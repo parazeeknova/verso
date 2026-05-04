@@ -8,7 +8,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/verso/backy/models"
+
+	"verso/backy/models"
 )
 
 var ErrPageNotFound = errors.New("page not found")

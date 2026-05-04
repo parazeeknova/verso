@@ -10,10 +10,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/verso/backy/database"
-	"github.com/verso/backy/fractional"
-	"github.com/verso/backy/models"
-	"github.com/verso/backy/repositories"
+
+	"verso/backy/database"
+	"verso/backy/fractional"
+	"verso/backy/models"
+	"verso/backy/repositories"
 )
 
 // PageService provides business logic over page and page history repositories

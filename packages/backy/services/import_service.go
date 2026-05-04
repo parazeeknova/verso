@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/verso/backy/models"
+	"verso/backy/models"
 )
 
 // ImportService handles importing markdown files into DB-backed pages

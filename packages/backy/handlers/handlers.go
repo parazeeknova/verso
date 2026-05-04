@@ -8,14 +8,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/verso/backy/cache"
-	"github.com/verso/backy/logger"
-	"github.com/verso/backy/middleware"
-	"github.com/verso/backy/models"
-	"github.com/verso/backy/repositories"
-	"github.com/verso/backy/services"
-	"github.com/verso/backy/store"
 	"golang.org/x/sync/singleflight"
+
+	"verso/backy/cache"
+	"verso/backy/logger"
+	"verso/backy/middleware"
+	"verso/backy/models"
+	"verso/backy/repositories"
+	"verso/backy/services"
+	"verso/backy/store"
 )
 
 // Handlers holds all HTTP handlers

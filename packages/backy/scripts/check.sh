@@ -17,7 +17,7 @@ if [ -n "$GOFUMPT_OUT" ]; then
 fi
 
 echo "Running goimports check..."
-GOIMPORTS_OUT=$(goimports -l -d . 2>&1) || true
+GOIMPORTS_OUT=$(goimports -local verso/backy -l -d . 2>&1) || true
 if [ -n "$GOIMPORTS_OUT" ]; then
     echo "$GOIMPORTS_OUT"
     echo "goimports found import issues"

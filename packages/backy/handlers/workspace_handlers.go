@@ -5,9 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/verso/backy/logger"
-	"github.com/verso/backy/models"
-	"github.com/verso/backy/services"
+
+	"verso/backy/logger"
+	"verso/backy/models"
+	"verso/backy/services"
 )
 
 // --- Workspace Handlers ---

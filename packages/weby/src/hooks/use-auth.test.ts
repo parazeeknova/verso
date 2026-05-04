@@ -3,12 +3,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createWrapper } from "../test/utils";
 import { useAuth, useAuthActions } from "./use-auth";
 
-const createMockResponse = (data: unknown, ok = true, status = 200): Response =>
-  ({
+const createMockResponse = (data: unknown, ok = true, status = 200): Response => {
+  const body = JSON.stringify(data);
+  return {
+    headers: {
+      get: (name: string) => (name.toLowerCase() === "content-type" ? "application/json" : null),
+    },
     json: () => Promise.resolve(data),
     ok,
     status,
-  }) as unknown as Response;
+    text: () => Promise.resolve(body),
+  } as unknown as Response;
+};
 
 describe("useAuth", () => {
   beforeEach(() => {

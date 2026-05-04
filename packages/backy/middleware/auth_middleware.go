@@ -5,9 +5,10 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/verso/backy/auth"
-	"github.com/verso/backy/logger"
-	"github.com/verso/backy/services"
+
+	"verso/backy/auth"
+	"verso/backy/logger"
+	"verso/backy/services"
 )
 
 const (

@@ -29,7 +29,7 @@ export const fetchProtected = async <T>(url: string, init?: RequestInit): Promis
   }
 
   if (!res.ok) {
-    let errorMessage = `request failed (${res.status})`;
+    let errorMessage = "";
     const contentType = res.headers.get("content-type") ?? "";
     if (contentType.includes("application/json")) {
       try {
@@ -41,7 +41,7 @@ export const fetchProtected = async <T>(url: string, init?: RequestInit): Promis
         // Ignore JSON parse errors for error bodies
       }
     }
-    throw new Error(errorMessage);
+    throw new Error(`HTTP ${res.status}${errorMessage ? `: ${errorMessage}` : ""}`);
   }
 
   const text = await res.text();

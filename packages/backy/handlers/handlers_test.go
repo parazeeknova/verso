@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/verso/backy/models"
+
+	"verso/backy/models"
 )
 
 func setupRouter() (*gin.Engine, *Handlers) {

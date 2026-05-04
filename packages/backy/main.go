@@ -11,14 +11,14 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 
-	"github.com/verso/backy/auth"
-	"github.com/verso/backy/database"
-	"github.com/verso/backy/handlers"
-	"github.com/verso/backy/logger"
-	"github.com/verso/backy/middleware"
-	"github.com/verso/backy/repositories"
-	"github.com/verso/backy/services"
-	"github.com/verso/backy/storage"
+	"verso/backy/auth"
+	"verso/backy/database"
+	"verso/backy/handlers"
+	"verso/backy/logger"
+	"verso/backy/middleware"
+	"verso/backy/repositories"
+	"verso/backy/services"
+	"verso/backy/storage"
 )
 
 func main() {

@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/verso/backy/models"
+	"verso/backy/models"
 )
 
 // StatsEntry represents a cached stats value with expiration

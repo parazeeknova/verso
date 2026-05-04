@@ -1,4 +1,4 @@
-module github.com/verso/backy
+module verso/backy
 
 go 1.26
 

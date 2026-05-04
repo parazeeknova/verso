@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/verso/backy/database"
-	"github.com/verso/backy/logger"
+
+	"verso/backy/database"
+	"verso/backy/logger"
 )
 
 // --- Debug Handlers ---

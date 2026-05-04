@@ -10,10 +10,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/verso/backy/auth"
-	"github.com/verso/backy/logger"
-	"github.com/verso/backy/models"
-	"github.com/verso/backy/repositories"
+
+	"verso/backy/auth"
+	"verso/backy/logger"
+	"verso/backy/models"
+	"verso/backy/repositories"
 )
 
 // Sentinel errors for expected auth outcomes.

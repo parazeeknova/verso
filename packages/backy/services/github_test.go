@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/verso/backy/models"
+	"verso/backy/models"
 )
 
 func TestNewGitHubService(t *testing.T) {

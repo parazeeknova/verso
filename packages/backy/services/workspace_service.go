@@ -6,8 +6,9 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/verso/backy/models"
-	"github.com/verso/backy/repositories"
+
+	"verso/backy/models"
+	"verso/backy/repositories"
 )
 
 var (

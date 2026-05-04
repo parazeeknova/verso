@@ -4,11 +4,18 @@ import { createWrapper } from "../test/utils";
 import { useExperience, useIsFetchingData, useProfile, useProjects } from "./use-data";
 
 // Helper to create mock Response at module level
-const createMockResponse = (data: unknown, ok = true): Response =>
-  ({
+const createMockResponse = (data: unknown, ok = true, status = 200): Response => {
+  const body = JSON.stringify(data);
+  return {
+    headers: {
+      get: (name: string) => (name.toLowerCase() === "content-type" ? "application/json" : null),
+    },
     json: () => Promise.resolve(data),
     ok,
-  }) as unknown as Response;
+    status,
+    text: () => Promise.resolve(body),
+  } as unknown as Response;
+};
 
 describe("useProfile", () => {
   beforeEach(() => {

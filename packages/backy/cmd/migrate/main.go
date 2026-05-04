@@ -5,8 +5,9 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/verso/backy/database"
-	"github.com/verso/backy/logger"
+
+	"verso/backy/database"
+	"verso/backy/logger"
 )
 
 func main() {

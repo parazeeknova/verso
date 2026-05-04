@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/verso/backy/logger"
+
+	"verso/backy/logger"
 )
 
 //go:embed migrations/*.sql
