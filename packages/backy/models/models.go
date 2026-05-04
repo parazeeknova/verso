@@ -178,6 +178,7 @@ type AuthUser struct {
 	Username  string `json:"username"`
 	Email     string `json:"email"`
 	Name      string `json:"name"`
+	AvatarURL string `json:"avatar_url"`
 	IsOwner   bool   `json:"is_owner"`
 	IsActive  bool   `json:"is_active"`
 	CreatedAt string `json:"created_at"`
@@ -188,6 +189,7 @@ type AuthUser struct {
 type AuthSession struct {
 	ID         string `json:"id"`
 	UserID     string `json:"user_id"`
+	DeviceName string `json:"device_name"`
 	ExpiresAt  string `json:"expires_at"`
 	LastSeenAt string `json:"last_seen_at"`
 	CreatedAt  string `json:"created_at"`

@@ -73,14 +73,14 @@ type BootstrapParams struct {
 // Login authenticates a user by username or email and password.
 // When the system is not yet bootstrapped (no users exist) and email is provided,
 // it creates the first owner user instead of performing a normal login.
-func (s *AuthService) Login(ctx context.Context, usernameOrEmail, password, email string, bootstrapParams *BootstrapParams) (*auth.UserResponse, *TokenPair, error) {
+func (s *AuthService) Login(ctx context.Context, usernameOrEmail, password, email string, bootstrapParams *BootstrapParams, deviceName string) (*auth.UserResponse, *TokenPair, error) {
 	bootstrapped, err := s.IsBootstrapped(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	if !bootstrapped && email != "" {
-		return s.bootstrap(ctx, usernameOrEmail, email, password, bootstrapParams)
+		return s.bootstrap(ctx, usernameOrEmail, email, password, bootstrapParams, deviceName)
 	}
 
 	if !bootstrapped {
@@ -128,7 +128,7 @@ func (s *AuthService) Login(ctx context.Context, usernameOrEmail, password, emai
 		CreatedAt: createdAt,
 	}
 
-	pair, err := s.createSession(ctx, dbUser.ID)
+	pair, err := s.createSession(ctx, dbUser.ID, deviceName)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create session: %w", err)
 	}
@@ -140,7 +140,7 @@ func (s *AuthService) Login(ctx context.Context, usernameOrEmail, password, emai
 // The user creation is transactional so concurrent bootstrap attempts are
 // safe — the second caller hits a unique constraint and gets an
 // ErrAlreadyBootstrapped error.
-func (s *AuthService) bootstrap(ctx context.Context, username, email, password string, params *BootstrapParams) (*auth.UserResponse, *TokenPair, error) {
+func (s *AuthService) bootstrap(ctx context.Context, username, email, password string, params *BootstrapParams, deviceName string) (*auth.UserResponse, *TokenPair, error) {
 	passwordHash, err := auth.HashPassword(password)
 	if err != nil {
 		return nil, nil, fmt.Errorf("hash password: %w", err)
@@ -206,7 +206,7 @@ func (s *AuthService) bootstrap(ctx context.Context, username, email, password s
 		CreatedAt: time.Now(),
 	}
 
-	pair, err := s.createSession(ctx, userID)
+	pair, err := s.createSession(ctx, userID, deviceName)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create session: %w", err)
 	}
@@ -358,13 +358,44 @@ func (s *AuthService) GetMe(ctx context.Context, userID string) (*auth.UserRespo
 		Username:  dbUser.Username,
 		Email:     dbUser.Email,
 		Name:      dbUser.Name,
+		AvatarURL: dbUser.AvatarURL,
 		IsOwner:   dbUser.IsOwner,
 		IsActive:  dbUser.IsActive,
 		CreatedAt: createdAt,
 	}, nil
 }
 
-func (s *AuthService) createSession(ctx context.Context, userID string) (*TokenPair, error) {
+// ErrInvalidPassword is returned when the current password is incorrect.
+var ErrInvalidPassword = errors.New("invalid password")
+
+// UpdateProfile updates the user's name and avatar URL.
+func (s *AuthService) UpdateProfile(ctx context.Context, userID, name, avatarURL string) error {
+	return s.userRepo.UpdateUserProfile(ctx, userID, name, avatarURL)
+}
+
+// ChangePassword changes the user's password after verifying the current one.
+func (s *AuthService) ChangePassword(ctx context.Context, userID, currentPassword, newPassword string) error {
+	passwordHash, err := s.userRepo.GetPasswordHash(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("get password hash: %w", err)
+	}
+	if passwordHash == "" {
+		return ErrInvalidPassword
+	}
+
+	if !auth.VerifyPassword(currentPassword, passwordHash) {
+		return ErrInvalidPassword
+	}
+
+	newHash, err := auth.HashPassword(newPassword)
+	if err != nil {
+		return fmt.Errorf("hash new password: %w", err)
+	}
+
+	return s.userRepo.UpdatePasswordHash(ctx, userID, newHash)
+}
+
+func (s *AuthService) createSession(ctx context.Context, userID string, deviceName string) (*TokenPair, error) {
 	uid, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("parse user id: %w", err)
@@ -386,7 +417,7 @@ func (s *AuthService) createSession(ctx context.Context, userID string) (*TokenP
 		return nil, fmt.Errorf("generate refresh token: %w", err)
 	}
 
-	sessionID, err := s.sessionRepo.CreateSessionWithRefreshToken(ctx, userID, sessionExpiresAt, refreshTokenHash)
+	sessionID, err := s.sessionRepo.CreateSessionWithRefreshToken(ctx, userID, sessionExpiresAt, refreshTokenHash, deviceName)
 	if err != nil {
 		return nil, fmt.Errorf("create session with refresh token: %w", err)
 	}
@@ -400,6 +431,16 @@ func (s *AuthService) createSession(ctx context.Context, userID string) (*TokenP
 		AccessToken:  accessToken,
 		RefreshToken: rawRefreshToken,
 	}, nil
+}
+
+// GetCurrentSession retrieves the current session by ID.
+func (s *AuthService) GetCurrentSession(ctx context.Context, sessionID string) (*models.AuthSession, error) {
+	return s.sessionRepo.GetSessionByID(ctx, sessionID)
+}
+
+// RevokeSession revokes a session by ID.
+func (s *AuthService) RevokeSession(ctx context.Context, sessionID string) error {
+	return s.sessionRepo.RevokeSession(ctx, sessionID)
 }
 
 func sha256Hash(input string) string {

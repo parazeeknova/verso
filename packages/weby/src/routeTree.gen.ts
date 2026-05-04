@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as SplatRouteImport } from './routes/$'
@@ -20,9 +21,11 @@ import { Route as ApiProjectsRouteImport } from './routes/api/projects'
 import { Route as ApiProfileRouteImport } from './routes/api/profile'
 import { Route as ApiExperienceRouteImport } from './routes/api/experience'
 import { Route as ApiBlogsRouteImport } from './routes/api/blogs'
+import { Route as SettingsAccountProfileRouteImport } from './routes/settings.account.profile'
 import { Route as ApiGithubStatsRouteImport } from './routes/api/github/stats'
 import { Route as ApiConsoleWorkspacesRouteImport } from './routes/api/console/workspaces'
 import { Route as ApiConsoleSpacesRouteImport } from './routes/api/console/spaces'
+import { Route as ApiConsoleProfileRouteImport } from './routes/api/console/profile'
 import { Route as ApiConsolePagesRouteImport } from './routes/api/console/pages'
 import { Route as ApiBlogsSlugRouteImport } from './routes/api/blogs.$slug'
 import { Route as ApiAuthRefreshRouteImport } from './routes/api/auth/refresh'
@@ -32,9 +35,12 @@ import { Route as ApiAuthLoginRouteImport } from './routes/api/auth/login'
 import { Route as ApiAuthBootstrapStateRouteImport } from './routes/api/auth/bootstrap-state'
 import { Route as ApiConsoleWorkspacesIdRouteImport } from './routes/api/console/workspaces.$id'
 import { Route as ApiConsoleSpacesIdRouteImport } from './routes/api/console/spaces.$id'
+import { Route as ApiConsoleProfileSessionRouteImport } from './routes/api/console/profile.session'
+import { Route as ApiConsoleProfilePasswordRouteImport } from './routes/api/console/profile.password'
 import { Route as ApiConsolePagesTreeRouteImport } from './routes/api/console/pages.tree'
 import { Route as ApiConsolePagesIdRouteImport } from './routes/api/console/pages.$id'
 import { Route as ApiConsoleDebugTablesRouteImport } from './routes/api/console/debug.tables'
+import { Route as ApiConsoleProfileSessionRevokeRouteImport } from './routes/api/console/profile.session.revoke'
 import { Route as ApiConsolePagesIdUnpublishRouteImport } from './routes/api/console/pages.$id.unpublish'
 import { Route as ApiConsolePagesIdRestoreRouteImport } from './routes/api/console/pages.$id.restore'
 import { Route as ApiConsolePagesIdPublishRouteImport } from './routes/api/console/pages.$id.publish'
@@ -45,6 +51,11 @@ import { Route as ApiConsoleDebugTablesTableNameRouteImport } from './routes/api
 import { Route as ApiConsolePagesIdHistoryHistoryIdRouteImport } from './routes/api/console/pages.$id.history.$historyId'
 import { Route as ApiConsoleDebugTablesTableNameRowsRouteImport } from './routes/api/console/debug.tables.$tableName.rows'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
@@ -100,6 +111,11 @@ const ApiBlogsRoute = ApiBlogsRouteImport.update({
   path: '/api/blogs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsAccountProfileRoute = SettingsAccountProfileRouteImport.update({
+  id: '/account/profile',
+  path: '/account/profile',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const ApiGithubStatsRoute = ApiGithubStatsRouteImport.update({
   id: '/api/github/stats',
   path: '/api/github/stats',
@@ -113,6 +129,11 @@ const ApiConsoleWorkspacesRoute = ApiConsoleWorkspacesRouteImport.update({
 const ApiConsoleSpacesRoute = ApiConsoleSpacesRouteImport.update({
   id: '/api/console/spaces',
   path: '/api/console/spaces',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiConsoleProfileRoute = ApiConsoleProfileRouteImport.update({
+  id: '/api/console/profile',
+  path: '/api/console/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiConsolePagesRoute = ApiConsolePagesRouteImport.update({
@@ -160,6 +181,18 @@ const ApiConsoleSpacesIdRoute = ApiConsoleSpacesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => ApiConsoleSpacesRoute,
 } as any)
+const ApiConsoleProfileSessionRoute =
+  ApiConsoleProfileSessionRouteImport.update({
+    id: '/session',
+    path: '/session',
+    getParentRoute: () => ApiConsoleProfileRoute,
+  } as any)
+const ApiConsoleProfilePasswordRoute =
+  ApiConsoleProfilePasswordRouteImport.update({
+    id: '/password',
+    path: '/password',
+    getParentRoute: () => ApiConsoleProfileRoute,
+  } as any)
 const ApiConsolePagesTreeRoute = ApiConsolePagesTreeRouteImport.update({
   id: '/tree',
   path: '/tree',
@@ -175,6 +208,12 @@ const ApiConsoleDebugTablesRoute = ApiConsoleDebugTablesRouteImport.update({
   path: '/api/console/debug/tables',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiConsoleProfileSessionRevokeRoute =
+  ApiConsoleProfileSessionRevokeRouteImport.update({
+    id: '/revoke',
+    path: '/revoke',
+    getParentRoute: () => ApiConsoleProfileSessionRoute,
+  } as any)
 const ApiConsolePagesIdUnpublishRoute =
   ApiConsolePagesIdUnpublishRouteImport.update({
     id: '/unpublish',
@@ -234,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/$': typeof SplatRoute
   '/about': typeof AboutRoute
   '/home': typeof HomeRouteWithChildren
+  '/settings': typeof SettingsRouteWithChildren
   '/api/blogs': typeof ApiBlogsRouteWithChildren
   '/api/experience': typeof ApiExperienceRoute
   '/api/profile': typeof ApiProfileRoute
@@ -248,12 +288,16 @@ export interface FileRoutesByFullPath {
   '/api/auth/refresh': typeof ApiAuthRefreshRoute
   '/api/blogs/$slug': typeof ApiBlogsSlugRoute
   '/api/console/pages': typeof ApiConsolePagesRouteWithChildren
+  '/api/console/profile': typeof ApiConsoleProfileRouteWithChildren
   '/api/console/spaces': typeof ApiConsoleSpacesRouteWithChildren
   '/api/console/workspaces': typeof ApiConsoleWorkspacesRouteWithChildren
   '/api/github/stats': typeof ApiGithubStatsRoute
+  '/settings/account/profile': typeof SettingsAccountProfileRoute
   '/api/console/debug/tables': typeof ApiConsoleDebugTablesRouteWithChildren
   '/api/console/pages/$id': typeof ApiConsolePagesIdRouteWithChildren
   '/api/console/pages/tree': typeof ApiConsolePagesTreeRoute
+  '/api/console/profile/password': typeof ApiConsoleProfilePasswordRoute
+  '/api/console/profile/session': typeof ApiConsoleProfileSessionRouteWithChildren
   '/api/console/spaces/$id': typeof ApiConsoleSpacesIdRoute
   '/api/console/workspaces/$id': typeof ApiConsoleWorkspacesIdRoute
   '/api/console/debug/tables/$tableName': typeof ApiConsoleDebugTablesTableNameRouteWithChildren
@@ -263,6 +307,7 @@ export interface FileRoutesByFullPath {
   '/api/console/pages/$id/publish': typeof ApiConsolePagesIdPublishRoute
   '/api/console/pages/$id/restore': typeof ApiConsolePagesIdRestoreRoute
   '/api/console/pages/$id/unpublish': typeof ApiConsolePagesIdUnpublishRoute
+  '/api/console/profile/session/revoke': typeof ApiConsoleProfileSessionRevokeRoute
   '/api/console/debug/tables/$tableName/rows': typeof ApiConsoleDebugTablesTableNameRowsRoute
   '/api/console/pages/$id/history/$historyId': typeof ApiConsolePagesIdHistoryHistoryIdRoute
 }
@@ -270,6 +315,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/about': typeof AboutRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/api/blogs': typeof ApiBlogsRouteWithChildren
   '/api/experience': typeof ApiExperienceRoute
   '/api/profile': typeof ApiProfileRoute
@@ -284,12 +330,16 @@ export interface FileRoutesByTo {
   '/api/auth/refresh': typeof ApiAuthRefreshRoute
   '/api/blogs/$slug': typeof ApiBlogsSlugRoute
   '/api/console/pages': typeof ApiConsolePagesRouteWithChildren
+  '/api/console/profile': typeof ApiConsoleProfileRouteWithChildren
   '/api/console/spaces': typeof ApiConsoleSpacesRouteWithChildren
   '/api/console/workspaces': typeof ApiConsoleWorkspacesRouteWithChildren
   '/api/github/stats': typeof ApiGithubStatsRoute
+  '/settings/account/profile': typeof SettingsAccountProfileRoute
   '/api/console/debug/tables': typeof ApiConsoleDebugTablesRouteWithChildren
   '/api/console/pages/$id': typeof ApiConsolePagesIdRouteWithChildren
   '/api/console/pages/tree': typeof ApiConsolePagesTreeRoute
+  '/api/console/profile/password': typeof ApiConsoleProfilePasswordRoute
+  '/api/console/profile/session': typeof ApiConsoleProfileSessionRouteWithChildren
   '/api/console/spaces/$id': typeof ApiConsoleSpacesIdRoute
   '/api/console/workspaces/$id': typeof ApiConsoleWorkspacesIdRoute
   '/api/console/debug/tables/$tableName': typeof ApiConsoleDebugTablesTableNameRouteWithChildren
@@ -299,6 +349,7 @@ export interface FileRoutesByTo {
   '/api/console/pages/$id/publish': typeof ApiConsolePagesIdPublishRoute
   '/api/console/pages/$id/restore': typeof ApiConsolePagesIdRestoreRoute
   '/api/console/pages/$id/unpublish': typeof ApiConsolePagesIdUnpublishRoute
+  '/api/console/profile/session/revoke': typeof ApiConsoleProfileSessionRevokeRoute
   '/api/console/debug/tables/$tableName/rows': typeof ApiConsoleDebugTablesTableNameRowsRoute
   '/api/console/pages/$id/history/$historyId': typeof ApiConsolePagesIdHistoryHistoryIdRoute
 }
@@ -308,6 +359,7 @@ export interface FileRoutesById {
   '/$': typeof SplatRoute
   '/about': typeof AboutRoute
   '/home': typeof HomeRouteWithChildren
+  '/settings': typeof SettingsRouteWithChildren
   '/api/blogs': typeof ApiBlogsRouteWithChildren
   '/api/experience': typeof ApiExperienceRoute
   '/api/profile': typeof ApiProfileRoute
@@ -322,12 +374,16 @@ export interface FileRoutesById {
   '/api/auth/refresh': typeof ApiAuthRefreshRoute
   '/api/blogs/$slug': typeof ApiBlogsSlugRoute
   '/api/console/pages': typeof ApiConsolePagesRouteWithChildren
+  '/api/console/profile': typeof ApiConsoleProfileRouteWithChildren
   '/api/console/spaces': typeof ApiConsoleSpacesRouteWithChildren
   '/api/console/workspaces': typeof ApiConsoleWorkspacesRouteWithChildren
   '/api/github/stats': typeof ApiGithubStatsRoute
+  '/settings/account/profile': typeof SettingsAccountProfileRoute
   '/api/console/debug/tables': typeof ApiConsoleDebugTablesRouteWithChildren
   '/api/console/pages/$id': typeof ApiConsolePagesIdRouteWithChildren
   '/api/console/pages/tree': typeof ApiConsolePagesTreeRoute
+  '/api/console/profile/password': typeof ApiConsoleProfilePasswordRoute
+  '/api/console/profile/session': typeof ApiConsoleProfileSessionRouteWithChildren
   '/api/console/spaces/$id': typeof ApiConsoleSpacesIdRoute
   '/api/console/workspaces/$id': typeof ApiConsoleWorkspacesIdRoute
   '/api/console/debug/tables/$tableName': typeof ApiConsoleDebugTablesTableNameRouteWithChildren
@@ -337,6 +393,7 @@ export interface FileRoutesById {
   '/api/console/pages/$id/publish': typeof ApiConsolePagesIdPublishRoute
   '/api/console/pages/$id/restore': typeof ApiConsolePagesIdRestoreRoute
   '/api/console/pages/$id/unpublish': typeof ApiConsolePagesIdUnpublishRoute
+  '/api/console/profile/session/revoke': typeof ApiConsoleProfileSessionRevokeRoute
   '/api/console/debug/tables/$tableName/rows': typeof ApiConsoleDebugTablesTableNameRowsRoute
   '/api/console/pages/$id/history/$historyId': typeof ApiConsolePagesIdHistoryHistoryIdRoute
 }
@@ -347,6 +404,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/about'
     | '/home'
+    | '/settings'
     | '/api/blogs'
     | '/api/experience'
     | '/api/profile'
@@ -361,12 +419,16 @@ export interface FileRouteTypes {
     | '/api/auth/refresh'
     | '/api/blogs/$slug'
     | '/api/console/pages'
+    | '/api/console/profile'
     | '/api/console/spaces'
     | '/api/console/workspaces'
     | '/api/github/stats'
+    | '/settings/account/profile'
     | '/api/console/debug/tables'
     | '/api/console/pages/$id'
     | '/api/console/pages/tree'
+    | '/api/console/profile/password'
+    | '/api/console/profile/session'
     | '/api/console/spaces/$id'
     | '/api/console/workspaces/$id'
     | '/api/console/debug/tables/$tableName'
@@ -376,6 +438,7 @@ export interface FileRouteTypes {
     | '/api/console/pages/$id/publish'
     | '/api/console/pages/$id/restore'
     | '/api/console/pages/$id/unpublish'
+    | '/api/console/profile/session/revoke'
     | '/api/console/debug/tables/$tableName/rows'
     | '/api/console/pages/$id/history/$historyId'
   fileRoutesByTo: FileRoutesByTo
@@ -383,6 +446,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/about'
+    | '/settings'
     | '/api/blogs'
     | '/api/experience'
     | '/api/profile'
@@ -397,12 +461,16 @@ export interface FileRouteTypes {
     | '/api/auth/refresh'
     | '/api/blogs/$slug'
     | '/api/console/pages'
+    | '/api/console/profile'
     | '/api/console/spaces'
     | '/api/console/workspaces'
     | '/api/github/stats'
+    | '/settings/account/profile'
     | '/api/console/debug/tables'
     | '/api/console/pages/$id'
     | '/api/console/pages/tree'
+    | '/api/console/profile/password'
+    | '/api/console/profile/session'
     | '/api/console/spaces/$id'
     | '/api/console/workspaces/$id'
     | '/api/console/debug/tables/$tableName'
@@ -412,6 +480,7 @@ export interface FileRouteTypes {
     | '/api/console/pages/$id/publish'
     | '/api/console/pages/$id/restore'
     | '/api/console/pages/$id/unpublish'
+    | '/api/console/profile/session/revoke'
     | '/api/console/debug/tables/$tableName/rows'
     | '/api/console/pages/$id/history/$historyId'
   id:
@@ -420,6 +489,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/about'
     | '/home'
+    | '/settings'
     | '/api/blogs'
     | '/api/experience'
     | '/api/profile'
@@ -434,12 +504,16 @@ export interface FileRouteTypes {
     | '/api/auth/refresh'
     | '/api/blogs/$slug'
     | '/api/console/pages'
+    | '/api/console/profile'
     | '/api/console/spaces'
     | '/api/console/workspaces'
     | '/api/github/stats'
+    | '/settings/account/profile'
     | '/api/console/debug/tables'
     | '/api/console/pages/$id'
     | '/api/console/pages/tree'
+    | '/api/console/profile/password'
+    | '/api/console/profile/session'
     | '/api/console/spaces/$id'
     | '/api/console/workspaces/$id'
     | '/api/console/debug/tables/$tableName'
@@ -449,6 +523,7 @@ export interface FileRouteTypes {
     | '/api/console/pages/$id/publish'
     | '/api/console/pages/$id/restore'
     | '/api/console/pages/$id/unpublish'
+    | '/api/console/profile/session/revoke'
     | '/api/console/debug/tables/$tableName/rows'
     | '/api/console/pages/$id/history/$historyId'
   fileRoutesById: FileRoutesById
@@ -458,6 +533,7 @@ export interface RootRouteChildren {
   SplatRoute: typeof SplatRoute
   AboutRoute: typeof AboutRoute
   HomeRoute: typeof HomeRouteWithChildren
+  SettingsRoute: typeof SettingsRouteWithChildren
   ApiBlogsRoute: typeof ApiBlogsRouteWithChildren
   ApiExperienceRoute: typeof ApiExperienceRoute
   ApiProfileRoute: typeof ApiProfileRoute
@@ -469,6 +545,7 @@ export interface RootRouteChildren {
   ApiAuthMeRoute: typeof ApiAuthMeRoute
   ApiAuthRefreshRoute: typeof ApiAuthRefreshRoute
   ApiConsolePagesRoute: typeof ApiConsolePagesRouteWithChildren
+  ApiConsoleProfileRoute: typeof ApiConsoleProfileRouteWithChildren
   ApiConsoleSpacesRoute: typeof ApiConsoleSpacesRouteWithChildren
   ApiConsoleWorkspacesRoute: typeof ApiConsoleWorkspacesRouteWithChildren
   ApiGithubStatsRoute: typeof ApiGithubStatsRoute
@@ -477,6 +554,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/home': {
       id: '/home'
       path: '/home'
@@ -554,6 +638,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBlogsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/account/profile': {
+      id: '/settings/account/profile'
+      path: '/account/profile'
+      fullPath: '/settings/account/profile'
+      preLoaderRoute: typeof SettingsAccountProfileRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/api/github/stats': {
       id: '/api/github/stats'
       path: '/api/github/stats'
@@ -573,6 +664,13 @@ declare module '@tanstack/react-router' {
       path: '/api/console/spaces'
       fullPath: '/api/console/spaces'
       preLoaderRoute: typeof ApiConsoleSpacesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/console/profile': {
+      id: '/api/console/profile'
+      path: '/api/console/profile'
+      fullPath: '/api/console/profile'
+      preLoaderRoute: typeof ApiConsoleProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/console/pages': {
@@ -638,6 +736,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiConsoleSpacesIdRouteImport
       parentRoute: typeof ApiConsoleSpacesRoute
     }
+    '/api/console/profile/session': {
+      id: '/api/console/profile/session'
+      path: '/session'
+      fullPath: '/api/console/profile/session'
+      preLoaderRoute: typeof ApiConsoleProfileSessionRouteImport
+      parentRoute: typeof ApiConsoleProfileRoute
+    }
+    '/api/console/profile/password': {
+      id: '/api/console/profile/password'
+      path: '/password'
+      fullPath: '/api/console/profile/password'
+      preLoaderRoute: typeof ApiConsoleProfilePasswordRouteImport
+      parentRoute: typeof ApiConsoleProfileRoute
+    }
     '/api/console/pages/tree': {
       id: '/api/console/pages/tree'
       path: '/tree'
@@ -658,6 +770,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/console/debug/tables'
       preLoaderRoute: typeof ApiConsoleDebugTablesRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/console/profile/session/revoke': {
+      id: '/api/console/profile/session/revoke'
+      path: '/revoke'
+      fullPath: '/api/console/profile/session/revoke'
+      preLoaderRoute: typeof ApiConsoleProfileSessionRevokeRouteImport
+      parentRoute: typeof ApiConsoleProfileSessionRoute
     }
     '/api/console/pages/$id/unpublish': {
       id: '/api/console/pages/$id/unpublish'
@@ -737,6 +856,18 @@ const HomeRouteChildren: HomeRouteChildren = {
 
 const HomeRouteWithChildren = HomeRoute._addFileChildren(HomeRouteChildren)
 
+interface SettingsRouteChildren {
+  SettingsAccountProfileRoute: typeof SettingsAccountProfileRoute
+}
+
+const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsAccountProfileRoute: SettingsAccountProfileRoute,
+}
+
+const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
+  SettingsRouteChildren,
+)
+
 interface ApiBlogsRouteChildren {
   ApiBlogsSlugRoute: typeof ApiBlogsSlugRoute
 }
@@ -799,6 +930,33 @@ const ApiConsolePagesRouteWithChildren = ApiConsolePagesRoute._addFileChildren(
   ApiConsolePagesRouteChildren,
 )
 
+interface ApiConsoleProfileSessionRouteChildren {
+  ApiConsoleProfileSessionRevokeRoute: typeof ApiConsoleProfileSessionRevokeRoute
+}
+
+const ApiConsoleProfileSessionRouteChildren: ApiConsoleProfileSessionRouteChildren =
+  {
+    ApiConsoleProfileSessionRevokeRoute: ApiConsoleProfileSessionRevokeRoute,
+  }
+
+const ApiConsoleProfileSessionRouteWithChildren =
+  ApiConsoleProfileSessionRoute._addFileChildren(
+    ApiConsoleProfileSessionRouteChildren,
+  )
+
+interface ApiConsoleProfileRouteChildren {
+  ApiConsoleProfilePasswordRoute: typeof ApiConsoleProfilePasswordRoute
+  ApiConsoleProfileSessionRoute: typeof ApiConsoleProfileSessionRouteWithChildren
+}
+
+const ApiConsoleProfileRouteChildren: ApiConsoleProfileRouteChildren = {
+  ApiConsoleProfilePasswordRoute: ApiConsoleProfilePasswordRoute,
+  ApiConsoleProfileSessionRoute: ApiConsoleProfileSessionRouteWithChildren,
+}
+
+const ApiConsoleProfileRouteWithChildren =
+  ApiConsoleProfileRoute._addFileChildren(ApiConsoleProfileRouteChildren)
+
 interface ApiConsoleSpacesRouteChildren {
   ApiConsoleSpacesIdRoute: typeof ApiConsoleSpacesIdRoute
 }
@@ -855,6 +1013,7 @@ const rootRouteChildren: RootRouteChildren = {
   SplatRoute: SplatRoute,
   AboutRoute: AboutRoute,
   HomeRoute: HomeRouteWithChildren,
+  SettingsRoute: SettingsRouteWithChildren,
   ApiBlogsRoute: ApiBlogsRouteWithChildren,
   ApiExperienceRoute: ApiExperienceRoute,
   ApiProfileRoute: ApiProfileRoute,
@@ -866,6 +1025,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthMeRoute: ApiAuthMeRoute,
   ApiAuthRefreshRoute: ApiAuthRefreshRoute,
   ApiConsolePagesRoute: ApiConsolePagesRouteWithChildren,
+  ApiConsoleProfileRoute: ApiConsoleProfileRouteWithChildren,
   ApiConsoleSpacesRoute: ApiConsoleSpacesRouteWithChildren,
   ApiConsoleWorkspacesRoute: ApiConsoleWorkspacesRouteWithChildren,
   ApiGithubStatsRoute: ApiGithubStatsRoute,

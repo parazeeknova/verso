@@ -78,14 +78,14 @@ func (r *UserRepo) CreateUser(ctx context.Context, username, email, name, passwo
 // FindUserByUsernameOrEmail looks up a user by username first, then falls back to email.
 // This avoids nondeterministic results when a username matches another user's email.
 func (r *UserRepo) FindUserByUsernameOrEmail(ctx context.Context, identifier string) (*models.AuthUser, error) {
-	query := `SELECT id, username, email, name, is_owner, is_active,
+	query := `SELECT id, username, email, name, COALESCE(avatar_url, ''), is_owner, is_active,
 	          COALESCE(to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), ''),
 	          COALESCE(to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), '')
 	          FROM users WHERE username = $1`
 
 	var u models.AuthUser
 	err := r.pool.QueryRow(ctx, query, identifier).Scan(
-		&u.ID, &u.Username, &u.Email, &u.Name, &u.IsOwner, &u.IsActive,
+		&u.ID, &u.Username, &u.Email, &u.Name, &u.AvatarURL, &u.IsOwner, &u.IsActive,
 		&u.CreatedAt, &u.UpdatedAt,
 	)
 	if err == nil {
@@ -96,13 +96,13 @@ func (r *UserRepo) FindUserByUsernameOrEmail(ctx context.Context, identifier str
 	}
 
 	// No match by username, try email.
-	query = `SELECT id, username, email, name, is_owner, is_active,
+	query = `SELECT id, username, email, name, COALESCE(avatar_url, ''), is_owner, is_active,
 	         COALESCE(to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), ''),
 	         COALESCE(to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), '')
 	         FROM users WHERE email = $1`
 
 	err = r.pool.QueryRow(ctx, query, identifier).Scan(
-		&u.ID, &u.Username, &u.Email, &u.Name, &u.IsOwner, &u.IsActive,
+		&u.ID, &u.Username, &u.Email, &u.Name, &u.AvatarURL, &u.IsOwner, &u.IsActive,
 		&u.CreatedAt, &u.UpdatedAt,
 	)
 	if err != nil {
@@ -116,14 +116,14 @@ func (r *UserRepo) FindUserByUsernameOrEmail(ctx context.Context, identifier str
 
 // GetUserByID retrieves a user by their UUID.
 func (r *UserRepo) GetUserByID(ctx context.Context, id string) (*models.AuthUser, error) {
-	query := `SELECT id, username, email, name, is_owner, is_active,
+	query := `SELECT id, username, email, name, COALESCE(avatar_url, ''), is_owner, is_active,
 	          COALESCE(to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), ''),
 	          COALESCE(to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), '')
 	          FROM users WHERE id = $1`
 
 	var u models.AuthUser
 	err := r.pool.QueryRow(ctx, query, id).Scan(
-		&u.ID, &u.Username, &u.Email, &u.Name, &u.IsOwner, &u.IsActive,
+		&u.ID, &u.Username, &u.Email, &u.Name, &u.AvatarURL, &u.IsOwner, &u.IsActive,
 		&u.CreatedAt, &u.UpdatedAt,
 	)
 	if err != nil {
@@ -133,6 +133,30 @@ func (r *UserRepo) GetUserByID(ctx context.Context, id string) (*models.AuthUser
 		return nil, fmt.Errorf("get user by id: %w", err)
 	}
 	return &u, nil
+}
+
+// UpdateUserProfile updates a user's name and avatar_url.
+func (r *UserRepo) UpdateUserProfile(ctx context.Context, userID, name, avatarURL string) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE users SET name = $1, avatar_url = $2, updated_at = NOW() WHERE id = $3`,
+		name, avatarURL, userID,
+	)
+	if err != nil {
+		return fmt.Errorf("update user profile: %w", err)
+	}
+	return nil
+}
+
+// UpdatePasswordHash updates the password hash for a user.
+func (r *UserRepo) UpdatePasswordHash(ctx context.Context, userID, passwordHash string) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE password_credentials SET password_hash = $1 WHERE user_id = $2`,
+		passwordHash, userID,
+	)
+	if err != nil {
+		return fmt.Errorf("update password hash: %w", err)
+	}
+	return nil
 }
 
 // GetPasswordHash retrieves the stored password hash for a user.

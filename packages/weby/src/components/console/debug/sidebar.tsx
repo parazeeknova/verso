@@ -116,14 +116,21 @@ export const DebugSidebar = ({
 
   return (
     <div className="flex flex-col h-full">
-      <button
-        onClick={onBack}
-        className={`flex items-center gap-1.5 px-1 py-2 text-[11px] lowercase border-b ${t("text-text-dark/70 hover:text-text-dark/90 border-border-dark", "text-text-light/70 hover:text-text-light/90 border-border-light")}`}
-        type="button"
+      <div
+        className={`flex items-center justify-between px-1 py-2 border-b ${t("border-border-dark", "border-border-light")}`}
       >
-        <ArrowLeftIcon size={12} />
-        back
-      </button>
+        <button
+          onClick={onBack}
+          className={`flex items-center gap-1.5 text-[11px] lowercase ${t("text-text-dark/70 hover:text-text-dark/90", "text-text-light/70 hover:text-text-light/90")}`}
+          type="button"
+        >
+          <ArrowLeftIcon size={12} />
+          back
+        </button>
+        <span className={`text-[11px] lowercase ${t("text-text-dark/40", "text-text-light/40")}`}>
+          debug
+        </span>
+      </div>
 
       <div
         className={`px-1 py-2 space-y-2 border-b ${t("border-border-dark", "border-border-light")}`}

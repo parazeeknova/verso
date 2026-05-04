@@ -63,6 +63,7 @@ export interface AuthUser {
   username: string;
   email: string;
   name: string;
+  avatar_url: string;
   isOwner: boolean;
 }
 

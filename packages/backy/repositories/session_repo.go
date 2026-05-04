@@ -38,7 +38,7 @@ func (r *SessionRepo) CreateSession(ctx context.Context, userID string, expiresA
 
 // CreateSessionWithRefreshToken creates a session and stores a refresh token
 // in a single transaction.
-func (r *SessionRepo) CreateSessionWithRefreshToken(ctx context.Context, userID string, expiresAt time.Time, tokenHash string) (string, error) {
+func (r *SessionRepo) CreateSessionWithRefreshToken(ctx context.Context, userID string, expiresAt time.Time, tokenHash string, deviceName string) (string, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return "", fmt.Errorf("begin tx: %w", err)
@@ -47,10 +47,10 @@ func (r *SessionRepo) CreateSessionWithRefreshToken(ctx context.Context, userID 
 
 	var sessionID string
 	err = tx.QueryRow(ctx,
-		`INSERT INTO sessions (user_id, expires_at, last_seen_at)
-		 VALUES ($1, $2, now())
+		`INSERT INTO sessions (user_id, expires_at, last_seen_at, device_name)
+		 VALUES ($1, $2, now(), $3)
 		 RETURNING id`,
-		userID, expiresAt,
+		userID, expiresAt, deviceName,
 	).Scan(&sessionID)
 	if err != nil {
 		return "", fmt.Errorf("create session: %w", err)
@@ -180,7 +180,7 @@ func (r *SessionRepo) RevokeRefreshToken(ctx context.Context, tokenHash string) 
 
 // GetSessionByRefreshToken retrieves the session for a valid (non-revoked, non-rotated, non-expired) refresh token.
 func (r *SessionRepo) GetSessionByRefreshToken(ctx context.Context, tokenHash string) (*models.AuthSession, error) {
-	query := `SELECT s.id, s.user_id,
+	query := `SELECT s.id, s.user_id, COALESCE(s.device_name, 'unknown device'),
 	          COALESCE(to_char(s.expires_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), ''),
 	          COALESCE(to_char(s.last_seen_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), ''),
 	          COALESCE(to_char(s.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), '')
@@ -194,13 +194,35 @@ func (r *SessionRepo) GetSessionByRefreshToken(ctx context.Context, tokenHash st
 
 	var s models.AuthSession
 	err := r.pool.QueryRow(ctx, query, tokenHash).Scan(
-		&s.ID, &s.UserID, &s.ExpiresAt, &s.LastSeenAt, &s.CreatedAt,
+		&s.ID, &s.UserID, &s.DeviceName, &s.ExpiresAt, &s.LastSeenAt, &s.CreatedAt,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("get session by refresh token: %w", err)
+	}
+	return &s, nil
+}
+
+// GetSessionByID retrieves a session by its ID.
+func (r *SessionRepo) GetSessionByID(ctx context.Context, sessionID string) (*models.AuthSession, error) {
+	query := `SELECT s.id, s.user_id, COALESCE(s.device_name, 'unknown device'),
+	          COALESCE(to_char(s.expires_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), ''),
+	          COALESCE(to_char(s.last_seen_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), ''),
+	          COALESCE(to_char(s.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), '')
+	          FROM sessions s
+	          WHERE s.id = $1`
+
+	var s models.AuthSession
+	err := r.pool.QueryRow(ctx, query, sessionID).Scan(
+		&s.ID, &s.UserID, &s.DeviceName, &s.ExpiresAt, &s.LastSeenAt, &s.CreatedAt,
+	)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get session by id: %w", err)
 	}
 	return &s, nil
 }

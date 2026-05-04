@@ -315,3 +315,46 @@ export const deleteDebugTableRows = (
     },
     method: "POST",
   });
+
+// Profile functions
+export const getUserProfile = (cookieHeader?: string | null) =>
+  fetchBacky<AuthUser>("console/profile", {
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+  });
+
+export const updateProfile = (
+  input: { name: string; avatar_url: string },
+  cookieHeader?: string | null,
+) =>
+  fetchBacky<{ status: string }>("console/profile", {
+    body: JSON.stringify(input),
+    headers: {
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      "Content-Type": "application/json",
+    },
+    method: "PUT",
+  });
+
+export const changePassword = (
+  input: { current_password: string; new_password: string },
+  cookieHeader?: string | null,
+) =>
+  fetchBacky<{ status: string }>("console/profile/password", {
+    body: JSON.stringify(input),
+    headers: {
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      "Content-Type": "application/json",
+    },
+    method: "PUT",
+  });
+
+export const getSessionInfo = (cookieHeader?: string | null) =>
+  fetchBacky<{ device_name: string; last_seen_at: string }>("console/profile/session", {
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+  });
+
+export const revokeSession = (cookieHeader?: string | null) =>
+  fetchBacky<{ status: string }>("console/profile/session/revoke", {
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+    method: "POST",
+  });

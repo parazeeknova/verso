@@ -111,6 +111,7 @@ func main() {
 	// Create auth service and handlers
 	authService := services.NewAuthService()
 	authHandlers := handlers.NewAuthHandlers(authService)
+	profileHandlers := handlers.NewProfileHandlers(authService)
 
 	r := gin.New()
 
@@ -204,6 +205,9 @@ func main() {
 		console := api.Group("/console")
 		console.Use(middleware.AuthRequired(authService))
 		{
+			// Profile
+			profileHandlers.RegisterRoutes(console)
+
 			// Workspaces
 			console.GET("/workspaces", h.GetWorkspaces)
 			console.POST("/workspaces", h.CreateWorkspace)

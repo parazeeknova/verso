@@ -63,7 +63,8 @@ func (h *AuthHandlers) Login(c *gin.Context) {
 		}
 	}
 
-	userResp, pair, err := h.authService.Login(c.Request.Context(), req.UsernameOrEmail, req.Password, req.Email, bootstrapParams)
+	deviceName := parseDeviceName(c.GetHeader("User-Agent"))
+	userResp, pair, err := h.authService.Login(c.Request.Context(), req.UsernameOrEmail, req.Password, req.Email, bootstrapParams, deviceName)
 	if err != nil {
 		if errors.Is(err, services.ErrNotBootstrapped) {
 			c.JSON(http.StatusBadRequest, auth.ErrorResponse{Error: "system not bootstrapped"})
@@ -167,6 +168,27 @@ func (h *AuthHandlers) Me(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, userResp)
+}
+
+func parseDeviceName(ua string) string {
+	if ua == "" {
+		return "unknown device"
+	}
+	ua = strings.ToLower(ua)
+	switch {
+	case strings.Contains(ua, "edg"):
+		return "edge"
+	case strings.Contains(ua, "opr") || strings.Contains(ua, "opera"):
+		return "opera"
+	case strings.Contains(ua, "firefox"):
+		return "firefox"
+	case strings.Contains(ua, "safari") && !strings.Contains(ua, "chrome"):
+		return "safari"
+	case strings.Contains(ua, "chrome"):
+		return "chrome"
+	default:
+		return "unknown device"
+	}
 }
 
 func extractAuthToken(c *gin.Context) string {
