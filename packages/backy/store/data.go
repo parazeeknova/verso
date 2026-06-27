@@ -51,16 +51,28 @@ var Experiences = []models.ExperienceItem{
 
 var Projects = []models.Project{
 	{
-		Title: "Palimpsest is a native git GUI written in rust to be blazing fast and light that goes brr",
+        Title: "Doty is an over-configured nix flake for opinionated developers",
+        Desc: "A fully declarative, highly opinionated, and reproducible NixOS/Hyprland desktop environment. " +
+             "Equipped with a custom Rust-based daemon (wabi), interactive QML-based Quickshell widgets, " +
+             "and dynamic Material You color schemes generated from your wallpapers via Matugen. " +
+             "Includes local AI workflows (OCR, Speech-to-Text, and LLMs) along with Waydroid virtualization " +
+             "and Cockpit server panel integration out of the box. Designed to look gorgeous without bloated overhead.",       
+        Stack:      "Nix, NixOS, Hyprland, Quickshell, Qt, QML, Rust, Matugen, Waydroid, Distrobox, Home Manager",
+        ReadmeURL:  "https://raw.githubusercontent.com/parazeeknova/doty/refs/heads/main/.github/README.md",
+        RepoURL:    "https://github.com/parazeeknova/doty",
+        ProductURL: "https://github.com/parazeeknova/doty",
+    },
+	{
+		Title: "Gitcha is a native git GUI written in rust to be blazing fast and light that goes brr",
 		Desc: "A local-first git visualizer built in Rust with egui. " +
 			"Commit graph, syntax-highlighted diffs, file tree with git status, " +
 			"and drag-to-merge all in a ~5MB binary with no Electron, no webview, " +
 			"no cloud, and no subscription for a picture of your own repo. " +
 			"Talks directly to libgit2. Named at 2am. No regrets.",
 		Stack:      "Rust, egui, eframe, git2, libgit2, diffy, similar, syntect, egui-arbor, egui-phosphor",
-		ReadmeURL:  "https://raw.githubusercontent.com/parazeeknova/palimpsest/refs/heads/main/.github/README.md",
-		RepoURL:    "https://github.com/parazeeknova/palimpsest",
-		ProductURL: "https://github.com/parazeeknova/palimpsest/releases",
+		ReadmeURL:  "https://raw.githubusercontent.com/parazeeknova/gitcha/refs/heads/main/.github/README.md",
+		RepoURL:    "https://github.com/parazeeknova/gitcha",
+		ProductURL: "https://github.com/parazeeknova/gitcha/releases",
 	},
 	{
 		Title:      "Lumen is a spatial system for organizing work.",
