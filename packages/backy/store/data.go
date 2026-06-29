@@ -51,17 +51,17 @@ var Experiences = []models.ExperienceItem{
 
 var Projects = []models.Project{
 	{
-        Title: "Doty is an over-configured nix flake for opinionated developers",
-        Desc: "A fully declarative, highly opinionated, and reproducible NixOS/Hyprland desktop environment. " +
-             "Equipped with a custom Rust-based daemon (wabi), interactive QML-based Quickshell widgets, " +
-             "and dynamic Material You color schemes generated from your wallpapers via Matugen. " +
-             "Includes local AI workflows (OCR, Speech-to-Text, and LLMs) along with Waydroid virtualization " +
-             "and Cockpit server panel integration out of the box. Designed to look gorgeous without bloated overhead.",       
-        Stack:      "Nix, NixOS, Hyprland, Quickshell, Qt, QML, Rust, Matugen, Waydroid, Distrobox, Home Manager",
-        ReadmeURL:  "https://raw.githubusercontent.com/parazeeknova/doty/refs/heads/main/.github/README.md",
-        RepoURL:    "https://github.com/parazeeknova/doty",
-        ProductURL: "https://github.com/parazeeknova/doty",
-    },
+		Title: "Doty is an over-configured nix flake for opinionated developers",
+		Desc: "A fully declarative, highly opinionated, and reproducible NixOS/Hyprland desktop environment. " +
+			"Equipped with a custom Rust-based daemon (wabi), interactive QML-based Quickshell widgets, " +
+			"and dynamic Material You color schemes generated from your wallpapers via Matugen. " +
+			"Includes local AI workflows (OCR, Speech-to-Text, and LLMs) along with Waydroid virtualization " +
+			"and Cockpit server panel integration out of the box. Designed to look gorgeous without bloated overhead.",
+		Stack:      "Nix, NixOS, Hyprland, Quickshell, Qt, QML, Rust, Matugen, Waydroid, Distrobox, Home Manager",
+		ReadmeURL:  "https://raw.githubusercontent.com/parazeeknova/doty/refs/heads/main/.github/README.md",
+		RepoURL:    "https://github.com/parazeeknova/doty",
+		ProductURL: "https://github.com/parazeeknova/doty",
+	},
 	{
 		Title: "Gitcha is a native git GUI written in rust to be blazing fast and light that goes brr",
 		Desc: "A local-first git visualizer built in Rust with egui. " +
