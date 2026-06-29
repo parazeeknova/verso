@@ -7,3 +7,8 @@ docs/
 .output/
 dist/
 .commandcode/
+
+# Devenv / Direnv
+.devenv/
+.devenv.lock
+.direnv/
