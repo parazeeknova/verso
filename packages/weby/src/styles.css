@@ -183,8 +183,14 @@ button {
 .blog-reader-prose {
   color: var(--color-text);
   font-family: "Ubuntu Mono", monospace;
-  font-size: 0.98rem;
+  font-size: 0.875rem;
   line-height: 1.6;
+}
+
+@media (min-width: 640px) {
+  .blog-reader-prose {
+    font-size: 1rem;
+  }
 }
 
 .blog-reader-prose h1,
