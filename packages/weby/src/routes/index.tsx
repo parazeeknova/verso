@@ -137,9 +137,11 @@ const Home = function Home() {
         repoUrl: firstWithReadme.repoUrl,
         title: firstWithReadme.title,
       });
-      setMobileView("blogs");
+      if (!isMobile) {
+        setMobileView("blogs");
+      }
     }
-  }, [projects, manifest, selectedProject]);
+  }, [projects, manifest, selectedProject, isMobile]);
 
   // Read initial theme from localStorage on mount
   useEffect(() => {
