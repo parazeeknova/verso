@@ -38,6 +38,7 @@ export const GitHubActivity = ({ username, isDarkMode = true }: GitHubActivityPr
         blockMargin={isNarrow ? 1 : 3}
         blockRadius={2}
         blockSize={isNarrow ? 5 : 10}
+        className="github-calendar-svg"
         colorScheme={isDarkMode ? "dark" : "light"}
         fontSize={isNarrow ? 10 : 12}
         showColorLegend

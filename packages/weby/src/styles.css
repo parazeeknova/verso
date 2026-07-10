@@ -516,3 +516,11 @@ button {
 [data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3) !important;
 }
+
+/* Make GitHub Calendar responsive on mobile viewports */
+@media (max-width: 640px) {
+  .github-calendar-svg svg {
+    width: 100% !important;
+    height: auto !important;
+  }
+}
