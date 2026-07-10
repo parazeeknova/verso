@@ -199,7 +199,7 @@ const Home = function Home() {
 
   return (
     <div
-      className="relative grid min-h-screen grid-cols-1 overflow-hidden lg:h-screen lg:grid-cols-2"
+      className="relative grid min-h-screen grid-cols-1 lg:overflow-hidden lg:h-screen lg:grid-cols-2"
       ref={mainContainerRef}
     >
       <div

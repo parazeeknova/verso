@@ -50,7 +50,7 @@
     -ms-overflow-style: none;
     background-color: var(--color-bg);
     font-family: "Ubuntu Mono", monospace;
-    overflow: hidden;
+    overflow-x: hidden;
     scroll-behavior: smooth;
     scrollbar-width: none;
     text-transform: lowercase;
@@ -59,7 +59,7 @@
   body {
     background-color: var(--color-bg);
     margin: 0;
-    overflow: hidden;
+    overflow-x: hidden;
     padding: 0;
   }
 
@@ -82,7 +82,7 @@
   html,
   body {
     height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
   }
 
   *::-webkit-scrollbar {
