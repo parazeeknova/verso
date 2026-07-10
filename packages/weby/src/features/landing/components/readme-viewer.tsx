@@ -226,7 +226,9 @@ export const ReadmeViewer = ({
         >
           back
         </button>
-        <p className={`text-[13px] ${isDarkMode ? "text-text-dark/60" : "text-text-light/60"}`}>
+        <p
+          className={`text-[13px] truncate min-w-0 ${isDarkMode ? "text-text-dark/60" : "text-text-light/60"}`}
+        >
           {projectTitle}
         </p>
         {repoUrl && (
