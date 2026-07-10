@@ -115,7 +115,7 @@ export const Route = createRootRoute({
         property: "og:image",
       },
       {
-        content: "https://folio.zephyyrr.in",
+        content: "https://folio.przknv.cc",
         property: "og:url",
       },
       {

@@ -8,16 +8,16 @@ var Profile = models.Profile{
 	Username: "parazeeknova",
 	Email:    "harsh@itssingularity.com",
 	Description: "Engineer and founder, building systems, infrastructure, and tools. " +
-		"Author of [Zephyr](https://www.zephyyrr.in). Runs [Singularity Works](https://www.itsingularity.com), an opinionated product studio. " +
+		"Author of [asocialmedia](https://www.asocialmedia.cc). Runs [Singularity Works](https://www.itsingularity.com), an opinionated product studio. " +
 		"CS undergrad who builds things that shouldn't exist yet, then open-sources them so you can too. " +
 		"Occasional [hackathon](https://www.linkedin.com/in/hashk/details/honors/) winner, published [researcher](https://www.orcid.org/0009-0008-9861-9181).",
 	Links: map[string]models.Link{
-		"portfolio":   {Label: "designer portfolio", URL: "https://folio.zephyyrr.in"},
-		"zephyr":      {Label: "Zephyr", URL: "https://www.zephyyrr.in"},
-		"singularity": {Label: "Singularity Works", URL: "https://www.itsingularity.com"},
-		"github":      {Label: "GitHub", URL: "https://www.github.com/parazeeknova"},
-		"linkedin":    {Label: "LinkedIn", URL: "https://www.linkedin.com/in/hashk"},
-		"twitter":     {Label: "Twitter / X", URL: "https://www.x.com/parazeeknova"},
+		"portfolio":    {Label: "designer portfolio", URL: "https://folio.przknv.cc"},
+		"asocialmedia": {Label: "asocialmedia", URL: "https://www.asocialmedia.cc"},
+		"singularity":  {Label: "Singularity Works", URL: "https://www.itsingularity.com"},
+		"github":       {Label: "GitHub", URL: "https://www.github.com/parazeeknova"},
+		"linkedin":     {Label: "LinkedIn", URL: "https://www.linkedin.com/in/hashk"},
+		"twitter":      {Label: "Twitter / X", URL: "https://www.x.com/parazeeknova"},
 	},
 }
 
@@ -83,16 +83,16 @@ var Projects = []models.Project{
 		ProductURL: "https://lumen.itssingularity.com",
 	},
 	{
-		Title: "Zephyr is the last social platform you'll ever need. Open source, cozy, and slightly unhinged. ",
+		Title: "asocialmedia formerly zephyr is the last social platform you'll ever need. Open source, cozy, and slightly unhinged. ",
 		Desc: "A social platform that brings your entire " +
 			"internet into one place. Unified feed, communities, real-time chat, " +
 			"rich media and tipping all tied together by Aura, a reputation " +
 			"system that grows with you, and Zeph, an AI companion that actually " +
 			"remembers you. Built by one person. Slightly unhinged in ambition.",
 		Stack:      "Next.js, React, Elysia, Elixir, TypeScript, Tailwind CSS, PostgreSQL, Redis, RustFS, RabbitMQ, MeiliSearch, AI-sdk, Docker and more",
-		ReadmeURL:  "https://raw.githubusercontent.com/zephverse/zephyr/refs/heads/main/.github/README.md",
-		RepoURL:    "https://github.com/zephverse/zephyr",
-		ProductURL: "https://zephyyrr.in",
+		ReadmeURL:  "https://raw.githubusercontent.com/asocialmedia/social/refs/heads/main/.github/README.md",
+		RepoURL:    "https://github.com/asocialmedia/social",
+		ProductURL: "https://asocialmedia.cc",
 	},
 	{
 		Title:      "Papyrus is a realtime collaborative spreadsheet",
@@ -100,7 +100,7 @@ var Projects = []models.Project{
 		Stack:      "Next.js, Elixir, TypeScript, Bun, Firestore, Yjs, Zustand, Tailwind CSS, CRDTs, Docker and more",
 		ReadmeURL:  "https://raw.githubusercontent.com/parazeeknova/papyrus/refs/heads/main/.github/README.md",
 		RepoURL:    "https://github.com/parazeeknova/papyrus",
-		ProductURL: "https://sheets.zephyyrr.in",
+		ProductURL: "https://sheets.przknv.cc",
 	},
 	{
 		Title:      "Verso is a knowledge base, two sides of the same surface.",

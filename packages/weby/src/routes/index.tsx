@@ -322,7 +322,7 @@ export const Route = createFileRoute("/")({
   head: () => {
     const origin =
       typeof window === "undefined"
-        ? import.meta.env.VITE_APP_ORIGIN || "https://folio.zephyyrr.in"
+        ? import.meta.env.VITE_APP_ORIGIN || "https://przknv.cc"
         : window.location.origin;
     const ogImage = `${origin}/verso-og.png`;
     return {
