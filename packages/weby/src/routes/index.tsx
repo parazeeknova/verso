@@ -258,7 +258,7 @@ const Home = function Home() {
           </div>
         )}
 
-        <div className="shrink-0 overflow-x-auto">
+        <div className="-mx-4 shrink-0 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           <GitHubActivity isDarkMode={isDarkMode} username={githubUsername} />
           <GitHubStats />
         </div>

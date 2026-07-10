@@ -17,7 +17,7 @@ var Profile = models.Profile{
 		"singularity":  {Label: "Singularity Works", URL: "https://www.itsingularity.com"},
 		"github":       {Label: "GitHub", URL: "https://www.github.com/parazeeknova"},
 		"linkedin":     {Label: "LinkedIn", URL: "https://www.linkedin.com/in/hashk"},
-		"twitter":      {Label: "Twitter / X", URL: "https://www.x.com/parazeeknova"},
+		"twitter":      {Label: "X", URL: "https://www.x.com/parazeeknova"},
 	},
 }
 

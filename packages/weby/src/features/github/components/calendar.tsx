@@ -42,7 +42,7 @@ export const GitHubActivity = ({ username, isDarkMode = true }: GitHubActivityPr
         fontSize={isNarrow ? 10 : 12}
         showColorLegend
         showTotalCount
-        style={{ color: "inherit" }}
+        style={{ color: "inherit", height: "auto", width: "100%" }}
         username={username}
       />
       <Tooltip id="github-calendar-tooltip" />
