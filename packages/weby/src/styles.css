@@ -519,6 +519,9 @@ button {
 
 /* Make GitHub Calendar responsive on mobile viewports */
 @media (max-width: 640px) {
+  .github-calendar-svg {
+    width: 100% !important;
+  }
   .github-calendar-svg svg {
     width: 100% !important;
     height: auto !important;
