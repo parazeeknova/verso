@@ -43,12 +43,24 @@ const config = defineConfig(async ({ mode }) => {
     plugins,
     resolve: { tsconfigPaths: true },
     server: {
-      hmr: {
-        overlay: false,
-      },
       proxy: {
         "/api": {
           changeOrigin: true,
+          configure: (proxy: {
+            on: (event: string, handler: (...args: unknown[]) => void) => void;
+          }) => {
+            proxy.on("error", (_err: unknown, _req: unknown, res: unknown) => {
+              const response = res as {
+                writeHead?: (code: number, headers: Record<string, string>) => void;
+                end?: (body: string) => void;
+                writableEnded?: boolean;
+              };
+              if (response?.writeHead && !response.writableEnded) {
+                response.writeHead(502, { "Content-Type": "application/json" });
+                response.end?.(JSON.stringify({ error: "backend unavailable" }));
+              }
+            });
+          },
           target: `http://localhost:${port}`,
         },
       },
