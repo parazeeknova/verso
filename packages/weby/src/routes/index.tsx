@@ -258,10 +258,9 @@ const Home = function Home() {
           </div>
         )}
 
-        <div className="-mx-4 shrink-0 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          <GitHubActivity isDarkMode={isDarkMode} username={githubUsername} />
+        <GitHubActivity isDarkMode={isDarkMode} username={githubUsername}>
           <GitHubStats />
-        </div>
+        </GitHubActivity>
 
         <div className="shrink-0 flex items-center justify-between">
           <SocialLinks profile={profile} />

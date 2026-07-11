@@ -34,8 +34,7 @@
   [data-theme] {
     transition:
       background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-      color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-      --fade-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .theme-bg {
@@ -532,4 +531,15 @@ button {
     width: 100% !important;
     height: auto !important;
   }
+}
+
+/* Smooth theme fade-out overlays */
+.fade-overlay {
+  background: linear-gradient(to top, var(--fade-color) 0%, transparent 100%);
+  transition: --fade-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-overlay-top {
+  background: linear-gradient(to bottom, var(--fade-color) 0%, transparent 100%);
+  transition: --fade-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }

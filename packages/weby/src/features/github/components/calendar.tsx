@@ -1,8 +1,11 @@
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { GitHubCalendar } from "react-github-calendar";
 import { Tooltip } from "react-tooltip";
+import { CaretDownIcon, CaretRightIcon } from "@phosphor-icons/react";
+import { gsap } from "gsap";
 
 interface GitHubActivityProps {
+  children?: React.ReactNode;
   isDarkMode?: boolean;
   username: string;
 }
@@ -28,25 +31,146 @@ const useIsNarrow = (): boolean => {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 };
 
-export const GitHubActivity = ({ username, isDarkMode = true }: GitHubActivityProps) => {
+export const GitHubActivity = ({ username, isDarkMode = true, children }: GitHubActivityProps) => {
   const isNarrow = useIsNarrow();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const descRef = useRef<HTMLParagraphElement>(null);
+  const isFirstRender = useRef(true);
+  const prevCollapsed = useRef(isCollapsed);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("github-activity-collapsed");
+    const element = containerRef.current;
+    const desc = descRef.current;
+    if (stored === "true") {
+      setIsCollapsed(true);
+      prevCollapsed.current = true;
+      if (element) {
+        gsap.set(element, { height: 0, opacity: 0, overflow: "hidden" });
+      }
+      if (desc) {
+        gsap.set(desc, { height: "auto", opacity: 1, overflow: "visible" });
+      }
+    } else if (desc) {
+      gsap.set(desc, { height: 0, opacity: 0, overflow: "hidden" });
+    }
+    isFirstRender.current = false;
+  }, []);
+
+  useEffect(() => {
+    const element = containerRef.current;
+    const desc = descRef.current;
+    if (!element || isFirstRender.current) {
+      return;
+    }
+
+    if (prevCollapsed.current === isCollapsed) {
+      return;
+    }
+    prevCollapsed.current = isCollapsed;
+
+    if (isCollapsed) {
+      gsap.to(element, {
+        duration: 0.3,
+        ease: "power2.inOut",
+        height: 0,
+        onStart: () => {
+          element.style.overflow = "hidden";
+        },
+        opacity: 0,
+      });
+      if (desc) {
+        gsap.fromTo(
+          desc,
+          { height: 0, opacity: 0 },
+          {
+            duration: 0.3,
+            ease: "power2.inOut",
+            height: "auto",
+            onComplete: () => {
+              desc.style.overflow = "";
+            },
+            onStart: () => {
+              desc.style.overflow = "hidden";
+            },
+            opacity: 1,
+          },
+        );
+      }
+    } else {
+      gsap.fromTo(
+        element,
+        { height: 0, opacity: 0 },
+        {
+          duration: 0.3,
+          ease: "power2.inOut",
+          height: "auto",
+          onComplete: () => {
+            element.style.overflow = "";
+          },
+          onStart: () => {
+            element.style.overflow = "hidden";
+          },
+          opacity: 1,
+        },
+      );
+      if (desc) {
+        gsap.to(desc, {
+          duration: 0.3,
+          ease: "power2.inOut",
+          height: 0,
+          onStart: () => {
+            desc.style.overflow = "hidden";
+          },
+          opacity: 0,
+        });
+      }
+    }
+  }, [isCollapsed]);
+
+  const handleToggle = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("github-activity-collapsed", String(next));
+      return next;
+    });
+  };
 
   return (
     <div className="mt-6 sm:mt-8">
-      <h3 className="mb-3 font-medium text-base">activity overview</h3>
-      <GitHubCalendar
-        blockMargin={isNarrow ? 1 : 3}
-        blockRadius={2}
-        blockSize={isNarrow ? 5 : 10}
-        className="github-calendar-svg"
-        colorScheme={isDarkMode ? "dark" : "light"}
-        fontSize={isNarrow ? 10 : 12}
-        showColorLegend
-        showTotalCount
-        style={{ color: "inherit", height: "auto", width: "100%" }}
-        username={username}
-      />
-      <Tooltip id="github-calendar-tooltip" />
+      <div className="mb-3">
+        <button
+          aria-expanded={!isCollapsed}
+          className="flex items-center gap-2 text-left focus:outline-none group select-none cursor-pointer"
+          onClick={handleToggle}
+          type="button"
+        >
+          <h3 className="font-medium text-base lowercase">activity overview</h3>
+          <span className="text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300 transition-colors flex items-center">
+            {isCollapsed ? <CaretRightIcon size={16} /> : <CaretDownIcon size={16} />}
+          </span>
+        </button>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 lowercase" ref={descRef}>
+          contributions calendar, commits, pull requests, and organizations
+        </p>
+      </div>
+      <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0" ref={containerRef}>
+        <GitHubCalendar
+          blockMargin={isNarrow ? 1 : 3}
+          blockRadius={2}
+          blockSize={isNarrow ? 5 : 10}
+          className="github-calendar-svg"
+          colorScheme={isDarkMode ? "dark" : "light"}
+          fontSize={isNarrow ? 10 : 12}
+          showColorLegend
+          showTotalCount
+          style={{ color: "inherit", height: "auto", width: "100%" }}
+          username={username}
+        />
+        <Tooltip id="github-calendar-tooltip" />
+        {children}
+      </div>
     </div>
   );
 };
