@@ -35,24 +35,32 @@ export const GitHubActivity = ({ username, isDarkMode = true, children }: GitHub
   const isNarrow = useIsNarrow();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const descRef = useRef<HTMLParagraphElement>(null);
   const isFirstRender = useRef(true);
   const prevCollapsed = useRef(isCollapsed);
 
   useEffect(() => {
     const stored = localStorage.getItem("github-activity-collapsed");
     const element = containerRef.current;
+    const desc = descRef.current;
     if (stored === "true") {
       setIsCollapsed(true);
       prevCollapsed.current = true;
       if (element) {
         gsap.set(element, { height: 0, opacity: 0, overflow: "hidden" });
       }
+      if (desc) {
+        gsap.set(desc, { height: "auto", opacity: 1, overflow: "visible" });
+      }
+    } else if (desc) {
+      gsap.set(desc, { height: 0, opacity: 0, overflow: "hidden" });
     }
     isFirstRender.current = false;
   }, []);
 
   useEffect(() => {
     const element = containerRef.current;
+    const desc = descRef.current;
     if (!element || isFirstRender.current) {
       return;
     }
@@ -72,6 +80,24 @@ export const GitHubActivity = ({ username, isDarkMode = true, children }: GitHub
         },
         opacity: 0,
       });
+      if (desc) {
+        gsap.fromTo(
+          desc,
+          { height: 0, opacity: 0 },
+          {
+            duration: 0.3,
+            ease: "power2.inOut",
+            height: "auto",
+            onComplete: () => {
+              desc.style.overflow = "";
+            },
+            onStart: () => {
+              desc.style.overflow = "hidden";
+            },
+            opacity: 1,
+          },
+        );
+      }
     } else {
       gsap.fromTo(
         element,
@@ -89,6 +115,17 @@ export const GitHubActivity = ({ username, isDarkMode = true, children }: GitHub
           opacity: 1,
         },
       );
+      if (desc) {
+        gsap.to(desc, {
+          duration: 0.3,
+          ease: "power2.inOut",
+          height: 0,
+          onStart: () => {
+            desc.style.overflow = "hidden";
+          },
+          opacity: 0,
+        });
+      }
     }
   }, [isCollapsed]);
 
@@ -102,19 +139,22 @@ export const GitHubActivity = ({ username, isDarkMode = true, children }: GitHub
 
   return (
     <div className="mt-6 sm:mt-8">
-      <h3 className="mb-3">
+      <div className="mb-3">
         <button
           aria-expanded={!isCollapsed}
           className="flex items-center gap-2 text-left focus:outline-none group select-none cursor-pointer"
           onClick={handleToggle}
           type="button"
         >
-          <span className="font-medium text-base lowercase">activity overview</span>
+          <h3 className="font-medium text-base lowercase">activity overview</h3>
           <span className="text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300 transition-colors flex items-center">
             {isCollapsed ? <CaretRightIcon size={16} /> : <CaretDownIcon size={16} />}
           </span>
         </button>
-      </h3>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 lowercase" ref={descRef}>
+          contributions calendar, commits, pull requests, and organizations
+        </p>
+      </div>
       <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0" ref={containerRef}>
         <GitHubCalendar
           blockMargin={isNarrow ? 1 : 3}

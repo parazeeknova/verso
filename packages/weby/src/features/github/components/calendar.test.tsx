@@ -88,6 +88,11 @@ describe("GitHubActivity", () => {
 
     // Calendar should be visible
     expect(screen.getByTestId("github-calendar")).toBeDefined();
+
+    // Description should be collapsed (height: 0, opacity: 0)
+    const descText = screen.getByText(/contributions calendar, commits/i);
+    expect(descText.style.height).toBe("0px");
+    expect(descText.style.opacity).toBe("0");
   });
 
   it("can be collapsed and expanded by clicking the toggle button", () => {
@@ -99,6 +104,7 @@ describe("GitHubActivity", () => {
 
     const toggleButton = screen.getByRole("button", { name: /activity overview/i });
     const contentContainer = container.querySelector(".github-calendar-svg")?.parentElement;
+    const descText = screen.getByText(/contributions calendar, commits/i);
 
     // Click to collapse
     fireEvent.click(toggleButton);
@@ -106,6 +112,8 @@ describe("GitHubActivity", () => {
     // Style checks for collapsed state
     expect(contentContainer?.style.height).toBe("0px");
     expect(contentContainer?.style.opacity).toBe("0");
+    expect(descText.style.height).toBe("auto");
+    expect(descText.style.opacity).toBe("1");
     expect(localStorage.getItem("github-activity-collapsed")).toBe("true");
 
     // Click to expand
@@ -114,6 +122,8 @@ describe("GitHubActivity", () => {
     // Style checks for expanded state
     expect(contentContainer?.style.height).toBe("auto");
     expect(contentContainer?.style.opacity).toBe("1");
+    expect(descText.style.height).toBe("0px");
+    expect(descText.style.opacity).toBe("0");
     expect(localStorage.getItem("github-activity-collapsed")).toBe("false");
   });
 
@@ -122,9 +132,14 @@ describe("GitHubActivity", () => {
 
     const { container } = render(<GitHubActivity username="testuser" />);
     const contentContainer = container.querySelector(".github-calendar-svg")?.parentElement;
+    const descText = screen.getByText(/contributions calendar, commits/i);
 
     // Calendar should be styled collapsed initially
     expect(contentContainer?.style.height).toBe("0px");
     expect(contentContainer?.style.opacity).toBe("0");
+
+    // Description should be styled expanded initially
+    expect(descText.style.height).toBe("auto");
+    expect(descText.style.opacity).toBe("1");
   });
 });
