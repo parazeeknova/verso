@@ -135,10 +135,10 @@ button {
 }
 
 .blog-reader-prose .tiptap {
-  color: var(--color-text);
-  font-family: "Ubuntu Mono", monospace;
-  font-size: 0.98rem;
-  line-height: 1.6;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
   text-transform: lowercase;
   outline: none !important;
   border: none !important;

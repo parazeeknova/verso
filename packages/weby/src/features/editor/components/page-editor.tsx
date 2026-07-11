@@ -698,7 +698,7 @@ export const PageEditor = ({
         <textarea
           ref={titleRef}
           rows={1}
-          className={`w-full resize-none overflow-hidden bg-transparent text-4xl font-bold border-none outline-none focus:outline-none focus:border-none focus:ring-0 p-0 mb-2 font-sans tracking-tight leading-tight ${t("text-neutral-200 placeholder-neutral-700", "text-neutral-800 placeholder-neutral-300")}`}
+          className={`w-full resize-none overflow-hidden bg-transparent text-4xl font-bold border-none outline-none focus:outline-none focus:border-none focus:ring-0 pt-8 pb-0 px-0 mb-2 font-sans tracking-tight leading-tight ${t("text-neutral-200 placeholder-neutral-700", "text-neutral-800 placeholder-neutral-300")}`}
           placeholder="Untitled"
           value={localTitle}
           onChange={(e) => handleTitleChange(e.target.value)}
