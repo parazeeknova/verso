@@ -7,15 +7,17 @@ interface AvatarBadgeProps {
   name: string;
 }
 
-const getInitials = (name: string) =>
-  name
-    .trim()
-    .split(/\s+/)
-    .map((word) => word[0])
-    .filter(Boolean)
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "?";
+const getInitials = (name: string) => {
+  const cleanName = name.trim();
+  if (!cleanName) {
+    return "?";
+  }
+  const words = cleanName.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+  return cleanName.slice(0, 2).toUpperCase();
+};
 
 const avatarImageQueryKey = (icon: string) => ["avatar-image", icon] as const;
 

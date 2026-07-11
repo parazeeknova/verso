@@ -43,6 +43,9 @@ const config = defineConfig(async ({ mode }) => {
     plugins,
     resolve: { tsconfigPaths: true },
     server: {
+      hmr: {
+        overlay: false,
+      },
       proxy: {
         "/api": {
           changeOrigin: true,

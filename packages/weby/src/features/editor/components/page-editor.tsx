@@ -2,7 +2,7 @@ import type { Editor } from "@tiptap/react";
 import type { JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { useEffect, useCallback, useMemo, useRef, useState } from "react";
-import { BookmarkSimpleIcon, ListBulletsIcon, XIcon } from "@phosphor-icons/react";
+import { BookmarkSimpleIcon, InfoIcon, ListBulletsIcon, XIcon } from "@phosphor-icons/react";
 import { useTheme } from "#/shared/hooks/use-theme";
 import { getEditorExtensions } from "#/features/editor/extensions";
 import { useEditorContent } from "#/features/editor/hooks/use-editor-content";
@@ -364,6 +364,26 @@ interface CreatorInfo {
   username?: string | null;
 }
 
+const formatDateTime = (dateStr?: string) => {
+  if (!dateStr) {
+    return "";
+  }
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) {
+    return "";
+  }
+  const datePart = d.toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const timePart = d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${datePart} at ${timePart}`;
+};
+
 const CreatorByline = ({
   creator,
   t,
@@ -379,16 +399,139 @@ const CreatorByline = ({
 
   return (
     <div
-      className={`flex items-center gap-1.5 text-[11px] mb-3 ${t("text-text-dark/40", "text-text-light/40")}`}
+      className={`flex items-center gap-1.5 text-[11px] mb-2 ${t("text-text-dark/40", "text-text-light/40")}`}
     >
       <AvatarBadge
         icon={creator.avatar_url}
         name={displayName}
         className="w-5 h-5 bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center rounded-full"
-        initialsClass="text-[8px] text-neutral-600 dark:text-neutral-300 font-semibold"
+        initialsClass="text-[10px] text-neutral-600 dark:text-neutral-300 font-semibold"
       />
       <span>by {displayName}</span>
     </div>
+  );
+};
+
+const PageDetailsPanel = ({
+  creator,
+  spaceName,
+  createdAt,
+  updatedAt,
+  wordCount,
+  characterCount,
+  readingTime,
+  t,
+  onClose,
+}: {
+  creator: CreatorInfo | null | undefined;
+  spaceName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  wordCount: number;
+  characterCount: number;
+  readingTime: number;
+  t: (dark: string, light: string) => string;
+  onClose: () => void;
+}) => {
+  const displayName = creator?.name || creator?.username || "creator";
+
+  return (
+    <>
+      <button
+        className="fixed inset-0 z-40 md:hidden"
+        onClick={onClose}
+        type="button"
+        aria-label="Close details"
+      />
+      <div
+        className={`fixed top-0 right-0 z-50 h-full w-full sm:w-80 border-l p-6 flex flex-col shadow-xl ${t(
+          "bg-neutral-900 border-neutral-800 text-neutral-200",
+          "bg-white border-neutral-200 text-neutral-800",
+        )}`}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h3
+            className={`text-[11px] font-semibold tracking-widest uppercase ${t("text-neutral-500", "text-neutral-400")}`}
+          >
+            page info
+          </h3>
+          <button
+            aria-label="Close page info"
+            className={`p-1 rounded-sm transition-colors ${t(
+              "text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800",
+              "text-neutral-400 hover:text-neutral-800 hover:bg-neutral-100",
+            )}`}
+            onClick={onClose}
+            type="button"
+          >
+            <XIcon size={14} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto space-y-5 text-[13px]">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className={t("text-neutral-500", "text-neutral-400")}>author</span>
+              <div className="flex items-center gap-1.5 font-medium">
+                <AvatarBadge
+                  icon={creator?.avatar_url}
+                  name={displayName}
+                  className="w-5 h-5 bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center rounded-full"
+                  initialsClass="text-[10px] text-neutral-600 dark:text-neutral-300 font-semibold"
+                />
+                <span>{displayName}</span>
+              </div>
+            </div>
+
+            {spaceName && (
+              <div className="flex items-center justify-between">
+                <span className={t("text-neutral-500", "text-neutral-400")}>space</span>
+                <span className="font-medium">{spaceName}</span>
+              </div>
+            )}
+          </div>
+
+          <hr className={`border-t ${t("border-neutral-800", "border-neutral-200")}`} />
+
+          <div className="space-y-3">
+            {createdAt && (
+              <div className="flex flex-col gap-0.5">
+                <span className={t("text-neutral-500", "text-neutral-400")}>created</span>
+                <span className="font-medium text-[12px]">{formatDateTime(createdAt)}</span>
+              </div>
+            )}
+            {updatedAt && (
+              <div className="flex flex-col gap-0.5">
+                <span className={t("text-neutral-500", "text-neutral-400")}>last modified</span>
+                <span className="font-medium text-[12px]">{formatDateTime(updatedAt)}</span>
+              </div>
+            )}
+          </div>
+
+          <hr className={`border-t ${t("border-neutral-800", "border-neutral-200")}`} />
+
+          <div className="space-y-3">
+            <h4
+              className={`text-[11px] font-semibold uppercase tracking-widest ${t("text-neutral-500", "text-neutral-400")}`}
+            >
+              metrics
+            </h4>
+            <div className="flex items-center justify-between">
+              <span className={t("text-neutral-500", "text-neutral-400")}>words</span>
+              <span className="font-semibold tabular-nums">{wordCount.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className={t("text-neutral-500", "text-neutral-400")}>characters</span>
+              <span className="font-semibold tabular-nums">{characterCount.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className={t("text-neutral-500", "text-neutral-400")}>reading time</span>
+              <span className="font-semibold">{readingTime} min</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 
@@ -509,6 +652,7 @@ export const PageEditor = ({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const content = useMemo(() => parseContent(contentJson), [contentJson]);
   const [tocOpen, setTocOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
   const [headings, setHeadings] = useState<BlogHeading[]>(() => extractEditorHeadings(content));
@@ -649,6 +793,14 @@ export const PageEditor = ({
           >
             <ListBulletsIcon size={14} />
           </button>
+          <button
+            aria-label="Page details"
+            className={`p-0.5 transition-colors ${detailsOpen ? t("text-text-dark", "text-text-light") : t("text-text-dark/40 hover:text-text-dark", "text-text-light/40 hover:text-text-light")}`}
+            onClick={() => setDetailsOpen((prev) => !prev)}
+            type="button"
+          >
+            <InfoIcon size={14} />
+          </button>
           <EditorMoreMenu
             pageId={pageId}
             title={localTitle}
@@ -695,7 +847,7 @@ export const PageEditor = ({
         <textarea
           ref={titleRef}
           rows={1}
-          className={`w-full resize-none overflow-hidden bg-transparent text-4xl font-bold border-none outline-none focus:outline-none focus:border-none focus:ring-0 pt-8 pb-0 px-0 mb-2 font-sans tracking-tight leading-tight ${t("text-neutral-200 placeholder-neutral-700", "text-neutral-800 placeholder-neutral-300")}`}
+          className={`w-full resize-none overflow-hidden bg-transparent text-4xl font-bold border-none outline-none focus:outline-none focus:border-none focus:ring-0 pt-8 pb-0 px-0 mb-0.5 font-sans tracking-tight leading-tight ${t("text-neutral-200 placeholder-neutral-700", "text-neutral-800 placeholder-neutral-300")}`}
           placeholder="Untitled"
           value={localTitle}
           onChange={(e) => handleTitleChange(e.target.value)}
@@ -706,6 +858,29 @@ export const PageEditor = ({
         <CreatorByline creator={creator} t={t} />
         <EditorContent editor={editor} />
       </div>
+
+      {detailsOpen &&
+        (() => {
+          const currentText = editor?.getText() || textContent || "";
+          const charCount = currentText.length;
+          const wCount = currentText.trim()
+            ? currentText.trim().split(/\s+/).filter(Boolean).length
+            : 0;
+          const rTime = Math.max(1, Math.ceil(wCount / 200));
+          return (
+            <PageDetailsPanel
+              creator={creator}
+              spaceName={spaceName}
+              createdAt={createdAt}
+              updatedAt={updatedAt}
+              wordCount={wCount}
+              characterCount={charCount}
+              readingTime={rTime}
+              t={t}
+              onClose={() => setDetailsOpen(false)}
+            />
+          );
+        })()}
 
       <TableOfContentsModal
         tocOpen={tocOpen}
