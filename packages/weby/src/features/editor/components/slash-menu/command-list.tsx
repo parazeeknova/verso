@@ -56,7 +56,7 @@ export const CommandList = forwardRef<CommandListRef, CommandListProps>(
     return (
       <div
         ref={containerRef}
-        className="w-[220px] max-h-[240px] overflow-y-auto border rounded-none shadow-lg p-0 text-left flex flex-col gap-0 z-100 theme-bg"
+        className="w-55 max-h-60 overflow-y-auto border rounded-none shadow-lg p-0 text-left flex flex-col gap-0 z-100 theme-bg"
         style={{
           backgroundColor: "var(--color-bg)",
           borderColor: "var(--color-border)",
@@ -73,18 +73,37 @@ export const CommandList = forwardRef<CommandListRef, CommandListProps>(
               onClick={() => selectItem(index)}
               className={`w-full flex items-center gap-2 px-2 py-1 text-left rounded-none transition-colors ${
                 isActive
-                  ? "bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
-                  : "text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 hover:text-neutral-800 dark:hover:text-neutral-200"
+                  ? "bg-neutral-200 dark:bg-neutral-800"
+                  : "hover:bg-neutral-100 dark:hover:bg-neutral-800/50"
               }`}
             >
-              <div className="flex items-center justify-center w-5 h-5 shrink-0">
-                <Icon size={13} className="text-neutral-600 dark:text-neutral-300" />
+              <div className="flex items-center justify-center w-6 h-6 border border-neutral-300 dark:border-neutral-700 bg-neutral-200/50 dark:bg-neutral-800 rounded-none shrink-0">
+                <Icon
+                  size={12}
+                  className={
+                    isActive
+                      ? "text-neutral-800 dark:text-neutral-200"
+                      : "text-neutral-500 dark:text-neutral-400"
+                  }
+                />
               </div>
               <div className="flex-1 flex flex-col min-w-0">
-                <span className="font-semibold text-neutral-800 dark:text-neutral-200 text-xs leading-tight">
+                <span
+                  className={`font-semibold text-xs leading-tight ${
+                    isActive
+                      ? "text-neutral-900 dark:text-neutral-100"
+                      : "text-neutral-500 dark:text-neutral-400"
+                  }`}
+                >
                   {item.title}
                 </span>
-                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 truncate leading-none mt-0.5">
+                <span
+                  className={`text-[10px] truncate leading-none mt-0.5 ${
+                    isActive
+                      ? "text-neutral-700 dark:text-neutral-300"
+                      : "text-neutral-400 dark:text-neutral-500"
+                  }`}
+                >
                   {item.description}
                 </span>
               </div>

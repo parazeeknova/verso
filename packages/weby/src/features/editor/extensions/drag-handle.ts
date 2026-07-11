@@ -5,14 +5,7 @@ import { NodeSelection, Plugin, PluginKey, TextSelection } from "@tiptap/pm/stat
 import type { EditorView } from "@tiptap/pm/view";
 
 export interface GlobalDragHandleOptions {
-  /**
-   * The width of the drag handle
-   */
   dragHandleWidth: number;
-
-  /**
-   * The treshold for scrolling
-   */
   scrollThreshold: number;
 
   /*
@@ -20,17 +13,8 @@ export interface GlobalDragHandleOptions {
    * If handle element is found, that element will be used as drag handle. If not, a default handle will be created
    */
   dragHandleSelector?: string;
-
-  /**
-   * Tags to be excluded for drag handle
-   */
   excludedTags: string[];
-
-  /**
-   * Custom nodes to be included for drag handle
-   */
   customNodes: string[];
-
   atomNodes: string[];
 }
 const absoluteRect = (node: Element) => {
