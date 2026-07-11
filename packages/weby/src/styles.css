@@ -672,12 +672,14 @@ button {
 .ProseMirror-dropcursor,
 .ProseMirror .ProseMirror-dropCursor,
 .ProseMirror-dropCursor {
-  border-color: #404040 !important; /* dark gray in light mode */
+  background-color: #404040 !important; /* dark gray in light mode */
+  border-color: #404040 !important;
 }
 
 [data-theme="dark"] .ProseMirror .ProseMirror-dropcursor,
 [data-theme="dark"] .ProseMirror-dropcursor,
 [data-theme="dark"] .ProseMirror .ProseMirror-dropCursor,
 [data-theme="dark"] .ProseMirror-dropCursor {
-  border-color: #e5e5e5 !important; /* off-white in dark mode */
+  background-color: #e5e5e5 !important; /* off-white in dark mode */
+  border-color: #e5e5e5 !important;
 }
