@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
 import { useEffect, useRef } from "react";
 
-interface AnimatedLinkProps {
+interface AnimatedLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   children: React.ReactNode;
   className?: string;
   href: string;
@@ -15,6 +15,7 @@ export const AnimatedLink = ({
   href,
   rel,
   target,
+  ...props
 }: AnimatedLinkProps) => {
   const ref = useRef<HTMLAnchorElement>(null);
 
@@ -44,7 +45,14 @@ export const AnimatedLink = ({
   }, []);
 
   return (
-    <a className={`link-underline ${className}`} href={href} ref={ref} rel={rel} target={target}>
+    <a
+      className={`link-underline ${className}`}
+      href={href}
+      ref={ref}
+      rel={rel}
+      target={target}
+      {...props}
+    >
       {children}
     </a>
   );

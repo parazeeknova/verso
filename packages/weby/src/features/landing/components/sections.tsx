@@ -195,51 +195,51 @@ export const SocialLinks = ({ profile }: SocialLinksProps) => {
   return (
     <div className="flex items-center gap-4">
       {github?.url && (
-        <a
+        <AnimatedLink
           href={github.url}
           rel="noopener noreferrer"
           target="_blank"
-          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center gap-1.5"
+          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark flex items-center gap-1.5"
           aria-label="GitHub"
         >
           <GithubLogoIcon size={18} />
-          <span className="hidden sm:inline text-[13px] lowercase">{github.label}</span>
-        </a>
+          <span className="hidden sm:inline text-sm lowercase">{github.label}</span>
+        </AnimatedLink>
       )}
       {linkedin?.url && (
-        <a
+        <AnimatedLink
           href={linkedin.url}
           rel="noopener noreferrer"
           target="_blank"
-          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center gap-1.5"
+          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark flex items-center gap-1.5"
           aria-label="LinkedIn"
         >
           <LinkedinLogoIcon size={18} />
-          <span className="hidden sm:inline text-[13px] lowercase">{linkedin.label}</span>
-        </a>
+          <span className="hidden sm:inline text-sm lowercase">{linkedin.label}</span>
+        </AnimatedLink>
       )}
       {twitter?.url && (
-        <a
+        <AnimatedLink
           href={twitter.url}
           rel="noopener noreferrer"
           target="_blank"
-          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center gap-1.5"
+          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark flex items-center gap-1.5"
           aria-label="Twitter/X"
         >
           <XLogoIcon size={18} />
-          <span className="hidden sm:inline text-[13px] lowercase">{twitter.label}</span>
-        </a>
+          <span className="hidden sm:inline text-sm lowercase">{twitter.label}</span>
+        </AnimatedLink>
       )}
       {profile?.email && (
-        <a
+        <AnimatedLink
           href={`mailto:${profile.email}`}
           rel="noopener noreferrer"
-          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center gap-1.5"
+          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark flex items-center gap-1.5"
           aria-label="Email"
         >
           <EnvelopeSimpleIcon size={18} />
-          <span className="hidden sm:inline text-[13px] lowercase">email</span>
-        </a>
+          <span className="hidden sm:inline text-sm lowercase">email</span>
+        </AnimatedLink>
       )}
     </div>
   );
