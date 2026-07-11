@@ -310,12 +310,12 @@ button {
 .tableWrapper {
   margin-top: 1rem;
   margin-bottom: 1rem;
+  max-width: 100%;
   overflow-x: auto;
 }
 
 .tableWrapper table {
   overflow-x: hidden;
-  min-width: 700px !important;
 }
 
 .table-dnd-preview {
