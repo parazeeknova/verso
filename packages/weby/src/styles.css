@@ -255,9 +255,15 @@ button {
 }
 
 .blog-reader-prose hr {
-  border: none;
-  border-top: 1px solid var(--color-border);
-  margin: 1rem 0;
+  border: none !important;
+  border-top: 1px solid #d4d4d4 !important; /* light gray in light mode */
+  margin: 1.5rem 0 !important;
+  display: block !important;
+  height: 0 !important;
+}
+
+[data-theme="dark"] .blog-reader-prose hr {
+  border-top: 1px solid #262626 !important; /* dark gray in dark mode */
 }
 
 .blog-reader-prose a {
