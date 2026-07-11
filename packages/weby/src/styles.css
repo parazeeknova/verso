@@ -183,7 +183,7 @@ button {
   color: #262626;
   font-family: "Ubuntu Mono", monospace;
   font-size: 0.8125rem;
-  line-height: 1.6;
+  line-height: 1.4;
 }
 
 [data-theme="dark"] .blog-reader-prose {
@@ -224,7 +224,7 @@ button {
 .blog-reader-prose ol,
 .blog-reader-prose blockquote,
 .blog-reader-prose pre {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .blog-reader-prose ul:not([data-type="taskList"]) {
@@ -668,11 +668,15 @@ button {
 }
 
 /* Drag and drop cursor indicator line styles */
+.ProseMirror .ProseMirror-dropcursor,
+.ProseMirror-dropcursor,
 .ProseMirror .ProseMirror-dropCursor,
 .ProseMirror-dropCursor {
   border-color: #404040 !important; /* dark gray in light mode */
 }
 
+[data-theme="dark"] .ProseMirror .ProseMirror-dropcursor,
+[data-theme="dark"] .ProseMirror-dropcursor,
 [data-theme="dark"] .ProseMirror .ProseMirror-dropCursor,
 [data-theme="dark"] .ProseMirror-dropCursor {
   border-color: #e5e5e5 !important; /* off-white in dark mode */
