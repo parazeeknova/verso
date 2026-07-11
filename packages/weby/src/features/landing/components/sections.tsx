@@ -275,7 +275,7 @@ export const ExperienceSection = ({ experience, isPending }: ExperienceSectionPr
 
       {hasMore && (
         <button
-          className="link-underline mt-1 text-gray-400 text-xs text-left select-none cursor-pointer"
+          className="link-underline mt-1 text-gray-400 text-xs w-full text-center sm:text-left sm:w-auto select-none cursor-pointer"
           onClick={() => setIsExpanded((prev) => !prev)}
           type="button"
         >
