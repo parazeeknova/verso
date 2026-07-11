@@ -475,7 +475,7 @@ export const DragHandlePlugin = (options: GlobalDragHandleOptions & { pluginKey:
       hideDragHandle();
 
       if (!handleBySelector) {
-        view?.dom?.parentElement?.append(dragHandleElement);
+        document.body.append(dragHandleElement);
       }
       view?.dom?.parentElement?.addEventListener("mouseout", hideHandleOnEditorOut);
 
