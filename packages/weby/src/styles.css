@@ -227,6 +227,24 @@ button {
   margin-bottom: 0.75rem;
 }
 
+.blog-reader-prose ul:not([data-type="taskList"]) {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+}
+
+.blog-reader-prose ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+}
+
+.blog-reader-prose ol ol {
+  list-style-type: lower-alpha;
+}
+
+.blog-reader-prose ol ol ol {
+  list-style-type: lower-roman;
+}
+
 .blog-reader-prose li {
   margin-bottom: 0.25rem;
   line-height: 1.5;
@@ -319,7 +337,7 @@ button {
 
 .blog-reader-prose ul[data-type="taskList"] {
   list-style: none;
-  padding-left: 0;
+  padding-left: 0.25rem;
 }
 
 .blog-reader-prose ul[data-type="taskList"] li {
@@ -332,6 +350,49 @@ button {
   flex: 0 0 auto;
   margin-top: 0.25em;
   user-select: none;
+  display: flex;
+  align-items: center;
+}
+
+.blog-reader-prose ul[data-type="taskList"] li > label input[type="checkbox"] {
+  appearance: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background-color: transparent;
+  transition: all 0.2s ease;
+}
+
+.blog-reader-prose ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
+  background-color: #b58cff;
+  border-color: #b58cff;
+}
+
+.blog-reader-prose ul[data-type="taskList"] li > label input[type="checkbox"]:checked::after {
+  content: "";
+  display: block;
+  width: 0.28rem;
+  height: 0.5rem;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) translate(-0.5px, -0.5px);
+  position: absolute;
+  top: 10%;
+  left: 32%;
+}
+
+.blog-reader-prose ul[data-type="taskList"] li[data-checked="true"] > div,
+.blog-reader-prose ul[data-type="taskList"] li[data-state="checked"] > div {
+  text-decoration: line-through;
+  opacity: 0.45;
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
 }
 
 .blog-reader-prose ul[data-type="taskList"] li > div {
