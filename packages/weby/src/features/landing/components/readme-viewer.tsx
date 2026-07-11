@@ -26,6 +26,7 @@ interface ReadmeViewerProps {
   themeIndicatorRef?: React.RefObject<HTMLSpanElement | null>;
 }
 
+// eslint-disable-next-line complexity -- component with multiple render modes, refactor later
 export const ReadmeViewer = ({
   isDarkMode,
   isMobile,
@@ -45,6 +46,7 @@ export const ReadmeViewer = ({
 }: ReadmeViewerProps) => {
   const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
   const [asideMounted, setAsideMounted] = useState(true);
+  const [tocOpen, setTocOpen] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const asideRef = useRef<HTMLElement>(null);
@@ -190,24 +192,64 @@ export const ReadmeViewer = ({
             ref={contentRef}
           />
         </div>
-        {asideMounted && (
-          <aside className="space-y-8 xl:sticky xl:top-8 xl:self-start" ref={asideRef}>
-            <BlogTableOfContents
-              activeHeadingId={activeHeadingId}
-              headings={headings}
-              isDarkMode={isDarkMode}
-              onSelect={handleSelectHeading}
-            />
-            <BlogFileTree
-              activeProjectTitle={projectTitle}
-              isDarkMode={isDarkMode}
-              manifest={manifest}
-              onSelectPost={onSelectPost}
-              onSelectProject={onSelectProject}
-              projects={projects}
-            />
-          </aside>
-        )}
+        {isMobile
+          ? tocOpen && (
+              <div className="fixed inset-0 z-50" role="dialog">
+                <div
+                  className="absolute inset-0 bg-black/40"
+                  onClick={() => setTocOpen(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      setTocOpen(false);
+                    }
+                  }}
+                  role="presentation"
+                />
+                <div
+                  className={`absolute top-12 right-4 max-h-[80vh] w-64 overflow-y-auto border p-4 shadow-xl sm:top-16 sm:right-6 ${
+                    isDarkMode ? "border-border-dark bg-bg-dark" : "border-border-light bg-bg-light"
+                  }`}
+                >
+                  <BlogTableOfContents
+                    activeHeadingId={activeHeadingId}
+                    headings={headings}
+                    isDarkMode={isDarkMode}
+                    onSelect={(id) => {
+                      handleSelectHeading(id);
+                      setTocOpen(false);
+                    }}
+                  />
+                  <div className="mt-4 pt-4">
+                    <BlogFileTree
+                      activeProjectTitle={projectTitle}
+                      isDarkMode={isDarkMode}
+                      manifest={manifest}
+                      onSelectPost={onSelectPost}
+                      onSelectProject={onSelectProject}
+                      projects={projects}
+                    />
+                  </div>
+                </div>
+              </div>
+            )
+          : asideMounted && (
+              <aside className="space-y-8 xl:sticky xl:top-8 xl:self-start" ref={asideRef}>
+                <BlogTableOfContents
+                  activeHeadingId={activeHeadingId}
+                  headings={headings}
+                  isDarkMode={isDarkMode}
+                  onSelect={handleSelectHeading}
+                />
+                <BlogFileTree
+                  activeProjectTitle={projectTitle}
+                  isDarkMode={isDarkMode}
+                  manifest={manifest}
+                  onSelectPost={onSelectPost}
+                  onSelectProject={onSelectProject}
+                  projects={projects}
+                />
+              </aside>
+            )}
       </div>
     );
   }
@@ -226,7 +268,9 @@ export const ReadmeViewer = ({
         >
           back
         </button>
-        <p className={`text-[13px] ${isDarkMode ? "text-text-dark/60" : "text-text-light/60"}`}>
+        <p
+          className={`text-[13px] truncate min-w-0 ${isDarkMode ? "text-text-dark/60" : "text-text-light/60"}`}
+        >
           {projectTitle}
         </p>
         {repoUrl && (
@@ -265,6 +309,15 @@ export const ReadmeViewer = ({
         )}
         {isMobile && (
           <>
+            <button
+              className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${
+                isDarkMode ? "text-text-dark/60" : "text-text-light/60"
+              }`}
+              onClick={() => setTocOpen(!tocOpen)}
+              type="button"
+            >
+              {tocOpen ? "close" : "toc"}
+            </button>
             <button
               className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${
                 isDarkMode ? "text-text-dark/60" : "text-text-light/60"

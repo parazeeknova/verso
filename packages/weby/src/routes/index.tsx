@@ -137,9 +137,11 @@ const Home = function Home() {
         repoUrl: firstWithReadme.repoUrl,
         title: firstWithReadme.title,
       });
-      setMobileView("blogs");
+      if (!isMobile) {
+        setMobileView("blogs");
+      }
     }
-  }, [projects, manifest, selectedProject]);
+  }, [projects, manifest, selectedProject, isMobile]);
 
   // Read initial theme from localStorage on mount
   useEffect(() => {
@@ -199,7 +201,7 @@ const Home = function Home() {
 
   return (
     <div
-      className="relative grid min-h-screen grid-cols-1 overflow-hidden lg:h-screen lg:grid-cols-2"
+      className="relative grid min-h-screen grid-cols-1 lg:overflow-hidden lg:h-screen lg:grid-cols-2"
       ref={mainContainerRef}
     >
       <div
@@ -256,7 +258,7 @@ const Home = function Home() {
           </div>
         )}
 
-        <div className="shrink-0 overflow-x-auto">
+        <div className="-mx-4 shrink-0 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           <GitHubActivity isDarkMode={isDarkMode} username={githubUsername} />
           <GitHubStats />
         </div>
@@ -322,7 +324,7 @@ export const Route = createFileRoute("/")({
   head: () => {
     const origin =
       typeof window === "undefined"
-        ? import.meta.env.VITE_APP_ORIGIN || "https://folio.zephyyrr.in"
+        ? import.meta.env.VITE_APP_ORIGIN || "https://przknv.cc"
         : window.location.origin;
     const ogImage = `${origin}/verso-og.png`;
     return {

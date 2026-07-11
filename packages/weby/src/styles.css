@@ -50,7 +50,7 @@
     -ms-overflow-style: none;
     background-color: var(--color-bg);
     font-family: "Ubuntu Mono", monospace;
-    overflow: hidden;
+    overflow-x: hidden;
     scroll-behavior: smooth;
     scrollbar-width: none;
     text-transform: lowercase;
@@ -59,7 +59,7 @@
   body {
     background-color: var(--color-bg);
     margin: 0;
-    overflow: hidden;
+    overflow-x: hidden;
     padding: 0;
   }
 
@@ -82,7 +82,7 @@
   html,
   body {
     height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
   }
 
   *::-webkit-scrollbar {
@@ -183,8 +183,14 @@ button {
 .blog-reader-prose {
   color: var(--color-text);
   font-family: "Ubuntu Mono", monospace;
-  font-size: 0.98rem;
+  font-size: 0.875rem;
   line-height: 1.6;
+}
+
+@media (min-width: 640px) {
+  .blog-reader-prose {
+    font-size: 1rem;
+  }
 }
 
 .blog-reader-prose h1,
@@ -515,4 +521,15 @@ button {
 
 [data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Make GitHub Calendar responsive on mobile viewports */
+@media (max-width: 640px) {
+  .github-calendar-svg {
+    width: 100% !important;
+  }
+  .github-calendar-svg svg {
+    width: 100% !important;
+    height: auto !important;
+  }
 }

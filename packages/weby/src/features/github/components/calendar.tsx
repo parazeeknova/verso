@@ -38,11 +38,12 @@ export const GitHubActivity = ({ username, isDarkMode = true }: GitHubActivityPr
         blockMargin={isNarrow ? 1 : 3}
         blockRadius={2}
         blockSize={isNarrow ? 5 : 10}
+        className="github-calendar-svg"
         colorScheme={isDarkMode ? "dark" : "light"}
         fontSize={isNarrow ? 10 : 12}
         showColorLegend
         showTotalCount
-        style={{ color: "inherit" }}
+        style={{ color: "inherit", height: "auto", width: "100%" }}
         username={username}
       />
       <Tooltip id="github-calendar-tooltip" />
