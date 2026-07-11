@@ -37,11 +37,12 @@ const THEME_SCRIPT = [
   "if(s){var j=JSON.parse(s);var p=j.state?.preference;",
   "if(p==='light'||p==='dark')t=p;else if(p==='system')",
   "t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}",
-  "}catch(e){}document.documentElement.dataset.theme=t})()",
+  "}catch(e){}document.documentElement.dataset.theme=t;",
+  "document.documentElement.dataset.mantineColorScheme=t})()",
 ].join("");
 
 const RootShell = ({ children }: { children: React.ReactNode }) => (
-  <html lang="en" data-theme="dark" suppressHydrationWarning>
+  <html lang="en" data-theme="dark" data-mantine-color-scheme="dark" suppressHydrationWarning>
     <head>
       <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       <HeadContent />

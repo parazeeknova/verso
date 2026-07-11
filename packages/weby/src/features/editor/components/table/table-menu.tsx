@@ -126,10 +126,10 @@ export const TableMenu = React.memo(({ editor }: EditorMenuProps): JSX.Element =
           <ActionIcon
             onClick={addColumnLeft}
             variant="subtle"
-            size="lg"
+            size="sm"
             aria-label={t("Add left column")}
           >
-            <IconColumnInsertLeft size={18} />
+            <IconColumnInsertLeft size={14} />
           </ActionIcon>
         </Tooltip>
 
@@ -137,10 +137,10 @@ export const TableMenu = React.memo(({ editor }: EditorMenuProps): JSX.Element =
           <ActionIcon
             onClick={addColumnRight}
             variant="subtle"
-            size="lg"
+            size="sm"
             aria-label={t("Add right column")}
           >
-            <IconColumnInsertRight size={18} />
+            <IconColumnInsertRight size={14} />
           </ActionIcon>
         </Tooltip>
 
@@ -148,10 +148,10 @@ export const TableMenu = React.memo(({ editor }: EditorMenuProps): JSX.Element =
           <ActionIcon
             onClick={deleteColumn}
             variant="subtle"
-            size="lg"
+            size="sm"
             aria-label={t("Delete column")}
           >
-            <IconColumnRemove size={18} />
+            <IconColumnRemove size={14} />
           </ActionIcon>
         </Tooltip>
 
@@ -161,10 +161,10 @@ export const TableMenu = React.memo(({ editor }: EditorMenuProps): JSX.Element =
           <ActionIcon
             onClick={addRowAbove}
             variant="subtle"
-            size="lg"
+            size="sm"
             aria-label={t("Add row above")}
           >
-            <IconRowInsertTop size={18} />
+            <IconRowInsertTop size={14} />
           </ActionIcon>
         </Tooltip>
 
@@ -172,16 +172,16 @@ export const TableMenu = React.memo(({ editor }: EditorMenuProps): JSX.Element =
           <ActionIcon
             onClick={addRowBelow}
             variant="subtle"
-            size="lg"
+            size="sm"
             aria-label={t("Add row below")}
           >
-            <IconRowInsertBottom size={18} />
+            <IconRowInsertBottom size={14} />
           </ActionIcon>
         </Tooltip>
 
         <Tooltip position="top" label={t("Delete row")} withinPortal={false}>
           <ActionIcon onClick={deleteRow} variant="subtle" size="lg" aria-label={t("Delete row")}>
-            <IconRowRemove size={18} />
+            <IconRowRemove size={14} />
           </ActionIcon>
         </Tooltip>
 
@@ -191,10 +191,10 @@ export const TableMenu = React.memo(({ editor }: EditorMenuProps): JSX.Element =
           <ActionIcon
             onClick={toggleHeaderRow}
             variant="subtle"
-            size="lg"
+            size="sm"
             aria-label={t("Toggle header row")}
           >
-            <IconTableRow size={18} />
+            <IconTableRow size={14} />
           </ActionIcon>
         </Tooltip>
 
@@ -202,10 +202,10 @@ export const TableMenu = React.memo(({ editor }: EditorMenuProps): JSX.Element =
           <ActionIcon
             onClick={toggleHeaderColumn}
             variant="subtle"
-            size="lg"
+            size="sm"
             aria-label={t("Toggle header column")}
           >
-            <IconTableColumn size={18} />
+            <IconTableColumn size={14} />
           </ActionIcon>
         </Tooltip>
 
@@ -215,10 +215,10 @@ export const TableMenu = React.memo(({ editor }: EditorMenuProps): JSX.Element =
           <ActionIcon
             onClick={deleteTable}
             variant="subtle"
-            size="lg"
+            size="sm"
             aria-label={t("Delete table")}
           >
-            <IconTrashX size={18} />
+            <IconTrashX size={14} />
           </ActionIcon>
         </Tooltip>
       </div>

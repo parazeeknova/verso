@@ -58,7 +58,7 @@ export const CellChevronMenu = React.memo(function CellChevronMenu({
     <>
       <Menu.Sub position="right-start">
         <Menu.Sub.Target>
-          <Menu.Sub.Item leftSection={<IconPalette size={16} />}>
+          <Menu.Sub.Item leftSection={<IconPalette size={12} />}>
             {t("Background color")}
           </Menu.Sub.Item>
         </Menu.Sub.Target>
@@ -88,7 +88,7 @@ export const CellChevronMenu = React.memo(function CellChevronMenu({
                   color={c.color || "#ffffff"}
                   size={22}
                   style={{
-                    border: c.color === "" ? "1px solid #e5e7eb" : undefined,
+                    border: c.color === "" ? "1px solid var(--color-border)" : undefined,
                   }}
                 />
               </button>
@@ -100,21 +100,21 @@ export const CellChevronMenu = React.memo(function CellChevronMenu({
       <AlignmentSubmenu editor={editor} />
 
       <Menu.Item
-        leftSection={<IconBoxMargin size={16} />}
+        leftSection={<IconBoxMargin size={12} />}
         onClick={() => editor.chain().focus().mergeCells().run()}
         disabled={!editor?.can().mergeCells()}
       >
         {t("Merge cells")}
       </Menu.Item>
       <Menu.Item
-        leftSection={<IconSquareToggle size={16} />}
+        leftSection={<IconSquareToggle size={12} />}
         onClick={() => editor.chain().focus().splitCell().run()}
         disabled={!editor?.can().splitCell()}
       >
         {t("Split cell")}
       </Menu.Item>
       <Menu.Item
-        leftSection={<IconTableRow size={16} />}
+        leftSection={<IconTableRow size={12} />}
         onClick={() => editor.chain().focus().toggleHeaderCell().run()}
       >
         {t("Toggle header cell")}
@@ -123,29 +123,29 @@ export const CellChevronMenu = React.memo(function CellChevronMenu({
       <Menu.Divider />
 
       <Menu.Item
-        leftSection={<IconColumnInsertRight size={16} />}
+        leftSection={<IconColumnInsertRight size={12} />}
         onClick={() => editor.chain().focus().addColumnAfter().run()}
       >
         {t("Add column right")}
       </Menu.Item>
       <Menu.Item
-        leftSection={<IconRowInsertBottom size={16} />}
+        leftSection={<IconRowInsertBottom size={12} />}
         onClick={() => editor.chain().focus().addRowAfter().run()}
       >
         {t("Add row below")}
       </Menu.Item>
 
-      <Menu.Item leftSection={<IconEraser size={16} />} onClick={clearCell}>
+      <Menu.Item leftSection={<IconEraser size={12} />} onClick={clearCell}>
         {t("Clear cell")}
       </Menu.Item>
       <Menu.Item
-        leftSection={<IconColumnRemove size={16} />}
+        leftSection={<IconColumnRemove size={12} />}
         onClick={() => editor.chain().focus().deleteColumn().run()}
       >
         {t("Delete column")}
       </Menu.Item>
       <Menu.Item
-        leftSection={<IconRowRemove size={16} />}
+        leftSection={<IconRowRemove size={12} />}
         onClick={() => editor.chain().focus().deleteRow().run()}
       >
         {t("Delete row")}

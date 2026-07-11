@@ -98,7 +98,7 @@ export const CellChevron = React.memo(function CellChevron({
   if (isResizingColumn) {return null;}
 
   return (
-    <Menu position="bottom-end" onOpen={onOpen} onClose={onClose} withinPortal shadow="md">
+    <Menu position="bottom-end" onOpen={onOpen} onClose={onClose} withinPortal shadow="md" classNames={{ dropdown: "table-handle-dropdown", item: "table-handle-dropdown-item" }}>
       <Menu.Target>
         <UnstyledButton
           ref={refs.setFloating}

@@ -343,8 +343,9 @@ button {
 .blog-reader-prose table th {
   border: 1px solid var(--color-border);
   box-sizing: border-box;
+  font-size: 0.8125rem;
   min-width: 1em;
-  padding: 8px 10px;
+  padding: 6px 8px;
   position: relative;
   vertical-align: top;
 }
@@ -368,14 +369,20 @@ button {
 
 .ProseMirror table th,
 .blog-reader-prose table th {
-  background-color: rgba(0, 0, 0, 0.02);
-  font-weight: bold;
+  background-color: rgba(0, 0, 0, 0.04);
+  font-size: 0.8125rem;
+  font-weight: 600;
   text-align: left;
 }
 
 [data-theme="dark"] .ProseMirror table th,
 [data-theme="dark"] .blog-reader-prose table th {
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .ProseMirror table td,
+[data-theme="dark"] .blog-reader-prose table td {
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
 .ProseMirror table .column-resize-handle,
@@ -512,7 +519,6 @@ button {
   justify-content: center;
   width: 18px;
   height: 18px;
-  border-radius: 4px;
   background: rgba(0, 0, 0, 0.05);
   color: rgba(0, 0, 0, 0.45);
   user-select: none;
@@ -550,10 +556,9 @@ button {
   top: calc(100% + 6px);
   right: 0;
   padding: 4px 8px;
-  border-radius: 4px;
   background: #212529;
   color: #fff;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 400;
   line-height: 1.4;
   white-space: nowrap;
@@ -589,6 +594,26 @@ button {
   .prosemirror-dropcursor-inline {
     display: none;
   }
+}
+
+.table-handle-dropdown {
+  border-radius: 0 !important;
+  padding: 2px !important;
+}
+
+.table-handle-dropdown-item {
+  border-radius: 0 !important;
+  font-family: "Ubuntu Mono", monospace;
+  font-size: 0.75rem;
+  padding: 2px 6px !important;
+}
+
+.table-handle-dropdown-item [data-position="left"] {
+  margin-right: 4px;
+}
+
+.table-handle-dropdown .mantine-Menu-divider {
+  margin: 1px 0;
 }
 
 .blog-reader-prose ul[data-type="taskList"] {

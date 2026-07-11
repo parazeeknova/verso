@@ -96,11 +96,11 @@ export const TableBackgroundColor: FC<TableBackgroundColorProps> = ({ editor }) 
         <Tooltip label={t("Background color")} withArrow>
           <ActionIcon
             variant="subtle"
-            size="lg"
+            size="sm"
             aria-label={t("Background color")}
             onClick={() => setOpened(!opened)}
           >
-            <IconPalette size={18} />
+            <IconPalette size={14} />
           </ActionIcon>
         </Tooltip>
       </Popover.Target>
@@ -133,7 +133,7 @@ export const TableBackgroundColor: FC<TableBackgroundColorProps> = ({ editor }) 
                   color={item.color || "#ffffff"}
                   size={24}
                   style={{
-                    border: item.color === "" ? "1px solid #e5e7eb" : undefined,
+                    border: item.color === "" ? "1px solid var(--color-border)" : undefined,
                     cursor: "pointer",
                   }}
                 >

@@ -59,7 +59,7 @@ export const RowHandleMenu = React.memo(function RowHandleMenu({
     <>
       <Menu.Sub position="right-start">
         <Menu.Sub.Target>
-          <Menu.Sub.Item leftSection={<IconPalette size={16} />}>
+          <Menu.Sub.Item leftSection={<IconPalette size={12} />}>
             {t("Background color")}
           </Menu.Sub.Item>
         </Menu.Sub.Target>
@@ -83,7 +83,7 @@ export const RowHandleMenu = React.memo(function RowHandleMenu({
                 <ColorSwatch
                   color={c.color || "#ffffff"}
                   size={22}
-                  style={{ border: c.color === "" ? "1px solid #e5e7eb" : undefined }}
+                  style={{ border: c.color === "" ? "1px solid var(--color-border)" : undefined }}
                 />
               </button>
             ))}
@@ -96,13 +96,13 @@ export const RowHandleMenu = React.memo(function RowHandleMenu({
       <Menu.Divider />
 
       <Menu.Item
-        leftSection={<IconRowInsertTop size={16} />}
+        leftSection={<IconRowInsertTop size={12} />}
         onClick={() => editor.chain().focus().addRowBefore().run()}
       >
         {t("Add row above")}
       </Menu.Item>
       <Menu.Item
-        leftSection={<IconRowInsertBottom size={16} />}
+        leftSection={<IconRowInsertBottom size={12} />}
         onClick={() => editor.chain().focus().addRowAfter().run()}
       >
         {t("Add row below")}
@@ -110,11 +110,11 @@ export const RowHandleMenu = React.memo(function RowHandleMenu({
 
       <Menu.Divider />
 
-      <Menu.Item leftSection={<IconEraser size={16} />} onClick={clearRow}>
+      <Menu.Item leftSection={<IconEraser size={12} />} onClick={clearRow}>
         {t("Clear cells")}
       </Menu.Item>
       <Menu.Item
-        leftSection={<IconRowRemove size={16} />}
+        leftSection={<IconRowRemove size={12} />}
         onClick={() => editor.chain().focus().deleteRow().run()}
       >
         {t("Delete row")}
@@ -123,14 +123,14 @@ export const RowHandleMenu = React.memo(function RowHandleMenu({
       <Menu.Divider />
 
       <Menu.Item
-        leftSection={<IconArrowUp size={16} />}
+        leftSection={<IconArrowUp size={12} />}
         onClick={moveUp.handleMove}
         disabled={!moveUp.canMove}
       >
         {t("Move row up")}
       </Menu.Item>
       <Menu.Item
-        leftSection={<IconArrowDown size={16} />}
+        leftSection={<IconArrowDown size={12} />}
         onClick={moveDown.handleMove}
         disabled={!moveDown.canMove}
       >

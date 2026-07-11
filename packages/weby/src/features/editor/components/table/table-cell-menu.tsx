@@ -83,10 +83,10 @@ export const TableCellMenu = React.memo(
             <ActionIcon
               onClick={mergeCells}
               variant="subtle"
-              size="lg"
+              size="sm"
               aria-label={t("Merge cells")}
             >
-              <IconBoxMargin size={18} />
+              <IconBoxMargin size={14} />
             </ActionIcon>
           </Tooltip>
 
@@ -94,10 +94,10 @@ export const TableCellMenu = React.memo(
             <ActionIcon
               onClick={splitCell}
               variant="subtle"
-              size="lg"
+              size="sm"
               aria-label={t("Split cell")}
             >
-              <IconSquareToggle size={18} />
+              <IconSquareToggle size={14} />
             </ActionIcon>
           </Tooltip>
 
@@ -107,10 +107,10 @@ export const TableCellMenu = React.memo(
             <ActionIcon
               onClick={deleteColumn}
               variant="subtle"
-              size="lg"
+              size="sm"
               aria-label={t("Delete column")}
             >
-              <IconColumnRemove size={18} />
+              <IconColumnRemove size={14} />
             </ActionIcon>
           </Tooltip>
 
@@ -118,10 +118,10 @@ export const TableCellMenu = React.memo(
             <ActionIcon
               onClick={deleteRow}
               variant="subtle"
-              size="lg"
+              size="sm"
               aria-label={t("Delete row")}
             >
-              <IconRowRemove size={18} />
+              <IconRowRemove size={14} />
             </ActionIcon>
           </Tooltip>
 
@@ -131,10 +131,10 @@ export const TableCellMenu = React.memo(
             <ActionIcon
               onClick={toggleHeaderCell}
               variant="subtle"
-              size="lg"
+              size="sm"
               aria-label={t("Toggle header cell")}
             >
-              <IconTableRow size={18} />
+              <IconTableRow size={14} />
             </ActionIcon>
           </Tooltip>
         </div>

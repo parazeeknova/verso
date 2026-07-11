@@ -84,6 +84,10 @@ export const RowHandle = React.memo(function RowHandle({
       onClose={onClose}
       withinPortal
       shadow="md"
+      classNames={{
+        dropdown: "table-handle-dropdown",
+        item: "table-handle-dropdown-item",
+      }}
     >
       <Menu.Target>
         <div

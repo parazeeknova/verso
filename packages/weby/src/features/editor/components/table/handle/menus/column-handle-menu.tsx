@@ -78,14 +78,14 @@ export const ColumnHandleMenu = React.memo(function ColumnHandleMenu({
   return (
     <>
       <Menu.Item
-        leftSection={<IconSortAscendingLetters size={16} />}
+        leftSection={<IconSortAscendingLetters size={12} />}
         onClick={sortAsc.handleSort}
         disabled={!sortAsc.canSort}
       >
         {t("Sort A → Z")}
       </Menu.Item>
       <Menu.Item
-        leftSection={<IconSortDescendingLetters size={16} />}
+        leftSection={<IconSortDescendingLetters size={12} />}
         onClick={sortDesc.handleSort}
         disabled={!sortDesc.canSort}
       >
@@ -95,7 +95,7 @@ export const ColumnHandleMenu = React.memo(function ColumnHandleMenu({
 
       <Menu.Sub position="right-start">
         <Menu.Sub.Target>
-          <Menu.Sub.Item leftSection={<IconPalette size={16} />}>
+          <Menu.Sub.Item leftSection={<IconPalette size={12} />}>
             {t("Background color")}
           </Menu.Sub.Item>
         </Menu.Sub.Target>
@@ -119,7 +119,7 @@ export const ColumnHandleMenu = React.memo(function ColumnHandleMenu({
                 <ColorSwatch
                   color={c.color || "#ffffff"}
                   size={22}
-                  style={{ border: c.color === "" ? "1px solid #e5e7eb" : undefined }}
+                  style={{ border: c.color === "" ? "1px solid var(--color-border)" : undefined }}
                 />
               </button>
             ))}
@@ -132,13 +132,13 @@ export const ColumnHandleMenu = React.memo(function ColumnHandleMenu({
       <Menu.Divider />
 
       <Menu.Item
-        leftSection={<IconColumnInsertLeft size={16} />}
+        leftSection={<IconColumnInsertLeft size={12} />}
         onClick={() => editor.chain().focus().addColumnBefore().run()}
       >
         {t("Add column left")}
       </Menu.Item>
       <Menu.Item
-        leftSection={<IconColumnInsertRight size={16} />}
+        leftSection={<IconColumnInsertRight size={12} />}
         onClick={() => editor.chain().focus().addColumnAfter().run()}
       >
         {t("Add column right")}
@@ -146,11 +146,11 @@ export const ColumnHandleMenu = React.memo(function ColumnHandleMenu({
 
       <Menu.Divider />
 
-      <Menu.Item leftSection={<IconEraser size={16} />} onClick={clearCol}>
+      <Menu.Item leftSection={<IconEraser size={12} />} onClick={clearCol}>
         {t("Clear cells")}
       </Menu.Item>
       <Menu.Item
-        leftSection={<IconColumnRemove size={16} />}
+        leftSection={<IconColumnRemove size={12} />}
         onClick={() => editor.chain().focus().deleteColumn().run()}
       >
         {t("Delete column")}
@@ -159,14 +159,14 @@ export const ColumnHandleMenu = React.memo(function ColumnHandleMenu({
       <Menu.Divider />
 
       <Menu.Item
-        leftSection={<IconArrowLeft size={16} />}
+        leftSection={<IconArrowLeft size={12} />}
         onClick={moveLeft.handleMove}
         disabled={!moveLeft.canMove}
       >
         {t("Move column left")}
       </Menu.Item>
       <Menu.Item
-        leftSection={<IconArrowRight size={16} />}
+        leftSection={<IconArrowRight size={12} />}
         onClick={moveRight.handleMove}
         disabled={!moveRight.canMove}
       >

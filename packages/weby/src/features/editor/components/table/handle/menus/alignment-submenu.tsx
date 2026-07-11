@@ -17,25 +17,25 @@ export const AlignmentSubmenu = React.memo(function AlignmentSubmenu({
   return (
     <Menu.Sub position="right-start">
       <Menu.Sub.Target>
-        <Menu.Sub.Item leftSection={<IconAlignLeft size={16} />}>
+        <Menu.Sub.Item leftSection={<IconAlignLeft size={12} />}>
           {t("Text alignment")}
         </Menu.Sub.Item>
       </Menu.Sub.Target>
       <Menu.Sub.Dropdown>
         <Menu.Item
-          leftSection={<IconAlignLeft size={16} />}
+          leftSection={<IconAlignLeft size={12} />}
           onClick={() => editor.chain().focus().setTextAlign("left").run()}
         >
           {t("Align left")}
         </Menu.Item>
         <Menu.Item
-          leftSection={<IconAlignCenter size={16} />}
+          leftSection={<IconAlignCenter size={12} />}
           onClick={() => editor.chain().focus().setTextAlign("center").run()}
         >
           {t("Align center")}
         </Menu.Item>
         <Menu.Item
-          leftSection={<IconAlignRight size={16} />}
+          leftSection={<IconAlignRight size={12} />}
           onClick={() => editor.chain().focus().setTextAlign("right").run()}
         >
           {t("Align right")}
