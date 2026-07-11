@@ -8,7 +8,6 @@ import { getEditorExtensions } from "#/features/editor/extensions";
 import { useEditorContent } from "#/features/editor/hooks/use-editor-content";
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
 import { useQueryClient } from "@tanstack/react-query";
-import { BubbleMenu } from "#/features/editor/components/toolbar/bubble-menu";
 import { EditorMoreMenu } from "#/features/editor/components/editor-more-menu";
 import {
   useIsPageFavorited,
@@ -678,8 +677,6 @@ export const PageEditor = ({
           />
         </div>
       </div>
-
-      {effectiveEditable && <BubbleMenu editor={editor} />}
 
       <div
         ref={contentRef}
