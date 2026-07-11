@@ -552,3 +552,21 @@ button {
 [data-theme="dark"] .fade-overlay-dark {
   opacity: 1;
 }
+
+.fade-overlay-top-light {
+  background: linear-gradient(to bottom, var(--color-bg-light) 0%, transparent 100%);
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+}
+[data-theme="dark"] .fade-overlay-top-light {
+  opacity: 0;
+}
+
+.fade-overlay-top-dark {
+  background: linear-gradient(to bottom, var(--color-bg-dark) 0%, transparent 100%);
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+}
+[data-theme="dark"] .fade-overlay-top-dark {
+  opacity: 1;
+}
