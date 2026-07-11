@@ -131,12 +131,9 @@ export const ProfileSection = ({ profile, isPending, isMobile }: ProfileSectionP
               >
                 {description}
                 <div
-                  className="pointer-events-none absolute right-0 bottom-0 left-0 h-16"
+                  className="pointer-events-none absolute right-0 bottom-0 left-0 h-16 fade-overlay"
                   ref={profileFadeRef}
-                >
-                  <div className="absolute inset-0 fade-overlay-light" />
-                  <div className="absolute inset-0 fade-overlay-dark" />
-                </div>
+                />
               </div>
               <button
                 className="link-underline mt-1 block text-center text-gray-400 text-xs w-full select-none cursor-pointer"
@@ -266,10 +263,10 @@ export const ExperienceSection = ({ experience, isPending }: ExperienceSectionPr
         )}
 
         {hasMore && (
-          <div className="pointer-events-none absolute right-0 bottom-0 left-0 h-16" ref={fadeRef}>
-            <div className="absolute inset-0 fade-overlay-light" />
-            <div className="absolute inset-0 fade-overlay-dark" />
-          </div>
+          <div
+            className="pointer-events-none absolute right-0 bottom-0 left-0 h-16 fade-overlay"
+            ref={fadeRef}
+          />
         )}
       </div>
 

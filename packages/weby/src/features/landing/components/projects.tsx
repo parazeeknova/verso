@@ -199,10 +199,10 @@ export const MobileProjectList = ({ onDetail }: MobileProjectListProps) => {
         )}
 
         {hasMore && (
-          <div className="pointer-events-none absolute right-0 bottom-0 left-0 h-16" ref={fadeRef}>
-            <div className="absolute inset-0 fade-overlay-light" />
-            <div className="absolute inset-0 fade-overlay-dark" />
-          </div>
+          <div
+            className="pointer-events-none absolute right-0 bottom-0 left-0 h-16 fade-overlay"
+            ref={fadeRef}
+          />
         )}
       </div>
 

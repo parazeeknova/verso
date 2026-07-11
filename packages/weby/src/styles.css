@@ -34,8 +34,7 @@
   [data-theme] {
     transition:
       background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-      color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-      --fade-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .theme-bg {
@@ -535,38 +534,12 @@ button {
 }
 
 /* Smooth theme fade-out overlays */
-.fade-overlay-light {
-  background: linear-gradient(to top, var(--color-bg-light) 0%, transparent 100%);
-  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 1;
-}
-div[data-theme="dark"] .fade-overlay-light {
-  opacity: 0;
+.fade-overlay {
+  background: linear-gradient(to top, var(--fade-color) 0%, transparent 100%);
+  transition: --fade-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.fade-overlay-dark {
-  background: linear-gradient(to top, var(--color-bg-dark) 0%, transparent 100%);
-  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0;
-}
-div[data-theme="dark"] .fade-overlay-dark {
-  opacity: 1;
-}
-
-.fade-overlay-top-light {
-  background: linear-gradient(to bottom, var(--color-bg-light) 0%, transparent 100%);
-  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 1;
-}
-div[data-theme="dark"] .fade-overlay-top-light {
-  opacity: 0;
-}
-
-.fade-overlay-top-dark {
-  background: linear-gradient(to bottom, var(--color-bg-dark) 0%, transparent 100%);
-  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0;
-}
-div[data-theme="dark"] .fade-overlay-top-dark {
-  opacity: 1;
+.fade-overlay-top {
+  background: linear-gradient(to bottom, var(--fade-color) 0%, transparent 100%);
+  transition: --fade-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
