@@ -199,10 +199,11 @@ export const SocialLinks = ({ profile }: SocialLinksProps) => {
           href={github.url}
           rel="noopener noreferrer"
           target="_blank"
-          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center"
+          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center gap-1.5"
           aria-label="GitHub"
         >
           <GithubLogoIcon size={18} />
+          <span className="hidden sm:inline text-[13px] lowercase">{github.label}</span>
         </a>
       )}
       {linkedin?.url && (
@@ -210,10 +211,11 @@ export const SocialLinks = ({ profile }: SocialLinksProps) => {
           href={linkedin.url}
           rel="noopener noreferrer"
           target="_blank"
-          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center"
+          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center gap-1.5"
           aria-label="LinkedIn"
         >
           <LinkedinLogoIcon size={18} />
+          <span className="hidden sm:inline text-[13px] lowercase">{linkedin.label}</span>
         </a>
       )}
       {twitter?.url && (
@@ -221,20 +223,22 @@ export const SocialLinks = ({ profile }: SocialLinksProps) => {
           href={twitter.url}
           rel="noopener noreferrer"
           target="_blank"
-          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center"
+          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center gap-1.5"
           aria-label="Twitter/X"
         >
           <XLogoIcon size={18} />
+          <span className="hidden sm:inline text-[13px] lowercase">{twitter.label}</span>
         </a>
       )}
       {profile?.email && (
         <a
           href={`mailto:${profile.email}`}
           rel="noopener noreferrer"
-          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center"
+          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center gap-1.5"
           aria-label="Email"
         >
           <EnvelopeSimpleIcon size={18} />
+          <span className="hidden sm:inline text-[13px] lowercase">email</span>
         </a>
       )}
     </div>
