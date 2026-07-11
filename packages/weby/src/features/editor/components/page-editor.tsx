@@ -444,40 +444,40 @@ const PageDetailsPanel = ({
         aria-label="Close details"
       />
       <div
-        className={`fixed top-0 right-0 z-50 h-full w-full sm:w-80 border-l p-6 flex flex-col shadow-xl ${t(
+        className={`fixed top-0 right-0 z-50 h-full w-full sm:w-64 border-l p-4 flex flex-col shadow-xl ${t(
           "bg-neutral-900 border-neutral-800 text-neutral-200",
           "bg-white border-neutral-200 text-neutral-800",
         )}`}
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <h3
-            className={`text-[11px] font-semibold tracking-widest uppercase ${t("text-neutral-500", "text-neutral-400")}`}
+            className={`text-[10px] font-bold tracking-wider uppercase ${t("text-neutral-500", "text-neutral-400")}`}
           >
             page info
           </h3>
           <button
             aria-label="Close page info"
-            className={`p-1 rounded-sm transition-colors ${t(
+            className={`p-0.5 rounded-sm transition-colors ${t(
               "text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800",
               "text-neutral-400 hover:text-neutral-800 hover:bg-neutral-100",
             )}`}
             onClick={onClose}
             type="button"
           >
-            <XIcon size={14} />
+            <XIcon size={12} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-5 text-[13px]">
-          <div className="space-y-3">
+        <div className="flex-1 overflow-y-auto space-y-4 text-[11px]">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className={t("text-neutral-500", "text-neutral-400")}>author</span>
-              <div className="flex items-center gap-1.5 font-medium">
+              <div className="flex items-center gap-1 font-medium">
                 <AvatarBadge
                   icon={creator?.avatar_url}
                   name={displayName}
-                  className="w-5 h-5 bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center rounded-full"
-                  initialsClass="text-[10px] text-neutral-600 dark:text-neutral-300 font-semibold"
+                  className="w-4.5 h-4.5 bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center rounded-full"
+                  initialsClass="text-[9px] text-neutral-600 dark:text-neutral-300 font-semibold"
                 />
                 <span>{displayName}</span>
               </div>
@@ -493,26 +493,26 @@ const PageDetailsPanel = ({
 
           <hr className={`border-t ${t("border-neutral-800", "border-neutral-200")}`} />
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {createdAt && (
               <div className="flex flex-col gap-0.5">
                 <span className={t("text-neutral-500", "text-neutral-400")}>created</span>
-                <span className="font-medium text-[12px]">{formatDateTime(createdAt)}</span>
+                <span className="font-medium text-[10.5px]">{formatDateTime(createdAt)}</span>
               </div>
             )}
             {updatedAt && (
               <div className="flex flex-col gap-0.5">
                 <span className={t("text-neutral-500", "text-neutral-400")}>last modified</span>
-                <span className="font-medium text-[12px]">{formatDateTime(updatedAt)}</span>
+                <span className="font-medium text-[10.5px]">{formatDateTime(updatedAt)}</span>
               </div>
             )}
           </div>
 
           <hr className={`border-t ${t("border-neutral-800", "border-neutral-200")}`} />
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             <h4
-              className={`text-[11px] font-semibold uppercase tracking-widest ${t("text-neutral-500", "text-neutral-400")}`}
+              className={`text-[10px] font-bold uppercase tracking-wider ${t("text-neutral-500", "text-neutral-400")}`}
             >
               metrics
             </h4>
