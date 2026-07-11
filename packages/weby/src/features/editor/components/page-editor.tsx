@@ -4,7 +4,8 @@ import { BookmarkSimpleIcon, ListBulletsIcon, XIcon } from "@phosphor-icons/reac
 import { useTheme } from "#/shared/hooks/use-theme";
 import { getEditorExtensions } from "#/features/editor/extensions";
 import { useEditorContent } from "#/features/editor/hooks/use-editor-content";
-import { useUpdatePage } from "#/features/console/hooks/use-pages";
+import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
+import { useQueryClient } from "@tanstack/react-query";
 import { BubbleMenu } from "#/features/editor/components/toolbar/bubble-menu";
 import { EditorMoreMenu } from "#/features/editor/components/editor-more-menu";
 import {
@@ -64,7 +65,7 @@ export const PageEditor = ({
   const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
   const [headings, setHeadings] = useState<BlogHeading[]>(() => extractEditorHeadings(content));
 
-  const updatePage = useUpdatePage();
+  const queryClient = useQueryClient();
   const [localTitle, setLocalTitle] = useState(title);
   const lastSavedTitleRef = useRef(title);
   const titleRef = useRef<HTMLTextAreaElement>(null);
@@ -80,18 +81,26 @@ export const PageEditor = ({
   }, [title]);
 
   const saveTitle = useCallback(
-    (value: string) => {
+    async (value: string) => {
       const trimmed = value.trim();
       if (trimmed === lastSavedTitleRef.current) {
         return;
       }
       lastSavedTitleRef.current = trimmed;
-      updatePage.mutate({
-        id: pageId,
-        input: { title: trimmed },
-      });
+      try {
+        await fetchProtected(`/api/console/pages/${pageId}`, {
+          body: JSON.stringify({ title: trimmed }),
+          headers: { "Content-Type": "application/json" },
+          method: "PUT",
+        });
+        await queryClient.invalidateQueries({ queryKey: ["consolePage"] });
+        await queryClient.invalidateQueries({ queryKey: ["consolePages"] });
+        await queryClient.invalidateQueries({ queryKey: ["pageTree"] });
+      } catch (error) {
+        console.error("failed to save title:", error);
+      }
     },
-    [pageId, updatePage],
+    [pageId, queryClient],
   );
 
   const debounceSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -102,7 +111,7 @@ export const PageEditor = ({
       clearTimeout(debounceSaveRef.current);
     }
     debounceSaveRef.current = setTimeout(() => {
-      saveTitle(newVal);
+      void saveTitle(newVal);
     }, 1000);
   };
 
@@ -110,7 +119,7 @@ export const PageEditor = ({
     if (debounceSaveRef.current) {
       clearTimeout(debounceSaveRef.current);
     }
-    saveTitle(localTitle);
+    void saveTitle(localTitle);
   };
 
   const adjustTitleHeight = () => {
@@ -133,13 +142,24 @@ export const PageEditor = ({
       }
       const trimmed = localTitleRef.current.trim();
       if (trimmed !== lastSavedTitleRef.current) {
-        updatePage.mutate({
-          id: activePageId,
-          input: { title: trimmed },
-        });
+        const doSave = async () => {
+          try {
+            await fetchProtected(`/api/console/pages/${activePageId}`, {
+              body: JSON.stringify({ title: trimmed }),
+              headers: { "Content-Type": "application/json" },
+              method: "PUT",
+            });
+            await queryClient.invalidateQueries({ queryKey: ["consolePage"] });
+            await queryClient.invalidateQueries({ queryKey: ["consolePages"] });
+            await queryClient.invalidateQueries({ queryKey: ["pageTree"] });
+          } catch (error) {
+            console.error("failed to auto-save title on page change/unmount:", error);
+          }
+        };
+        void doSave();
       }
     };
-  }, [pageId, updatePage]);
+  }, [pageId, queryClient]);
 
   const markDirtyRef = useRef<(() => void) | null>(null);
 
