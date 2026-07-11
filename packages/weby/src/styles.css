@@ -670,10 +670,10 @@ button {
 /* Drag and drop cursor indicator line styles */
 .ProseMirror .ProseMirror-dropCursor,
 .ProseMirror-dropCursor {
-  color: #404040 !important; /* dark gray in light mode */
+  border-color: #404040 !important; /* dark gray in light mode */
 }
 
 [data-theme="dark"] .ProseMirror .ProseMirror-dropCursor,
 [data-theme="dark"] .ProseMirror-dropCursor {
-  color: #e5e5e5 !important; /* off-white in dark mode */
+  border-color: #e5e5e5 !important; /* off-white in dark mode */
 }
