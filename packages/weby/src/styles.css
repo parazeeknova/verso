@@ -364,7 +364,7 @@ button {
 
 .blog-reader-prose ul[data-type="taskList"] li > label {
   flex: 0 0 auto;
-  margin-top: 0.15rem;
+  margin-top: 0.25rem;
   user-select: none;
   display: flex;
   align-items: center;
@@ -372,10 +372,10 @@ button {
 
 .blog-reader-prose ul[data-type="taskList"] li > label input[type="checkbox"] {
   appearance: none;
-  width: 0.85rem;
-  height: 0.85rem;
+  width: 0.75rem;
+  height: 0.75rem;
   border: 1.5px solid var(--color-border);
-  border-radius: 3px;
+  border-radius: 2px;
   outline: none;
   cursor: pointer;
   display: inline-flex;
@@ -394,14 +394,14 @@ button {
 .blog-reader-prose ul[data-type="taskList"] li > label input[type="checkbox"]:checked::after {
   content: "";
   display: block;
-  width: 0.22rem;
-  height: 0.4rem;
+  width: 0.18rem;
+  height: 0.32rem;
   border: solid white;
-  border-width: 0 1.5px 1.5px 0;
+  border-width: 0 1.2px 1.2px 0;
   transform: rotate(45deg);
   position: absolute;
-  top: 12%;
-  left: 34%;
+  top: 15%;
+  left: 33%;
 }
 
 .blog-reader-prose ul[data-type="taskList"] li[data-checked="true"] > div,
