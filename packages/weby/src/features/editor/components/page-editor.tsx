@@ -4,6 +4,7 @@ import { BookmarkSimpleIcon, ListBulletsIcon, XIcon } from "@phosphor-icons/reac
 import { useTheme } from "#/shared/hooks/use-theme";
 import { getEditorExtensions } from "#/features/editor/extensions";
 import { useEditorContent } from "#/features/editor/hooks/use-editor-content";
+import { useUpdatePage } from "#/features/console/hooks/use-pages";
 import { BubbleMenu } from "#/features/editor/components/toolbar/bubble-menu";
 import { EditorMoreMenu } from "#/features/editor/components/editor-more-menu";
 import {
@@ -63,6 +64,83 @@ export const PageEditor = ({
   const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
   const [headings, setHeadings] = useState<BlogHeading[]>(() => extractEditorHeadings(content));
 
+  const updatePage = useUpdatePage();
+  const [localTitle, setLocalTitle] = useState(title);
+  const lastSavedTitleRef = useRef(title);
+  const titleRef = useRef<HTMLTextAreaElement>(null);
+  const localTitleRef = useRef(localTitle);
+
+  useEffect(() => {
+    localTitleRef.current = localTitle;
+  }, [localTitle]);
+
+  useEffect(() => {
+    setLocalTitle(title);
+    lastSavedTitleRef.current = title;
+  }, [title]);
+
+  const saveTitle = useCallback(
+    (value: string) => {
+      const trimmed = value.trim();
+      if (trimmed === lastSavedTitleRef.current) {
+        return;
+      }
+      lastSavedTitleRef.current = trimmed;
+      updatePage.mutate({
+        id: pageId,
+        input: { title: trimmed },
+      });
+    },
+    [pageId, updatePage],
+  );
+
+  const debounceSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleTitleChange = (newVal: string) => {
+    setLocalTitle(newVal);
+    if (debounceSaveRef.current) {
+      clearTimeout(debounceSaveRef.current);
+    }
+    debounceSaveRef.current = setTimeout(() => {
+      saveTitle(newVal);
+    }, 1000);
+  };
+
+  const handleTitleBlur = () => {
+    if (debounceSaveRef.current) {
+      clearTimeout(debounceSaveRef.current);
+    }
+    saveTitle(localTitle);
+  };
+
+  const adjustTitleHeight = () => {
+    const el = titleRef.current;
+    if (el) {
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight}px`;
+    }
+  };
+
+  useEffect(() => {
+    adjustTitleHeight();
+  }, [localTitle]);
+
+  useEffect(() => {
+    const activePageId = pageId;
+    return () => {
+      if (debounceSaveRef.current) {
+        clearTimeout(debounceSaveRef.current);
+      }
+      const trimmed = localTitleRef.current.trim();
+      if (trimmed !== lastSavedTitleRef.current) {
+        updatePage.mutate({
+          id: activePageId,
+          input: { title: trimmed },
+        });
+      }
+    };
+  }, [pageId, updatePage]);
+
   const markDirtyRef = useRef<(() => void) | null>(null);
 
   const editor = useEditor({
@@ -87,6 +165,49 @@ export const PageEditor = ({
   });
 
   const { dirty, cleanup, isSaving, lastSaved, markDirty } = useEditorContent(editor, pageId);
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!editor || !editable) {
+      return;
+    }
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const el = titleRef.current;
+      if (!el) {
+        return;
+      }
+
+      const { selectionStart } = el;
+      const titleText = localTitle;
+      const textBeforeCursor = titleText.slice(0, selectionStart);
+      const textAfterCursor = titleText.slice(selectionStart);
+
+      setLocalTitle(textBeforeCursor);
+      saveTitle(textBeforeCursor);
+
+      editor
+        .chain()
+        .command(({ tr }) => {
+          tr.setMeta("addToHistory", false);
+          return true;
+        })
+        .insertContentAt(0, {
+          content: textAfterCursor ? [{ text: textAfterCursor, type: "text" }] : undefined,
+          type: "paragraph",
+        })
+        .focus("start")
+        .run();
+
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      editor.commands.focus("start");
+    }
+  };
+
   const { data: favData } = useIsPageFavorited(pageId);
   const toggleFav = useTogglePageFavorite();
   const isFaved = favData?.favorited ?? false;
@@ -279,13 +400,13 @@ export const PageEditor = ({
           <span
             className={`text-[11px] lowercase font-medium ${t("text-text-dark/30", "text-text-light/30")}`}
           >
-            {title}
+            {localTitle}
           </span>
           <div className="pointer-events-none absolute left-0 top-full z-50 mt-1.5 hidden group-hover:block">
             <div
               className={`relative whitespace-nowrap px-2 py-1 text-[10px] ${t("bg-neutral-800 text-white", "bg-neutral-200 text-black")}`}
             >
-              {title}
+              {localTitle}
               <div
                 className={`absolute left-2 bottom-full h-1 w-1 rotate-45 ${t("bg-neutral-800", "bg-neutral-200")}`}
               />
@@ -330,7 +451,7 @@ export const PageEditor = ({
           </button>
           <EditorMoreMenu
             pageId={pageId}
-            title={title}
+            title={localTitle}
             spaceName={spaceName}
             spaceSlug={spaceSlug}
             creatorId={creatorId}
@@ -373,6 +494,17 @@ export const PageEditor = ({
         role="textbox"
         tabIndex={0}
       >
+        <textarea
+          ref={titleRef}
+          rows={1}
+          className={`w-full resize-none overflow-hidden bg-transparent text-4xl font-bold border-none outline-none focus:outline-none focus:border-none focus:ring-0 p-0 mb-6 font-sans tracking-tight leading-tight ${t("text-text-dark placeholder-neutral-700", "text-text-light placeholder-neutral-300")}`}
+          placeholder="Untitled"
+          value={localTitle}
+          onChange={(e) => handleTitleChange(e.target.value)}
+          onBlur={handleTitleBlur}
+          onKeyDown={handleTitleKeyDown}
+          disabled={!editable}
+        />
         <EditorContent editor={editor} />
       </div>
 
