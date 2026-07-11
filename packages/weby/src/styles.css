@@ -250,7 +250,7 @@ button {
   line-height: 1.5;
 }
 
-.blog-reader-prose li > p {
+.blog-reader-prose li p {
   margin-bottom: 0;
 }
 

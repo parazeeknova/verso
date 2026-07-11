@@ -1,15 +1,15 @@
 import {
-  TextT,
-  CheckSquare,
-  TextHOne,
-  TextHTwo,
-  TextHThree,
-  ListBullets,
-  ListNumbers,
-  Quotes,
-  Code,
-  Minus,
-  Table,
+  TextTIcon,
+  CheckSquareIcon,
+  TextHOneIcon,
+  TextHTwoIcon,
+  TextHThreeIcon,
+  ListBulletsIcon,
+  ListNumbersIcon,
+  QuotesIcon,
+  CodeIcon,
+  MinusIcon,
+  TableIcon,
 } from "@phosphor-icons/react";
 import type { SlashMenuItemType } from "./types";
 
@@ -19,7 +19,7 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
       editor.chain().focus().deleteRange(range).toggleNode("paragraph", "paragraph").run();
     },
     description: "Just start typing with plain text.",
-    icon: TextT,
+    icon: TextTIcon,
     searchTerms: ["p", "paragraph", "text"],
     title: "Text",
   },
@@ -28,7 +28,7 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
       editor.chain().focus().deleteRange(range).toggleTaskList().run();
     },
     description: "Track tasks with a to-do list.",
-    icon: CheckSquare,
+    icon: CheckSquareIcon,
     searchTerms: ["todo", "task", "list", "check", "checkbox"],
     title: "To-do list",
   },
@@ -37,7 +37,7 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
       editor.chain().focus().deleteRange(range).setNode("heading", { level: 1 }).run();
     },
     description: "Big section heading.",
-    icon: TextHOne,
+    icon: TextHOneIcon,
     searchTerms: ["title", "big", "large", "h1"],
     title: "Heading 1",
   },
@@ -46,7 +46,7 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
       editor.chain().focus().deleteRange(range).setNode("heading", { level: 2 }).run();
     },
     description: "Medium section heading.",
-    icon: TextHTwo,
+    icon: TextHTwoIcon,
     searchTerms: ["subtitle", "medium", "h2"],
     title: "Heading 2",
   },
@@ -55,7 +55,7 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
       editor.chain().focus().deleteRange(range).setNode("heading", { level: 3 }).run();
     },
     description: "Small section heading.",
-    icon: TextHThree,
+    icon: TextHThreeIcon,
     searchTerms: ["subtitle", "small", "h3"],
     title: "Heading 3",
   },
@@ -64,7 +64,7 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
       editor.chain().focus().deleteRange(range).toggleBulletList().run();
     },
     description: "Create a simple bullet list.",
-    icon: ListBullets,
+    icon: ListBulletsIcon,
     searchTerms: ["unordered", "point", "list", "bullet"],
     title: "Bullet list",
   },
@@ -73,7 +73,7 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
       editor.chain().focus().deleteRange(range).toggleOrderedList().run();
     },
     description: "Create a list with numbering.",
-    icon: ListNumbers,
+    icon: ListNumbersIcon,
     searchTerms: ["numbered", "ordered", "list", "ol"],
     title: "Numbered list",
   },
@@ -82,7 +82,7 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
       editor.chain().focus().deleteRange(range).toggleBlockquote().run();
     },
     description: "Create block quote.",
-    icon: Quotes,
+    icon: QuotesIcon,
     searchTerms: ["blockquote", "quotes", "quote"],
     title: "Quote",
   },
@@ -91,7 +91,7 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
       editor.chain().focus().deleteRange(range).toggleCodeBlock().run();
     },
     description: "Insert code snippet.",
-    icon: Code,
+    icon: CodeIcon,
     searchTerms: ["codeblock", "code"],
     title: "Code",
   },
@@ -105,7 +105,7 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
         .run();
     },
     description: "Insert a table.",
-    icon: Table,
+    icon: TableIcon,
     searchTerms: ["table", "rows", "columns"],
     title: "Table",
   },
@@ -114,7 +114,7 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
       editor.chain().focus().deleteRange(range).setHorizontalRule().run();
     },
     description: "Insert horizontal rule divider.",
-    icon: Minus,
+    icon: MinusIcon,
     searchTerms: ["horizontal rule", "hr", "divider", "line"],
     title: "Divider",
   },

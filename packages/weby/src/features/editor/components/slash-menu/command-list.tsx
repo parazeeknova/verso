@@ -56,7 +56,7 @@ export const CommandList = forwardRef<CommandListRef, CommandListProps>(
     return (
       <div
         ref={containerRef}
-        className="w-[280px] max-h-[330px] overflow-y-auto border rounded-lg shadow-xl p-1 text-left flex flex-col gap-0.5 z-100 theme-bg"
+        className="w-70 max-h-82.5 overflow-y-auto border rounded-lg shadow-xl p-1 text-left flex flex-col gap-0.5 z-100 theme-bg"
         style={{
           backgroundColor: "var(--color-bg)",
           borderColor: "var(--color-border)",
