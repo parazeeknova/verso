@@ -71,8 +71,8 @@ export const ScrollContainer = ({ children, className = "" }: ScrollContainerPro
       {showBottomShadow && (
         <>
           <div className="pointer-events-none absolute right-0 bottom-0 left-0 h-16 fade-overlay" />
-          <div className="pointer-events-none absolute right-0 bottom-1 left-0 flex items-center justify-center gap-1 text-[10px] text-gray-400">
-            <span>more</span>
+          <div className="pointer-events-none absolute right-0 bottom-1 left-0 flex items-center justify-start gap-1 text-[10px] text-gray-400">
+            <span>see more</span>
           </div>
         </>
       )}

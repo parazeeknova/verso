@@ -107,8 +107,8 @@ describe("MobileProjectList", () => {
     expect(extraContainer?.style.height).toBe("0px");
     expect(extraContainer?.style.opacity).toBe("0");
 
-    // The view more button should be present
-    const toggleButton = screen.getByRole("button", { name: /view more/i });
+    // The see more button should be present
+    const toggleButton = screen.getByRole("button", { name: /see more/i });
     expect(toggleButton).toBeDefined();
   });
 
@@ -119,7 +119,7 @@ describe("MobileProjectList", () => {
     } as unknown as ReturnType<typeof useProjects>);
     const { container } = render(<MobileProjectList />);
 
-    const toggleButton = screen.getByRole("button", { name: /view more/i });
+    const toggleButton = screen.getByRole("button", { name: /see more/i });
     const extraContainer = container.querySelector(".overflow-hidden") as HTMLDivElement;
 
     // Click to expand

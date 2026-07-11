@@ -212,7 +212,7 @@ export const MobileProjectList = ({ onDetail }: MobileProjectListProps) => {
           onClick={() => setIsExpanded((prev) => !prev)}
           type="button"
         >
-          {isExpanded ? "view less" : "view more"}
+          {isExpanded ? "view less" : "see more"}
         </button>
       )}
     </div>
