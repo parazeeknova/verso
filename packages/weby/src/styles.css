@@ -274,8 +274,12 @@ button {
 .blog-reader-prose blockquote {
   border-left: 3px solid #b58cff;
   background: rgba(181, 140, 255, 0.08);
-  padding: 1rem 1.25rem;
+  padding: 0.25rem 1.25rem;
   margin-left: 0;
+}
+
+.blog-reader-prose blockquote p {
+  margin-bottom: 0;
 }
 
 .blog-reader-prose pre {
