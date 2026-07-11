@@ -137,6 +137,10 @@ func bumpPatch(version string) (string, error) {
 		return "", err
 	}
 
+	if patch >= 100 {
+		return fmt.Sprintf("%d.%d.0", major, minor+1), nil
+	}
+
 	return fmt.Sprintf("%d.%d.%d", major, minor, patch+1), nil
 }
 
