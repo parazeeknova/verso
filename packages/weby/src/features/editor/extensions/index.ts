@@ -23,6 +23,10 @@ const lowlight = createLowlight(common);
 export const getEditorExtensions = () => [
   StarterKit.configure({
     codeBlock: false,
+    dropcursor: {
+      color: "currentColor",
+      width: 2,
+    },
     heading: false,
     link: false,
   }),

@@ -484,7 +484,7 @@ const GlobalDragHandle = Extension.create({
       atomNodes: [] as string[],
       customNodes: [] as string[],
       dragHandleSelector: undefined as string | undefined,
-      dragHandleWidth: 20,
+      dragHandleWidth: 16,
       excludedTags: [] as string[],
       scrollThreshold: 100,
     };
