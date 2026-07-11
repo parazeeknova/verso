@@ -26,6 +26,9 @@ export const CommandList = forwardRef<CommandListRef, CommandListProps>(
 
     useImperativeHandle(ref, () => ({
       onKeyDown: ({ event }) => {
+        if (items.length === 0) {
+          return false;
+        }
         if (event.key === "ArrowUp") {
           setSelectedIndex((prev) => (prev + items.length - 1) % items.length);
           return true;

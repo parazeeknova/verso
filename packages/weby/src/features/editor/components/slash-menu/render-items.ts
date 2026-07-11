@@ -94,6 +94,10 @@ const renderItems = () => {
     onUpdate: (props: SuggestionProps<SlashMenuItemType>) => {
       component?.updateProps(props);
 
+      if (popup) {
+        popup.style.display = "";
+      }
+
       if (!props.clientRect) {
         return;
       }

@@ -212,19 +212,25 @@ const usePageTitle = (title: string, pageId: string) => {
     lastSavedTitleRef.current = title;
   }, [title]);
 
+  const debounceSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const saveTitle = useCallback(
     async (value: string) => {
       const trimmed = value.trim();
       if (trimmed === lastSavedTitleRef.current) {
         return;
       }
-      lastSavedTitleRef.current = trimmed;
+      if (debounceSaveRef.current) {
+        clearTimeout(debounceSaveRef.current);
+        debounceSaveRef.current = null;
+      }
       try {
         await fetchProtected(`/api/console/pages/${pageId}`, {
           body: JSON.stringify({ title: trimmed }),
           headers: { "Content-Type": "application/json" },
           method: "PUT",
         });
+        lastSavedTitleRef.current = trimmed;
         await queryClient.invalidateQueries({ queryKey: ["consolePage"] });
         await queryClient.invalidateQueries({ queryKey: ["consolePages"] });
         await queryClient.invalidateQueries({ queryKey: ["pageTree"] });
@@ -234,8 +240,6 @@ const usePageTitle = (title: string, pageId: string) => {
     },
     [pageId, queryClient],
   );
-
-  const debounceSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleTitleChange = (newVal: string) => {
     setLocalTitle(newVal);
@@ -281,6 +285,7 @@ const usePageTitle = (title: string, pageId: string) => {
               headers: { "Content-Type": "application/json" },
               method: "PUT",
             });
+            lastSavedTitleRef.current = trimmed;
             await queryClient.invalidateQueries({ queryKey: ["consolePage"] });
             await queryClient.invalidateQueries({ queryKey: ["consolePages"] });
             await queryClient.invalidateQueries({ queryKey: ["pageTree"] });
