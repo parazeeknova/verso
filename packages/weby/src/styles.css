@@ -533,3 +533,22 @@ button {
     height: auto !important;
   }
 }
+
+/* Smooth theme fade-out overlays */
+.fade-overlay-light {
+  background: linear-gradient(to top, var(--color-bg-light) 0%, transparent 100%);
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+}
+[data-theme="dark"] .fade-overlay-light {
+  opacity: 0;
+}
+
+.fade-overlay-dark {
+  background: linear-gradient(to top, var(--color-bg-dark) 0%, transparent 100%);
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+}
+[data-theme="dark"] .fade-overlay-dark {
+  opacity: 1;
+}
