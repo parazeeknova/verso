@@ -33,8 +33,7 @@ export const TableHeader = TiptapTableHeader.extend({
       },
     };
   },
-  content:
-    "(paragraph | heading | bulletList | orderedList | taskList | blockquote | callout | image | video | audio | subpages | attachment | mathBlock | details | codeBlock)+",
+  content: "block+",
 
   name: "tableHeader",
 });
