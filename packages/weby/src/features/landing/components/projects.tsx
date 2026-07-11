@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useProjects } from "../hooks/use-data";
+import { gsap } from "gsap";
 import type { Project } from "#/shared/types";
 import { LoadingDots } from "#/shared/components/loading";
 
@@ -108,60 +109,114 @@ interface MobileProjectListProps {
 export const MobileProjectList = ({ onDetail }: MobileProjectListProps) => {
   const { data: projectData, isPending } = useProjects();
   const [isExpanded, setIsExpanded] = useState(false);
+  const extraRef = useRef<HTMLDivElement>(null);
+  const fadeRef = useRef<HTMLDivElement>(null);
+  const isFirstRender = useRef(true);
 
-  const visibleProjects = isExpanded ? projectData : projectData?.slice(0, 3);
+  useEffect(() => {
+    const extra = extraRef.current;
+    const fade = fadeRef.current;
+    if (!extra) {
+      return;
+    }
+
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    if (isExpanded) {
+      gsap.fromTo(
+        extra,
+        { height: 0, opacity: 0 },
+        {
+          duration: 0.3,
+          ease: "power2.inOut",
+          height: "auto",
+          onComplete: () => {
+            extra.style.overflow = "";
+          },
+          onStart: () => {
+            extra.style.overflow = "hidden";
+          },
+          opacity: 1,
+        },
+      );
+      if (fade) {
+        gsap.to(fade, {
+          duration: 0.3,
+          ease: "power2.inOut",
+          opacity: 0,
+        });
+      }
+    } else {
+      gsap.to(extra, {
+        duration: 0.3,
+        ease: "power2.inOut",
+        height: 0,
+        onStart: () => {
+          extra.style.overflow = "hidden";
+        },
+        opacity: 0,
+      });
+      if (fade) {
+        gsap.to(fade, {
+          duration: 0.3,
+          ease: "power2.inOut",
+          opacity: 1,
+        });
+      }
+    }
+  }, [isExpanded]);
+
+  if (isPending) {
+    return <LoadingDots />;
+  }
+
+  if (!projectData || projectData.length === 0) {
+    return null;
+  }
+
+  const hasMore = projectData.length > 3;
 
   return (
     <div>
-      {isExpanded ? (
-        <>
-          <div className="space-y-3 sm:space-y-4">
-            {isPending ? (
-              <LoadingDots />
-            ) : (
-              visibleProjects?.map((project) => (
-                <ProjectCard key={project.title} onDetail={onDetail} project={project} />
-              ))
-            )}
-          </div>
-          <button
-            className="link-underline mt-1 text-gray-400 text-xs"
-            onClick={() => setIsExpanded(false)}
+      <div className="relative space-y-3 sm:space-y-4">
+        {projectData.slice(0, 3).map((project) => (
+          <ProjectCard key={project.title} onDetail={onDetail} project={project} />
+        ))}
+
+        {hasMore && (
+          <div
+            className="space-y-3 sm:space-y-4 overflow-hidden mt-3 sm:mt-4"
+            ref={extraRef}
+            style={{ height: 0, opacity: 0 }}
           >
-            view less
-          </button>
-        </>
-      ) : (
-        <div
-          className="w-full text-left"
-          // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- this div wraps interactive children that include <button> elements, so a native <button> cannot be used here
-          onClick={() => setIsExpanded(true)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              setIsExpanded(true);
-            }
-          }}
-          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- same reason as above, native <button> would nest other <button>s
-          role="button"
-          tabIndex={0}
-        >
-          <div className="relative space-y-3 sm:space-y-4">
-            {isPending ? (
-              <LoadingDots />
-            ) : (
-              visibleProjects?.map((project) => (
-                <ProjectCard key={project.title} onDetail={onDetail} project={project} />
-              ))
-            )}
-            <div
-              className="pointer-events-none absolute right-0 bottom-0 left-0 h-16"
-              style={{
-                background: `linear-gradient(to top, var(--fade-color) 0%, transparent 100%)`,
-              }}
-            />
+            {projectData.slice(3).map((project) => (
+              <ProjectCard key={project.title} onDetail={onDetail} project={project} />
+            ))}
           </div>
-          <span className="link-underline mt-1 block text-gray-400 text-xs">view more</span>
-        </div>
+        )}
+
+        {hasMore && (
+          <div
+            className="pointer-events-none absolute right-0 bottom-0 left-0 h-16"
+            ref={fadeRef}
+            style={{
+              background: `linear-gradient(to top, var(--fade-color) 0%, transparent 100%)`,
+            }}
+          />
+        )}
+      </div>
+
+      {hasMore && (
+        <button
+          className="link-underline mt-1 text-gray-400 text-xs text-left select-none cursor-pointer"
+          onClick={() => setIsExpanded((prev) => !prev)}
+          type="button"
+        >
+          {isExpanded ? "view less" : "view more"}
+        </button>
       )}
     </div>
   );
