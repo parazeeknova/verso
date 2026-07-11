@@ -275,13 +275,14 @@ const SpaceBreadcrumb = ({
 
       <div className="relative" ref={wsRef}>
         <button
-          className={`flex items-center gap-0.5 lowercase text-[12px] ${t("text-text-dark/50 hover:text-text-dark", "text-text-light/50 hover:text-text-light")}`}
+          className={`flex items-center gap-1.5 lowercase text-[12px] ${t("text-text-dark/50 hover:text-text-dark", "text-text-light/50 hover:text-text-light")}`}
           onClick={() => setWsMenuOpen((o) => !o)}
           type="button"
         >
           <AvatarBadge
-            className={`w-3.5 h-3.5 ${t("bg-white/10 text-text-dark/50", "bg-black/5 text-text-light/50")}`}
+            className={`w-5 h-5 ${t("bg-white/10 text-text-dark/50", "bg-black/5 text-text-light/50")}`}
             icon={selectedWorkspace?.icon}
+            initialsClass={`text-[9px] font-semibold ${t("text-text-dark/60", "text-text-light/60")}`}
             name={selectedWorkspace?.name ?? "..."}
           />
           {selectedWorkspace?.name ?? "..."}
@@ -301,8 +302,9 @@ const SpaceBreadcrumb = ({
                 type="button"
               >
                 <AvatarBadge
-                  className={`mx-0.5 h-3.5 w-3.5 ${t("bg-white/10 text-text-dark/50", "bg-black/5 text-text-light/50")}`}
+                  className={`mx-0.5 h-5 w-5 ${t("bg-white/10 text-text-dark/50", "bg-black/5 text-text-light/50")}`}
                   icon={w.icon}
+                  initialsClass={`text-[9px] font-semibold ${t("text-text-dark/60", "text-text-light/60")}`}
                   name={w.name}
                 />
                 <span className="truncate">{w.name}</span>
@@ -316,13 +318,14 @@ const SpaceBreadcrumb = ({
 
       <div className="relative" ref={spRef}>
         <button
-          className={`flex items-center gap-0.5 lowercase text-[12px] ${t("text-text-dark/70 hover:text-text-dark", "text-text-light/70 hover:text-text-light")}`}
+          className={`flex items-center gap-1.5 lowercase text-[12px] ${t("text-text-dark/70 hover:text-text-dark", "text-text-light/70 hover:text-text-light")}`}
           onClick={() => setSpMenuOpen((o) => !o)}
           type="button"
         >
           <AvatarBadge
-            className={`w-3.5 h-3.5 ${t("bg-white/10 text-text-dark/60", "bg-black/5 text-text-light/60")}`}
+            className={`w-5 h-5 ${t("bg-white/10 text-text-dark/60", "bg-black/5 text-text-light/60")}`}
             icon={currentSpace?.icon}
+            initialsClass={`text-[9px] font-semibold ${t("text-text-dark/60", "text-text-light/60")}`}
             name={currentSpace?.name ?? spaceSlug}
           />
           <span className="truncate max-w-25">{currentSpace?.name ?? spaceSlug}</span>
@@ -343,8 +346,9 @@ const SpaceBreadcrumb = ({
                 type="button"
               >
                 <AvatarBadge
-                  className={`mx-0.5 h-3.5 w-3.5 ${t("bg-white/10 text-text-dark/60", "bg-black/5 text-text-light/60")}`}
+                  className={`mx-0.5 h-5 w-5 ${t("bg-white/10 text-text-dark/60", "bg-black/5 text-text-light/60")}`}
                   icon={s.icon}
+                  initialsClass={`text-[9px] font-semibold ${t("text-text-dark/60", "text-text-light/60")}`}
                   name={s.name}
                 />
                 <span className="truncate">{s.name}</span>
