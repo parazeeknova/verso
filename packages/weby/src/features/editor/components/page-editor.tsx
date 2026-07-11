@@ -17,6 +17,8 @@ import {
 } from "#/features/console/hooks/use-page-favorites";
 import { setFlashToast } from "#/features/console/components/flash-toast";
 import { useIsPageWatching, useWatchPage } from "#/features/console/hooks/use-page-watches";
+import { TableMenu } from "./table/table-menu";
+import { TableHandlesLayer } from "./table/handle/table-handles-layer";
 import { BlogTableOfContents } from "#/features/blog/components/blog-table-of-contents";
 import type { BlogHeading } from "#/features/blog/lib/blog-headings";
 import { extractEditorHeadings } from "#/features/editor/lib/editor-headings";
@@ -968,6 +970,12 @@ export const PageEditor = ({
         />
         <CreatorByline creator={creator} t={t} />
         <EditorContent editor={editor} />
+        {editor && editable && (
+          <>
+            <TableMenu editor={editor} />
+            <TableHandlesLayer editor={editor} />
+          </>
+        )}
       </div>
 
       <PageDetailsPanel

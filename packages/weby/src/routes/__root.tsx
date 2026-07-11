@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { useState } from "react";
+import { MantineProvider } from "@mantine/core";
 
+import mantineCss from "@mantine/core/styles.css?url";
 import appCss from "../styles.css?url";
 
 const createQueryClient = () =>
@@ -23,7 +25,9 @@ const RootComponent = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <MantineProvider>
+        <Outlet />
+      </MantineProvider>
     </QueryClientProvider>
   );
 };
@@ -53,6 +57,10 @@ export const Route = createRootRoute({
   component: RootComponent,
   head: () => ({
     links: [
+      {
+        href: mantineCss,
+        rel: "stylesheet",
+      },
       {
         href: appCss,
         rel: "stylesheet",
