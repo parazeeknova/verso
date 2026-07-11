@@ -22,7 +22,64 @@ interface ProfileSectionProps {
 
 export const ProfileSection = ({ profile, isPending, isMobile }: ProfileSectionProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const profileDescRef = useRef<HTMLDivElement>(null);
+  const profileFadeRef = useRef<HTMLDivElement>(null);
+  const isFirstRender = useRef(true);
   const portfolio = getLink(profile?.links, "portfolio");
+
+  useEffect(() => {
+    const desc = profileDescRef.current;
+    const fade = profileFadeRef.current;
+    if (!desc) {
+      return;
+    }
+
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    if (isExpanded) {
+      gsap.fromTo(
+        desc,
+        { height: 96 },
+        {
+          duration: 0.3,
+          ease: "power2.inOut",
+          height: "auto",
+          onComplete: () => {
+            desc.style.overflow = "";
+          },
+          onStart: () => {
+            desc.style.overflow = "hidden";
+          },
+        },
+      );
+      if (fade) {
+        gsap.to(fade, {
+          duration: 0.3,
+          ease: "power2.inOut",
+          opacity: 0,
+        });
+      }
+    } else {
+      gsap.to(desc, {
+        duration: 0.3,
+        ease: "power2.inOut",
+        height: 96,
+        onStart: () => {
+          desc.style.overflow = "hidden";
+        },
+      });
+      if (fade) {
+        gsap.to(fade, {
+          duration: 0.3,
+          ease: "power2.inOut",
+          opacity: 1,
+        });
+      }
+    }
+  }, [isExpanded]);
 
   const descriptionHtml = useMemo(
     () => (profile?.description ? markdownToHtml(profile.description) : ""),
@@ -67,40 +124,30 @@ export const ProfileSection = ({ profile, isPending, isMobile }: ProfileSectionP
         <>
           {isMobile ? (
             <div>
-              {isExpanded ? (
-                <>
-                  <p className="text-sm leading-relaxed">{description}</p>
-                  <button
-                    className="link-underline mt-1 text-gray-400 text-xs"
-                    onClick={() => setIsExpanded(false)}
-                    type="button"
-                  >
-                    view less
-                  </button>
-                </>
-              ) : (
-                <button
-                  className="w-full text-left"
-                  onClick={() => setIsExpanded(true)}
-                  type="button"
-                >
-                  <div className="relative max-h-24 overflow-hidden text-sm leading-relaxed">
-                    {description}
-                    <div
-                      className="pointer-events-none absolute right-0 bottom-0 left-0 h-16"
-                      style={{
-                        background: `linear-gradient(to top, var(--fade-color) 0%, transparent 100%)`,
-                      }}
-                    />
-                  </div>
-                  <span className="link-underline mt-1 block text-center text-gray-400 text-xs">
-                    more
-                  </span>
-                </button>
-              )}
+              <div
+                className="relative overflow-hidden text-sm leading-relaxed lowercase"
+                ref={profileDescRef}
+                style={{ height: 96 }}
+              >
+                {description}
+                <div
+                  className="pointer-events-none absolute right-0 bottom-0 left-0 h-16"
+                  ref={profileFadeRef}
+                  style={{
+                    background: `linear-gradient(to top, var(--fade-color) 0%, transparent 100%)`,
+                  }}
+                />
+              </div>
+              <button
+                className="link-underline mt-1 block text-center text-gray-400 text-xs w-full select-none cursor-pointer"
+                onClick={() => setIsExpanded((prev) => !prev)}
+                type="button"
+              >
+                {isExpanded ? "view less" : "more"}
+              </button>
             </div>
           ) : (
-            <p className="text-sm leading-relaxed sm:text-base">{description}</p>
+            <p className="text-sm leading-relaxed sm:text-base lowercase">{description}</p>
           )}
         </>
       )}

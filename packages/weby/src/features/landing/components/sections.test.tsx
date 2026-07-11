@@ -94,6 +94,34 @@ describe("ProfileSection", () => {
     expect(link).toBeDefined();
     expect(link.closest("a")?.getAttribute("href")).toBe("https://example.com");
   });
+
+  it("can expand and collapse description smoothly on mobile", () => {
+    const { container } = render(
+      <ProfileSection profile={mockProfile} isMobile={true} isPending={false} />,
+    );
+
+    // Find the more button
+    const toggleButton = screen.getByRole("button", { name: /more/i });
+    expect(toggleButton).toBeDefined();
+
+    // The description wrapper should be collapsed initially (height: 96px)
+    const descContainer = container.querySelector(".overflow-hidden") as HTMLDivElement;
+    expect(descContainer?.style.height).toBe("96px");
+
+    // Click to expand
+    fireEvent.click(toggleButton);
+
+    // Style checks for expanded state
+    expect(screen.getByRole("button", { name: /view less/i })).toBeDefined();
+    expect(descContainer?.style.height).toBe("auto");
+
+    // Click to collapse
+    const collapseButton = screen.getByRole("button", { name: /view less/i });
+    fireEvent.click(collapseButton);
+
+    // Style checks for collapsed state again
+    expect(descContainer?.style.height).toBe("96px");
+  });
 });
 
 describe("ExperienceSection", () => {
