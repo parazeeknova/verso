@@ -5,12 +5,15 @@ import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
 
 const audio = typeof Audio === "undefined" ? null : new Audio("/notification.mp3");
 
-export const useNotificationStream = () => {
+export const useNotificationStream = (enabled: boolean) => {
   const queryClient = useQueryClient();
   const esRef = useRef<EventSource | null>(null);
   const reconnectTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
     let stopped = false;
 
     const clearReconnectTimer = () => {
@@ -86,5 +89,5 @@ export const useNotificationStream = () => {
       esRef.current?.close();
       clearReconnectTimer();
     };
-  }, [queryClient]);
+  }, [enabled, queryClient]);
 };

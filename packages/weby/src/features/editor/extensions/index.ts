@@ -15,12 +15,18 @@ import { Superscript } from "@tiptap/extension-superscript";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { HeadingWithIds } from "#/features/blog/components/tiptap-heading-ids";
+import GlobalDragHandle from "./drag-handle";
+import SlashCommand from "./slash-command";
 
 const lowlight = createLowlight(common);
 
 export const getEditorExtensions = () => [
   StarterKit.configure({
     codeBlock: false,
+    dropcursor: {
+      color: "var(--color-text)",
+      width: 2,
+    },
     heading: false,
     link: false,
   }),
@@ -55,6 +61,33 @@ export const getEditorExtensions = () => [
   Superscript,
   Subscript,
   Placeholder.configure({
-    placeholder: "Press / for commands...",
+    placeholder: ({ editor, node, pos }) => {
+      if (node.type.name === "heading") {
+        return `Heading ${node.attrs.level}`;
+      }
+      if (node.type.name === "detailsSummary") {
+        return "Toggle title";
+      }
+      if (node.type.name === "paragraph") {
+        const $pos = editor.state.doc.resolve(pos);
+        const parentName = $pos.parent.type.name;
+        if (
+          parentName === "column" ||
+          parentName === "tableCell" ||
+          parentName === "tableHeader" ||
+          parentName === "callout" ||
+          parentName === "blockquote"
+        ) {
+          return "Write...";
+        }
+        return 'Write anything. Enter "/" for commands';
+      }
+      return "";
+    },
   }),
+  GlobalDragHandle.configure({
+    atomNodes: ["base"] as string[],
+    customNodes: ["transclusionSource", "transclusionReference"] as string[],
+  }),
+  SlashCommand,
 ];

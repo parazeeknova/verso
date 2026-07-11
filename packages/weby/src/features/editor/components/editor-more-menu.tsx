@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
+import { gsap } from "gsap";
+
 import {
   DotsThreeVerticalIcon,
   EyeIcon,
@@ -354,13 +356,39 @@ export const EditorMoreMenu = ({
     setPos({ left, top });
   }, []);
 
+  const closeMenu = useCallback(() => {
+    if (menuRef.current) {
+      gsap.to(menuRef.current, {
+        duration: 0.12,
+        ease: "power2.in",
+        onComplete: () => setOpen(false),
+        opacity: 0,
+        scale: 0.95,
+        y: -4,
+      });
+    } else {
+      setOpen(false);
+    }
+  }, []);
+
   const toggle = useCallback(() => {
-    if (!open) {
-      // Use setTimeout to allow the menu to render before measuring height
+    if (open) {
+      closeMenu();
+    } else {
+      setOpen(true);
       setTimeout(updatePosition, 0);
     }
-    setOpen((prev) => !prev);
-  }, [open, updatePosition]);
+  }, [open, updatePosition, closeMenu]);
+
+  useEffect(() => {
+    if (open && menuRef.current) {
+      gsap.fromTo(
+        menuRef.current,
+        { opacity: 0, scale: 0.95, y: -4 },
+        { duration: 0.15, ease: "power2.out", opacity: 1, scale: 1, y: 0 },
+      );
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open) {
@@ -377,12 +405,12 @@ export const EditorMoreMenu = ({
         buttonRef.current &&
         !buttonRef.current.contains(target)
       ) {
-        setOpen(false);
+        closeMenu();
       }
     };
     document.addEventListener("mousedown", onMouseDown);
     return () => document.removeEventListener("mousedown", onMouseDown);
-  }, [open]);
+  }, [open, closeMenu]);
 
   const menuItem = (
     icon: React.ReactNode,
@@ -402,7 +430,7 @@ export const EditorMoreMenu = ({
         if (disabled) {
           return;
         }
-        setOpen(false);
+        closeMenu();
         onClick?.();
       }}
       t={t}

@@ -51,6 +51,7 @@ const ProfileDropdown = ({
   workspaceName,
 }: ProfileDropdownProps) => {
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const initialsClass = `text-[10px] font-medium ${t("text-text-dark/60", "text-text-light/60")}`;
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -91,6 +92,7 @@ const ProfileDropdown = ({
         <AvatarBadge
           className={`w-4 h-4 ${t("bg-white/10 text-text-dark/60", "bg-black/5 text-text-light/60")}`}
           icon={selectedWorkspace?.icon}
+          initialsClass={initialsClass}
           name={selectedWorkspace?.name ?? workspaceName}
         />
         {workspaceName}
@@ -133,6 +135,7 @@ const ProfileDropdown = ({
                 <AvatarBadge
                   className={`w-6 h-6 ${t("bg-white/10 text-text-dark/60", "bg-black/5 text-text-light/60")}`}
                   icon={user?.avatar_url}
+                  initialsClass={initialsClass}
                   name={user?.name || user?.username || "?"}
                 />
                 <div className="flex-1 min-w-0">
@@ -229,6 +232,7 @@ const SpaceBreadcrumb = ({
   spaceSlug,
 }: SpaceBreadcrumbProps) => {
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const initialsClass = `text-[10px] font-medium ${t("text-text-dark/60", "text-text-light/60")}`;
   const { data: spaces } = useSpaces(selectedWorkspace?.id ?? "");
   const { data: currentSpace } = useSpaceBySlug(spaceSlug);
   const [wsMenuOpen, setWsMenuOpen] = useState(false);
@@ -275,13 +279,14 @@ const SpaceBreadcrumb = ({
 
       <div className="relative" ref={wsRef}>
         <button
-          className={`flex items-center gap-0.5 lowercase text-[12px] ${t("text-text-dark/50 hover:text-text-dark", "text-text-light/50 hover:text-text-light")}`}
+          className={`flex items-center gap-1.5 lowercase text-[12px] ${t("text-text-dark/50 hover:text-text-dark", "text-text-light/50 hover:text-text-light")}`}
           onClick={() => setWsMenuOpen((o) => !o)}
           type="button"
         >
           <AvatarBadge
             className={`w-3.5 h-3.5 ${t("bg-white/10 text-text-dark/50", "bg-black/5 text-text-light/50")}`}
             icon={selectedWorkspace?.icon}
+            initialsClass={initialsClass}
             name={selectedWorkspace?.name ?? "..."}
           />
           {selectedWorkspace?.name ?? "..."}
@@ -303,6 +308,7 @@ const SpaceBreadcrumb = ({
                 <AvatarBadge
                   className={`mx-0.5 h-3.5 w-3.5 ${t("bg-white/10 text-text-dark/50", "bg-black/5 text-text-light/50")}`}
                   icon={w.icon}
+                  initialsClass={initialsClass}
                   name={w.name}
                 />
                 <span className="truncate">{w.name}</span>
@@ -316,13 +322,14 @@ const SpaceBreadcrumb = ({
 
       <div className="relative" ref={spRef}>
         <button
-          className={`flex items-center gap-0.5 lowercase text-[12px] ${t("text-text-dark/70 hover:text-text-dark", "text-text-light/70 hover:text-text-light")}`}
+          className={`flex items-center gap-1.5 lowercase text-[12px] ${t("text-text-dark/70 hover:text-text-dark", "text-text-light/70 hover:text-text-light")}`}
           onClick={() => setSpMenuOpen((o) => !o)}
           type="button"
         >
           <AvatarBadge
             className={`w-3.5 h-3.5 ${t("bg-white/10 text-text-dark/60", "bg-black/5 text-text-light/60")}`}
             icon={currentSpace?.icon}
+            initialsClass={initialsClass}
             name={currentSpace?.name ?? spaceSlug}
           />
           <span className="truncate max-w-25">{currentSpace?.name ?? spaceSlug}</span>
@@ -345,6 +352,7 @@ const SpaceBreadcrumb = ({
                 <AvatarBadge
                   className={`mx-0.5 h-3.5 w-3.5 ${t("bg-white/10 text-text-dark/60", "bg-black/5 text-text-light/60")}`}
                   icon={s.icon}
+                  initialsClass={initialsClass}
                   name={s.name}
                 />
                 <span className="truncate">{s.name}</span>

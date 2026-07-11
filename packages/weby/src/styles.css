@@ -135,10 +135,10 @@ button {
 }
 
 .blog-reader-prose .tiptap {
-  color: var(--color-text);
-  font-family: "Ubuntu Mono", monospace;
-  font-size: 0.98rem;
-  line-height: 1.6;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
   text-transform: lowercase;
   outline: none !important;
   border: none !important;
@@ -180,15 +180,19 @@ button {
 }
 
 .blog-reader-prose {
-  color: var(--color-text);
+  color: #262626;
   font-family: "Ubuntu Mono", monospace;
-  font-size: 0.875rem;
-  line-height: 1.6;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+[data-theme="dark"] .blog-reader-prose {
+  color: #e5e5e5;
 }
 
 @media (min-width: 640px) {
   .blog-reader-prose {
-    font-size: 1rem;
+    font-size: 0.875rem;
   }
 }
 
@@ -220,7 +224,25 @@ button {
 .blog-reader-prose ol,
 .blog-reader-prose blockquote,
 .blog-reader-prose pre {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.blog-reader-prose ul:not([data-type="taskList"]) {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+}
+
+.blog-reader-prose ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+}
+
+.blog-reader-prose ol ol {
+  list-style-type: lower-alpha;
+}
+
+.blog-reader-prose ol ol ol {
+  list-style-type: lower-roman;
 }
 
 .blog-reader-prose li {
@@ -228,8 +250,20 @@ button {
   line-height: 1.5;
 }
 
-.blog-reader-prose li > p {
+.blog-reader-prose li p {
   margin-bottom: 0;
+}
+
+.blog-reader-prose hr {
+  background-color: #d4d4d4 !important; /* light gray in light mode */
+  border: none !important;
+  display: block !important;
+  height: 1px !important;
+  margin: 1.5rem 0 !important;
+}
+
+[data-theme="dark"] .blog-reader-prose hr {
+  background-color: #404040 !important; /* visible gray in dark mode */
 }
 
 .blog-reader-prose a {
@@ -240,8 +274,12 @@ button {
 .blog-reader-prose blockquote {
   border-left: 3px solid #b58cff;
   background: rgba(181, 140, 255, 0.08);
-  padding: 1rem 1.25rem;
+  padding: 0.25rem 1.25rem;
   margin-left: 0;
+}
+
+.blog-reader-prose blockquote p {
+  margin-bottom: 0;
 }
 
 .blog-reader-prose pre {
@@ -315,7 +353,7 @@ button {
 
 .blog-reader-prose ul[data-type="taskList"] {
   list-style: none;
-  padding-left: 0;
+  padding-left: 0.25rem;
 }
 
 .blog-reader-prose ul[data-type="taskList"] li {
@@ -326,8 +364,56 @@ button {
 
 .blog-reader-prose ul[data-type="taskList"] li > label {
   flex: 0 0 auto;
-  margin-top: 0.25em;
+  margin-top: 0.25rem;
   user-select: none;
+  display: flex;
+  align-items: center;
+}
+
+.blog-reader-prose ul[data-type="taskList"] li > label input[type="checkbox"] {
+  appearance: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background-color: transparent;
+  transition: all 0.2s ease;
+}
+
+.blog-reader-prose ul[data-type="taskList"] li > label input[type="checkbox"]:focus-visible {
+  outline: 2px solid #b58cff;
+  outline-offset: 1px;
+}
+
+.blog-reader-prose ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
+  background-color: #b58cff;
+  border-color: #b58cff;
+}
+
+.blog-reader-prose ul[data-type="taskList"] li > label input[type="checkbox"]:checked::after {
+  content: "";
+  display: block;
+  width: 0.18rem;
+  height: 0.32rem;
+  border: solid white;
+  border-width: 0 1.2px 1.2px 0;
+  transform: rotate(45deg);
+  position: absolute;
+  top: 15%;
+  left: 33%;
+}
+
+.blog-reader-prose ul[data-type="taskList"] li[data-checked="true"] > div,
+.blog-reader-prose ul[data-type="taskList"] li[data-state="checked"] > div {
+  text-decoration: line-through;
+  opacity: 0.45;
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
 }
 
 .blog-reader-prose ul[data-type="taskList"] li > div {
@@ -542,4 +628,75 @@ button {
 .fade-overlay-top {
   background: linear-gradient(to bottom, var(--fade-color) 0%, transparent 100%);
   transition: --fade-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drag-handle {
+  position: fixed;
+  opacity: 1;
+  transition: opacity ease-in 0.2s;
+  border-radius: 0.15rem;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 0.6rem 0.8rem;
+  width: 1rem;
+  height: 1.25rem;
+  z-index: 50;
+  cursor: grab;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' style='fill: rgba(55, 53, 47, 0.3)'%3E%3Cpath d='M3,2 C2.44771525,2 2,1.55228475 2,1 C2,0.44771525 2.44771525,0 3,0 C3.55228475,0 4,0.44771525 4,1 C4,1.55228475 3.55228475,2 3,2 Z M3,6 C2.44771525,6 2,5.55228475 2,5 C2,4.44771525 2.44771525,4 3,4 C3.55228475,4 4,4.44771525 4,5 C4,5.55228475 3.55228475,6 3,6 Z M3,10 C2.44771525,10 2,9.55228475 2,9 C2,8.44771525 2.44771525,8 3,8 C3.55228475,8 4,8.44771525 4,9 C4,9.55228475 3.55228475,10 3,10 Z M7,2 C6.44771525,2 6,1.55228475 6,1 C6,0.44771525 6.44771525,0 7,0 C7.55228475,0 8,0.44771525 8,1 C8,1.55228475 7.55228475,2 7,2 Z M7,6 C6.44771525,6 6,5.55228475 6,5 C6,4.44771525 6.44771525,4 7,4 C7.55228475,4 8,4.44771525 8,5 C8,5.55228475 7.55228475,6 7,6 Z M7,10 C6.44771525,10 6,9.55228475 6,9 C6,8.44771525 6.44771525,8 7,8 C7.55228475,8 8,8.44771525 8,9 C8,9.55228475 7.55228475,10 7,10 Z'%3E%3C/path%3E%3C/svg%3E");
+}
+
+.drag-handle:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.drag-handle:active {
+  background-color: rgba(0, 0, 0, 0.05);
+  cursor: grabbing;
+}
+
+.drag-handle.hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media screen and (max-width: 600px) {
+  .drag-handle {
+    display: none;
+    pointer-events: none;
+  }
+}
+
+[data-theme="dark"] .drag-handle {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' style='fill: rgba(255, 255, 255, 0.5)'%3E%3Cpath d='M3,2 C2.44771525,2 2,1.55228475 2,1 C2,0.44771525 2.44771525,0 3,0 C3.55228475,0 4,0.44771525 4,1 C4,1.55228475 3.55228475,2 3,2 Z M3,6 C2.44771525,6 2,5.55228475 2,5 C2,4.44771525 2.44771525,4 3,4 C3.55228475,4 4,4.44771525 4,5 C4,5.55228475 3.55228475,6 3,6 Z M3,10 C2.44771525,10 2,9.55228475 2,9 C2,8.44771525 2.44771525,8 3,8 C3.55228475,8 4,8.44771525 4,9 C4,9.55228475 3.55228475,10 3,10 Z M7,2 C6.44771525,2 6,1.55228475 6,1 C6,0.44771525 6.44771525,0 7,0 C7.55228475,0 8,0.44771525 8,1 C8,1.55228475 7.55228475,2 7,2 Z M7,6 C6.44771525,6 6,5.55228475 6,5 C6,4.44771525 6.44771525,4 7,4 C7.55228475,4 8,4.44771525 8,5 C8,5.55228475 7.55228475,6 7,6 Z M7,10 C6.44771525,10 6,9.55228475 6,9 C6,8.44771525 6.44771525,8 7,8 C7.55228475,8 8,8.44771525 8,9 C8,9.55228475 7.55228475,10 7,10 Z'%3E%3C/path%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] .drag-handle:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Tiptap Placeholder styles */
+.ProseMirror .is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--color-text);
+  opacity: 0.35;
+  pointer-events: none;
+  height: 0;
+}
+
+.ProseMirror table .is-empty::before {
+  display: none;
+}
+
+/* Drag and drop cursor indicator line styles */
+.ProseMirror-dropcursor,
+.ProseMirror-dropCursor {
+  background-color: #404040 !important; /* dark gray in light mode */
+  border-color: #404040 !important;
+}
+
+[data-theme="dark"] .ProseMirror-dropcursor,
+[data-theme="dark"] .ProseMirror-dropCursor {
+  background-color: #e5e5e5 !important; /* off-white in dark mode */
+  border-color: #e5e5e5 !important;
 }
