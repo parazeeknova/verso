@@ -254,6 +254,12 @@ button {
   margin-bottom: 0;
 }
 
+.blog-reader-prose hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 1rem 0;
+}
+
 .blog-reader-prose a {
   color: #b58cff;
   text-decoration: underline;
@@ -668,17 +674,13 @@ button {
 }
 
 /* Drag and drop cursor indicator line styles */
-.ProseMirror .ProseMirror-dropcursor,
 .ProseMirror-dropcursor,
-.ProseMirror .ProseMirror-dropCursor,
 .ProseMirror-dropCursor {
   background-color: #404040 !important; /* dark gray in light mode */
   border-color: #404040 !important;
 }
 
-[data-theme="dark"] .ProseMirror .ProseMirror-dropcursor,
 [data-theme="dark"] .ProseMirror-dropcursor,
-[data-theme="dark"] .ProseMirror .ProseMirror-dropCursor,
 [data-theme="dark"] .ProseMirror-dropCursor {
   background-color: #e5e5e5 !important; /* off-white in dark mode */
   border-color: #e5e5e5 !important;

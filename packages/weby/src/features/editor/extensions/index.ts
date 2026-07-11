@@ -24,7 +24,7 @@ export const getEditorExtensions = () => [
   StarterKit.configure({
     codeBlock: false,
     dropcursor: {
-      color: "currentColor",
+      color: "var(--color-text)",
       width: 2,
     },
     heading: false,
