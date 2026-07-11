@@ -3,6 +3,8 @@ import type { JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { useEffect, useCallback, useMemo, useRef, useState } from "react";
 import { BookmarkSimpleIcon, InfoIcon, ListBulletsIcon, XIcon } from "@phosphor-icons/react";
+import { gsap } from "gsap";
+
 import { useTheme } from "#/shared/hooks/use-theme";
 import { getEditorExtensions } from "#/features/editor/extensions";
 import { useEditorContent } from "#/features/editor/hooks/use-editor-content";
@@ -422,6 +424,7 @@ const PageDetailsPanel = ({
   readingTime,
   t,
   onClose,
+  isOpen,
 }: {
   creator: CreatorInfo | null | undefined;
   spaceName?: string;
@@ -432,19 +435,61 @@ const PageDetailsPanel = ({
   readingTime: number;
   t: (dark: string, light: string) => string;
   onClose: () => void;
+  isOpen: boolean;
 }) => {
   const displayName = creator?.name || creator?.username || "creator";
+  const containerRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    gsap.set(backdropRef.current, { opacity: 0 });
+    gsap.set(panelRef.current, { x: "100%" });
+    gsap.set(containerRef.current, { display: "none" });
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      gsap.set(containerRef.current, { display: "block" });
+      gsap.to(backdropRef.current, {
+        duration: 0.25,
+        ease: "power2.out",
+        opacity: 1,
+      });
+      gsap.to(panelRef.current, {
+        duration: 0.3,
+        ease: "power2.out",
+        x: "0%",
+      });
+    } else {
+      gsap.to(backdropRef.current, {
+        duration: 0.2,
+        ease: "power2.in",
+        opacity: 0,
+      });
+      gsap.to(panelRef.current, {
+        duration: 0.25,
+        ease: "power2.in",
+        onComplete: () => {
+          gsap.set(containerRef.current, { display: "none" });
+        },
+        x: "100%",
+      });
+    }
+  }, [isOpen]);
 
   return (
-    <>
+    <div ref={containerRef} className="fixed inset-0 z-50 pointer-events-none">
       <button
-        className="fixed inset-0 z-40 md:hidden"
+        ref={backdropRef}
+        className="absolute inset-0 bg-black/10 dark:bg-black/30 pointer-events-auto md:hidden"
         onClick={onClose}
         type="button"
         aria-label="Close details"
       />
       <div
-        className={`fixed top-0 right-0 z-50 h-full w-full sm:w-64 border-l p-4 flex flex-col shadow-xl ${t(
+        ref={panelRef}
+        className={`absolute top-0 right-0 h-full w-full sm:w-64 border-l p-4 flex flex-col shadow-xl pointer-events-auto ${t(
           "bg-neutral-900 border-neutral-800 text-neutral-200",
           "bg-white border-neutral-200 text-neutral-800",
         )}`}
@@ -531,7 +576,7 @@ const PageDetailsPanel = ({
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
@@ -552,20 +597,63 @@ const TableOfContentsModal = ({
   isDarkMode: boolean;
   handleSelectHeading: (id: string) => void;
 }) => {
-  if (!tocOpen) {
-    return null;
-  }
+  const containerRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLButtonElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    gsap.set(backdropRef.current, { opacity: 0 });
+    gsap.set(sidebarRef.current, { x: "100%" });
+    gsap.set(containerRef.current, { display: "none" });
+  }, []);
+
+  useEffect(() => {
+    if (tocOpen) {
+      gsap.set(containerRef.current, { display: "block" });
+      gsap.to(backdropRef.current, {
+        duration: 0.25,
+        ease: "power2.out",
+        opacity: 1,
+      });
+      gsap.to(sidebarRef.current, {
+        duration: 0.3,
+        ease: "power2.out",
+        x: "0%",
+      });
+    } else {
+      gsap.to(backdropRef.current, {
+        duration: 0.2,
+        ease: "power2.in",
+        opacity: 0,
+      });
+      gsap.to(sidebarRef.current, {
+        duration: 0.25,
+        ease: "power2.in",
+        onComplete: () => {
+          gsap.set(containerRef.current, { display: "none" });
+        },
+        x: "100%",
+      });
+    }
+  }, [tocOpen]);
 
   return (
-    <div className="fixed inset-0 z-80" role="dialog" aria-modal="true">
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-80 pointer-events-none"
+      role="dialog"
+      aria-modal="true"
+    >
       <button
+        ref={backdropRef}
         aria-label="Close table of contents"
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 bg-black/40 pointer-events-auto"
         onClick={() => setTocOpen(false)}
         type="button"
       />
       <div
-        className={`absolute right-0 top-0 flex h-full w-[min(92vw,18rem)] flex-col border-l shadow-2xl ${t("border-border-dark bg-text-light", "border-border-light bg-white")}`}
+        ref={sidebarRef}
+        className={`absolute right-0 top-0 flex h-full w-[min(92vw,18rem)] flex-col border-l shadow-2xl pointer-events-auto ${t("border-border-dark bg-text-light", "border-border-light bg-white")}`}
       >
         <div
           className={`flex items-center justify-between border-b px-3 py-2 ${t("border-border-dark", "border-border-light")}`}
@@ -582,7 +670,10 @@ const TableOfContentsModal = ({
           </div>
           <button
             aria-label="Close table of contents"
-            className={`p-0.5 ${t("text-text-dark/50 hover:text-text-dark", "text-text-light/50 hover:text-text-light")}`}
+            className={`p-0.5 rounded-sm transition-colors ${t(
+              "text-text-dark/40 hover:text-text-dark hover:bg-white/5",
+              "text-text-light/40 hover:text-text-light hover:bg-black/5",
+            )}`}
             onClick={() => setTocOpen(false)}
             type="button"
           >
@@ -859,28 +950,27 @@ export const PageEditor = ({
         <EditorContent editor={editor} />
       </div>
 
-      {detailsOpen &&
-        (() => {
+      <PageDetailsPanel
+        creator={creator}
+        spaceName={spaceName}
+        createdAt={createdAt}
+        updatedAt={updatedAt}
+        wordCount={(() => {
           const currentText = editor?.getText() || textContent || "";
-          const charCount = currentText.length;
+          return currentText.trim() ? currentText.trim().split(/\s+/).filter(Boolean).length : 0;
+        })()}
+        characterCount={(editor?.getText() || textContent || "").length}
+        readingTime={(() => {
+          const currentText = editor?.getText() || textContent || "";
           const wCount = currentText.trim()
             ? currentText.trim().split(/\s+/).filter(Boolean).length
             : 0;
-          const rTime = Math.max(1, Math.ceil(wCount / 200));
-          return (
-            <PageDetailsPanel
-              creator={creator}
-              spaceName={spaceName}
-              createdAt={createdAt}
-              updatedAt={updatedAt}
-              wordCount={wCount}
-              characterCount={charCount}
-              readingTime={rTime}
-              t={t}
-              onClose={() => setDetailsOpen(false)}
-            />
-          );
+          return Math.max(1, Math.ceil(wCount / 200));
         })()}
+        t={t}
+        onClose={() => setDetailsOpen(false)}
+        isOpen={detailsOpen}
+      />
 
       <TableOfContentsModal
         tocOpen={tocOpen}
