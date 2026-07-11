@@ -1,7 +1,65 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import type { ExperienceItem, Profile } from "#/shared/types";
 import { ExperienceSection, ProfileSection, SocialLinks } from "./sections";
+
+// Mock GSAP to run animations synchronously in JSDOM
+vi.mock("gsap", () => {
+  const mockTimeline = {
+    fromTo: () => mockTimeline,
+    play: () => {},
+    reverse: () => {},
+    to: () => mockTimeline,
+  };
+  const unitlessKeys = new Set(["opacity", "zIndex", "flexGrow", "flexShrink"]);
+  const applyStyles = (el: HTMLElement, props: Record<string, unknown>) => {
+    const styleObj = el.style as unknown as Record<string, string>;
+    for (const [key, val] of Object.entries(props)) {
+      styleObj[key] = typeof val === "number" && !unitlessKeys.has(key) ? `${val}px` : String(val);
+    }
+  };
+
+  return {
+    gsap: {
+      fromTo: (
+        el: HTMLElement | null,
+        _from: Record<string, unknown>,
+        to: Record<string, unknown>,
+      ) => {
+        if (el) {
+          if (typeof to.onStart === "function") {
+            to.onStart();
+          }
+          const { duration: _d, ease: _e, onComplete, onStart: _s, ...styles } = to;
+          applyStyles(el, styles);
+          if (typeof onComplete === "function") {
+            onComplete();
+          }
+        }
+        return mockTimeline;
+      },
+      set: (el: HTMLElement | null, props: Record<string, unknown>) => {
+        if (el) {
+          applyStyles(el, props);
+        }
+      },
+      timeline: () => mockTimeline,
+      to: (el: HTMLElement | null, props: Record<string, unknown>) => {
+        if (el) {
+          if (typeof props.onStart === "function") {
+            props.onStart();
+          }
+          const { duration: _d, ease: _e, onComplete, onStart: _s, ...styles } = props;
+          applyStyles(el, styles);
+          if (typeof onComplete === "function") {
+            onComplete();
+          }
+        }
+        return mockTimeline;
+      },
+    },
+  };
+});
 
 describe("ProfileSection", () => {
   const mockProfile: Profile = {
@@ -62,6 +120,44 @@ describe("ExperienceSection", () => {
     render(<ExperienceSection experience={undefined} isPending={true} />);
     const container = document.querySelector(".shrink-0");
     expect(container).toBeDefined();
+  });
+
+  it("can expand and collapse extra items smoothly", () => {
+    const mockFullExperience: ExperienceItem[] = [
+      { location: "Remote", period: "2020-Present", title: "Software Engineer" },
+      { location: "Remote", period: "2018-2020", title: "Frontend Developer" },
+      { location: "Remote", period: "2016-2018", title: "Junior Engineer" },
+      { location: "Remote", period: "2014-2016", title: "Intern" },
+    ];
+
+    const { container } = render(
+      <ExperienceSection experience={mockFullExperience} isPending={false} />,
+    );
+
+    // Find the see more button
+    const toggleButton = screen.getByRole("button", { name: /see more/i });
+    expect(toggleButton).toBeDefined();
+
+    // The extra items wrapper should be collapsed initially (height: 0, opacity: 0)
+    const extraContainer = container.querySelector(".overflow-hidden") as HTMLDivElement;
+    expect(extraContainer?.style.height).toBe("0px");
+    expect(extraContainer?.style.opacity).toBe("0");
+
+    // Click to expand
+    fireEvent.click(toggleButton);
+
+    // Style checks for expanded state
+    expect(screen.getByRole("button", { name: /view less/i })).toBeDefined();
+    expect(extraContainer?.style.height).toBe("auto");
+    expect(extraContainer?.style.opacity).toBe("1");
+
+    // Click to collapse
+    const collapseButton = screen.getByRole("button", { name: /view less/i });
+    fireEvent.click(collapseButton);
+
+    // Style checks for collapsed state again
+    expect(extraContainer?.style.height).toBe("0px");
+    expect(extraContainer?.style.opacity).toBe("0");
   });
 });
 
