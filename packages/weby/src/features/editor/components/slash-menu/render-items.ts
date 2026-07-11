@@ -11,25 +11,28 @@ const renderItems = () => {
   let cleanup: (() => void) | null = null;
   let getReferenceClientRect: (() => DOMRect) | null = null;
 
-  const updatePosition = async () => {
+  const updatePosition = () => {
     if (!popup || !getReferenceClientRect) {
       return;
     }
 
     const rect = getReferenceClientRect();
 
-    try {
-      const { x, y } = await computePosition({ getBoundingClientRect: () => rect }, popup, {
-        middleware: [offset(8), flip(), shift()],
-        placement: "bottom-start",
+    /* eslint-disable promise/prefer-await-to-then */
+    computePosition({ getBoundingClientRect: () => rect }, popup, {
+      middleware: [offset(8), flip(), shift()],
+      placement: "bottom-start",
+    })
+      .then(({ x, y }) => {
+        if (popup) {
+          popup.style.left = `${x}px`;
+          popup.style.top = `${y}px`;
+        }
+      })
+      .catch(() => {
+        // ignore
       });
-      if (popup) {
-        popup.style.left = `${x}px`;
-        popup.style.top = `${y}px`;
-      }
-    } catch {
-      // ignore
-    }
+    /* eslint-enable promise/prefer-await-to-then */
   };
 
   return {

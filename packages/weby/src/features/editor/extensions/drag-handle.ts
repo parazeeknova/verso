@@ -424,7 +424,7 @@ export const DragHandlePlugin = (options: GlobalDragHandleOptions & { pluginKey:
           dragHandleElement.style.top = `${rect.top}px`;
           showDragHandle();
         },
-        mousewheel: () => {
+        wheel: () => {
           hideDragHandle();
         },
       },

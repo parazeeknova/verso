@@ -57,7 +57,7 @@ const config = defineConfig(async ({ mode }) => {
               };
               if (response?.writeHead && !response.writableEnded) {
                 response.writeHead(502, { "Content-Type": "application/json" });
-                response.end?.(JSON.stringify({ error: "backend unavailable" }));
+                response.end?.(JSON.stringify({ error: "Backend unavailable" }));
               }
             });
           },

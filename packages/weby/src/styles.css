@@ -386,6 +386,11 @@ button {
   transition: all 0.2s ease;
 }
 
+.blog-reader-prose ul[data-type="taskList"] li > label input[type="checkbox"]:focus-visible {
+  outline: 2px solid #b58cff;
+  outline-offset: 1px;
+}
+
 .blog-reader-prose ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
   background-color: #b58cff;
   border-color: #b58cff;

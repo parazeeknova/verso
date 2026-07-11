@@ -49,7 +49,7 @@ export const NotificationBell = ({ isDarkMode }: NotificationBellProps) => {
   });
 
   const { data: notifications } = useQuery({
-    enabled: notiOpen,
+    enabled: notiOpen && !!user,
     queryFn: ({ signal }) =>
       fetchProtected<NotificationItem[]>("/api/console/notifications", { signal }),
     queryKey: ["notifications", "list"],

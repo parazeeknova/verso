@@ -106,7 +106,7 @@ const getSaveStatusText = (
 const setupActiveHeadingObserver = (
   container: HTMLElement | null,
   headings: BlogHeading[],
-  activeHeadingId: string | null,
+  hasCheckedInitialRef: React.RefObject<boolean | null>,
   setActiveHeadingId: (id: string | null) => void,
 ) => {
   if (!container || headings.length === 0) {
@@ -145,7 +145,8 @@ const setupActiveHeadingObserver = (
     observer.observe(element);
   }
 
-  if (!activeHeadingId) {
+  if (!hasCheckedInitialRef.current) {
+    hasCheckedInitialRef.current = true;
     setActiveHeadingId(headingElements[0]?.id ?? null);
   }
 
@@ -270,33 +271,15 @@ const usePageTitle = (title: string, pageId: string) => {
     adjustTitleHeight();
   }, [localTitle]);
 
-  useEffect(() => {
-    const activePageId = pageId;
-    return () => {
+  useEffect(
+    () => () => {
       if (debounceSaveRef.current) {
         clearTimeout(debounceSaveRef.current);
       }
-      const trimmed = localTitleRef.current.trim();
-      if (trimmed !== lastSavedTitleRef.current) {
-        const doSave = async () => {
-          try {
-            await fetchProtected(`/api/console/pages/${activePageId}`, {
-              body: JSON.stringify({ title: trimmed }),
-              headers: { "Content-Type": "application/json" },
-              method: "PUT",
-            });
-            lastSavedTitleRef.current = trimmed;
-            await queryClient.invalidateQueries({ queryKey: ["consolePage"] });
-            await queryClient.invalidateQueries({ queryKey: ["consolePages"] });
-            await queryClient.invalidateQueries({ queryKey: ["pageTree"] });
-          } catch (error) {
-            console.error("failed to auto-save title on page change/unmount:", error);
-          }
-        };
-        void doSave();
-      }
-    };
-  }, [pageId, queryClient]);
+      void saveTitle(localTitleRef.current);
+    },
+    [saveTitle],
+  );
 
   return {
     handleTitleBlur,
@@ -313,8 +296,13 @@ const usePageEditorInstance = (
   editable: boolean,
   setHeadings: (headings: BlogHeading[]) => void,
   markDirtyRef: React.MutableRefObject<(() => void) | null>,
-) =>
-  useEditor({
+) => {
+  const editableRef = useRef(editable);
+  useEffect(() => {
+    editableRef.current = editable;
+  }, [editable]);
+
+  return useEditor({
     content,
     editable,
     editorProps: {
@@ -329,13 +317,19 @@ const usePageEditorInstance = (
       if (liveContent) {
         setHeadings(extractEditorHeadings(liveContent));
       }
-      if (editable) {
+      if (editableRef.current) {
         markDirtyRef.current?.();
       }
     },
   });
+};
 
-const useSyncEditorContent = (editor: Editor | null, content: JSONContent, contentJson: string) => {
+const useSyncEditorContent = (
+  editor: Editor | null,
+  content: JSONContent,
+  contentJson: string,
+  dirty: boolean,
+) => {
   const previousContentJsonRef = useRef(contentJson);
 
   useEffect(() => {
@@ -345,9 +339,12 @@ const useSyncEditorContent = (editor: Editor | null, content: JSONContent, conte
     if (previousContentJsonRef.current === contentJson) {
       return;
     }
+    if (dirty || editor.isFocused) {
+      return;
+    }
     previousContentJsonRef.current = contentJson;
     editor.commands.setContent(content);
-  }, [content, contentJson, editor]);
+  }, [content, contentJson, editor, dirty]);
 };
 
 const useEscapeKeyListener = (isOpen: boolean, setIsOpen: (open: boolean) => void) => {
@@ -800,7 +797,7 @@ export const PageEditor = ({
 
   markDirtyRef.current = markDirty;
 
-  useSyncEditorContent(editor, content, contentJson);
+  useSyncEditorContent(editor, content, contentJson, dirty);
 
   useEffect(() => {
     setHeadings(extractEditorHeadings(content));
@@ -824,10 +821,21 @@ export const PageEditor = ({
 
   useEscapeKeyListener(tocOpen, setTocOpen);
 
+  const hasCheckedInitialActiveIdRef = useRef(false);
+
+  useEffect(() => {
+    hasCheckedInitialActiveIdRef.current = false;
+  }, [headings]);
+
   useEffect(
     () =>
-      setupActiveHeadingObserver(contentRef.current, headings, activeHeadingId, setActiveHeadingId),
-    [activeHeadingId, headings],
+      setupActiveHeadingObserver(
+        contentRef.current,
+        headings,
+        hasCheckedInitialActiveIdRef,
+        setActiveHeadingId,
+      ),
+    [headings],
   );
 
   const handleSelectHeading = useCallback((id: string) => {
@@ -843,6 +851,13 @@ export const PageEditor = ({
   if (!editor) {
     return null;
   }
+
+  const effectiveText = editor.getText() || textContent || "";
+  const derivedWordCount = effectiveText.trim()
+    ? effectiveText.trim().split(/\s+/).filter(Boolean).length
+    : 0;
+  const derivedCharCount = effectiveText.length;
+  const derivedReadingTime = Math.max(1, Math.ceil(derivedWordCount / 200));
 
   return (
     <div ref={wrapperRef} className="relative h-full flex flex-col pb-16">
@@ -960,18 +975,9 @@ export const PageEditor = ({
         spaceName={spaceName}
         createdAt={createdAt}
         updatedAt={updatedAt}
-        wordCount={(() => {
-          const currentText = editor?.getText() || textContent || "";
-          return currentText.trim() ? currentText.trim().split(/\s+/).filter(Boolean).length : 0;
-        })()}
-        characterCount={(editor?.getText() || textContent || "").length}
-        readingTime={(() => {
-          const currentText = editor?.getText() || textContent || "";
-          const wCount = currentText.trim()
-            ? currentText.trim().split(/\s+/).filter(Boolean).length
-            : 0;
-          return Math.max(1, Math.ceil(wCount / 200));
-        })()}
+        wordCount={derivedWordCount}
+        characterCount={derivedCharCount}
+        readingTime={derivedReadingTime}
         t={t}
         onClose={() => setDetailsOpen(false)}
         isOpen={detailsOpen}

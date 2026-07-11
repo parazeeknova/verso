@@ -21,7 +21,7 @@ const Command = Extension.create({
         },
         char: "/",
         command: ({ editor, range, props }) => {
-          props.command({ editor, props, range });
+          props.command({ editor, range });
         },
       } as Partial<SuggestionOptions>,
     };

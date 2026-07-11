@@ -106,4 +106,20 @@ describe("useNotificationStream", () => {
       expect(queryClient.getQueryData(["notifications", "list"])).toEqual([mockNotification]);
     });
   });
+
+  it("does not create EventSource or schedule reconnect when disabled", async () => {
+    const mockFetch = vi.fn();
+    globalThis.fetch = mockFetch as typeof fetch;
+
+    renderHook(() => useNotificationStream(false), { wrapper: Wrapper });
+
+    // Wait a brief period to ensure no async actions occur
+    // eslint-disable-next-line promise/avoid-new
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 50);
+    });
+
+    expect(MockEventSource.instances).toHaveLength(0);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
 });
