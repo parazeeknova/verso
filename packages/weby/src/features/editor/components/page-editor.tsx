@@ -4,7 +4,6 @@ import { BookmarkSimpleIcon, ListBulletsIcon, XIcon } from "@phosphor-icons/reac
 import { useTheme } from "#/shared/hooks/use-theme";
 import { getEditorExtensions } from "#/features/editor/extensions";
 import { useEditorContent } from "#/features/editor/hooks/use-editor-content";
-import { FixedToolbar } from "#/features/editor/components/toolbar/fixed-toolbar";
 import { BubbleMenu } from "#/features/editor/components/toolbar/bubble-menu";
 import { EditorMoreMenu } from "#/features/editor/components/editor-more-menu";
 import {
@@ -358,14 +357,7 @@ export const PageEditor = ({
         </div>
       </div>
 
-      {effectiveEditable && (
-        <>
-          <div className={`w-full px-4 shrink-0 ${fullWidth ? "" : "mx-auto max-w-2xl"}`}>
-            <FixedToolbar editor={editor} />
-          </div>
-          <BubbleMenu editor={editor} />
-        </>
-      )}
+      {effectiveEditable && <BubbleMenu editor={editor} />}
 
       <div
         ref={contentRef}
