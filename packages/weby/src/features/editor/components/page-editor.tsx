@@ -683,7 +683,7 @@ export const PageEditor = ({
 
       <div
         ref={contentRef}
-        className={`w-full px-4 blog-reader-prose flex-1 min-h-0 overflow-y-auto ${fullWidth ? "" : "mx-auto max-w-2xl"}`}
+        className={`w-full blog-reader-prose flex-1 min-h-0 overflow-y-auto ${fullWidth ? "px-8 md:px-16 lg:px-24" : "px-4 mx-auto max-w-2xl"}`}
         onClick={handleContentClick}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {

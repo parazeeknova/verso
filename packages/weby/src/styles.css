@@ -180,15 +180,19 @@ button {
 }
 
 .blog-reader-prose {
-  color: var(--color-text);
+  color: #262626;
   font-family: "Ubuntu Mono", monospace;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   line-height: 1.6;
+}
+
+[data-theme="dark"] .blog-reader-prose {
+  color: #e5e5e5;
 }
 
 @media (min-width: 640px) {
   .blog-reader-prose {
-    font-size: 1rem;
+    font-size: 0.875rem;
   }
 }
 
