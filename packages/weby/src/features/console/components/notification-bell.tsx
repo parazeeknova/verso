@@ -1,9 +1,10 @@
+import { BellIcon, CircleIcon, XIcon } from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { BellIcon, CircleIcon, XIcon } from "@phosphor-icons/react";
-import type { NotificationItem } from "#/shared/types";
-import { useNotificationStream } from "#/features/console/hooks/use-notification-stream";
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
+import { useAuth } from "#/features/auth/hooks/use-auth";
+import { useNotificationStream } from "#/features/console/hooks/use-notification-stream";
+import type { NotificationItem } from "#/shared/types";
 
 const formatTime = (dateStr: string) => {
   const date = new Date(dateStr);
@@ -35,10 +36,12 @@ export const NotificationBell = ({ isDarkMode }: NotificationBellProps) => {
   const [showAll, setShowAll] = useState(false);
   const notiRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const { data: user } = useAuth();
 
-  useNotificationStream();
+  useNotificationStream(!!user);
 
   const { data: countData } = useQuery({
+    enabled: !!user,
     queryFn: ({ signal }) =>
       fetchProtected<{ count: number }>("/api/console/notifications/unread-count", { signal }),
     queryKey: ["notifications", "unread-count"],

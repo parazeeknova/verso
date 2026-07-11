@@ -93,7 +93,7 @@ describe("useNotificationStream", () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(createMockResponse({ id: "user-1" }));
     globalThis.fetch = mockFetch as typeof fetch;
 
-    renderHook(() => useNotificationStream(), { wrapper: Wrapper });
+    renderHook(() => useNotificationStream(true), { wrapper: Wrapper });
 
     await waitFor(() => {
       expect(MockEventSource.instances).toHaveLength(1);
