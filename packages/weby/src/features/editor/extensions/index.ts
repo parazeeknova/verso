@@ -16,6 +16,7 @@ import { Subscript } from "@tiptap/extension-subscript";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { HeadingWithIds } from "#/features/blog/components/tiptap-heading-ids";
 import GlobalDragHandle from "./drag-handle";
+import SlashCommand from "./slash-command";
 
 const lowlight = createLowlight(common);
 
@@ -81,7 +82,8 @@ export const getEditorExtensions = () => [
     },
   }),
   GlobalDragHandle.configure({
-    atomNodes: ["base"],
-    customNodes: ["transclusionSource", "transclusionReference"],
+    atomNodes: ["base"] as string[],
+    customNodes: ["transclusionSource", "transclusionReference"] as string[],
   }),
+  SlashCommand,
 ];
