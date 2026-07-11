@@ -401,7 +401,7 @@ export const DragHandlePlugin = (options: GlobalDragHandleOptions & { pluginKey:
 
           const rect = absoluteRect(node);
 
-          rect.top += (lineHeight - 24) / 2;
+          rect.top += (lineHeight - 20) / 2;
           rect.top += paddingTop;
           // Li markers
           if (node.matches("ul:not([data-type=taskList]) li, ol li")) {
