@@ -68,6 +68,7 @@ describe("ExperienceSection", () => {
 describe("SocialLinks", () => {
   const mockProfile: Profile = {
     description: "test",
+    email: "test@example.com",
     links: {
       github: { label: "GitHub", url: "https://github.com/testuser" },
       linkedin: { label: "LinkedIn", url: "https://linkedin.com/in/test" },
@@ -79,15 +80,18 @@ describe("SocialLinks", () => {
 
   it("renders social links", () => {
     render(<SocialLinks profile={mockProfile} />);
-    expect(screen.getByText("GitHub")).toBeDefined();
-    expect(screen.getByText("LinkedIn")).toBeDefined();
-    expect(screen.getByText("X")).toBeDefined();
+    expect(screen.getByLabelText("GitHub")).toBeDefined();
+    expect(screen.getByLabelText("LinkedIn")).toBeDefined();
+    expect(screen.getByLabelText("Twitter/X")).toBeDefined();
+    expect(screen.getByLabelText("Email")).toBeDefined();
   });
 
   it("uses profile links when available", () => {
     render(<SocialLinks profile={mockProfile} />);
-    const githubLink = screen.getByText("GitHub").closest("a");
+    const githubLink = screen.getByLabelText("GitHub");
     expect(githubLink?.getAttribute("href")).toBe("https://github.com/testuser");
+    const emailLink = screen.getByLabelText("Email");
+    expect(emailLink?.getAttribute("href")).toBe("mailto:test@example.com");
   });
 
   it("renders nothing when profile is undefined", () => {

@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react";
 import type { ExperienceItem, Link, Profile } from "#/shared/types";
+import {
+  GithubLogoIcon,
+  LinkedinLogoIcon,
+  XLogoIcon,
+  EnvelopeSimpleIcon,
+} from "@phosphor-icons/react";
 import { AnimatedLink } from "#/shared/components/animated-link";
 import { LoadingDots } from "#/shared/components/loading";
 import { markdownToHtml } from "#/features/blog/lib/markdown-to-html";
@@ -187,26 +193,49 @@ export const SocialLinks = ({ profile }: SocialLinksProps) => {
   const twitter = getLink(profile?.links, "twitter");
 
   return (
-    <div className="flex space-x-6">
+    <div className="flex items-center gap-4">
       {github?.url && (
-        <AnimatedLink href={github.url} rel="noopener noreferrer" target="_blank">
-          {github.label}
-        </AnimatedLink>
+        <a
+          href={github.url}
+          rel="noopener noreferrer"
+          target="_blank"
+          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center"
+          aria-label="GitHub"
+        >
+          <GithubLogoIcon size={18} />
+        </a>
       )}
       {linkedin?.url && (
-        <AnimatedLink href={linkedin.url} rel="noopener noreferrer" target="_blank">
-          {linkedin.label}
-        </AnimatedLink>
+        <a
+          href={linkedin.url}
+          rel="noopener noreferrer"
+          target="_blank"
+          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center"
+          aria-label="LinkedIn"
+        >
+          <LinkedinLogoIcon size={18} />
+        </a>
       )}
       {twitter?.url && (
-        <AnimatedLink href={twitter.url} rel="noopener noreferrer" target="_blank">
-          {twitter.label}
-        </AnimatedLink>
+        <a
+          href={twitter.url}
+          rel="noopener noreferrer"
+          target="_blank"
+          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center"
+          aria-label="Twitter/X"
+        >
+          <XLogoIcon size={18} />
+        </a>
       )}
       {profile?.email && (
-        <AnimatedLink href={`mailto:${profile.email}`} rel="noopener noreferrer">
-          email
-        </AnimatedLink>
+        <a
+          href={`mailto:${profile.email}`}
+          rel="noopener noreferrer"
+          className="text-text-light/60 dark:text-text-dark/60 hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center"
+          aria-label="Email"
+        >
+          <EnvelopeSimpleIcon size={18} />
+        </a>
       )}
     </div>
   );
