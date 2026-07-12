@@ -3,6 +3,8 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { useState } from "react";
 import { createTheme, MantineProvider } from "@mantine/core";
 
+import { useTheme } from "#/shared/hooks/use-theme";
+
 import mantineCss from "@mantine/core/styles.css?url";
 import appCss from "../styles.css?url";
 
@@ -27,10 +29,11 @@ const theme = createTheme({
 
 const RootComponent = () => {
   const [queryClient] = useState(createQueryClient);
+  const { isDarkMode } = useTheme();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MantineProvider theme={theme}>
+      <MantineProvider theme={theme} forceColorScheme={isDarkMode ? "dark" : "light"}>
         <Outlet />
       </MantineProvider>
     </QueryClientProvider>

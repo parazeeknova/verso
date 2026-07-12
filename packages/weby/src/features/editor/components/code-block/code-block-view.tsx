@@ -69,11 +69,18 @@ export default function CodeBlockView(props: NodeViewProps) {
           classNames={{ input: classes.selectInput }}
           disabled={!editor.isEditable}
           radius={0}
+          comboboxProps={{ radius: 0 }}
         />
 
         <CopyButton value={node?.textContent || ""} timeout={2000}>
           {({ copied, copy }) => (
-            <Tooltip label={copied ? t("Copied") : t("Copy")} withArrow position="right">
+            <Tooltip
+              label={copied ? t("Copied") : t("Copy")}
+              withArrow
+              position="right"
+              radius={0}
+              color="dark"
+            >
               <ActionIcon
                 color={copied ? "teal" : "gray"}
                 variant="subtle"
