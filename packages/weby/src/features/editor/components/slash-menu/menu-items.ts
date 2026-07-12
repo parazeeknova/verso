@@ -146,7 +146,7 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setCallout().run();
+      editor.chain().focus().deleteRange(range).toggleCallout().run();
     },
     description: "Insert a callout block.",
     icon: InfoIcon,
