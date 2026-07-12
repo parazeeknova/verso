@@ -14,11 +14,11 @@
     },
     "packages/backy": {
       "name": "@verso/backy",
-      "version": "0.2.58",
+      "version": "0.2.65",
     },
     "packages/weby": {
       "name": "@verso/weby",
-      "version": "0.2.58",
+      "version": "0.2.65",
       "dependencies": {
         "@atlaskit/pragmatic-drag-and-drop": "^2.0.1",
         "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "^3.0.0",
@@ -27,6 +27,9 @@
         "@mantine/core": "^9.4.1",
         "@mantine/hooks": "^9.4.1",
         "@phosphor-icons/react": "^2.1.10",
+        "@slidoapp/emoji-mart": "^5.8.7",
+        "@slidoapp/emoji-mart-data": "^1.2.4",
+        "@slidoapp/emoji-mart-react": "^1.1.5",
         "@tabler/icons-react": "^3.44.0",
         "@tailwindcss/vite": "^4.2.4",
         "@tanstack/react-devtools": "^0.10.2",
@@ -595,6 +598,12 @@
     "@sinclair/typebox": ["@sinclair/typebox@0.34.49", "", {}, "sha512-brySQQs7Jtn0joV8Xh9ZV/hZb9Ozb0pmazDIASBkYKCjXrXU3mpcFahmK/z4YDhGkQvP9mWJbVyahdtU5wQA+A=="],
 
     "@sindresorhus/is": ["@sindresorhus/is@7.2.0", "", {}, "sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw=="],
+
+    "@slidoapp/emoji-mart": ["@slidoapp/emoji-mart@5.8.7", "", {}, "sha512-zn8CBoZRFY0M0Tps0rFgcbu1nhQDmnSoD8CqkTVobI9k3MK2WHIYRp50DXhMxRoQnoct4nomrVaY9kU01ARDTQ=="],
+
+    "@slidoapp/emoji-mart-data": ["@slidoapp/emoji-mart-data@1.2.4", "", {}, "sha512-wyZjYb0Q/Cxgq+90G9Bs8Ynvaed3WMgXhkKs/7LOFd5XWfdQ5XQEPeiv52xp8zuNHjCQK964JiK/YP0g0bpQsQ=="],
+
+    "@slidoapp/emoji-mart-react": ["@slidoapp/emoji-mart-react@1.1.5", "", { "peerDependencies": { "@slidoapp/emoji-mart": "^5.6", "react": "^16.8 || ^17 || ^18 || ^19" } }, "sha512-I0FPvnxazx8AjiWXvU3KcusZ0Aw+FpC57ikyXyeHi9aMUUSYZbXkiaIumKmYtAPWP/9S+q3cCWXnECFHokOV1A=="],
 
     "@solid-primitives/event-listener": ["@solid-primitives/event-listener@2.4.5", "", { "dependencies": { "@solid-primitives/utils": "^6.4.0" }, "peerDependencies": { "solid-js": "^1.6.12" } }, "sha512-nwRV558mIabl4yVAhZKY8cb6G+O1F0M6Z75ttTu5hk+SxdOnKSGj+eetDIu7Oax1P138ZdUU01qnBPR8rnxaEA=="],
 

@@ -37,9 +37,16 @@ const calloutConfigs: Record<CalloutType, CalloutConfig> = {
 
 export default function CalloutView(props: NodeViewProps) {
   const { node } = props;
-  const { type } = node.attrs as { type: CalloutType };
+  const { type, icon } = node.attrs as { type: CalloutType; icon?: string };
   const config = calloutConfigs[type] || calloutConfigs.info;
   const IconComponent = config.icon;
+
+  const renderedIcon =
+    icon && icon.trim() !== "" ? (
+      <span style={{ fontSize: "18px" }}>{icon}</span>
+    ) : (
+      <IconComponent size={20} />
+    );
 
   return (
     <NodeViewWrapper className="callout-wrapper">
@@ -47,7 +54,7 @@ export default function CalloutView(props: NodeViewProps) {
         variant="light"
         color={config.color}
         radius="none"
-        icon={<IconComponent size={20} />}
+        icon={renderedIcon}
         classNames={{
           icon: classes.icon,
           message: classes.message,

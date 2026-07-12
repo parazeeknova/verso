@@ -1,6 +1,6 @@
 {
   "name": "@verso/weby",
-  "version": "0.2.65",
+  "version": "0.2.67",
   "private": true,
   "type": "module",
   "imports": {
@@ -23,6 +23,9 @@
     "@mantine/core": "^9.4.1",
     "@mantine/hooks": "^9.4.1",
     "@phosphor-icons/react": "^2.1.10",
+    "@slidoapp/emoji-mart": "^5.8.7",
+    "@slidoapp/emoji-mart-data": "^1.2.4",
+    "@slidoapp/emoji-mart-react": "^1.1.5",
     "@tabler/icons-react": "^3.44.0",
     "@tailwindcss/vite": "^4.2.4",
     "@tanstack/react-devtools": "^0.10.2",

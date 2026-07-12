@@ -10,10 +10,12 @@ import {
   IconExclamationCircle,
   IconAlertCircle,
   IconTrash,
+  IconMoodSmile,
 } from "@tabler/icons-react";
 import { isEditorReady, isTextSelected } from "#/features/editor/extensions/table";
 import type { CalloutType } from "./callout-view";
 import { useTranslation } from "react-i18next";
+import EmojiPicker from "#/shared/components/emoji-picker";
 import classes from "../common/toolbar-menu.module.css";
 import type { Editor } from "@tiptap/core";
 import type { EditorState } from "@tiptap/pm/state";
@@ -100,6 +102,29 @@ export const CalloutMenu = ({ editor }: EditorMenuProps) => {
     [editor],
   );
 
+  const setCalloutIcon = useCallback(
+    (emoji: unknown) => {
+      const emojiObj = emoji as { native?: string; emoji?: string } | null;
+      const emojiChar =
+        emojiObj?.native || emojiObj?.emoji || (typeof emoji === "string" ? emoji : "");
+      editor.chain().focus(undefined, { scrollIntoView: false }).updateCalloutIcon(emojiChar).run();
+    },
+    [editor],
+  );
+
+  const removeCalloutIcon = useCallback(() => {
+    editor.chain().focus(undefined, { scrollIntoView: false }).updateCalloutIcon("").run();
+  }, [editor]);
+
+  const getCurrentIcon = () => {
+    const { selection } = editor.state;
+    const parent = findParentNode((node: PMNode) => node.type.name === "callout")(selection);
+    const icon = parent?.node.attrs.icon as string | undefined;
+    return icon || null;
+  };
+
+  const currentIcon = getCurrentIcon();
+
   const handleDelete = useCallback(() => {
     const parent = findParentNode((node: PMNode) => node.type.name === "callout")(
       editor.state.selection,
@@ -170,6 +195,23 @@ export const CalloutMenu = ({ editor }: EditorMenuProps) => {
             <IconAlertCircle size={14} color="var(--mantine-color-red-5)" />
           </ActionIcon>
         </Tooltip>
+
+        <EmojiPicker
+          onEmojiSelect={setCalloutIcon}
+          removeEmojiAction={removeCalloutIcon}
+          readOnly={false}
+          icon={
+            currentIcon ? (
+              <span style={{ fontSize: "14px", lineHeight: 1 }}>{currentIcon}</span>
+            ) : (
+              <IconMoodSmile size={14} />
+            )
+          }
+          actionIconProps={{
+            size: "sm",
+            variant: "subtle",
+          }}
+        />
 
         <div className={classes.divider} />
 

@@ -23,6 +23,7 @@ declare module "@tiptap/core" {
       setCallout: (attributes?: CalloutAttributes) => ReturnType;
       liftCallout: () => ReturnType;
       toggleCallout: (attributes?: CalloutAttributes) => ReturnType;
+      updateCalloutIcon: (icon: string) => ReturnType;
     };
   }
 }
@@ -49,6 +50,13 @@ export const Callout = Node.create<CalloutOptions>({
         parseHTML: (element) => element.dataset.calloutType || "info",
         renderHTML: (attributes) => ({
           "data-callout-type": attributes.type,
+        }),
+      },
+      icon: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("data-callout-icon"),
+        renderHTML: (attributes) => ({
+          "data-callout-icon": attributes.icon,
         }),
       },
     };
@@ -86,6 +94,13 @@ export const Callout = Node.create<CalloutOptions>({
         (attributes) =>
         ({ commands }) =>
           commands.toggleWrap(this.name, attributes),
+
+      updateCalloutIcon:
+        (icon: string) =>
+        ({ commands }) =>
+          commands.updateAttributes(this.name, {
+            icon: icon || null,
+          }),
     };
   },
 
