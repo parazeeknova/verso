@@ -44,6 +44,11 @@ export function updateColumns(
             const [propertyKey, propertyValue] = getColStyleDeclaration(cellMinWidth, hasWidth);
 
             (nextDOM as HTMLTableColElement).style.setProperty(propertyKey, propertyValue);
+            if (propertyKey === "min-width") {
+              (nextDOM as HTMLTableColElement).style.removeProperty("width");
+            } else {
+              (nextDOM as HTMLTableColElement).style.removeProperty("min-width");
+            }
           }
 
           nextDOM = nextDOM.nextSibling;
@@ -108,6 +113,9 @@ export class TableView implements NodeView {
     }
 
     this.node = node;
+    if (node.attrs.style) {
+      this.table.style.cssText = node.attrs.style;
+    }
     updateColumns(node, this.colgroup, this.table, this.cellMinWidth);
 
     return true;

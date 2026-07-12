@@ -104,7 +104,7 @@ export const RowHandle = React.memo(function RowHandle({
           tabIndex={0}
           aria-label={t("Row actions")}
         >
-          <span style={{ display: "inline-flex", pointerEvents: "none" }}>
+          <span className="inline-flex pointer-events-none">
             <GripIcon />
           </span>
         </div>

@@ -209,6 +209,7 @@ export const TableReadonlySort = Extension.create({
   addProseMirrorPlugins() {
     const { editor } = this;
     let editorRoot: HTMLElement | null = null;
+    let lastEditable: boolean | null = null;
 
     const onClick = (event: MouseEvent) => {
       if (editor.isEditable) {
@@ -248,7 +249,11 @@ export const TableReadonlySort = Extension.create({
           editorRoot.addEventListener("click", onClick);
 
           if (!editor.isEditable) {
+            lastEditable = false;
             addChevronsToAllTables(editorRoot);
+          } else {
+            lastEditable = true;
+            removeAllChevrons(editorRoot);
           }
 
           return {
@@ -259,6 +264,8 @@ export const TableReadonlySort = Extension.create({
               }
             },
             update(view) {
+              if (editor.isEditable === lastEditable) return;
+              lastEditable = editor.isEditable;
               const root = view.dom as HTMLElement;
               if (!editor.isEditable) {
                 addChevronsToAllTables(root);

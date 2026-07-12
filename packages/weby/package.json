@@ -1,6 +1,6 @@
 {
   "name": "@verso/weby",
-  "version": "0.2.44",
+  "version": "0.2.45",
   "private": true,
   "type": "module",
   "imports": {
@@ -19,6 +19,7 @@
     "@atlaskit/pragmatic-drag-and-drop": "^2.0.1",
     "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "^3.0.0",
     "@floating-ui/dom": "^1.7.6",
+    "@floating-ui/react": "^0.27.19",
     "@mantine/core": "^9.4.1",
     "@mantine/hooks": "^9.4.1",
     "@phosphor-icons/react": "^2.1.10",

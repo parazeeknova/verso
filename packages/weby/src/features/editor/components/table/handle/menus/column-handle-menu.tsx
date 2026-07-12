@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 import { useTableMoveRowColumn } from "../hooks/use-table-move-row-column";
 import { useTableClear } from "../hooks/use-table-clear";
 import { useTableSort } from "../hooks/use-table-sort";
+import { setTableBackground } from "../set-table-background";
 import { AlignmentSubmenu } from "./alignment-submenu";
 
 interface ColumnHandleMenuProps {
@@ -42,21 +43,6 @@ export const ColumnHandleMenu = React.memo(function ColumnHandleMenu({
     index,
     kind: "col",
   });
-
-  const setBackground = (color: string, name: string) => {
-    editor
-      .chain()
-      .focus()
-      .updateAttributes("tableCell", {
-        backgroundColor: color || null,
-        backgroundColorName: color ? name : null,
-      })
-      .updateAttributes("tableHeader", {
-        backgroundColor: color || null,
-        backgroundColorName: color ? name : null,
-      })
-      .run();
-  };
 
   const sortAsc = useTableSort({
     direction: "asc",
@@ -107,7 +93,7 @@ export const ColumnHandleMenu = React.memo(function ColumnHandleMenu({
               <button
                 key={c.name}
                 type="button"
-                onClick={() => setBackground(c.color, c.name)}
+                onClick={() => setTableBackground(editor, c.color, c.name)}
                 aria-label={t(c.name)}
                 style={{
                   background: "transparent",

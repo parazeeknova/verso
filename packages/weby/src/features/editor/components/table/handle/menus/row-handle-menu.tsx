@@ -16,6 +16,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useTableMoveRowColumn } from "../hooks/use-table-move-row-column";
 import { useTableClear } from "../hooks/use-table-clear";
+import { setTableBackground } from "../set-table-background";
 import { AlignmentSubmenu } from "./alignment-submenu";
 
 interface RowHandleMenuProps {
@@ -32,21 +33,6 @@ export const RowHandleMenu = React.memo(function RowHandleMenu({
   tablePos,
 }: RowHandleMenuProps) {
   const { t } = useTranslation();
-
-  const setBackground = (color: string, name: string) => {
-    editor
-      .chain()
-      .focus()
-      .updateAttributes("tableCell", {
-        backgroundColor: color || null,
-        backgroundColorName: color ? name : null,
-      })
-      .updateAttributes("tableHeader", {
-        backgroundColor: color || null,
-        backgroundColorName: color ? name : null,
-      })
-      .run();
-  };
 
   const moveUp = useTableMoveRowColumn(editor, "row", index, "up", tableNode, tablePos);
   const moveDown = useTableMoveRowColumn(editor, "row", index, "down", tableNode, tablePos);
@@ -71,7 +57,7 @@ export const RowHandleMenu = React.memo(function RowHandleMenu({
               <button
                 key={c.name}
                 type="button"
-                onClick={() => setBackground(c.color, c.name)}
+                onClick={() => setTableBackground(editor, c.color, c.name)}
                 aria-label={t(c.name)}
                 style={{
                   background: "transparent",

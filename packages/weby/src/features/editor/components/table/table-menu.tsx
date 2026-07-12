@@ -3,7 +3,7 @@ import { posToDOMRect, findParentNode } from "@tiptap/react";
 import type { Node as PMNode } from "@tiptap/pm/model";
 import React, { useCallback } from 'react';
 import type { JSX } from 'react';
-import type { EditorMenuProps, ShouldShowProps } from "./types/types.ts";
+import type { EditorMenuProps, ShouldShowProps } from "./types/types";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import {
   IconColumnInsertLeft,
@@ -42,7 +42,14 @@ export const TableMenu = React.memo(({ editor }: EditorMenuProps): JSX.Element =
     const parent = findParentNode(predicate)(selection);
 
     if (parent) {
-      const dom = editor.view.nodeDOM(parent?.pos) as HTMLElement;
+      const dom = editor.view.nodeDOM(parent?.pos) as HTMLElement | null;
+      if (!dom) {
+        const rect = posToDOMRect(editor.view, selection.from, selection.to);
+        return {
+          getBoundingClientRect: () => rect,
+          getClientRects: () => [rect],
+        };
+      }
       const rect = dom.getBoundingClientRect();
       return {
         getBoundingClientRect: () => rect,
@@ -180,7 +187,7 @@ export const TableMenu = React.memo(({ editor }: EditorMenuProps): JSX.Element =
         </Tooltip>
 
         <Tooltip position="top" label={t("Delete row")} withinPortal={false}>
-          <ActionIcon onClick={deleteRow} variant="subtle" size="lg" aria-label={t("Delete row")}>
+          <ActionIcon onClick={deleteRow} variant="subtle" size="sm" aria-label={t("Delete row")}>
             <IconRowRemove size={14} />
           </ActionIcon>
         </Tooltip>

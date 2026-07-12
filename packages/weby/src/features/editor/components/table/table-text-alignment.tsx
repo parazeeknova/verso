@@ -92,9 +92,9 @@ export const TableTextAlignment: FC<TableTextAlignmentProps> = ({ editor }) => {
       <Popover.Dropdown>
         <ScrollArea.Autosize type="scroll" mah={300}>
           <Button.Group orientation="vertical">
-            {items.map((item, index) => (
+            {items.map((item) => (
               <Button
-                key={index}
+                key={item.value}
                 variant="default"
                 leftSection={<item.icon size={12} />}
                 rightSection={item.isActive() && <IconCheck size={12} />}

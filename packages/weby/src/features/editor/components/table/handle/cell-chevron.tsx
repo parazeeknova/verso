@@ -84,7 +84,9 @@ export const CellChevron = React.memo(function CellChevron({
         const $inside = editor.state.doc.resolve(cellPos + 1);
         const sel = TextSelection.near($inside, 1);
         editor.view.dispatch(editor.state.tr.setSelection(sel));
-      } catch {}
+      } catch (error) {
+        console.error("Failed to set cell selection:", error);
+      }
     }
     editor.commands.freezeHandles();
   }, [editor, cellPos]);

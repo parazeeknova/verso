@@ -41,13 +41,26 @@ export function getDragOverColumn(
     return;
   }
   const cells = [...firstRow.children];
-  return findDragOverElement(cells, pointerX, "x");
+  const result = findDragOverElement(cells, pointerX, "x");
+  if (!result) {
+    return;
+  }
+  const [element, domIndex] = result;
+  let logicalIndex = 0;
+  for (let i = 0; i < domIndex; i++) {
+    logicalIndex += (cells[i] as HTMLTableCellElement).colSpan || 1;
+  }
+  return [element, logicalIndex];
 }
 
 export function getDragOverRow(
   table: HTMLTableElement,
   pointerY: number,
 ): [element: Element, index: number] | undefined {
-  const rows = [...table.querySelectorAll("tr")];
+  const tbody = table.querySelector("tbody");
+  if (!tbody) {
+    return;
+  }
+  const rows = [...tbody.querySelectorAll(":scope > tr")];
   return findDragOverElement(rows, pointerY, "y");
 }

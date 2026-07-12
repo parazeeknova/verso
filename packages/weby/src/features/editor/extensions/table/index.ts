@@ -44,3 +44,4 @@ export function isTextSelected(editor: Editor) {
 }
 
 export { isCellSelection } from "./utils/query";
+export { findTable } from "./utils/query";

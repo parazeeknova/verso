@@ -40,6 +40,23 @@ export const TableHeaderPin = Extension.create({
       rafHandle = requestAnimationFrame(reconcile);
     };
 
+    const onMutation = (mutations: MutationRecord[]) => {
+      for (const m of mutations) {
+        if (m.type !== "childList") {
+          continue;
+        }
+        for (const node of [...m.addedNodes, ...m.removedNodes]) {
+          if (!(node instanceof HTMLElement)) {
+            continue;
+          }
+          if (node.classList.contains("tableWrapper") || node.querySelector(".tableWrapper")) {
+            schedule();
+            return;
+          }
+        }
+      }
+    };
+
     return [
       new Plugin({
         key: tableHeaderPinKey,
@@ -49,7 +66,7 @@ export const TableHeaderPin = Extension.create({
 
           schedule();
 
-          domObserver = new MutationObserver(schedule);
+          domObserver = new MutationObserver(onMutation);
           domObserver.observe(editorRoot, { childList: true, subtree: true });
 
           return {
@@ -67,9 +84,9 @@ export const TableHeaderPin = Extension.create({
             update(view, prevState) {
               if (!editorRoot) return;
               if (view.state.doc === prevState.doc) return;
-              editorRoot
-                .querySelectorAll<HTMLElement>(".tableWrapper")
-                .forEach((w) => getController(w)?.refresh());
+              for (const w of tracked) {
+                getController(w)?.refresh();
+              }
             },
           };
         },

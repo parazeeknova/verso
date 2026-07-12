@@ -3,7 +3,7 @@ import React, { useCallback, type JSX } from "react";
 import {
   type EditorMenuProps,
   type ShouldShowProps,
-} from "./types/types.ts";
+} from "./types/types";
 import { isCellSelection } from "#/features/editor/extensions/table";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import {
@@ -58,9 +58,7 @@ export const TableCellMenu = React.memo(
         editor={editor}
         pluginKey="table-cell-menu"
         updateDelay={0}
-        appendTo={() => {
-          return appendTo?.current;
-        }}
+        appendTo={() => appendTo?.current ?? document.body}
         ref={(element) => {
           if (element) {
             element.style.zIndex = "99";

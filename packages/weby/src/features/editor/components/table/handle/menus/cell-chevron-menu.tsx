@@ -16,6 +16,7 @@ import {
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useTableClear } from "../hooks/use-table-clear";
+import { setTableBackground } from "../set-table-background";
 import { TABLE_COLORS } from "../../table-background-color";
 import { AlignmentSubmenu } from "./alignment-submenu";
 
@@ -39,21 +40,6 @@ export const CellChevronMenu = React.memo(function CellChevronMenu({
     kind: "cell",
   });
 
-  const setBackground = (color: string, name: string) => {
-    editor
-      .chain()
-      .focus()
-      .updateAttributes("tableCell", {
-        backgroundColor: color || null,
-        backgroundColorName: color ? name : null,
-      })
-      .updateAttributes("tableHeader", {
-        backgroundColor: color || null,
-        backgroundColorName: color ? name : null,
-      })
-      .run();
-  };
-
   return (
     <>
       <Menu.Sub position="right-start">
@@ -75,7 +61,7 @@ export const CellChevronMenu = React.memo(function CellChevronMenu({
               <button
                 key={c.name}
                 type="button"
-                onClick={() => setBackground(c.color, c.name)}
+                onClick={() => setTableBackground(editor, c.color, c.name)}
                 aria-label={t(c.name)}
                 style={{
                   background: "transparent",

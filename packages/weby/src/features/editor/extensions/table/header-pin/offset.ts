@@ -39,6 +39,9 @@ export const pinOffsetWatcher = {
       this.rafPending = true;
       requestAnimationFrame(() => {
         this.rafPending = false;
+        if (this.refs === 0) {
+          return;
+        }
         this.publish();
       });
     };

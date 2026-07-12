@@ -14,6 +14,7 @@ import {
 import type { Editor } from "@tiptap/react";
 import { useEditorState } from "@tiptap/react";
 import { useTranslation } from "react-i18next";
+import { setTableBackground } from "./handle/set-table-background";
 
 export interface TableColorItem {
   name: string;
@@ -34,6 +35,17 @@ export const TABLE_COLORS: TableColorItem[] = [
   { color: "#eaecef", name: "Gray" },
   { color: "#c1b7f2", name: "Purple" },
 ];
+
+function isLightColor(hex: string): boolean {
+  if (!hex) {
+    return true;
+  }
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminance > 0.5;
+}
 
 export const TableBackgroundColor: FC<TableBackgroundColorProps> = ({ editor }) => {
   const { t } = useTranslation();
@@ -68,18 +80,7 @@ export const TableBackgroundColor: FC<TableBackgroundColorProps> = ({ editor }) 
   }
 
   const setTableCellBackground = (color: string, colorName: string) => {
-    editor
-      .chain()
-      .focus()
-      .updateAttributes("tableCell", {
-        backgroundColor: color || null,
-        backgroundColorName: color ? colorName : null,
-      })
-      .updateAttributes("tableHeader", {
-        backgroundColor: color || null,
-        backgroundColorName: color ? colorName : null,
-      })
-      .run();
+    setTableBackground(editor, color, colorName);
     setOpened(false);
   };
 
@@ -141,8 +142,7 @@ export const TableBackgroundColor: FC<TableBackgroundColorProps> = ({ editor }) 
                     <IconCheck
                       size={18}
                       style={{
-                        color:
-                          item.color === "" || item.color.startsWith("#F") ? "#000000" : "#ffffff",
+                        color: isLightColor(item.color) ? "#000000" : "#ffffff",
                       }}
                     />
                   )}

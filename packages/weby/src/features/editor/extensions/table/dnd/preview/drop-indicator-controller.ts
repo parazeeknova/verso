@@ -6,6 +6,7 @@ const DROP_INDICATOR_WIDTH = 2;
 
 export class DropIndicatorController {
   private _dropIndicator: HTMLElement;
+  private _generation = 0;
 
   constructor() {
     this._dropIndicator = document.createElement("div");
@@ -36,11 +37,13 @@ export class DropIndicatorController {
     direction: "left" | "right" | "up" | "down",
     type: "col" | "row",
   ) => {
+    const gen = ++this._generation;
     if (type === "col") {
       void computePosition(target, this._dropIndicator, {
         middleware: [offset(direction === "left" ? -1 * DROP_INDICATOR_WIDTH : 0)],
         placement: direction === "left" ? "left" : "right",
       }).then(({ x }) => {
+        if (gen !== this._generation) return;
         Object.assign(this._dropIndicator.style, { left: `${x}px` });
       });
 
@@ -52,6 +55,7 @@ export class DropIndicatorController {
         middleware: [offset(direction === "up" ? -1 * DROP_INDICATOR_WIDTH : 0)],
         placement: direction === "up" ? "top" : "bottom",
       }).then(({ y }) => {
+        if (gen !== this._generation) return;
         Object.assign(this._dropIndicator.style, { top: `${y}px` });
       });
 

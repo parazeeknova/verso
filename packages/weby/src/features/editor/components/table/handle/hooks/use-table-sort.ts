@@ -5,6 +5,7 @@ import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import {
   convertArrayOfRowsToTableNode,
   convertTableNodeToArrayOfRows,
+  findTable,
   isEditorReady,
   transpose,
 } from "#/features/editor/extensions/table";
@@ -35,7 +36,7 @@ function isAllHeader(cells: (ProseMirrorNode | null)[]): boolean {
   return cells.every((c) => c !== null && isHeaderCell(c));
 }
 
-export function useTableSort({ editor, orientation, index, tableNode, tablePos, direction }: Args) {
+export function useTableSort({ editor, orientation, index, tableNode, tablePos: _tablePos, direction }: Args) {
   const canSort = useMemo(() => {
     if (tableHasMergedCells(tableNode)) {return false;}
 
@@ -53,7 +54,12 @@ export function useTableSort({ editor, orientation, index, tableNode, tablePos, 
   const handleSort = useCallback(() => {
     if (!canSort || !isEditorReady(editor)) {return;}
 
-    const rows = convertTableNodeToArrayOfRows(tableNode);
+    const table = findTable(editor.state.selection.$from);
+    if (!table) {return;}
+    const currentTableNode = table.node;
+    const currentTablePos = table.pos;
+
+    const rows = convertTableNodeToArrayOfRows(currentTableNode);
     const axes = orientation === "col" ? rows : transpose(rows);
 
     const items: SortableItem<(ProseMirrorNode | null)[]>[] = axes.map((cells: (ProseMirrorNode | null)[], originalOrder: number) => {
@@ -74,13 +80,13 @@ export function useTableSort({ editor, orientation, index, tableNode, tablePos, 
     const newAxes = woven.map((it) => it.payload);
     const newRows = orientation === "col" ? newAxes : transpose(newAxes);
 
-    const newTable = convertArrayOfRowsToTableNode(tableNode, newRows);
+    const newTable = convertArrayOfRowsToTableNode(currentTableNode, newRows);
 
     const {tr} = editor.state;
-    tr.replaceWith(tablePos, tablePos + tableNode.nodeSize, newTable);
+    tr.replaceWith(currentTablePos, currentTablePos + currentTableNode.nodeSize, newTable);
 
     if (tr.docChanged) {editor.view.dispatch(tr);}
-  }, [editor, tableNode, tablePos, orientation, index, direction, canSort]);
+  }, [editor, orientation, index, direction, canSort]);
 
   return { canSort, handleSort };
 }

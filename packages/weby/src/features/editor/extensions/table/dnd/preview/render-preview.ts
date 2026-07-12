@@ -22,6 +22,9 @@ export function createPreviewDOM(
 
   if (direction === "row") {
     const row = rows[index];
+    if (!row) {
+      return;
+    }
     const rowDOM = row.cloneNode(true);
     previewTableBody.appendChild(rowDOM);
   } else {

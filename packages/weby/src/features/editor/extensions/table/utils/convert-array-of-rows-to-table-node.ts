@@ -22,11 +22,8 @@ export function convertArrayOfRowsToTableNode(
         continue;
       }
 
-      const cellPos = map.map[rowIndex * map.width + colIndex];
-
       const cell = arrayOfNodes[rowIndex][colIndex]!;
-      const oldCell = tableNode.nodeAt(cellPos)!;
-      const newCell = oldCell.type.createChecked({ ...cell.attrs }, cell.content, cell.marks);
+      const newCell = cell.type.createChecked({ ...cell.attrs }, cell.content, cell.marks);
       rowCells.push(newCell);
     }
 

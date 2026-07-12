@@ -91,13 +91,17 @@ function getTargetFirstCellDOM(
   direction: "row" | "col",
 ): HTMLTableCellElement | undefined {
   if (direction === "row") {
-    const row = table.querySelectorAll("tr")[index];
+    const tbody = table.querySelector("tbody");
+    const row = tbody?.querySelectorAll<HTMLTableRowElement>(":scope > tr")[index];
     const cell = row?.querySelector<HTMLTableCellElement>("th,td");
     return cell ?? undefined;
   }
   const row = table.querySelector("tr");
-  const cell = row?.querySelectorAll<HTMLTableCellElement>("th,td")[index];
-  return cell ?? undefined;
+  if (!row) {
+    return;
+  }
+  const cells = row.querySelectorAll<HTMLTableCellElement>(":scope > th, :scope > td");
+  return cells[index] ?? undefined;
 }
 
 export interface DraggingDOMs {

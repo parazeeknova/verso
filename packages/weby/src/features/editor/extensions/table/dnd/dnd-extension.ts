@@ -86,10 +86,8 @@ class TableHandlePluginSpec implements PluginSpec<TableHandleState> {
   }
 
   view = () => {
-    const wrapper = this.editor.options.element;
-    // @ts-expect-error
+    const wrapper = this.editor.options.element as HTMLElement;
     wrapper.append(this._previewController.previewRoot);
-    // @ts-expect-error
     wrapper.append(this._dropIndicatorController.dropIndicatorRoot);
 
     // Track the cursor cell so handles follow keyboard nav and clicks too.
@@ -115,6 +113,18 @@ class TableHandlePluginSpec implements PluginSpec<TableHandleState> {
     return false;
   };
 
+  private _clearHoverIfNeeded = (current: TableHandleState | undefined) => {
+    if (
+      current?.hoveringCell === null &&
+      current?.tableNode === null &&
+      current?.tablePos === null
+    ) {
+      return true;
+    }
+    this._dispatchMeta({ hoveringCell: null, tableNode: null, tablePos: null });
+    return true;
+  };
+
   private _pointerMove = (view: EditorView, event: PointerEvent) => {
     const current = TableDndKey.getState(view.state);
     if (current?.frozen || current?.dragging) {
@@ -127,14 +137,7 @@ class TableHandlePluginSpec implements PluginSpec<TableHandleState> {
     }
 
     if (!this.editor.isEditable) {
-      if (
-        current?.hoveringCell === null &&
-        current?.tableNode === null &&
-        current?.tablePos === null
-      ) {
-        return;
-      }
-      this._dispatchMeta({ hoveringCell: null, tableNode: null, tablePos: null });
+      this._clearHoverIfNeeded(current);
       return;
     }
 
@@ -174,14 +177,7 @@ class TableHandlePluginSpec implements PluginSpec<TableHandleState> {
     }
 
     this._hoveringCell = undefined;
-    if (
-      current?.hoveringCell === null &&
-      current?.tableNode === null &&
-      current?.tablePos === null
-    ) {
-      return;
-    }
-    this._dispatchMeta({ hoveringCell: null, tableNode: null, tablePos: null });
+    this._clearHoverIfNeeded(current);
   };
 
   private _onSelectionUpdate = () => {

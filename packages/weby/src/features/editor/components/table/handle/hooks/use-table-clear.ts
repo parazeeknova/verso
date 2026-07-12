@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import type { Editor } from "@tiptap/react";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { TableMap } from "@tiptap/pm/tables";
-import { isEditorReady } from "#/features/editor/extensions/table";
+import { findTable, isEditorReady } from "#/features/editor/extensions/table";
 
 type Scope =
   | { kind: "col"; index: number }
@@ -12,15 +12,21 @@ type Scope =
 
 export function useTableClear(
   editor: Editor,
-  tableNode: ProseMirrorNode,
-  tablePos: number,
+  _tableNode: ProseMirrorNode,
+  _tablePos: number,
   scope: Scope,
 ) {
   return useCallback(() => {
     if (!isEditorReady(editor)) {return;}
+
+    const table = findTable(editor.state.selection.$from);
+    if (!table) {return;}
+    const currentTableNode = table.node;
+    const currentTablePos = table.pos;
+
     const {tr} = editor.state;
-    const tableStart = tablePos + 1;
-    const map = TableMap.get(tableNode);
+    const tableStart = currentTablePos + 1;
+    const map = TableMap.get(currentTableNode);
     const {paragraph} = editor.schema.nodes;
     if (!paragraph) {return;}
 
@@ -53,5 +59,5 @@ export function useTableClear(
     }
 
     if (tr.docChanged) {editor.view.dispatch(tr);}
-  }, [editor, tableNode, tablePos, scope]);
+  }, [editor, scope]);
 }
