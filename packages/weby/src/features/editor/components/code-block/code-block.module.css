@@ -1,6 +1,7 @@
 .selectInput {
   height: 25px;
   min-height: 25px;
+  border-radius: 0 !important;
 }
 
 .error {

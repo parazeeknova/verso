@@ -68,12 +68,21 @@ export default function CodeBlockView(props: NodeViewProps) {
           style={{ maxWidth: "130px" }}
           classNames={{ input: classes.selectInput }}
           disabled={!editor.isEditable}
+          radius={0}
         />
 
         <CopyButton value={node?.textContent || ""} timeout={2000}>
           {({ copied, copy }) => (
             <Tooltip label={copied ? t("Copied") : t("Copy")} withArrow position="right">
-              <ActionIcon color={copied ? "teal" : "gray"} variant="subtle" onClick={copy}>
+              <ActionIcon
+                color={copied ? "teal" : "gray"}
+                variant="subtle"
+                onClick={copy}
+                radius={0}
+                style={{
+                  color: copied ? undefined : "var(--color-accent)",
+                }}
+              >
                 {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
               </ActionIcon>
             </Tooltip>
