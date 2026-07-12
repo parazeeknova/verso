@@ -2,7 +2,7 @@
 import { useCallback } from "react";
 import type { Editor } from "@tiptap/react";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { TableMap } from "@tiptap/pm/tables";
+import { cellAround, TableMap } from "@tiptap/pm/tables";
 import { findTable, isEditorReady } from "#/features/editor/extensions/table";
 
 type Scope =
@@ -42,10 +42,13 @@ export function useTableClear(
       }
     }
 
-    const targets =
-      scope.kind === "cell"
-        ? [scope.cellPos]
-        : [...new Set(cellOffsets)].map((o) => tableStart + o);
+    let targets: number[];
+    if (scope.kind === "cell") {
+      const $cell = cellAround(editor.state.selection.$head);
+      targets = $cell ? [$cell.pos] : [];
+    } else {
+      targets = [...new Set(cellOffsets)].map((o) => tableStart + o);
+    }
 
     // Process in reverse position order so earlier replacements don't shift later ones.
     targets.sort((a, b) => b - a);

@@ -101,7 +101,15 @@ function getTargetFirstCellDOM(
     return;
   }
   const cells = row.querySelectorAll<HTMLTableCellElement>(":scope > th, :scope > td");
-  return cells[index] ?? undefined;
+  let logicalIndex = 0;
+  for (const cell of cells) {
+    const colSpan = cell.colSpan || 1;
+    if (index >= logicalIndex && index < logicalIndex + colSpan) {
+      return cell;
+    }
+    logicalIndex += colSpan;
+  }
+  return;
 }
 
 export interface DraggingDOMs {

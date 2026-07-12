@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { TableCell as TiptapTableCell } from "@tiptap/extension-table";
 import { tableCellAttributes } from "./table-attributes";
 
