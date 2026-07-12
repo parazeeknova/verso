@@ -66,7 +66,11 @@ export default function CodeBlockView(props: NodeViewProps) {
           onChange={changeLanguage}
           searchable
           style={{ maxWidth: "130px" }}
-          classNames={{ input: classes.selectInput }}
+          classNames={{
+            input: classes.selectInput,
+            option: classes.selectOption,
+            dropdown: classes.selectDropdown,
+          }}
           disabled={!editor.isEditable}
           radius={0}
           comboboxProps={{ radius: 0 }}
@@ -86,11 +90,13 @@ export default function CodeBlockView(props: NodeViewProps) {
                 variant="subtle"
                 onClick={copy}
                 radius={0}
+                size="xs"
                 style={{
-                  color: copied ? undefined : "var(--color-accent)",
+                  color: copied ? undefined : "var(--color-text)",
+                  opacity: copied ? 1 : 0.6,
                 }}
               >
-                {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+                {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
               </ActionIcon>
             </Tooltip>
           )}
