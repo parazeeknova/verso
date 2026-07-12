@@ -367,7 +367,7 @@ export const ColumnsMenu = ({ editor }: EditorMenuProps) => {
         {presets.length > 0 && <div className={classes.divider} />}
 
         {presets.map((preset) => (
-          <Tooltip key={preset.layout} position="top" label={t(preset.label)}>
+          <Tooltip key={preset.layout} position="top" label={t(preset.label)} withinPortal={false}>
             <ActionIcon
               onClick={() => setLayout(preset.layout)}
               size="lg"
