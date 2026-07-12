@@ -109,6 +109,7 @@ const EmojiPicker = ({
       position="bottom"
       disabled={readOnly}
       closeOnEscape={true}
+      withinPortal={true}
     >
       <Popover.Target ref={setTarget}>
         <ActionIcon
@@ -125,7 +126,7 @@ const EmojiPicker = ({
         </ActionIcon>
       </Popover.Target>
       <Suspense fallback={null}>
-        <Popover.Dropdown bg="000" style={{ border: "none" }} ref={setDropdown}>
+        <Popover.Dropdown style={{ border: "none" }} ref={setDropdown}>
           <Picker
             onEmojiSelect={handleEmojiSelect}
             perLine={8}
