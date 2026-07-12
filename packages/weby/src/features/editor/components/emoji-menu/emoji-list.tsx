@@ -260,7 +260,7 @@ export const EmojiList = ({
                     role="option"
                     aria-selected={i === idx}
                   >
-                    <span style={{ fontSize: 20, lineHeight: 1, minWidth: 26 }}>{item.emoji}</span>
+                    <span style={{ fontSize: 16, lineHeight: 1, minWidth: 22 }}>{item.emoji}</span>
                     <Text size="sm" c="dimmed" ff="monospace" span>
                       :{item.id}:
                     </Text>
@@ -335,7 +335,8 @@ export const EmojiList = ({
       p={0}
       shadow="md"
       withBorder
-      style={{ width: 280 }}
+      radius="none"
+      style={{ width: 240 }}
       role="listbox"
       aria-label={t("Emoji picker")}
     >
