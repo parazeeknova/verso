@@ -334,9 +334,9 @@ export const ColumnsMenu = ({ editor }: EditorMenuProps) => {
             <Button
               variant="subtle"
               color="dark"
-              size="compact-sm"
+              size="compact-xs"
               className={colClasses.triggerButton}
-              rightSection={<IconChevronDown size={12} />}
+              rightSection={<IconChevronDown size={10} />}
               onClick={() => setIsCountOpen(!isCountOpen)}
               aria-label="Column count"
             >
@@ -370,14 +370,14 @@ export const ColumnsMenu = ({ editor }: EditorMenuProps) => {
           <Tooltip key={preset.layout} position="top" label={t(preset.label)} withinPortal={false}>
             <ActionIcon
               onClick={() => setLayout(preset.layout)}
-              size="lg"
+              size="sm"
               aria-label={t(preset.label)}
               variant="subtle"
               className={clsx({
                 [colClasses.active]: currentLayout === preset.layout,
               })}
             >
-              <preset.icon size={18} />
+              <preset.icon size={14} />
             </ActionIcon>
           </Tooltip>
         ))}
@@ -385,18 +385,18 @@ export const ColumnsMenu = ({ editor }: EditorMenuProps) => {
         <div className={classes.divider} />
 
         <Tooltip position="top" label={copied ? t("Copied") : t("Copy")} withinPortal={false}>
-          <ActionIcon onClick={handleCopy} size="lg" aria-label={t("Copy")} variant="subtle">
+          <ActionIcon onClick={handleCopy} size="sm" aria-label={t("Copy")} variant="subtle">
             {copied ? (
-              <IconCheck size={18} color="var(--mantine-color-green-6)" />
+              <IconCheck size={14} color="var(--mantine-color-green-6)" />
             ) : (
-              <IconCopy size={18} />
+              <IconCopy size={14} />
             )}
           </ActionIcon>
         </Tooltip>
 
         <Tooltip position="top" label={t("Delete")} withinPortal={false}>
-          <ActionIcon onClick={handleDelete} size="lg" aria-label={t("Delete")} variant="subtle">
-            <IconTrash size={18} />
+          <ActionIcon onClick={handleDelete} size="sm" aria-label={t("Delete")} variant="subtle">
+            <IconTrash size={14} />
           </ActionIcon>
         </Tooltip>
       </div>
