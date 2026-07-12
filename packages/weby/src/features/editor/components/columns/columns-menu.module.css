@@ -1,0 +1,26 @@
+.popoverDropdown {
+  border-radius: 0 !important;
+  padding: 2px !important;
+  border: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4)) !important;
+  background: light-dark(var(--mantine-color-body), var(--mantine-color-dark-7)) !important;
+}
+
+.popoverArrow {
+  display: none !important;
+}
+
+.columnButton {
+  border-radius: 0 !important;
+  font-family: "Ubuntu Mono", monospace !important;
+  font-size: 0.6875rem !important;
+}
+
+.triggerButton {
+  border-radius: 0 !important;
+  font-family: "Ubuntu Mono", monospace !important;
+  font-size: 0.6875rem !important;
+}
+
+.active {
+  background: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.12));
+}

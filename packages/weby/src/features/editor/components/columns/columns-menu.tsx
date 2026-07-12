@@ -20,6 +20,7 @@ import { isEditorReady, isTextSelected } from "#/features/editor/extensions/tabl
 import type { ColumnsLayout } from "#/features/editor/extensions/columns";
 import { useTranslation } from "react-i18next";
 import classes from "../common/toolbar-menu.module.css";
+import colClasses from "./columns-menu.module.css";
 import type { Editor } from "@tiptap/core";
 import type { EditorState } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
@@ -328,33 +329,35 @@ export const ColumnsMenu = ({ editor }: EditorMenuProps) => {
       shouldShow={shouldShow}
     >
       <div className={classes.toolbar}>
-        <Popover opened={isCountOpen} onChange={setIsCountOpen} withArrow>
+        <Popover opened={isCountOpen} onChange={setIsCountOpen}>
           <Popover.Target>
             <Button
               variant="subtle"
               color="dark"
               size="compact-sm"
+              className={colClasses.triggerButton}
               rightSection={<IconChevronDown size={12} />}
               onClick={() => setIsCountOpen(!isCountOpen)}
-              aria-label={t("Column count")}
+              aria-label="Column count"
             >
-              {t("{{count}} Columns", { count: columnCount })}
+              {`${columnCount} Columns`}
             </Button>
           </Popover.Target>
-          <Popover.Dropdown p={4}>
+          <Popover.Dropdown p={4} className={colClasses.popoverDropdown}>
             <Button.Group orientation="vertical">
               {[2, 3, 4, 5].map((n) => (
                 <Button
                   key={n}
                   variant={n === columnCount ? "light" : "subtle"}
                   color={n === columnCount ? "blue" : "dark"}
+                  className={colClasses.columnButton}
                   justify="space-between"
                   fullWidth
                   rightSection={n === columnCount ? <IconCheck size={14} /> : null}
                   onClick={() => setColumnCount(n)}
                   size="xs"
                 >
-                  {t("{{count}} Columns", { count: n })}
+                  {`${n} Columns`}
                 </Button>
               ))}
             </Button.Group>
@@ -371,7 +374,7 @@ export const ColumnsMenu = ({ editor }: EditorMenuProps) => {
               aria-label={t(preset.label)}
               variant="subtle"
               className={clsx({
-                [classes.active]: currentLayout === preset.layout,
+                [colClasses.active]: currentLayout === preset.layout,
               })}
             >
               <preset.icon size={18} />
