@@ -58,6 +58,7 @@ export function useTableSort({ editor, orientation, index, tableNode, tablePos: 
     if (!table) {return;}
     const currentTableNode = table.node;
     const currentTablePos = table.pos;
+    if (tableHasMergedCells(currentTableNode)) {return;}
 
     const rows = convertTableNodeToArrayOfRows(currentTableNode);
     const axes = orientation === "col" ? rows : transpose(rows);

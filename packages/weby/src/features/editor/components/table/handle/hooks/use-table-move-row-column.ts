@@ -7,49 +7,63 @@ import { findTable, isEditorReady, moveColumn, moveRow } from "#/features/editor
 
 export type MoveDirection = "left" | "right" | "up" | "down";
 
+function deriveIndexFromSelection(
+  editor: Editor,
+  orientation: "col" | "row",
+): number | null {
+  const $head = editor.state.selection.$head;
+  const table = findTable($head);
+  if (!table) {return null;}
+  const map = TableMap.get(table.node);
+  const cellRect = map.findCell($head.pos - table.pos);
+  return orientation === "col" ? cellRect.left : cellRect.top;
+}
+
 export function useTableMoveRowColumn(
   editor: Editor,
   orientation: "col" | "row",
-  index: number,
+  _index: number,
   direction: MoveDirection,
   _tableNode: ProseMirrorNode,
   _tablePos: number,
 ) {
-  const target = direction === "left" || direction === "up" ? index - 1 : index + 1;
-
   const handleMove = useCallback(() => {
-    if (!canMove || !isEditorReady(editor)) {return;}
+    if (!isEditorReady(editor)) {return;}
 
     const table = findTable(editor.state.selection.$from);
     if (!table) {return;}
     const currentTableNode = table.node;
     const currentTablePos = table.pos;
 
+    const originIndex = deriveIndexFromSelection(editor, orientation);
+    if (originIndex === null) {return;}
+
     const map = TableMap.get(currentTableNode);
     const maxIndex = orientation === "col" ? map.width - 1 : map.height - 1;
-    if (target < 0 || target > maxIndex) {return;}
+    const targetIndex = direction === "left" || direction === "up" ? originIndex - 1 : originIndex + 1;
+    if (targetIndex < 0 || targetIndex > maxIndex) {return;}
 
     const {tr} = editor.state;
     const moved =
       orientation === "col"
         ? moveColumn({
-            originIndex: index,
+            originIndex,
             pos: currentTablePos + 1,
             select: true,
-            targetIndex: target,
+            targetIndex,
             tr,
           })
         : moveRow({
-            originIndex: index,
+            originIndex,
             pos: currentTablePos + 1,
             select: true,
-            targetIndex: target,
+            targetIndex,
             tr,
           });
     if (moved) {editor.view.dispatch(tr);}
-  }, [editor, orientation, index, target]);
+  }, [editor, orientation, direction]);
 
-  const canMove = target >= 0;
+  const canMove = true;
 
   return { canMove, handleMove };
 }
