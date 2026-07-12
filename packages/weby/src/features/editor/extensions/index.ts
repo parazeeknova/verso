@@ -29,6 +29,7 @@ import { Placeholder } from "@tiptap/extension-placeholder";
 import { HeadingWithIds } from "#/features/blog/components/tiptap-heading-ids";
 import GlobalDragHandle from "./drag-handle";
 import SlashCommand from "./slash-command";
+import { EmojiCommand } from "./emoji-command";
 
 const lowlight = createLowlight(common);
 
@@ -108,6 +109,7 @@ export const getEditorExtensions = () => [
     customNodes: ["transclusionSource", "transclusionReference"] as string[],
   }),
   SlashCommand,
+  EmojiCommand,
   PageBreak,
   Details,
   DetailsSummary,
