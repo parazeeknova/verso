@@ -21,7 +21,8 @@ const createQueryClient = () =>
   });
 
 const theme = createTheme({
-  fontFamily: '"Ubuntu Mono", monospace',
+  fontFamily:
+    'Ubuntu, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
   fontFamilyMonospace: '"Ubuntu Mono", monospace',
 });
 
