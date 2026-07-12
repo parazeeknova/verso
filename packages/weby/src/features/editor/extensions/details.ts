@@ -64,6 +64,38 @@ export const DetailsSummary = Node.create({
   renderHTML({ HTMLAttributes }) {
     return ["summary", mergeAttributes({ "data-type": this.name }, HTMLAttributes), 0];
   },
+
+  addKeyboardShortcuts() {
+    return {
+      Enter: () => {
+        const { state } = this.editor.view;
+        const { $from } = state.selection;
+        if ($from.parent.type.name === this.name) {
+          const parent = findParentNode((node) => node.type.name === "details")(state.selection);
+          if (parent) {
+            const [contentNode] = findChildren(
+              parent.node,
+              (node) => node.type.name === "detailsContent",
+            );
+            if (contentNode) {
+              const contentPos = parent.pos + contentNode.pos + 2;
+              this.editor.commands.setTextSelection(contentPos);
+              return true;
+            }
+          }
+        }
+        return false;
+      },
+      Backspace: () => {
+        const { state } = this.editor.view;
+        const { $from } = state.selection;
+        if ($from.parent.type.name === this.name && $from.parent.textContent.length === 0) {
+          return this.editor.commands.unsetDetails();
+        }
+        return false;
+      },
+    };
+  },
 });
 
 export const DetailsContent = Node.create({
@@ -87,6 +119,39 @@ export const DetailsContent = Node.create({
 
   renderHTML({ HTMLAttributes }) {
     return ["div", mergeAttributes({ "data-type": this.name }, HTMLAttributes), 0];
+  },
+
+  addKeyboardShortcuts() {
+    return {
+      Backspace: () => {
+        const { state } = this.editor.view;
+        const { $from } = state.selection;
+        const parentContent = findParentNode((node) => node.type.name === "detailsContent")(
+          state.selection,
+        );
+        if (parentContent) {
+          const isFirstBlock = parentContent.node.firstChild === $from.parent;
+          if (isFirstBlock && $from.parentOffset === 0) {
+            const parentDetails = findParentNode((node) => node.type.name === "details")(
+              state.selection,
+            );
+            if (parentDetails) {
+              const [summaryNode] = findChildren(
+                parentDetails.node,
+                (node) => node.type.name === "detailsSummary",
+              );
+              if (summaryNode) {
+                const summaryEndPos =
+                  parentDetails.pos + summaryNode.pos + summaryNode.node.nodeSize - 1;
+                this.editor.commands.setTextSelection(summaryEndPos);
+                return true;
+              }
+            }
+          }
+        }
+        return false;
+      },
+    };
   },
 });
 
