@@ -46,7 +46,7 @@ export default function CalloutView(props: NodeViewProps) {
       <Alert
         variant="light"
         color={config.color}
-        radius="md"
+        radius="none"
         icon={<IconComponent size={20} />}
         classNames={{
           icon: classes.icon,

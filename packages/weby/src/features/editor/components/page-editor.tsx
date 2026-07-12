@@ -19,6 +19,7 @@ import { setFlashToast } from "#/features/console/components/flash-toast";
 import { useIsPageWatching, useWatchPage } from "#/features/console/hooks/use-page-watches";
 import { TableMenu } from "./table/table-menu";
 import { ColumnsMenu } from "./columns/columns-menu";
+import { CalloutMenu } from "./callout/callout-menu";
 import { TableHandlesLayer } from "./table/handle/table-handles-layer";
 import { BlogTableOfContents } from "#/features/blog/components/blog-table-of-contents";
 import type { BlogHeading } from "#/features/blog/lib/blog-headings";
@@ -975,6 +976,7 @@ export const PageEditor = ({
           <>
             <TableMenu editor={editor} />
             <ColumnsMenu editor={editor} />
+            <CalloutMenu editor={editor} />
             <TableHandlesLayer editor={editor} />
           </>
         )}
