@@ -348,7 +348,10 @@ export const ColumnsMenu = ({ editor }: EditorMenuProps) => {
               onClick={() => setIsCountOpen(!isCountOpen)}
               aria-label={t("Column count")}
             >
-              {t("{{count}} Columns", { count: columnCount })}
+              {t("{{count}} Columns", { count: columnCount }).replace(
+                "{{count}}",
+                String(columnCount),
+              )}
             </Button>
           </Popover.Target>
           <Popover.Dropdown p={4} className={colClasses.popoverDropdown}>
@@ -365,7 +368,7 @@ export const ColumnsMenu = ({ editor }: EditorMenuProps) => {
                   onClick={() => setColumnCount(n)}
                   size="xs"
                 >
-                  {t("{{count}} Columns", { count: n })}
+                  {t("{{count}} Columns", { count: n }).replace("{{count}}", String(n))}
                 </Button>
               ))}
             </Button.Group>
