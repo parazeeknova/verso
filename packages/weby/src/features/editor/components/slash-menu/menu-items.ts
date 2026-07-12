@@ -10,6 +10,14 @@ import {
   CodeIcon,
   MinusIcon,
   TableIcon,
+  ScissorsIcon,
+  CaretRightIcon,
+  InfoIcon,
+  CalendarIcon,
+  ClockIcon,
+  TagIcon,
+  SmileyIcon,
+  ColumnsIcon,
 } from "@phosphor-icons/react";
 import type { SlashMenuItemType } from "./types";
 
@@ -117,5 +125,113 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
     icon: MinusIcon,
     searchTerms: ["horizontal rule", "hr", "divider", "line"],
     title: "Divider",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setPageBreak().run();
+    },
+    description: "Insert a page break for printing.",
+    icon: ScissorsIcon,
+    searchTerms: ["page", "break", "pagebreak", "print"],
+    title: "Page break",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setDetails().run();
+    },
+    description: "Insert a toggle block.",
+    icon: CaretRightIcon,
+    searchTerms: ["collapsible", "block", "toggle", "details", "expand"],
+    title: "Toggle block",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setCallout().run();
+    },
+    description: "Insert a callout block.",
+    icon: InfoIcon,
+    searchTerms: ["callout", "info", "alert"],
+    title: "Callout",
+  },
+  {
+    command: ({ editor, range }) => {
+      const currentDate = new Date().toLocaleDateString(undefined, {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+      editor.chain().focus().deleteRange(range).insertContent(currentDate).run();
+    },
+    description: "Insert current date.",
+    icon: CalendarIcon,
+    searchTerms: ["date", "today"],
+    title: "Date",
+  },
+  {
+    command: ({ editor, range }) => {
+      const currentTime = new Date().toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "numeric",
+      });
+      editor.chain().focus().deleteRange(range).insertContent(currentTime).run();
+    },
+    description: "Insert current time.",
+    icon: ClockIcon,
+    searchTerms: ["time", "now", "clock"],
+    title: "Time",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setStatus({ color: "gray", text: "" }).run();
+    },
+    description: "Insert inline status badge.",
+    icon: TagIcon,
+    searchTerms: ["status", "badge", "label", "lozenge"],
+    title: "Status",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).insertContent(":").run();
+    },
+    description: "Insert emoji.",
+    icon: SmileyIcon,
+    searchTerms: ["emoji", "face", "smile"],
+    title: "Emoji",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).insertColumns({ layout: "two_equal" }).run();
+    },
+    description: "Insert 2 columns layout.",
+    icon: ColumnsIcon,
+    searchTerms: ["columns", "layout", "two", "2"],
+    title: "2 Columns",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).insertColumns({ layout: "three_equal" }).run();
+    },
+    description: "Insert 3 columns layout.",
+    icon: ColumnsIcon,
+    searchTerms: ["columns", "layout", "three", "3"],
+    title: "3 Columns",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).insertColumns({ layout: "four_equal" }).run();
+    },
+    description: "Insert 4 columns layout.",
+    icon: ColumnsIcon,
+    searchTerms: ["columns", "layout", "four", "4"],
+    title: "4 Columns",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).insertColumns({ layout: "five_equal" }).run();
+    },
+    description: "Insert 5 columns layout.",
+    icon: ColumnsIcon,
+    searchTerms: ["columns", "layout", "five", "5"],
+    title: "5 Columns",
   },
 ];

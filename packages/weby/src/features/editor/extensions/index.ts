@@ -1,8 +1,13 @@
 // eslint-disable-next-line import/no-named-as-default
 import StarterKit from "@tiptap/starter-kit";
-import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
+import { CustomCodeBlock } from "./custom-code-block";
 import { createLowlight, common } from "lowlight";
 import { Link } from "@tiptap/extension-link";
+import { PageBreak } from "./page-break";
+import { Details, DetailsSummary, DetailsContent } from "./details";
+import { Callout } from "./callout";
+import { Status } from "./status";
+import { Columns, Column } from "./columns";
 import {
   CustomTable as Table,
   TableRow,
@@ -47,7 +52,7 @@ export const getEditorExtensions = () => [
     },
     openOnClick: false,
   }),
-  CodeBlockLowlight.configure({
+  CustomCodeBlock.configure({
     defaultLanguage: "plaintext",
     lowlight,
   }),
@@ -103,4 +108,12 @@ export const getEditorExtensions = () => [
     customNodes: ["transclusionSource", "transclusionReference"] as string[],
   }),
   SlashCommand,
+  PageBreak,
+  Details,
+  DetailsSummary,
+  DetailsContent,
+  Callout,
+  Status,
+  Columns,
+  Column,
 ];

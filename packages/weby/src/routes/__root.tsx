@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { useState } from "react";
-import { MantineProvider } from "@mantine/core";
+import { createTheme, MantineProvider } from "@mantine/core";
 
 import mantineCss from "@mantine/core/styles.css?url";
 import appCss from "../styles.css?url";
@@ -20,12 +20,17 @@ const createQueryClient = () =>
     },
   });
 
+const theme = createTheme({
+  fontFamily: '"Ubuntu Mono", monospace',
+  fontFamilyMonospace: '"Ubuntu Mono", monospace',
+});
+
 const RootComponent = () => {
   const [queryClient] = useState(createQueryClient);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MantineProvider>
+      <MantineProvider theme={theme}>
         <Outlet />
       </MantineProvider>
     </QueryClientProvider>
@@ -45,6 +50,11 @@ const RootShell = ({ children }: { children: React.ReactNode }) => (
   <html lang="en" data-theme="dark" data-mantine-color-scheme="dark" suppressHydrationWarning>
     <head>
       <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      <script
+        defer
+        src="https://tracking.przknv.cc/script.js"
+        data-website-id="2e47b7c9-3f7a-4e37-b435-3922b269c7ec"
+      />
       <HeadContent />
     </head>
     <body>
