@@ -10,6 +10,20 @@ type Scope =
   | { kind: "row"; index: number }
   | { kind: "cell"; cellPos: number };
 
+function deriveIndexFromSelection(
+  editor: import("@tiptap/react").Editor,
+  orientation: "col" | "row",
+  _fallbackIndex: number,
+): number | null {
+  const $head = editor.state.selection.$head;
+  const table = findTable($head);
+  if (!table) {return null;}
+  const map = TableMap.get(table.node);
+  const tableStart = table.pos;
+  const cellRect = map.findCell($head.pos - tableStart);
+  return orientation === "col" ? cellRect.left : cellRect.top;
+}
+
 export function useTableClear(
   editor: Editor,
   _tableNode: ProseMirrorNode,
@@ -33,12 +47,14 @@ export function useTableClear(
     const cellOffsets: number[] = [];
 
     if (scope.kind === "col") {
+      const resolvedIndex = deriveIndexFromSelection(editor, "col", scope.index) ?? scope.index;
       for (let row = 0; row < map.height; row++) {
-        cellOffsets.push(map.map[row * map.width + scope.index]);
+        cellOffsets.push(map.map[row * map.width + resolvedIndex]);
       }
     } else if (scope.kind === "row") {
+      const resolvedIndex = deriveIndexFromSelection(editor, "row", scope.index) ?? scope.index;
       for (let col = 0; col < map.width; col++) {
-        cellOffsets.push(map.map[scope.index * map.width + col]);
+        cellOffsets.push(map.map[resolvedIndex * map.width + col]);
       }
     }
 

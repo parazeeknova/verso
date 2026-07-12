@@ -17,6 +17,7 @@ export default function MermaidView({ props }: MermaidViewProps) {
   // Update Mermaid config when theme changes.
   useEffect(() => {
     mermaid.initialize({
+      securityLevel: "strict",
       startOnLoad: false,
       suppressErrorRendering: true,
       theme: isDarkMode ? "dark" : "default",
@@ -25,27 +26,35 @@ export default function MermaidView({ props }: MermaidViewProps) {
 
   // Re-render the diagram whenever the node content or theme changes.
   useEffect(() => {
+    let cancelled = false;
     const renderDiagram = async () => {
       const randomId = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
       if (node.textContent.length > 0) {
         try {
           const item = await mermaid.render(randomId, node.textContent);
-          setPreview(item.svg);
-          setMermaidErr(null);
+          if (!cancelled) {
+            setPreview(item.svg);
+            setMermaidErr(null);
+          }
         } catch (error) {
-          const errMsg = error instanceof Error ? error.message : String(error);
-          if (props.editor.isEditable) {
-            setMermaidErr(`Mermaid diagram error: ${errMsg}`);
-          } else {
-            setMermaidErr("Invalid Mermaid diagram");
+          if (!cancelled) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            if (props.editor.isEditable) {
+              setMermaidErr(`Mermaid diagram error: ${errMsg}`);
+            } else {
+              setMermaidErr("Invalid Mermaid diagram");
+            }
           }
         }
-      } else {
+      } else if (!cancelled) {
         setPreview("");
         setMermaidErr(null);
       }
     };
     void renderDiagram();
+    return () => {
+      cancelled = true;
+    };
   }, [node.textContent, isDarkMode, props.editor.isEditable]);
 
   if (mermaidErr) {

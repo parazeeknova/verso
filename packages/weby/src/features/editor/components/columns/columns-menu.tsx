@@ -194,7 +194,14 @@ export const ColumnsMenu = ({ editor }: EditorMenuProps) => {
     const parent = findParentNode(predicate)(selection);
 
     if (parent) {
-      const dom = editor.view.nodeDOM(parent?.pos) as HTMLElement;
+      const dom = editor.view.nodeDOM(parent?.pos) as HTMLElement | null;
+      if (!dom) {
+        const fallback = posToDOMRect(editor.view, selection.from, selection.to);
+        return {
+          getBoundingClientRect: () => fallback,
+          getClientRects: () => [fallback],
+        };
+      }
       const domRect = dom.getBoundingClientRect();
 
       // Columns entirely out of viewport — return real rect so menu goes off-screen
@@ -209,7 +216,8 @@ export const ColumnsMenu = ({ editor }: EditorMenuProps) => {
       // 55px = 15px offset + ~40px menu height
       const maxBottom = window.innerHeight - 55;
       if (domRect.bottom > maxBottom) {
-        const clamped = new DOMRect(domRect.x, domRect.y, domRect.width, maxBottom - domRect.y);
+        const clampedHeight = Math.max(0, maxBottom - domRect.y);
+        const clamped = new DOMRect(domRect.x, domRect.y, domRect.width, clampedHeight);
         return {
           getBoundingClientRect: () => clamped,
           getClientRects: () => [clamped],
@@ -338,9 +346,9 @@ export const ColumnsMenu = ({ editor }: EditorMenuProps) => {
               className={colClasses.triggerButton}
               rightSection={<IconChevronDown size={10} />}
               onClick={() => setIsCountOpen(!isCountOpen)}
-              aria-label="Column count"
+              aria-label={t("Column count")}
             >
-              {`${columnCount} Columns`}
+              {t("{{count}} Columns", { count: columnCount })}
             </Button>
           </Popover.Target>
           <Popover.Dropdown p={4} className={colClasses.popoverDropdown}>
@@ -357,7 +365,7 @@ export const ColumnsMenu = ({ editor }: EditorMenuProps) => {
                   onClick={() => setColumnCount(n)}
                   size="xs"
                 >
-                  {`${n} Columns`}
+                  {t("{{count}} Columns", { count: n })}
                 </Button>
               ))}
             </Button.Group>

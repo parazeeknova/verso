@@ -75,9 +75,12 @@ export default function StatusView(props: NodeViewProps) {
       <Popover
         opened={opened}
         onChange={(open) => {
-          if (!open && !text) {
-            deleteNode();
-            return;
+          if (!open) {
+            if (!inputValue) {
+              deleteNode();
+              return;
+            }
+            updateAttributes({ text: inputValue });
           }
           setOpened(open);
         }}

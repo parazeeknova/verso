@@ -235,7 +235,7 @@ export const Columns = Node.create<ColumnsOptions>({
 
       setColumnCount:
         (count: number) =>
-        ({ tr, state }) => {
+        ({ tr, state, dispatch }) => {
           const predicate = (node: PMNode) => node.type.name === "columns";
           const parent = findParentNode(predicate)(state.selection);
           if (!parent) return false;
@@ -282,6 +282,7 @@ export const Columns = Node.create<ColumnsOptions>({
           );
           tr.replaceWith(parentPos, parentPos + columnsNode.nodeSize, newNode);
           tr.setSelection(TextSelection.near(tr.doc.resolve(parentPos + 1), 1));
+          if (dispatch) dispatch(tr);
           return true;
         },
 
