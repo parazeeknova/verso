@@ -348,12 +348,12 @@ export const ColumnsMenu = ({ editor }: EditorMenuProps) => {
               {[2, 3, 4, 5].map((n) => (
                 <Button
                   key={n}
-                  variant={n === columnCount ? "light" : "subtle"}
-                  color={n === columnCount ? "blue" : "dark"}
-                  className={colClasses.columnButton}
+                  variant="subtle"
+                  color="dark"
+                  className={`${colClasses.columnButton} ${n === columnCount ? colClasses.active : ""}`}
                   justify="space-between"
                   fullWidth
-                  rightSection={n === columnCount ? <IconCheck size={14} /> : null}
+                  rightSection={n === columnCount ? <IconCheck size={12} /> : null}
                   onClick={() => setColumnCount(n)}
                   size="xs"
                 >
