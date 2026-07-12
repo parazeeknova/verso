@@ -1,12 +1,24 @@
 // eslint-disable-next-line import/no-named-as-default
 import StarterKit from "@tiptap/starter-kit";
-import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
+import { CustomCodeBlock } from "./custom-code-block";
 import { createLowlight, common } from "lowlight";
 import { Link } from "@tiptap/extension-link";
-import { Table } from "@tiptap/extension-table";
-import { TableRow } from "@tiptap/extension-table/row";
-import { TableCell } from "@tiptap/extension-table/cell";
-import { TableHeader } from "@tiptap/extension-table/header";
+import { PageBreak } from "./page-break";
+import { Details, DetailsSummary, DetailsContent } from "./details";
+import { Callout } from "./callout";
+import { Status } from "./status";
+import { Columns, Column } from "./columns";
+import {
+  CustomTable as Table,
+  TableRow,
+  TableCell,
+  TableHeader,
+  TableDndExtension,
+  TableHandleCommandsExtension,
+  TableHeaderPin,
+  TableReadonlySort,
+  TableView,
+} from "./table";
 import { TaskList } from "@tiptap/extension-task-list";
 import { TaskItem } from "@tiptap/extension-task-item";
 import { TextAlign } from "@tiptap/extension-text-align";
@@ -17,6 +29,7 @@ import { Placeholder } from "@tiptap/extension-placeholder";
 import { HeadingWithIds } from "#/features/blog/components/tiptap-heading-ids";
 import GlobalDragHandle from "./drag-handle";
 import SlashCommand from "./slash-command";
+import { EmojiCommand } from "./emoji-command";
 
 const lowlight = createLowlight(common);
 
@@ -40,16 +53,22 @@ export const getEditorExtensions = () => [
     },
     openOnClick: false,
   }),
-  CodeBlockLowlight.configure({
+  CustomCodeBlock.configure({
     defaultLanguage: "plaintext",
     lowlight,
   }),
   Table.configure({
+    View: TableView,
+    allowTableNodeSelection: true,
     resizable: true,
   }),
   TableRow,
   TableCell,
   TableHeader,
+  TableDndExtension,
+  TableHandleCommandsExtension,
+  TableHeaderPin,
+  TableReadonlySort,
   TaskList,
   TaskItem.configure({
     nested: true,
@@ -90,4 +109,13 @@ export const getEditorExtensions = () => [
     customNodes: ["transclusionSource", "transclusionReference"] as string[],
   }),
   SlashCommand,
+  EmojiCommand,
+  PageBreak,
+  Details,
+  DetailsSummary,
+  DetailsContent,
+  Callout,
+  Status,
+  Columns,
+  Column,
 ];

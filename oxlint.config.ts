@@ -13,5 +13,7 @@ export default defineConfig({
     "packages/weby/src/routes/**/$tableName*.ts",
     "packages/weby/src/routes/**/$historyId.ts",
     "packages/weby/src/routes/s/$spaceSlug*.tsx",
+    "packages/weby/src/features/editor/extensions/table/**",
+    "packages/weby/src/features/editor/components/table/**",
   ],
 });

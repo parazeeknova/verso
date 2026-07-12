@@ -26,6 +26,7 @@ const resolvePreference = (pref: ThemePreference): "light" | "dark" =>
 const applyDOM = (resolved: "light" | "dark") => {
   if (typeof document !== "undefined") {
     document.documentElement.dataset.theme = resolved;
+    document.documentElement.dataset.mantineColorScheme = resolved;
   }
 };
 

@@ -1,0 +1,40 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 2px;
+  background: light-dark(var(--mantine-color-body), var(--mantine-color-dark-7));
+  border: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar :global(.mantine-ActionIcon-root) {
+  border-radius: 0;
+}
+
+.toolbar :global(.mantine-ActionIcon-root):hover {
+  background: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.08));
+  border-radius: 0;
+}
+
+.toolbar :global(.mantine-Tooltip-tooltip) {
+  font-family: "Ubuntu Mono", monospace;
+  font-size: 0.6875rem;
+  padding: 2px 6px;
+  border-radius: 0;
+  background: light-dark(#e5e5e5, #262626);
+  color: light-dark(#000, #fff);
+}
+
+.divider {
+  width: 1px;
+  height: 14px;
+  margin: 0 2px;
+  background: light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+}
+
+@media print {
+  .toolbar {
+    display: none !important;
+  }
+}

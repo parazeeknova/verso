@@ -1,0 +1,13 @@
+.root {
+  margin: 0.75rem 0;
+  border-radius: 0 !important;
+  padding: 8px 12px !important;
+}
+
+.icon {
+  margin-right: 0.5rem;
+}
+
+.message {
+  margin: 0;
+}

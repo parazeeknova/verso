@@ -1,0 +1,93 @@
+/* eslint-disable */
+import { useCallback, useMemo } from "react";
+import type { Editor } from "@tiptap/react";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import {
+  convertArrayOfRowsToTableNode,
+  convertTableNodeToArrayOfRows,
+  findTable,
+  isEditorReady,
+  transpose,
+} from "#/features/editor/extensions/table";
+import { getCellSortText, isCellEmpty, isHeaderCell, sortItems, weaveItems } from '../lib/sort-cells';
+import type { SortDirection, SortableItem } from '../lib/sort-cells';
+
+interface Args {
+  editor: Editor;
+  orientation: "col" | "row";
+  index: number;
+  tableNode: ProseMirrorNode;
+  tablePos: number;
+  direction: SortDirection;
+}
+
+function tableHasMergedCells(tableNode: ProseMirrorNode): boolean {
+  for (let r = 0; r < tableNode.childCount; r++) {
+    const row = tableNode.child(r);
+    for (let c = 0; c < row.childCount; c++) {
+      const { colspan = 1, rowspan = 1 } = row.child(c).attrs;
+      if (colspan > 1 || rowspan > 1) {return true;}
+    }
+  }
+  return false;
+}
+
+function isAllHeader(cells: (ProseMirrorNode | null)[]): boolean {
+  return cells.every((c) => c !== null && isHeaderCell(c));
+}
+
+export function useTableSort({ editor, orientation, index, tableNode, tablePos: _tablePos, direction }: Args) {
+  const canSort = useMemo(() => {
+    if (tableHasMergedCells(tableNode)) {return false;}
+
+    const rows = convertTableNodeToArrayOfRows(tableNode);
+    const axes = orientation === "col" ? rows : transpose(rows);
+    if (axes.length < 2) {return false;}
+
+    return axes.some((cells: (ProseMirrorNode | null)[]) => {
+      if (isAllHeader(cells)) {return false;}
+      const sortCell = cells[index];
+      return !!sortCell && !isCellEmpty(sortCell);
+    });
+  }, [tableNode, orientation, index]);
+
+  const handleSort = useCallback(() => {
+    if (!canSort || !isEditorReady(editor)) {return;}
+
+    const table = findTable(editor.state.selection.$from);
+    if (!table) {return;}
+    const currentTableNode = table.node;
+    const currentTablePos = table.pos;
+    if (tableHasMergedCells(currentTableNode)) {return;}
+
+    const rows = convertTableNodeToArrayOfRows(currentTableNode);
+    const axes = orientation === "col" ? rows : transpose(rows);
+
+    const items: SortableItem<(ProseMirrorNode | null)[]>[] = axes.map((cells: (ProseMirrorNode | null)[], originalOrder: number) => {
+      const sortCell = cells[index];
+      return {
+        isEmpty: !sortCell || isCellEmpty(sortCell),
+        isHeader: isAllHeader(cells),
+        originalOrder,
+        payload: cells,
+        text: sortCell ? getCellSortText(sortCell) : "",
+      };
+    });
+
+    const dataItems = items.filter((it) => !it.isHeader);
+    const sortedData = sortItems(dataItems, direction);
+    const woven = weaveItems(items, sortedData);
+
+    const newAxes = woven.map((it) => it.payload);
+    const newRows = orientation === "col" ? newAxes : transpose(newAxes);
+
+    const newTable = convertArrayOfRowsToTableNode(currentTableNode, newRows);
+
+    const {tr} = editor.state;
+    tr.replaceWith(currentTablePos, currentTablePos + currentTableNode.nodeSize, newTable);
+
+    if (tr.docChanged) {editor.view.dispatch(tr);}
+  }, [editor, orientation, index, direction, canSort]);
+
+  return { canSort, handleSort };
+}

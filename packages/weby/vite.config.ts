@@ -41,7 +41,10 @@ const config = defineConfig(async ({ mode }) => {
       include: ["use-sync-external-store/shim/with-selector", "use-sync-external-store/shim"],
     },
     plugins,
-    resolve: { tsconfigPaths: true },
+    resolve: {
+      dedupe: ["react", "react-dom"],
+      tsconfigPaths: true,
+    },
     server: {
       proxy: {
         "/api": {
