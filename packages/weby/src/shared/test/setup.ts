@@ -37,5 +37,14 @@ MockIntersectionObserver.prototype = {
 };
 vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
 
+// Mock ResizeObserver globally
+const MockResizeObserver = vi.fn();
+MockResizeObserver.prototype = {
+  disconnect: vi.fn(),
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+};
+vi.stubGlobal("ResizeObserver", MockResizeObserver);
+
 // Mock environment variables
 vi.stubEnv("VITE_GITHUB_USERNAME", "testuser");
