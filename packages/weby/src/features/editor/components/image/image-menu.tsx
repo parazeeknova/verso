@@ -44,12 +44,13 @@ export const ImageMenu = ({ editor }: EditorMenuProps) => {
       }
 
       const imageAttrs = ctx.editor.getAttributes("image");
+      const align = imageAttrs?.align || "center";
 
       return {
         alt: imageAttrs?.alt || "",
-        isAlignCenter: ctx.editor.isActive("image", { align: "center" }),
-        isAlignLeft: ctx.editor.isActive("image", { align: "left" }),
-        isAlignRight: ctx.editor.isActive("image", { align: "right" }),
+        isAlignCenter: align === "center",
+        isAlignLeft: align === "left",
+        isAlignRight: align === "right",
         isImage: ctx.editor.isActive("image"),
         src: imageAttrs?.src || null,
       };

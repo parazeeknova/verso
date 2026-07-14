@@ -107,7 +107,12 @@ export const useAltTextControl = ({ editor, nodeName, currentAlt }: UseAltTextCo
           <Button size="compact-xs" variant="default" onClick={cancel} radius={0}>
             {t("Cancel")}
           </Button>
-          <Button size="compact-xs" onClick={save} radius={0}>
+          <Button
+            size="compact-xs"
+            onClick={save}
+            radius={0}
+            className="bg-[#b58cff] hover:bg-[#a37bfa] text-white border-none"
+          >
             {t("Save")}
           </Button>
         </Group>
