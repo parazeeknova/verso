@@ -537,7 +537,7 @@ export const LoginPopup = ({ isDarkMode }: LoginPopupProps) => {
               <a href="/about" className="underline" target="_blank" rel="noopener noreferrer">
                 verso
               </a>{" "}
-              a self hosted knowledge base
+              a personal knowledge base and folio
             </p>
 
             {mode === "loading" && (

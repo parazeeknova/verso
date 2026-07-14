@@ -103,8 +103,8 @@ var Projects = []models.Project{
 		ProductURL: "https://sheets.przknv.cc",
 	},
 	{
-		Title:      "Verso is a knowledge base, two sides of the same surface.",
-		Desc:       "This is my personal portfolio and knowledge base two panels, two purposes, one app that doesn't apologize for being both. the left side is where i exist as a person: my projects, my work, my contribution graph that i pretend isn't a source of anxiety. the right side is where i think out loud: notes, docs, blog posts, half-baked ideas that maybe shouldn't be public but are anyway.",
+		Title:      "Personal knowledge base and folio, blog for public face & private brain, one app",
+		Desc:       "Personal knowledge base and folio, blog for public face & private brain, one app that doesn't apologize for being both. the left side is where i exist as a person (public face): my projects, my work, my contribution graph. the right side is where i think out loud (private brain): notes, docs, blog posts, half-baked ideas.",
 		Stack:      "Tanstack Start, Vite, Vitest, Golang, TypeScript, Postgres, TipTap, CRDTs, Tailwind CSS, Cloudflare, Docker and more",
 		ReadmeURL:  "https://raw.githubusercontent.com/parazeeknova/verso/refs/heads/main/.github/README.md",
 		RepoURL:    "https://github.com/parazeeknova/verso",
