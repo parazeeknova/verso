@@ -111,7 +111,14 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setMathInline({ text: "" }).run();
+      const pos = range.from;
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .setMathInline({ text: "" })
+        .setNodeSelection(pos)
+        .run();
     },
     description: "Inline mathematical expression.",
     icon: FunctionIcon,
@@ -120,7 +127,14 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setMathBlock({ text: "" }).run();
+      const pos = range.from;
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .setMathBlock({ text: "" })
+        .setNodeSelection(pos)
+        .run();
     },
     description: "Block mathematical expression.",
     icon: MathOperationsIcon,

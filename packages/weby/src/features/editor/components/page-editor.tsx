@@ -346,6 +346,11 @@ const useSyncEditorContent = (
     if (previousContentJsonRef.current === contentJson) {
       return;
     }
+    const localJsonString = JSON.stringify(editor.getJSON());
+    if (localJsonString === contentJson) {
+      previousContentJsonRef.current = contentJson;
+      return;
+    }
     if (dirty || editor.isFocused) {
       return;
     }
