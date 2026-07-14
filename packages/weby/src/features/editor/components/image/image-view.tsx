@@ -57,7 +57,7 @@ const ImageContent = ({ src, previewSrc, placeholder, alt, t }: ImageContentProp
 };
 
 export const ImageView = (props: NodeViewProps) => {
-  const { node, selected, editor } = props;
+  const { node, editor } = props;
   const { src, width, height, aspectRatio, placeholder, alt, align } = node.attrs;
   const { isDarkMode } = useTheme();
 
@@ -145,17 +145,16 @@ export const ImageView = (props: NodeViewProps) => {
     [handleResize],
   );
 
-  // Determine helper opacity class based on selection state
-  const handleOpacityClass = selected
-    ? "opacity-100"
-    : "opacity-0 group-hover:opacity-100 transition-opacity duration-200";
+  // Show handles only on hover
+  const handleOpacityClass = "opacity-0 group-hover:opacity-100 transition-opacity duration-200";
+  const showHandles = editor?.isEditable && src;
 
   return (
     <NodeViewWrapper className={alignmentClass} data-drag-handle>
       <div
-        className={`relative max-w-full overflow-visible group ${
-          selected ? "ring-2 ring-blue-500 dark:ring-blue-400 rounded-none" : "rounded-none"
-        } ${t("bg-neutral-900/10", "bg-neutral-100/50")}`}
+        className={`relative max-w-full overflow-visible group rounded-none ${
+          src ? "" : t("bg-neutral-900/10", "bg-neutral-100/50")
+        }`}
         style={{
           aspectRatio: aspectRatio ? `${aspectRatio}` : undefined,
           height: displayHeight,
@@ -165,7 +164,7 @@ export const ImageView = (props: NodeViewProps) => {
         <ImageContent alt={alt} placeholder={placeholder} previewSrc={previewSrc} src={src} t={t} />
 
         {/* Custom Left resize handle */}
-        {selected && src && (
+        {showHandles && (
           <button
             className={`absolute top-0 bottom-0 left-[-8px] w-4 flex items-center justify-center cursor-ew-resize z-50 group/handle ${handleOpacityClass}`}
             onMouseDown={(e) => handleResizeStart(e, "left")}
@@ -173,12 +172,12 @@ export const ImageView = (props: NodeViewProps) => {
             tabIndex={-1}
             aria-label="Resize left"
           >
-            <div className="w-[4px] h-12 bg-blue-400 dark:bg-blue-500 group-hover/handle:bg-blue-600 dark:group-hover/handle:bg-blue-400 transition-colors rounded-none" />
+            <div className="w-[4px] h-12 bg-[#b58cff] transition-colors rounded-none" />
           </button>
         )}
 
         {/* Custom Right resize handle */}
-        {selected && src && (
+        {showHandles && (
           <button
             className={`absolute top-0 bottom-0 right-[-8px] w-4 flex items-center justify-center cursor-ew-resize z-50 group/handle ${handleOpacityClass}`}
             onMouseDown={(e) => handleResizeStart(e, "right")}
@@ -186,7 +185,7 @@ export const ImageView = (props: NodeViewProps) => {
             tabIndex={-1}
             aria-label="Resize right"
           >
-            <div className="w-[4px] h-12 bg-blue-400 dark:bg-blue-500 group-hover/handle:bg-blue-600 dark:group-hover/handle:bg-blue-400 transition-colors rounded-none" />
+            <div className="w-[4px] h-12 bg-[#b58cff] transition-colors rounded-none" />
           </button>
         )}
       </div>
