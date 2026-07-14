@@ -1,5 +1,5 @@
 {
-  description = "Verso - A portfolio and knowledge base desktop application";
+  description = "Personal knowledge base and folio, blog for public face & private brain, one app";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";

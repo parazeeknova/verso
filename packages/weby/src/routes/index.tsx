@@ -329,10 +329,10 @@ export const Route = createFileRoute("/")({
     return {
       links: [{ href: origin, rel: "canonical" }],
       meta: [
-        { title: "verso — open-source, self-hosted wiki" },
+        { title: "verso — personal knowledge base and folio" },
         {
           content:
-            "verso is an open-source, self-hosted wiki and knowledge base. write, organize, and publish your thinking — in real-time, with full control over your data.",
+            "verso is a personal knowledge base and folio, blog for public face & private brain, one app.",
           name: "description",
         },
         {
@@ -340,10 +340,10 @@ export const Route = createFileRoute("/")({
             "verso, wiki, knowledge base, self-hosted, open-source, markdown, real-time collaboration",
           name: "keywords",
         },
-        { content: "verso — open-source, self-hosted wiki", property: "og:title" },
+        { content: "verso — personal knowledge base and folio", property: "og:title" },
         {
           content:
-            "verso is an open-source, self-hosted wiki and knowledge base. write, organize, and publish your thinking — in real-time, with full control over your data.",
+            "verso is a personal knowledge base and folio, blog for public face & private brain, one app.",
           property: "og:description",
         },
         { content: "website", property: "og:type" },
@@ -352,10 +352,10 @@ export const Route = createFileRoute("/")({
         { content: "630", property: "og:image:height" },
         { content: "image/png", property: "og:image:type" },
         { content: "summary_large_image", property: "twitter:card" },
-        { content: "verso — open-source, self-hosted wiki", property: "twitter:title" },
+        { content: "verso — personal knowledge base and folio", property: "twitter:title" },
         {
           content:
-            "verso is an open-source, self-hosted wiki and knowledge base. write, organize, and publish your thinking — in real-time, with full control over your data.",
+            "verso is a personal knowledge base and folio, blog for public face & private brain, one app.",
           property: "twitter:description",
         },
         { content: ogImage, property: "twitter:image" },

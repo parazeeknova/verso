@@ -747,8 +747,8 @@ export const LandingPage = () => {
         <p
           className={`mt-5 text-[14px] leading-relaxed lowercase ${t("text-text-dark/60", "text-text-light/60")}`}
         >
-          an open-source, self-hosted wiki and knowledge base. write, organize, and publish your
-          thinking —{" "}
+          a personal knowledge base and folio, blog for public face & private brain, one app. write,
+          organize, and publish your thinking —{" "}
           <strong className={t("text-text-dark/80", "text-text-light/80")}>in real-time</strong>,
           with{" "}
           <strong className={t("text-text-dark/80", "text-text-light/80")}>full control</strong>{" "}

@@ -2,7 +2,7 @@
 pkgname=verso-bin
 pkgver=0.2.92
 pkgrel=1
-pkgdesc="A portfolio and knowledge base, two panels, one app"
+pkgdesc="Personal knowledge base and folio, blog for public face & private brain, one app"
 arch=('x86_64')
 url="https://github.com/parazeeknova/verso"
 license=('MIT')
@@ -31,6 +31,6 @@ Icon=/opt/verso/resources/verso.png
 Type=Application
 Categories=Utility;
 Terminal=false
-Comment=A portfolio and knowledge base desktop application
+Comment=Personal knowledge base and folio, blog for public face & private brain, one app
 EOF
 }

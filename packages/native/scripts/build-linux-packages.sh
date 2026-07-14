@@ -71,7 +71,7 @@ Icon=verso
 Type=Application
 Categories=Utility;
 Terminal=false
-Comment=A portfolio and knowledge base desktop application
+Comment=Personal knowledge base and folio, blog for public face & private brain, one app
 EOF
 
 # Download appimagetool if not present
