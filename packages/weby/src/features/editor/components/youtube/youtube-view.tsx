@@ -27,10 +27,11 @@ const YoutubePlaceholder = ({
 
   return (
     <div
-      className={`w-full flex items-center justify-between gap-2 p-1.5 border rounded-none ${t(
+      className={`w-full flex items-center justify-between gap-2 p-1 border rounded-none ${t(
         "border-neutral-800 bg-neutral-900/5",
         "border-neutral-200 bg-neutral-50",
       )}`}
+      style={{ height: "32px" }}
     >
       <TextInput
         placeholder="Paste YouTube link..."
@@ -47,8 +48,8 @@ const YoutubePlaceholder = ({
             borderRadius: 0,
             fontFamily: "monospace",
             fontSize: "12px",
-            height: "28px",
-            padding: "4px 8px",
+            height: "24px",
+            padding: "2px 6px",
           },
         }}
         onKeyDown={(e) => {
@@ -67,11 +68,12 @@ const YoutubePlaceholder = ({
               backgroundColor: "#a074ec",
             },
             backgroundColor: "#b58cff",
+            borderRadius: 0,
             color: "#ffffff",
             fontSize: "11px",
             fontWeight: "normal",
-            height: "28px",
-            padding: "0 12px",
+            height: "24px",
+            padding: "0 10px",
           },
         }}
       >
