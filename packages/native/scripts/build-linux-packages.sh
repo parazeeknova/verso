@@ -77,7 +77,7 @@ EOF
 # Download appimagetool if not present
 APPIMAGETOOL="$NATIVE_DIR/build/appimagetool"
 if [ ! -f "$APPIMAGETOOL" ]; then
-  curl -L -o "$APPIMAGETOOL" "https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage"
+  curl -L -o "$APPIMAGETOOL" "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
   chmod +x "$APPIMAGETOOL"
 fi
 
