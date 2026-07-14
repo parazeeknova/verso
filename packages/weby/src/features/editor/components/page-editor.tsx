@@ -4,7 +4,6 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { useEffect, useCallback, useMemo, useRef, useState } from "react";
 import { BookmarkSimpleIcon, InfoIcon, ListBulletsIcon, XIcon } from "@phosphor-icons/react";
 import { gsap } from "gsap";
-
 import { useTheme } from "#/shared/hooks/use-theme";
 import { getEditorExtensions } from "#/features/editor/extensions";
 import { useEditorContent } from "#/features/editor/hooks/use-editor-content";

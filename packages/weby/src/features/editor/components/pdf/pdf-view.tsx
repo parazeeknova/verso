@@ -57,9 +57,11 @@ const PdfContent = ({ src, placeholder, name, hasError, onError, t }: PdfContent
     return <PdfError t={t} />;
   }
 
+  const iframeTitle = name ? `pdf document: ${name}` : "pdf document";
+
   return (
     <iframe
-      title={name || "pdf document"}
+      title={iframeTitle}
       className="w-full h-full block rounded-none border-none bg-white"
       src={src}
       loading="lazy"
