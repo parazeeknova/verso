@@ -97,16 +97,17 @@ export const useAltTextControl = ({ editor, nodeName, currentAlt }: UseAltTextCo
         minRows={1}
         maxRows={4}
         maxLength={ALT_MAX_LENGTH}
+        radius={0}
       />
       <Group justify="space-between" align="center" mt={6} wrap="nowrap">
         <Text size="10px" c="dimmed">
           {draft.length}/{ALT_MAX_LENGTH}
         </Text>
         <Group gap={4}>
-          <Button size="compact-xs" variant="default" onClick={cancel}>
+          <Button size="compact-xs" variant="default" onClick={cancel} radius={0}>
             {t("Cancel")}
           </Button>
-          <Button size="compact-xs" onClick={save}>
+          <Button size="compact-xs" onClick={save} radius={0}>
             {t("Save")}
           </Button>
         </Group>
