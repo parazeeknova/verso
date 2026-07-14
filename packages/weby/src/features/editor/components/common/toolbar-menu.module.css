@@ -17,6 +17,11 @@
   border-radius: 0;
 }
 
+.active {
+  background: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.1)) !important;
+  color: #b58cff !important;
+}
+
 .toolbar :global(.mantine-Tooltip-tooltip) {
   font-family: "Ubuntu Mono", monospace;
   font-size: 0.6875rem;
