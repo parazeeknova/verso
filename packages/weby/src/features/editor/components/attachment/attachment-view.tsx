@@ -80,7 +80,7 @@ export const AttachmentView = (props: NodeViewProps) => {
 
   return (
     <NodeViewWrapper className="w-full my-1" data-drag-handle>
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: ProseMirror NodeView selection handler */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
         contentEditable={false}
         onClick={handleSelect}

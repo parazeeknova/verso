@@ -1,54 +1,35 @@
+/* eslint-disable complexity */
 import "katex/dist/katex.min.css";
 import { render } from "katex";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { NodeViewWrapper } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { ActionIcon, Flex, Popover, Stack, Textarea } from "@mantine/core";
-import { IconTrashX } from "@tabler/icons-react";
+import { TrashIcon } from "@phosphor-icons/react";
 import { useDebouncedValue } from "@mantine/hooks";
+import { useTheme } from "#/shared/hooks/use-theme";
 import classes from "./math.module.css";
 
-export const BlockMathView = (props: NodeViewProps) => {
-  const { node, updateAttributes, editor, selected, getPos } = props;
-  const mathResultContainer = useRef<HTMLDivElement>(null);
-  const mathPreviewContainer = useRef<HTMLDivElement>(null);
-  const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
-  const [mathError, setMathError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+const renderKatex = (katexString: string, container: HTMLDivElement | null): string | null => {
+  if (!container) {
+    return null;
+  }
+  try {
+    render(katexString, container, { displayMode: true, strict: false });
+    return null;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+};
+
+const useMathEditingState = (
+  node: NodeViewProps["node"],
+  selected: NodeViewProps["selected"],
+  getPos: NodeViewProps["getPos"],
+  editor: NodeViewProps["editor"],
+) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [debouncedPreview] = useDebouncedValue(preview, 500);
-
-  const renderMath = (katexString: string, container: HTMLDivElement | null) => {
-    if (!container) {
-      return;
-    }
-    try {
-      render(katexString, container, { displayMode: true, strict: false });
-      setMathError(null);
-    } catch (error) {
-      setMathError(error instanceof Error ? error.message : String(error));
-    }
-  };
-
-  useEffect(() => {
-    renderMath(node.attrs.text ?? "", mathResultContainer.current);
-  }, [node.attrs.text]);
-
-  useEffect(() => {
-    if (isEditing) {
-      renderMath(preview ?? "", mathPreviewContainer.current);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preview, isEditing]);
-
-  useEffect(() => {
-    if (debouncedPreview !== null) {
-      queueMicrotask(() => {
-        updateAttributes({ text: debouncedPreview });
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedPreview]);
+  const [preview, setPreview] = useState<string | null>(null);
 
   useEffect(() => {
     const pos = getPos();
@@ -58,8 +39,87 @@ export const BlockMathView = (props: NodeViewProps) => {
     if (nodeSelected) {
       setPreview(node.attrs.text ?? "");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected]);
+  }, [selected, getPos, node.nodeSize, node.attrs.text, editor.state.selection]);
+
+  return { isEditing, preview, setPreview };
+};
+
+const useDebouncedAttributesUpdate = (
+  debouncedPreview: string | null,
+  updateAttributes: NodeViewProps["updateAttributes"],
+) => {
+  useEffect(() => {
+    if (debouncedPreview !== null) {
+      queueMicrotask(() => {
+        updateAttributes({ text: debouncedPreview });
+      });
+    }
+  }, [debouncedPreview, updateAttributes]);
+};
+
+export const BlockMathView = (props: NodeViewProps) => {
+  const { node, updateAttributes, editor, selected, getPos } = props;
+  const mathResultContainer = useRef<HTMLDivElement>(null);
+  const mathPreviewContainer = useRef<HTMLDivElement>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [mathError, setMathError] = useState<string | null>(null);
+  const { isDarkMode } = useTheme();
+
+  const { isEditing, preview, setPreview } = useMathEditingState(node, selected, getPos, editor);
+
+  const [debouncedPreview] = useDebouncedValue(preview, 500);
+  useDebouncedAttributesUpdate(debouncedPreview, updateAttributes);
+
+  const renderMath = useCallback((katexString: string, container: HTMLDivElement | null) => {
+    const error = renderKatex(katexString, container);
+    setMathError(error);
+  }, []);
+
+  useEffect(() => {
+    renderMath(node.attrs.text ?? "", mathResultContainer.current);
+  }, [node.attrs.text, renderMath]);
+
+  useEffect(() => {
+    if (isEditing) {
+      renderMath(preview ?? "", mathPreviewContainer.current);
+    }
+  }, [preview, isEditing, renderMath]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      const pos = getPos?.();
+      if (pos === undefined) {
+        return;
+      }
+
+      if (e.key === "Escape" || (e.key === "Enter" && !e.shiftKey)) {
+        return editor.commands.focus(pos + node.nodeSize);
+      }
+
+      if (!textAreaRef.current) {
+        return;
+      }
+
+      const { selectionStart, selectionEnd } = textAreaRef.current;
+
+      if (
+        (e.key === "ArrowLeft" || e.key === "ArrowUp") &&
+        selectionStart === selectionEnd &&
+        selectionStart === 0
+      ) {
+        editor.commands.focus(pos - 1);
+      }
+
+      if (
+        (e.key === "ArrowRight" || e.key === "ArrowDown") &&
+        selectionStart === selectionEnd &&
+        selectionStart === textAreaRef.current.value.length
+      ) {
+        editor.commands.focus(pos + node.nodeSize);
+      }
+    },
+    [getPos, editor.commands, node.nodeSize],
+  );
 
   const isEmpty = isEditing ? !preview?.trim().length : !node.attrs.text?.trim().length;
 
@@ -69,9 +129,23 @@ export const BlockMathView = (props: NodeViewProps) => {
       trapFocus
       position="top"
       shadow="md"
-      width={500}
+      width={400}
       withArrow
+      arrowSize={8}
+      radius="none"
+      offset={4}
       zIndex={101}
+      styles={{
+        arrow: {
+          backgroundColor: isDarkMode ? "#1a1a1a" : "#ffffff",
+          borderColor: isDarkMode ? "#262626" : "#e5e5e5",
+        },
+        dropdown: {
+          backgroundColor: isDarkMode ? "#1a1a1a" : "#ffffff",
+          borderColor: isDarkMode ? "#262626" : "#e5e5e5",
+          padding: "6px",
+        },
+      }}
     >
       <Popover.Target>
         <NodeViewWrapper
@@ -84,7 +158,9 @@ export const BlockMathView = (props: NodeViewProps) => {
           ].join(" ")}
         >
           <div
-            style={{ display: isEditing && preview?.length ? undefined : "none" }}
+            style={{
+              display: isEditing && preview?.length ? undefined : "none",
+            }}
             ref={mathPreviewContainer}
           />
           <div style={{ display: isEditing ? "none" : undefined }} ref={mathResultContainer} />
@@ -93,63 +169,46 @@ export const BlockMathView = (props: NodeViewProps) => {
         </NodeViewWrapper>
       </Popover.Target>
       <Popover.Dropdown>
-        <Stack>
+        <Stack gap="xs">
           <Textarea
-            minRows={4}
+            minRows={3}
             maxRows={8}
             autosize
             ref={textAreaRef}
             radius="none"
             draggable={false}
-            classNames={{ input: classes.textInput }}
             value={preview ?? ""}
             placeholder="E = mc^2"
+            styles={{
+              input: {
+                "&:focus": {
+                  borderColor: "#b58cff",
+                },
+                backgroundColor: isDarkMode ? "#171717" : "#ffffff",
+                border: `1px solid ${isDarkMode ? "#404040" : "#d4d4d4"}`,
+                borderRadius: 0,
+                color: isDarkMode ? "#f5f5f5" : "#171717",
+                fontFamily: "monospace",
+                fontSize: "12px",
+                padding: "6px 8px",
+                width: "100%",
+              },
+            }}
             onBlur={(e) => {
               e.preventDefault();
             }}
-            onKeyDown={(e) => {
-              const pos = getPos?.();
-              if (pos === undefined) {
-                return;
-              }
-
-              if (e.key === "Escape" || (e.key === "Enter" && !e.shiftKey)) {
-                return editor.commands.focus(pos + node.nodeSize);
-              }
-
-              if (!textAreaRef.current) {
-                return;
-              }
-
-              const { selectionStart, selectionEnd } = textAreaRef.current;
-
-              if (
-                (e.key === "ArrowLeft" || e.key === "ArrowUp") &&
-                selectionStart === selectionEnd &&
-                selectionStart === 0
-              ) {
-                editor.commands.focus(pos - 1);
-              }
-
-              if (
-                (e.key === "ArrowRight" || e.key === "ArrowDown") &&
-                selectionStart === selectionEnd &&
-                selectionStart === textAreaRef.current.value.length
-              ) {
-                editor.commands.focus(pos + node.nodeSize);
-              }
-            }}
+            onKeyDown={handleKeyDown}
             onChange={(e) => setPreview(e.target.value)}
           />
 
           <Flex justify="flex-end" align="flex-end">
             <ActionIcon
-              variant="light"
+              variant="subtle"
               color="red"
               aria-label="Delete equation"
               onClick={() => props.deleteNode()}
             >
-              <IconTrashX size={18} />
+              <TrashIcon size={16} />
             </ActionIcon>
           </Flex>
         </Stack>
@@ -157,3 +216,5 @@ export const BlockMathView = (props: NodeViewProps) => {
     </Popover>
   );
 };
+
+export default BlockMathView;

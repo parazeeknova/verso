@@ -1,9 +1,10 @@
 import "katex/dist/katex.min.css";
-import { render } from "katex";
-import { useEffect, useRef, useState } from "react";
-import { NodeViewWrapper } from "@tiptap/react";
-import type { NodeViewProps } from "@tiptap/react";
 import { Popover, Textarea } from "@mantine/core";
+import type { NodeViewProps } from "@tiptap/react";
+import { NodeViewWrapper } from "@tiptap/react";
+import { render } from "katex";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useTheme } from "#/shared/hooks/use-theme";
 import classes from "./math.module.css";
 
 export const InlineMathView = (props: NodeViewProps) => {
@@ -14,8 +15,9 @@ export const InlineMathView = (props: NodeViewProps) => {
   const [mathError, setMathError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const { isDarkMode } = useTheme();
 
-  const renderMath = (katexString: string, container: HTMLDivElement | null) => {
+  const renderMath = useCallback((katexString: string, container: HTMLDivElement | null) => {
     if (!container) {
       return;
     }
@@ -25,11 +27,11 @@ export const InlineMathView = (props: NodeViewProps) => {
     } catch (error) {
       setMathError(error instanceof Error ? error.message : String(error));
     }
-  };
+  }, []);
 
   useEffect(() => {
     renderMath(node.attrs.text ?? "", mathResultContainer.current);
-  }, [node.attrs.text]);
+  }, [node.attrs.text, renderMath]);
 
   useEffect(() => {
     if (isEditing) {
@@ -39,8 +41,7 @@ export const InlineMathView = (props: NodeViewProps) => {
         updateAttributes({ text: preview.trim() });
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preview, isEditing]);
+  }, [preview, isEditing, renderMath, updateAttributes]);
 
   useEffect(() => {
     const pos = getPos();
@@ -50,8 +51,7 @@ export const InlineMathView = (props: NodeViewProps) => {
     if (nodeSelected) {
       setPreview(node.attrs.text ?? "");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected]);
+  }, [selected, getPos, node.nodeSize, node.attrs.text, editor.state.selection]);
 
   const isEmpty = isEditing ? !preview?.trim().length : !node.attrs.text?.trim().length;
 
@@ -61,10 +61,24 @@ export const InlineMathView = (props: NodeViewProps) => {
       trapFocus
       position="top"
       shadow="md"
-      width={400}
+      width={300}
       middlewares={{ flip: true, inline: true, shift: true }}
       withArrow
+      arrowSize={8}
+      radius="none"
+      offset={4}
       zIndex={101}
+      styles={{
+        arrow: {
+          backgroundColor: isDarkMode ? "#1a1a1a" : "#ffffff",
+          borderColor: isDarkMode ? "#262626" : "#e5e5e5",
+        },
+        dropdown: {
+          backgroundColor: isDarkMode ? "#1a1a1a" : "#ffffff",
+          borderColor: isDarkMode ? "#262626" : "#e5e5e5",
+          padding: "4px",
+        },
+      }}
     >
       <Popover.Target>
         <NodeViewWrapper
@@ -83,7 +97,7 @@ export const InlineMathView = (props: NodeViewProps) => {
           {mathError && <span className="text-[11px] lowercase">invalid equation</span>}
         </NodeViewWrapper>
       </Popover.Target>
-      <Popover.Dropdown p="xs">
+      <Popover.Dropdown>
         <Textarea
           minRows={1}
           maxRows={5}
@@ -93,6 +107,20 @@ export const InlineMathView = (props: NodeViewProps) => {
           draggable={false}
           value={preview ?? ""}
           placeholder="E = mc^2"
+          styles={{
+            input: {
+              "&:focus": {
+                borderColor: "#b58cff",
+              },
+              backgroundColor: isDarkMode ? "#171717" : "#ffffff",
+              border: `1px solid ${isDarkMode ? "#404040" : "#d4d4d4"}`,
+              borderRadius: 0,
+              color: isDarkMode ? "#f5f5f5" : "#171717",
+              fontFamily: "monospace",
+              fontSize: "12px",
+              padding: "6px 8px",
+            },
+          }}
           onKeyDown={(e) => {
             const pos = getPos?.();
             if (pos === undefined) {
@@ -127,3 +155,5 @@ export const InlineMathView = (props: NodeViewProps) => {
     </Popover>
   );
 };
+
+export default InlineMathView;
