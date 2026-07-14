@@ -27,10 +27,10 @@ export const uploadAudio = async (file: File, editor: Editor, pos: number) => {
     return;
   }
 
-  // Check upload size limit (e.g. 20MB)
-  const MAX_SIZE = 20 * 1024 * 1024;
+  // Check upload size limit (e.g. 100MB)
+  const MAX_SIZE = 100 * 1024 * 1024;
   if (file.size > MAX_SIZE) {
-    setFlashToast("file exceeds the 20mb limit");
+    setFlashToast("file exceeds the 100mb limit");
     return;
   }
 

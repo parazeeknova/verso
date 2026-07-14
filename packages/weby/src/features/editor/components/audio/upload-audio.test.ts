@@ -119,14 +119,14 @@ describe("uploadAudio", () => {
     expect(setFlashToast).toHaveBeenCalledWith("only audio files are allowed");
   });
 
-  it("should reject files over the 20MB size limit", async () => {
+  it("should reject files over the 100MB size limit", async () => {
     const hugeFile = {
       name: "huge.mp3",
-      size: 21 * 1024 * 1024,
+      size: 101 * 1024 * 1024,
       type: "audio/mpeg",
     } as unknown as File;
     await uploadAudio(hugeFile, mockEditor, 5);
-    expect(setFlashToast).toHaveBeenCalledWith("file exceeds the 20mb limit");
+    expect(setFlashToast).toHaveBeenCalledWith("file exceeds the 100mb limit");
   });
 
   it("should successfully upload audio and update editor state on fetch 200", async () => {
