@@ -23,6 +23,7 @@ import { ImageMenu } from "./image/image-menu";
 import { VideoMenu } from "./video/video-menu";
 import { AudioMenu } from "./audio/audio-menu";
 import { PdfMenu } from "./pdf/pdf-menu";
+import { YoutubeMenu } from "./youtube/youtube-menu";
 import { TableHandlesLayer } from "./table/handle/table-handles-layer";
 import { BlogTableOfContents } from "#/features/blog/components/blog-table-of-contents";
 import type { BlogHeading } from "#/features/blog/lib/blog-headings";
@@ -1007,6 +1008,7 @@ export const PageEditor = ({
             <VideoMenu editor={editor} />
             <AudioMenu editor={editor} />
             <PdfMenu editor={editor} />
+            <YoutubeMenu editor={editor} />
             <TableHandlesLayer editor={editor} />
           </>
         )}

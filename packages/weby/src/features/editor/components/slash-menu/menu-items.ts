@@ -25,6 +25,7 @@ import {
   PaperclipIcon,
   FunctionIcon,
   MathOperationsIcon,
+  YoutubeLogo,
 } from "@phosphor-icons/react";
 import type { SlashMenuItemType } from "./types";
 
@@ -126,6 +127,15 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
     icon: MathOperationsIcon,
     searchTerms: ["math", "latex", "equation", "block", "formula"],
     title: "Math (block)",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setYoutubeVideo({ src: "" }).run();
+    },
+    description: "Embed YouTube video.",
+    icon: YoutubeLogo,
+    searchTerms: ["youtube", "yt", "video", "embed"],
+    title: "YouTube",
   },
   {
     command: ({ editor, range }) => {
