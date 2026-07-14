@@ -85,7 +85,7 @@ export const uploadVideo = async (file: File, editor: Editor, pos: number) => {
       editor.state.schema.nodes.video.create({
         aspectRatio,
         height,
-        placeholder: { id: placeholderId, name: file.name },
+        placeholder: { id: placeholderId, name: file.name, progress: 0 },
         width,
       }),
     ),
@@ -106,16 +106,54 @@ export const uploadVideo = async (file: File, editor: Editor, pos: number) => {
   }
 
   try {
-    const res = await fetch("/api/console/upload", {
-      body: formData,
-      method: "POST",
+    // eslint-disable-next-line promise/avoid-new
+    const data = await new Promise<{ src: string }>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/console/upload");
+
+      let lastPercent = 0;
+      xhr.upload.addEventListener("progress", (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          if (percent !== lastPercent) {
+            lastPercent = percent;
+
+            const { state } = editor;
+            const placeholderNode = findVideoNodeByPlaceholderId(state.doc, placeholderId);
+            if (placeholderNode) {
+              editor.view.dispatch(
+                state.tr.setNodeMarkup(placeholderNode.pos, undefined, {
+                  ...placeholderNode.node.attrs,
+                  placeholder: {
+                    id: placeholderId,
+                    name: file.name,
+                    progress: percent,
+                  },
+                }),
+              );
+            }
+          }
+        }
+      });
+
+      xhr.addEventListener("load", () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            resolve(JSON.parse(xhr.responseText) as { src: string });
+          } catch {
+            reject(new Error("Invalid server response"));
+          }
+        } else {
+          reject(new Error(`Upload failed with status ${xhr.status}`));
+        }
+      });
+
+      xhr.addEventListener("error", () => {
+        reject(new Error("Network error during upload"));
+      });
+      xhr.send(formData);
     });
 
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-
-    const data = await res.json();
     logger.info({ placeholderId, src: data.src }, "optimistic video upload succeeded");
 
     // Replace placeholder with final served video URL

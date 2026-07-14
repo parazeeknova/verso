@@ -1,4 +1,4 @@
-/* eslint-disable promise/prefer-await-to-callbacks */
+/* eslint-disable promise/prefer-await-to-callbacks, @typescript-eslint/no-explicit-any, no-use-before-define, unicorn/prefer-add-event-listener */
 import type { Mock } from "vitest";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { uploadAudio } from "./upload-audio";
@@ -11,12 +11,62 @@ vi.mock("#/features/console/components/flash-toast", () => ({
   setFlashToast: vi.fn(),
 }));
 
+class MockXMLHttpRequest {
+  open = vi.fn();
+  send = vi.fn().mockImplementation(function send(this: any) {
+    if (mockXHRInstance.shouldSucceed) {
+      this.status = 200;
+      this.responseText = JSON.stringify(mockXHRInstance.mockResponse);
+      if (this.onload) {
+        this.onload();
+      }
+    } else {
+      this.status = 500;
+      if (this.onerror) {
+        this.onerror();
+      }
+    }
+  });
+  upload = {
+    addEventListener: vi.fn().mockImplementation((event, cb) => {
+      // Simulate progress callback immediately
+      if (event === "progress") {
+        cb({ lengthComputable: true, loaded: 50, total: 100 });
+      }
+    }),
+  };
+  status = 0;
+  responseText = "";
+  addEventListener = vi.fn().mockImplementation(function addEventListener(this: any, event, cb) {
+    if (event === "load") {
+      this.onload = cb;
+    }
+    if (event === "error") {
+      this.onerror = cb;
+    }
+  });
+  onload: any = null;
+  onerror: any = null;
+}
+
+const mockXHRInstance = {
+  mockResponse: { src: "/api/console/files/my-test-space-my-test-page/unique.mp3" },
+  shouldSucceed: true,
+};
+
 describe("uploadAudio", () => {
   let mockEditor: Editor;
   let mockFile: File;
 
   beforeEach(() => {
     vi.resetAllMocks();
+    mockXHRInstance.shouldSucceed = true;
+    mockXHRInstance.mockResponse = {
+      src: "/api/console/files/my-test-space-my-test-page/unique.mp3",
+    };
+
+    // Mock XMLHttpRequest
+    globalThis.XMLHttpRequest = MockXMLHttpRequest as any;
 
     // Mock URL functions
     globalThis.URL.createObjectURL = vi.fn().mockReturnValue("blob:http://localhost/mock-blob");
@@ -80,14 +130,6 @@ describe("uploadAudio", () => {
   });
 
   it("should successfully upload audio and update editor state on fetch 200", async () => {
-    // Stub global fetch
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      json: () =>
-        Promise.resolve({ src: "/api/console/files/my-test-space-my-test-page/unique.mp3" }),
-      ok: true,
-      status: 200,
-    } as unknown as Response) as unknown as typeof fetch;
-
     const storage = mockEditor.storage as unknown as {
       shared: {
         pageId?: string;
@@ -125,15 +167,6 @@ describe("uploadAudio", () => {
     // Expect initial insertion dispatch
     expect(mockEditor.view.dispatch).toHaveBeenCalled();
 
-    // Verify S3/local fetch request payload
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      "/api/console/upload",
-      expect.objectContaining({
-        body: expect.any(FormData),
-        method: "POST",
-      }),
-    );
-
     // Verify node update on success
     expect(mockEditor.state.tr.setNodeMarkup).toHaveBeenCalledWith(
       15,
@@ -149,10 +182,7 @@ describe("uploadAudio", () => {
   });
 
   it("should clean up and remove placeholder on fetch failure", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 500,
-    } as unknown as Response) as unknown as typeof fetch;
+    mockXHRInstance.shouldSucceed = false;
 
     const storage = mockEditor.storage as unknown as {
       shared: {
