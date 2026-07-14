@@ -16,7 +16,7 @@ const AudioContent = ({ src, previewSrc, placeholder, t }: AudioContentProps) =>
       /* eslint-disable-next-line jsx-a11y/media-has-caption */
       <audio
         aria-label={placeholder?.name || "uploaded audio"}
-        className="w-full block"
+        className="w-full block rounded-none"
         src={src}
         controls
         preload="metadata"
@@ -30,7 +30,7 @@ const AudioContent = ({ src, previewSrc, placeholder, t }: AudioContentProps) =>
         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
         <audio
           aria-label={placeholder?.name || "preview"}
-          className="w-full opacity-60 blur-[1px] block"
+          className="w-full opacity-60 blur-[1px] block rounded-none"
           src={previewSrc}
           controls
           preload="metadata"
