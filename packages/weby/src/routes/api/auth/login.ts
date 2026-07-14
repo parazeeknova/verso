@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { postBacky } from "#/server/backy";
+import { forwardSanitizedCookies } from "#/server/cookie-sanitizer";
 
 export const Route = createFileRoute("/api/auth/login")({
   server: {
@@ -11,9 +12,7 @@ export const Route = createFileRoute("/api/auth/login")({
           .text()
           .catch(() => '{"error":"authentication service unavailable"}');
         const responseHeaders = new Headers({ "Content-Type": "application/json" });
-        for (const cookie of backyRes.headers.getSetCookie()) {
-          responseHeaders.append("set-cookie", cookie);
-        }
+        forwardSanitizedCookies(backyRes, responseHeaders);
         return new Response(data, {
           headers: responseHeaders,
           status: backyRes.status,

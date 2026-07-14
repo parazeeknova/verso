@@ -87,7 +87,7 @@ export const useAuthActions = () => {
   };
 
   const logout = async () => {
-    const res = await fetch("/api/auth/logout", { method: "POST" });
+    const res = await fetch("/api/auth/logout", { credentials: "include", method: "POST" });
     if (!res.ok) {
       throw new Error("Logout failed");
     }
