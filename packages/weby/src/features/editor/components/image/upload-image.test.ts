@@ -28,12 +28,25 @@ describe("uploadImage", () => {
       naturalHeight = 600;
       onload: (() => void) | null = null;
       onerror: (() => void) | null = null;
+      private listeners: Record<string, (() => void)[]> = {};
+
+      addEventListener(event: string, callback: () => void) {
+        this.listeners[event] = this.listeners[event] || [];
+        this.listeners[event].push(callback);
+      }
+
       get src() {
         return this.naturalWidth ? "" : "";
       }
       set src(_val: string) {
         if (this.onload) {
           setTimeout(() => this.onload?.(), 0);
+        }
+        const loadListeners = this.listeners["load"];
+        if (loadListeners) {
+          for (const cb of loadListeners) {
+            setTimeout(cb, 0);
+          }
         }
       }
     }
