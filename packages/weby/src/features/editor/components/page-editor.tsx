@@ -660,7 +660,10 @@ const TableOfContentsModal = ({
       />
       <div
         ref={sidebarRef}
-        className={`absolute right-0 top-0 flex h-full w-[min(92vw,18rem)] flex-col border-l shadow-2xl pointer-events-auto ${t("border-border-dark bg-text-light", "border-border-light bg-white")}`}
+        className={`absolute right-0 top-0 flex h-full w-[min(92vw,18rem)] flex-col border-l shadow-2xl pointer-events-auto ${t(
+          "border-border-dark bg-neutral-900 text-neutral-200",
+          "border-border-light bg-white text-neutral-800",
+        )}`}
       >
         <div
           className={`flex items-center justify-between border-b px-3 py-2 ${t("border-border-dark", "border-border-light")}`}
@@ -878,8 +881,10 @@ export const PageEditor = ({
   const derivedReadingTime = Math.max(1, Math.ceil(derivedWordCount / 200));
 
   return (
-    <div ref={wrapperRef} className="relative h-full flex flex-col pb-16">
-      <div className="flex items-center justify-between pt-1.5 pb-1 pl-4 pr-4 shrink-0">
+    <div ref={wrapperRef} className="relative h-full flex flex-col overflow-hidden">
+      <div
+        className={`sticky top-0 z-30 flex items-center justify-between pt-1.5 pb-1 pl-4 pr-4 shrink-0 transition-colors duration-500 ease-out ${t("bg-bg-dark", "bg-bg-light")}`}
+      >
         <div className="group relative">
           <span
             className={`text-[11px] lowercase font-medium ${t("text-text-dark/30", "text-text-light/30")}`}
@@ -961,7 +966,7 @@ export const PageEditor = ({
 
       <div
         ref={contentRef}
-        className={`w-full blog-reader-prose flex-1 min-h-0 overflow-y-auto ${fullWidth ? "px-8 md:px-16 lg:px-24" : "px-4 mx-auto max-w-2xl"}`}
+        className={`w-full blog-reader-prose flex-1 min-h-0 overflow-y-auto pb-32 ${fullWidth ? "px-8 md:px-16 lg:px-24" : "px-4 mx-auto max-w-2xl"}`}
         onClick={handleContentClick}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
