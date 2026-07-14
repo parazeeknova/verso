@@ -97,28 +97,16 @@ export const ImageView = (props: NodeViewProps) => {
 
   // Mouse / Touch resize handler
   const handleResize = useCallback(
-    (
-      clientX: number,
-      clientY: number,
-      startWidth: number,
-      startHeight: number,
-      startX: number,
-      startY: number,
-    ) => {
+    (direction: "left" | "right", startWidth: number, startHeight: number, startX: number) => {
       const handleMouseMove = (moveEvent: MouseEvent) => {
         const deltaX = moveEvent.clientX - startX;
-        const deltaY = moveEvent.clientY - startY;
-
-        let newWidth = startWidth + deltaX;
-        let newHeight = startHeight + deltaY;
+        let newWidth = startWidth + (direction === "right" ? deltaX : -deltaX);
 
         if (newWidth < 50) {
           newWidth = 50;
         }
-        if (newHeight < 50) {
-          newHeight = 50;
-        }
 
+        let newHeight = startHeight;
         if (aspectRatio) {
           newHeight = newWidth / aspectRatio;
         }
@@ -141,10 +129,9 @@ export const ImageView = (props: NodeViewProps) => {
   );
 
   const handleResizeStart = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.MouseEvent, direction: "left" | "right") => {
       e.preventDefault();
       const startX = e.clientX;
-      const startY = e.clientY;
 
       const imgWrapper = e.currentTarget.parentElement;
       if (!imgWrapper) {
@@ -153,15 +140,20 @@ export const ImageView = (props: NodeViewProps) => {
       const startWidth = imgWrapper.clientWidth;
       const startHeight = imgWrapper.clientHeight;
 
-      handleResize(startX, startY, startWidth, startHeight, startX, startY);
+      handleResize(direction, startWidth, startHeight, startX);
     },
     [handleResize],
   );
 
+  // Determine helper opacity class based on selection state
+  const handleOpacityClass = selected
+    ? "opacity-100"
+    : "opacity-0 group-hover:opacity-100 transition-opacity duration-200";
+
   return (
     <NodeViewWrapper className={alignmentClass} data-drag-handle>
       <div
-        className={`relative max-w-full overflow-hidden transition-all duration-300 ${
+        className={`relative max-w-full overflow-visible group ${
           selected ? "ring-2 ring-blue-500 dark:ring-blue-400 rounded-none" : "rounded-none"
         } ${t("bg-neutral-900/10", "bg-neutral-100/50")}`}
         style={{
@@ -172,27 +164,29 @@ export const ImageView = (props: NodeViewProps) => {
       >
         <ImageContent alt={alt} placeholder={placeholder} previewSrc={previewSrc} src={src} t={t} />
 
-        {/* Custom drag resize handle */}
+        {/* Custom Left resize handle */}
         {selected && src && (
           <button
-            className="absolute right-1 bottom-1 w-4 h-4 bg-blue-500 border border-white dark:border-neutral-800 rounded-none cursor-se-resize z-50 hover:scale-125 active:scale-95 shadow-md transition-all flex items-center justify-center"
-            onMouseDown={handleResizeStart}
+            className={`absolute top-0 bottom-0 left-[-8px] w-4 flex items-center justify-center cursor-ew-resize z-50 group/handle ${handleOpacityClass}`}
+            onMouseDown={(e) => handleResizeStart(e, "left")}
             type="button"
             tabIndex={-1}
-            aria-label="Resize image"
+            aria-label="Resize left"
           >
-            {/* Minimal resize lines inside handle */}
-            <svg className="w-2 h-2 text-white" viewBox="0 0 10 10">
-              <line
-                x1="1"
-                y1="9"
-                x2="9"
-                y2="1"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
+            <div className="w-[4px] h-12 bg-blue-400 dark:bg-blue-500 group-hover/handle:bg-blue-600 dark:group-hover/handle:bg-blue-400 transition-colors rounded-none" />
+          </button>
+        )}
+
+        {/* Custom Right resize handle */}
+        {selected && src && (
+          <button
+            className={`absolute top-0 bottom-0 right-[-8px] w-4 flex items-center justify-center cursor-ew-resize z-50 group/handle ${handleOpacityClass}`}
+            onMouseDown={(e) => handleResizeStart(e, "right")}
+            type="button"
+            tabIndex={-1}
+            aria-label="Resize right"
+          >
+            <div className="w-[4px] h-12 bg-blue-400 dark:bg-blue-500 group-hover/handle:bg-blue-600 dark:group-hover/handle:bg-blue-400 transition-colors rounded-none" />
           </button>
         )}
       </div>

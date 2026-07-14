@@ -79,33 +79,30 @@ export const useAltTextControl = ({ editor, nodeName, currentAlt }: UseAltTextCo
       withBorder
       shadow="md"
       radius={0}
-      p="sm"
-      w={320}
+      p="xs"
+      w={240}
       style={{ position: "relative", zIndex: 100 }}
     >
-      <Text size="sm" fw={600} mb={2}>
+      <Text size="xs" fw={600} mb={6}>
         {t("Alt text")}
-      </Text>
-      <Text size="xs" c="dimmed" mb="xs">
-        {t("Describe this for accessibility.")}
       </Text>
       <Textarea
         size="xs"
-        placeholder={t("Add a description")}
+        placeholder={t("Add description...")}
         value={draft}
         onChange={(e) => setDraft(e.currentTarget.value)}
         onKeyDown={onKeyDown}
         autoFocus
         autosize
-        minRows={2}
-        maxRows={5}
+        minRows={1}
+        maxRows={4}
         maxLength={ALT_MAX_LENGTH}
       />
-      <Group justify="space-between" align="center" mt="xs" wrap="nowrap">
-        <Text size="xs" c="dimmed">
+      <Group justify="space-between" align="center" mt={6} wrap="nowrap">
+        <Text size="10px" c="dimmed">
           {draft.length}/{ALT_MAX_LENGTH}
         </Text>
-        <Group gap="xs">
+        <Group gap={4}>
           <Button size="compact-xs" variant="default" onClick={cancel}>
             {t("Cancel")}
           </Button>
