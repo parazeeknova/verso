@@ -25,6 +25,7 @@
     pkgs.golangci-lint
     pkgs.webkitgtk_4_1
     pkgs.gtk3
+    pkgs.gsettings-desktop-schemas
     pkgs.libsoup_3
     pkgs.libayatana-appindicator
     pkgs.glib-networking
@@ -50,6 +51,7 @@
     pkgs.gst_all_1.gst-plugins-bad
   ];
 
+  env.XDG_DATA_DIRS = "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:$XDG_DATA_DIRS";
   env.SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
   env.NIX_SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
   env.WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS = "1";
