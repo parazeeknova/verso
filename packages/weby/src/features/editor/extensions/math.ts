@@ -1,5 +1,6 @@
 import { Node, nodeInputRule } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
+import { NodeSelection } from "@tiptap/pm/state";
 import { InlineMathView } from "../components/math/inline-math-view";
 import { BlockMathView } from "../components/math/block-math-view";
 
@@ -30,8 +31,21 @@ export const MathInline = Node.create({
     return {
       setMathInline:
         (attributes?: Record<string, unknown>) =>
-        ({ commands }) =>
-          commands.insertContent({ attrs: attributes, type: this.name }),
+        ({ chain, state }) => {
+          const pos = state.selection.from;
+          return chain()
+            .insertContent({ attrs: attributes, type: this.name })
+            .command(({ tr }) => {
+              try {
+                const selectionType = NodeSelection.create(tr.doc, pos);
+                tr.setSelection(selectionType);
+              } catch {
+                // fallback
+              }
+              return true;
+            })
+            .run();
+        },
     };
   },
   addInputRules() {
@@ -92,8 +106,21 @@ export const MathBlock = Node.create({
     return {
       setMathBlock:
         (attributes?: Record<string, unknown>) =>
-        ({ commands }) =>
-          commands.insertContent({ attrs: attributes, type: this.name }),
+        ({ chain, state }) => {
+          const pos = state.selection.from;
+          return chain()
+            .insertContent({ attrs: attributes, type: this.name })
+            .command(({ tr }) => {
+              try {
+                const selectionType = NodeSelection.create(tr.doc, pos);
+                tr.setSelection(selectionType);
+              } catch {
+                // fallback
+              }
+              return true;
+            })
+            .run();
+        },
     };
   },
   addInputRules() {
