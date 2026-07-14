@@ -81,6 +81,7 @@ export const AudioView = (props: NodeViewProps) => {
   return (
     <NodeViewWrapper className="w-full my-4" data-drag-handle>
       <div
+        contentEditable={false}
         className={`max-w-xl mx-auto overflow-hidden group rounded-none border p-2 ${t(
           "bg-neutral-900/10 border-neutral-800",
           "bg-neutral-50 border-neutral-200",

@@ -92,24 +92,24 @@ export const PdfView = (props: NodeViewProps) => {
 
   const handleResize = useCallback(
     (
-      direction: "left" | "right" | "bottom",
+      direction: "bottom-left" | "bottom-right",
       startWidth: number,
       startHeight: number,
       startX: number,
       startY: number,
     ) => {
       const handleMouseMove = (moveEvent: MouseEvent) => {
-        if (direction === "bottom") {
-          const deltaY = moveEvent.clientY - startY;
-          const newHeight = Math.max(200, Math.min(1600, startHeight + deltaY));
-          editor.commands.updateAttributes("pdf", { height: Math.round(newHeight) });
-          return;
-        }
-
         const deltaX = moveEvent.clientX - startX;
-        const rawWidth = startWidth + (direction === "right" ? deltaX : -deltaX);
-        const newWidth = Math.max(200, Math.min(1200, rawWidth));
-        editor.commands.updateAttributes("pdf", { width: Math.round(newWidth) });
+        const deltaY = moveEvent.clientY - startY;
+
+        const widthFactor = direction === "bottom-right" ? 1 : -1;
+        const newWidth = Math.max(200, Math.min(1200, startWidth + widthFactor * deltaX));
+        const newHeight = Math.max(200, Math.min(1600, startHeight + deltaY));
+
+        editor.commands.updateAttributes("pdf", {
+          height: Math.round(newHeight),
+          width: Math.round(newWidth),
+        });
       };
 
       const handleMouseUp = () => {
@@ -124,7 +124,7 @@ export const PdfView = (props: NodeViewProps) => {
   );
 
   const handleResizeStart = useCallback(
-    (e: React.MouseEvent, direction: "left" | "right" | "bottom") => {
+    (e: React.MouseEvent, direction: "bottom-left" | "bottom-right") => {
       e.preventDefault();
       const wrapper = e.currentTarget.parentElement;
       if (!wrapper) {
@@ -139,6 +139,8 @@ export const PdfView = (props: NodeViewProps) => {
   const showHandles = editor?.isEditable && src && !hasError;
 
   const isLoaded = Boolean(src) && !placeholder;
+
+  const cornerHandleClass = `absolute w-4 h-4 bg-[#b58cff] border border-white/80 z-50 cursor-nwse-resize rounded-none ${handleOpacityClass}`;
 
   return (
     <NodeViewWrapper className="w-full flex justify-center my-4" data-drag-handle>
@@ -162,38 +164,22 @@ export const PdfView = (props: NodeViewProps) => {
 
         {showHandles && (
           <button
-            className={`absolute top-0 bottom-0 left-[-8px] w-4 flex items-center justify-center cursor-ew-resize z-50 ${handleOpacityClass}`}
-            onMouseDown={(e) => handleResizeStart(e, "left")}
+            className={`${cornerHandleClass} left-[-8px] bottom-[-8px] cursor-sw-resize`}
+            onMouseDown={(e) => handleResizeStart(e, "bottom-left")}
             type="button"
             tabIndex={-1}
-            aria-label="Resize left"
-          >
-            <div className="w-[4px] h-12 bg-[#b58cff] transition-colors rounded-none" />
-          </button>
+            aria-label="Resize from bottom-left corner"
+          />
         )}
 
         {showHandles && (
           <button
-            className={`absolute top-0 bottom-0 right-[-8px] w-4 flex items-center justify-center cursor-ew-resize z-50 ${handleOpacityClass}`}
-            onMouseDown={(e) => handleResizeStart(e, "right")}
+            className={`${cornerHandleClass} right-[-8px] bottom-[-8px]`}
+            onMouseDown={(e) => handleResizeStart(e, "bottom-right")}
             type="button"
             tabIndex={-1}
-            aria-label="Resize right"
-          >
-            <div className="w-[4px] h-12 bg-[#b58cff] transition-colors rounded-none" />
-          </button>
-        )}
-
-        {showHandles && (
-          <button
-            className={`absolute left-0 right-0 bottom-[-8px] h-4 flex items-center justify-center cursor-ns-resize z-50 ${handleOpacityClass}`}
-            onMouseDown={(e) => handleResizeStart(e, "bottom")}
-            type="button"
-            tabIndex={-1}
-            aria-label="Resize bottom"
-          >
-            <div className="h-[4px] w-12 bg-[#b58cff] transition-colors rounded-none" />
-          </button>
+            aria-label="Resize from bottom-right corner"
+          />
         )}
       </div>
     </NodeViewWrapper>

@@ -161,6 +161,7 @@ export const VideoView = (props: NodeViewProps) => {
   return (
     <NodeViewWrapper className={alignmentClass} data-drag-handle>
       <div
+        contentEditable={false}
         className={`relative max-w-full overflow-visible group rounded-none ${
           src ? "" : t("bg-neutral-900/10", "bg-neutral-100/50")
         }`}
