@@ -31,20 +31,6 @@ const PdfPlaceholder = ({
   </div>
 );
 
-const CornerArrow = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 14 14" width="14" height="14" fill="none" className={className}>
-    <path d="M3 3 L11 11" stroke="currentColor" strokeLinecap="round" strokeWidth="1.6" />
-    <path
-      d="M7 11 L11 11 L11 7"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.6"
-    />
-  </svg>
-);
-
 const PdfError = ({ t }: { t: (dark: string, light: string) => string }) => (
   <div
     data-pdf-error
@@ -85,10 +71,12 @@ const PdfContent = ({ src, placeholder, name, hasError, onError, t }: PdfContent
 };
 
 export const PdfView = (props: NodeViewProps) => {
-  const { node, editor, selected } = props;
+  const { node, editor, selected, updateAttributes } = props;
   const { src, width, height, placeholder, name } = node.attrs;
   const { isDarkMode } = useTheme();
   const [hasError, setHasError] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizingCursor, setResizingCursor] = useState("default");
 
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
 
@@ -106,29 +94,42 @@ export const PdfView = (props: NodeViewProps) => {
 
   const handleResize = useCallback(
     (
-      direction: "top-left" | "top-right" | "bottom-left" | "bottom-right",
+      direction: "tl" | "tr" | "bl" | "br" | "bottom",
       startWidth: number,
       startHeight: number,
       startX: number,
       startY: number,
     ) => {
+      setIsResizing(true);
+      const cursors = {
+        bl: "nesw-resize",
+        bottom: "ns-resize",
+        br: "nwse-resize",
+        tl: "nwse-resize",
+        tr: "nesw-resize",
+      };
+      setResizingCursor(cursors[direction]);
+
       const handleMouseMove = (moveEvent: MouseEvent) => {
-        const deltaX = moveEvent.clientX - startX;
         const deltaY = moveEvent.clientY - startY;
+        const signY = direction === "br" || direction === "bl" || direction === "bottom" ? 1 : -1;
+        const newHeight = Math.max(200, Math.min(1200, startHeight + deltaY * signY));
 
-        const widthFactor = direction === "bottom-right" || direction === "top-right" ? 1 : -1;
-        const heightFactor = direction === "bottom-right" || direction === "bottom-left" ? 1 : -1;
+        let newWidth = startWidth;
+        if (direction !== "bottom") {
+          const deltaX = moveEvent.clientX - startX;
+          const signX = direction === "br" || direction === "tr" ? 1 : -1;
+          newWidth = Math.max(200, Math.min(1200, startWidth + deltaX * signX));
+        }
 
-        const newWidth = Math.max(200, Math.min(1200, startWidth + widthFactor * deltaX));
-        const newHeight = Math.max(200, Math.min(1600, startHeight + heightFactor * deltaY));
-
-        editor.commands.updateAttributes("pdf", {
+        updateAttributes({
           height: Math.round(newHeight),
-          width: Math.round(newWidth),
+          width: direction === "bottom" ? startWidth : Math.round(newWidth),
         });
       };
 
       const handleMouseUp = () => {
+        setIsResizing(false);
         window.removeEventListener("mousemove", handleMouseMove);
         window.removeEventListener("mouseup", handleMouseUp);
       };
@@ -136,12 +137,13 @@ export const PdfView = (props: NodeViewProps) => {
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
     },
-    [editor],
+    [updateAttributes],
   );
 
   const handleResizeStart = useCallback(
-    (e: React.MouseEvent, direction: "top-left" | "top-right" | "bottom-left" | "bottom-right") => {
+    (e: React.MouseEvent, direction: "tl" | "tr" | "bl" | "br" | "bottom") => {
       e.preventDefault();
+      e.stopPropagation();
       const wrapper = e.currentTarget.parentElement;
       if (!wrapper) {
         return;
@@ -151,47 +153,41 @@ export const PdfView = (props: NodeViewProps) => {
     [handleResize],
   );
 
-  const handleOpacityClass = "opacity-0 group-hover:opacity-100 transition-opacity duration-200";
   const showHandles = editor?.isEditable && src && !hasError;
+  const handlesVisibleClass =
+    isResizing || selected
+      ? "opacity-100"
+      : "opacity-0 group-hover:opacity-100 transition-opacity duration-200";
 
   const isLoaded = Boolean(src) && !placeholder;
-
-  const cornerHandleClass = `absolute z-50 p-0.5 text-[#b58cff] ${handleOpacityClass}`;
 
   const corners = [
     {
       ariaLabel: "Resize from top-left corner",
-      cursor: "cursor-nwse-resize",
-      direction: "top-left" as const,
-      position: "top-[-7px] left-[-7px]",
-      rotation: "rotate-180",
+      className: `absolute top-[-3px] left-[-3px] w-4 h-4 cursor-nwse-resize border-t-2 border-l-2 border-[#b58cff] z-50 ${handlesVisibleClass}`,
+      direction: "tl" as const,
     },
     {
       ariaLabel: "Resize from top-right corner",
-      cursor: "cursor-nesw-resize",
-      direction: "top-right" as const,
-      position: "top-[-7px] right-[-7px]",
-      rotation: "-rotate-90",
+      className: `absolute top-[-3px] right-[-3px] w-4 h-4 cursor-nesw-resize border-t-2 border-r-2 border-[#b58cff] z-50 ${handlesVisibleClass}`,
+      direction: "tr" as const,
     },
     {
       ariaLabel: "Resize from bottom-left corner",
-      cursor: "cursor-nesw-resize",
-      direction: "bottom-left" as const,
-      position: "bottom-[-7px] left-[-7px]",
-      rotation: "rotate-90",
+      className: `absolute bottom-[-3px] left-[-3px] w-4 h-4 cursor-nesw-resize border-b-2 border-l-2 border-[#b58cff] z-50 ${handlesVisibleClass}`,
+      direction: "bl" as const,
     },
     {
       ariaLabel: "Resize from bottom-right corner",
-      cursor: "cursor-nwse-resize",
-      direction: "bottom-right" as const,
-      position: "bottom-[-7px] right-[-7px]",
-      rotation: "rotate-0",
+      className: `absolute bottom-[-3px] right-[-3px] w-4 h-4 cursor-nwse-resize border-b-2 border-r-2 border-[#b58cff] z-50 ${handlesVisibleClass}`,
+      direction: "br" as const,
     },
   ];
 
   return (
     <NodeViewWrapper className="w-full flex justify-center my-4" data-drag-handle>
       <div
+        contentEditable={false}
         className={`relative max-w-full overflow-visible group rounded-none border ${
           selected ? "border-[#b58cff]" : t("border-neutral-800", "border-neutral-200")
         } ${isLoaded ? "" : t("bg-neutral-900/10", "bg-neutral-100/50")}`}
@@ -209,19 +205,36 @@ export const PdfView = (props: NodeViewProps) => {
           t={t}
         />
 
+        {isResizing && (
+          <div
+            className="absolute inset-0 z-50 bg-transparent"
+            style={{ cursor: resizingCursor }}
+          />
+        )}
+
         {showHandles &&
           corners.map((corner) => (
             <button
               key={corner.direction}
               aria-label={corner.ariaLabel}
-              className={`${cornerHandleClass} ${corner.position} ${corner.cursor}`}
+              className={corner.className}
               onMouseDown={(e) => handleResizeStart(e, corner.direction)}
               tabIndex={-1}
               type="button"
-            >
-              <CornerArrow className={`${corner.rotation}`} />
-            </button>
+            />
           ))}
+
+        {showHandles && (
+          <button
+            className={`absolute bottom-[-6px] left-5 right-5 h-3 flex items-center justify-center cursor-ns-resize z-50 ${handlesVisibleClass}`}
+            onMouseDown={(e) => handleResizeStart(e, "bottom")}
+            type="button"
+            tabIndex={-1}
+            aria-label="Resize bottom"
+          >
+            <div className="w-12 h-[3px] bg-[#b58cff] transition-colors rounded-none" />
+          </button>
+        )}
       </div>
     </NodeViewWrapper>
   );
