@@ -33,6 +33,10 @@
             pkgs.libayatana-appindicator
             pkgs.glib-networking
             pkgs.stdenv.cc.cc.lib
+            pkgs.gst_all_1.gstreamer
+            pkgs.gst_all_1.gst-plugins-base
+            pkgs.gst_all_1.gst-plugins-good
+            pkgs.gst_all_1.gst-plugins-bad
           ];
 
           dontBuild = true;
@@ -51,6 +55,7 @@
             makeWrapper $out/opt/verso/Verso $out/bin/verso \
               --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath buildInputs}" \
               --prefix GIO_EXTRA_MODULES : "${pkgs.glib-networking}/lib/gio/modules" \
+              --prefix GST_PLUGIN_PATH : "${pkgs.lib.makeSearchPath "lib/gstreamer-1.0" [ pkgs.gst_all_1.gst-plugins-base pkgs.gst_all_1.gst-plugins-good pkgs.gst_all_1.gst-plugins-bad ]}" \
               --set WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS 1 \
               --set SSL_CERT_FILE "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt" \
               --set NIX_SSL_CERT_FILE "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"

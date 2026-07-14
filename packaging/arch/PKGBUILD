@@ -7,6 +7,10 @@ arch=('x86_64')
 url="https://github.com/parazeeknova/verso"
 license=('MIT')
 depends=('webkit2gtk-4.1' 'gtk3' 'libsoup3' 'libayatana-appindicator3' 'glib-networking')
+optdepends=('gstreamer: audio/video support'
+            'gst-plugins-base: audio/video support'
+            'gst-plugins-good: audio/video support'
+            'gst-plugins-bad: WebVTT subtitles and video support')
 provides=('verso')
 conflicts=('verso')
 source=("https://github.com/parazeeknova/verso/releases/download/v${pkgver}/stable-linux-x64-Verso-Setup.tar.gz")
