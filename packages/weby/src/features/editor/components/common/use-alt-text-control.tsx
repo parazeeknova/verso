@@ -68,8 +68,8 @@ export const useAltTextControl = ({ editor, nodeName, currentAlt }: UseAltTextCo
 
   const button = (
     <Tooltip position="top" label={t("Alt text")} withinPortal={false}>
-      <ActionIcon onClick={open} size="lg" aria-label={t("Alt text")} variant="subtle">
-        <IconAlt size={18} />
+      <ActionIcon onClick={open} size="sm" aria-label={t("Alt text")} variant="subtle">
+        <IconAlt size={14} />
       </ActionIcon>
     </Tooltip>
   );
@@ -78,7 +78,7 @@ export const useAltTextControl = ({ editor, nodeName, currentAlt }: UseAltTextCo
     <Paper
       withBorder
       shadow="md"
-      radius={6}
+      radius={0}
       p="sm"
       w={320}
       style={{ position: "relative", zIndex: 100 }}

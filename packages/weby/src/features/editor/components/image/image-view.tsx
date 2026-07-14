@@ -16,7 +16,7 @@ const ImageContent = ({ src, previewSrc, placeholder, alt, t }: ImageContentProp
     return (
       <img
         alt={alt || "uploaded image"}
-        className="w-full h-full object-contain rounded-md block transition-transform duration-300"
+        className="w-full h-full object-contain rounded-none block transition-transform duration-300"
         src={src}
       />
     );
@@ -27,7 +27,7 @@ const ImageContent = ({ src, previewSrc, placeholder, alt, t }: ImageContentProp
       <div className="relative w-full h-full flex items-center justify-center">
         <img
           alt={placeholder?.name || "preview"}
-          className="w-full h-full object-contain opacity-60 blur-[1px] rounded-md block"
+          className="w-full h-full object-contain opacity-60 blur-[1px] rounded-none block"
           src={previewSrc}
         />
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/10 dark:bg-white/5">
@@ -45,7 +45,7 @@ const ImageContent = ({ src, previewSrc, placeholder, alt, t }: ImageContentProp
   if (placeholder) {
     return (
       <div
-        className={`w-full py-8 flex flex-col items-center justify-center gap-2 border border-dashed rounded-md ${t("border-neutral-800 bg-neutral-900/5 text-neutral-400", "border-neutral-200 bg-neutral-50 text-neutral-500")}`}
+        className={`w-full py-8 flex flex-col items-center justify-center gap-2 border border-dashed rounded-none ${t("border-neutral-800 bg-neutral-900/5 text-neutral-400", "border-neutral-200 bg-neutral-50 text-neutral-500")}`}
       >
         <div className="w-5 h-5 border-2 border-neutral-400 border-t-transparent dark:border-neutral-500 dark:border-t-transparent rounded-full animate-spin" />
         <span className="text-[10px] lowercase">uploading {placeholder.name}...</span>
@@ -162,7 +162,7 @@ export const ImageView = (props: NodeViewProps) => {
     <NodeViewWrapper className={alignmentClass} data-drag-handle>
       <div
         className={`relative max-w-full overflow-hidden transition-all duration-300 ${
-          selected ? "ring-2 ring-blue-500 dark:ring-blue-400 rounded-md" : "rounded-md"
+          selected ? "ring-2 ring-blue-500 dark:ring-blue-400 rounded-none" : "rounded-none"
         } ${t("bg-neutral-900/10", "bg-neutral-100/50")}`}
         style={{
           aspectRatio: aspectRatio ? `${aspectRatio}` : undefined,
@@ -175,7 +175,7 @@ export const ImageView = (props: NodeViewProps) => {
         {/* Custom drag resize handle */}
         {selected && src && (
           <button
-            className="absolute right-1 bottom-1 w-4 h-4 bg-blue-500 border border-white dark:border-neutral-800 rounded-full cursor-se-resize z-50 hover:scale-125 active:scale-95 shadow-md transition-all flex items-center justify-center"
+            className="absolute right-1 bottom-1 w-4 h-4 bg-blue-500 border border-white dark:border-neutral-800 rounded-none cursor-se-resize z-50 hover:scale-125 active:scale-95 shadow-md transition-all flex items-center justify-center"
             onMouseDown={handleResizeStart}
             type="button"
             tabIndex={-1}
