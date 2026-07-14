@@ -76,12 +76,12 @@ export const AttachmentView = (props: NodeViewProps) => {
 
   return (
     <NodeViewWrapper className="w-full my-3" data-drag-handle>
-      <div
+      <button
         contentEditable={false}
         onClick={handleSelect}
-        className={`group flex items-center justify-between border rounded-none p-3 transition-colors duration-200 select-none ${borderClass}`}
+        className={`group flex items-center justify-between border rounded-none p-3 transition-colors duration-200 select-none w-full text-left ${borderClass}`}
         style={{ cursor: "pointer" }}
-        role="button"
+        type="button"
         tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -159,7 +159,7 @@ export const AttachmentView = (props: NodeViewProps) => {
             )}
           </div>
         )}
-      </div>
+      </button>
     </NodeViewWrapper>
   );
 };

@@ -20,7 +20,9 @@ export function useTableHandleDrag(
   onDragStart?: () => void,
 ) {
   useEffect(() => {
-    if (!element) {return;}
+    if (!element) {
+      return;
+    }
 
     return combine(
       draggable({

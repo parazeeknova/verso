@@ -18,9 +18,7 @@ export { transpose } from "./utils/transpose";
 import { isTextSelection } from "@tiptap/core";
 import { type Editor } from "@tiptap/core";
 
-export function isEditorReady(
-  editor: Editor | null | undefined,
-): editor is Editor {
+export function isEditorReady(editor: Editor | null | undefined): editor is Editor {
   return !!editor && editor.isInitialized;
 }
 
@@ -33,8 +31,7 @@ export function isTextSelected(editor: Editor) {
     },
   } = editor;
 
-  const isEmptyTextBlock =
-    !doc.textBetween(from, to).length && isTextSelection(selection);
+  const isEmptyTextBlock = !doc.textBetween(from, to).length && isTextSelection(selection);
 
   if (empty || isEmptyTextBlock || !editor.isEditable) {
     return false;

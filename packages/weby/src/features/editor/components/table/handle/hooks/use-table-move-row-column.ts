@@ -7,13 +7,12 @@ import { findTable, isEditorReady, moveColumn, moveRow } from "#/features/editor
 
 export type MoveDirection = "left" | "right" | "up" | "down";
 
-function deriveIndexFromSelection(
-  editor: Editor,
-  orientation: "col" | "row",
-): number | null {
+function deriveIndexFromSelection(editor: Editor, orientation: "col" | "row"): number | null {
   const $head = editor.state.selection.$head;
   const table = findTable($head);
-  if (!table) {return null;}
+  if (!table) {
+    return null;
+  }
   const map = TableMap.get(table.node);
   const cellRect = map.findCell($head.pos - table.pos);
   return orientation === "col" ? cellRect.left : cellRect.top;
@@ -28,22 +27,31 @@ export function useTableMoveRowColumn(
   _tablePos: number,
 ) {
   const handleMove = useCallback(() => {
-    if (!isEditorReady(editor)) {return;}
+    if (!isEditorReady(editor)) {
+      return;
+    }
 
     const table = findTable(editor.state.selection.$from);
-    if (!table) {return;}
+    if (!table) {
+      return;
+    }
     const currentTableNode = table.node;
     const currentTablePos = table.pos;
 
     const originIndex = deriveIndexFromSelection(editor, orientation);
-    if (originIndex === null) {return;}
+    if (originIndex === null) {
+      return;
+    }
 
     const map = TableMap.get(currentTableNode);
     const maxIndex = orientation === "col" ? map.width - 1 : map.height - 1;
-    const targetIndex = direction === "left" || direction === "up" ? originIndex - 1 : originIndex + 1;
-    if (targetIndex < 0 || targetIndex > maxIndex) {return;}
+    const targetIndex =
+      direction === "left" || direction === "up" ? originIndex - 1 : originIndex + 1;
+    if (targetIndex < 0 || targetIndex > maxIndex) {
+      return;
+    }
 
-    const {tr} = editor.state;
+    const { tr } = editor.state;
     const moved =
       orientation === "col"
         ? moveColumn({
@@ -60,7 +68,9 @@ export function useTableMoveRowColumn(
             targetIndex,
             tr,
           });
-    if (moved) {editor.view.dispatch(tr);}
+    if (moved) {
+      editor.view.dispatch(tr);
+    }
   }, [editor, orientation, direction]);
 
   const canMove = true;

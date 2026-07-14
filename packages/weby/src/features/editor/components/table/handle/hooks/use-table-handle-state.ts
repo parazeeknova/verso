@@ -16,7 +16,9 @@ export function useTableHandleState(editor: Editor | null): TableHandleState {
   const state = useEditorState({
     editor,
     selector: (ctx) => {
-      if (!ctx.editor) {return null;}
+      if (!ctx.editor) {
+        return null;
+      }
       return TableDndKey.getState(ctx.editor.state) ?? null;
     },
   });
