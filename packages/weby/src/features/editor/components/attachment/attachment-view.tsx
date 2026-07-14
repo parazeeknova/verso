@@ -67,56 +67,61 @@ export const AttachmentView = (props: NodeViewProps) => {
     }
   }, [editor, getPos]);
 
-  const borderClass = selected
-    ? "border-[#b58cff]"
-    : t("border-neutral-800 bg-neutral-900/5", "border-neutral-200 bg-neutral-50");
-
+  let outlineColor = isDarkMode ? "#525252" : "#d4d4d4";
+  if (selected) {
+    outlineColor = "#b58cff";
+  }
   const textClass = t("text-neutral-200", "text-neutral-800");
   const sizeClass = t("text-neutral-500", "text-neutral-400");
+  const actionBtnClass = t(
+    "border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white",
+    "border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 hover:text-neutral-800",
+  );
 
   return (
-    <NodeViewWrapper className="w-full my-3" data-drag-handle>
+    <NodeViewWrapper className="w-full my-1" data-drag-handle>
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: ProseMirror NodeView selection handler */}
       <div
         contentEditable={false}
         onClick={handleSelect}
-        className={`group flex items-center justify-between border rounded-none p-3 transition-colors duration-200 select-none ${borderClass}`}
-        style={{ cursor: "pointer" }}
+        className="group flex items-center justify-between py-1.5 px-2.5 select-none"
+        style={{
+          cursor: "pointer",
+          outline: `1px solid ${outlineColor}`,
+          outlineOffset: "-1px",
+        }}
       >
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {!url && placeholder ? (
-            <div className="w-5 h-5 border-2 border-[#b58cff] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            <div className="w-4 h-4 border-2 border-[#b58cff] border-t-transparent rounded-full animate-spin flex-shrink-0" />
           ) : (
-            <PaperclipIcon size={18} className="text-[#b58cff] flex-shrink-0" />
+            <PaperclipIcon size={15} className="text-[#b58cff] flex-shrink-0" />
           )}
 
-          <span className={`text-xs truncate font-medium ${textClass}`}>
+          <span className={`text-[11px] truncate font-medium leading-none ${textClass}`}>
             {!url && placeholder ? `uploading ${name}...` : name}
           </span>
 
           {size !== undefined && size !== null && (
-            <span className={`text-[10px] lowercase flex-shrink-0 font-medium ${sizeClass}`}>
+            <span className={`text-[10px] lowercase flex-shrink-0 leading-none ${sizeClass}`}>
               {formatBytes(size)}
             </span>
           )}
         </div>
 
         {url && (
-          <div className="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 group-[.ProseMirror-selectednode]:opacity-100 transition-opacity duration-200 ml-3">
+          <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 ml-2">
             {isPdf && editor.isEditable && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleEmbedAsPdf();
                 }}
-                className={`p-1.5 rounded-none border transition-colors ${t(
-                  "border-neutral-800 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white",
-                  "border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 hover:text-neutral-800",
-                )}`}
+                className={`p-1 border transition-colors ${actionBtnClass}`}
                 title="embed as pdf"
                 type="button"
               >
-                <FilePdfIcon size={15} />
+                <FilePdfIcon size={13} />
               </button>
             )}
 
@@ -125,13 +130,10 @@ export const AttachmentView = (props: NodeViewProps) => {
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className={`p-1.5 rounded-none border transition-colors ${t(
-                "border-neutral-800 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white",
-                "border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 hover:text-neutral-800",
-              )}`}
+              className={`p-1 border transition-colors ${actionBtnClass}`}
               title="download file"
             >
-              <DownloadSimpleIcon size={15} />
+              <DownloadSimpleIcon size={13} />
             </a>
 
             {editor.isEditable && (
@@ -140,14 +142,14 @@ export const AttachmentView = (props: NodeViewProps) => {
                   e.stopPropagation();
                   handleDelete();
                 }}
-                className={`p-1.5 rounded-none border transition-colors ${t(
-                  "border-neutral-800 bg-neutral-900 hover:bg-neutral-800 text-red-400 hover:text-red-300",
+                className={`p-1 border transition-colors ${t(
+                  "border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-red-400 hover:text-red-300",
                   "border-neutral-200 bg-white hover:bg-neutral-50 text-red-500 hover:text-red-600",
                 )}`}
                 title="delete file"
                 type="button"
               >
-                <TrashIcon size={15} />
+                <TrashIcon size={13} />
               </button>
             )}
           </div>
