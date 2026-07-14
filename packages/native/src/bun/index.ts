@@ -35,7 +35,7 @@ const getAppUrl = async (): Promise<string> => {
 
   // Set default production API backend if not already set
   if (!process.env.BACKY_ORIGIN) {
-    process.env.BACKY_ORIGIN = "https://przknv.cc";
+    process.env.BACKY_ORIGIN = "https://verso-serve.przknv.cc";
   }
 
   // Dynamic path to the bundled Nitro SSR server inside the views resources folder
