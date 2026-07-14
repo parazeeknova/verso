@@ -303,6 +303,32 @@ jobs:
           pattern: desktop-artifacts-*
           merge-multiple: true
 
+      - name: Update SHA256 hashes in flake.nix and PKGBUILD
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          TAR_FILE="desktop-artifacts/stable-linux-x64-Verso-Setup.tar.gz"
+          if [ -f "$TAR_FILE" ]; then
+            # Calculate hex hash
+            HEX_HASH=$(sha256sum "$TAR_FILE" | cut -d' ' -f1)
+            # Calculate SRI hash
+            SRI_HASH="sha256-$(openssl dgst -sha256 -binary "$TAR_FILE" | openssl base64)"
+            
+            echo "Updating PKGBUILD with SHA256: $HEX_HASH"
+            sed -i "s/sha256sums=.*/sha256sums=('$HEX_HASH')/" packaging/arch/PKGBUILD
+            
+            echo "Updating flake.nix with SRI hash: $SRI_HASH"
+            sed -i "s|sha256 = \".*\";|sha256 = \"$SRI_HASH\";|" flake.nix
+            
+            # Commit and push updates back to branch
+            git config --local user.name "github-actions[bot]"
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git add packaging/arch/PKGBUILD flake.nix
+            git commit -m "chore(release): Update SHA256 hashes for v${{ steps.version.outputs.version }} [skip ci]" || echo "No changes to commit"
+            git push origin HEAD:${{ github.ref_name }}
+          else
+            echo "Warning: stable-linux-x64-Verso-Setup.tar.gz not found, skipping hash updates."
+          fi
+
       - name: Create Release
         if: steps.check_tag.outputs.exists == 'false'
         uses: softprops/action-gh-release@v3
