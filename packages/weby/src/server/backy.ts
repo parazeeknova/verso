@@ -107,9 +107,13 @@ export const getAuthMe = (cookieHeader?: string | null) =>
     headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
   });
 
-export const getBacky = (endpoint: string, cookieHeader?: string | null): Promise<Response> => {
+export const getBacky = (
+  endpoint: string,
+  cookieHeader?: string | null,
+  extraHeaders?: Record<string, string>,
+): Promise<Response> => {
   const url = buildBackyUrl(endpoint);
-  const headers: Record<string, string> = { Accept: "application/json" };
+  const headers: Record<string, string> = { Accept: "application/json", ...extraHeaders };
   if (cookieHeader) {
     headers.Cookie = cookieHeader;
   }
