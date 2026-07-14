@@ -40,6 +40,9 @@
     pkgs.stdenv.cc.cc.lib
   ];
 
+  env.SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+  env.NIX_SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+
   # Pre-commit hooks configuration (optional, can be integrated if desired)
   # pre-commit.hooks = {
   #   shellcheck.enable = true;
