@@ -240,7 +240,13 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleCodeBlock({ language: "mermaid" }).run();
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .setCodeBlock({ language: "mermaid" })
+        .insertContent("flowchart LR\n    A --> B")
+        .run();
     },
     description: "Insert mermaid diagram.",
     icon: GitForkIcon,

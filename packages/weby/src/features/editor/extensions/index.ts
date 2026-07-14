@@ -38,7 +38,10 @@ import { MathInline, MathBlock } from "./math";
 import { CustomAttachment } from "./attachment";
 import { CustomYoutube } from "./youtube";
 
+import plaintext from "highlight.js/lib/languages/plaintext";
+
 const lowlight = createLowlight(common);
+lowlight.register("mermaid", plaintext);
 
 export const getEditorExtensions = () => [
   CustomImage,
