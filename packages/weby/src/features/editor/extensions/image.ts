@@ -1,4 +1,4 @@
-import type { Range } from "@tiptap/core";
+import type { Range, CommandProps } from "@tiptap/core";
 import { Image } from "@tiptap/extension-image";
 import { ReactNodeViewRenderer, mergeAttributes } from "@tiptap/react";
 import { ImageView } from "../components/image/image-view";
@@ -19,9 +19,7 @@ export interface ImageAttributes {
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
-    image: {
-      setImage: (attributes: ImageAttributes) => ReturnType;
-      setImageAt: (attributes: ImageAttributes & { pos: number | Range }) => ReturnType;
+    imageBlock: {
       setImageAlign: (align: "left" | "center" | "right") => ReturnType;
       setImageWidth: (width: number | string) => ReturnType;
       setImageSize: (width: number | string, height: number | string) => ReturnType;
@@ -95,7 +93,7 @@ export const CustomImage = Image.extend({
     return {
       setImage:
         (attrs: ImageAttributes) =>
-        ({ commands }) =>
+        ({ commands }: CommandProps) =>
           commands.insertContent({
             attrs,
             type: "image",
@@ -103,12 +101,12 @@ export const CustomImage = Image.extend({
 
       setImageAlign:
         (align: "left" | "center" | "right") =>
-        ({ commands }) =>
+        ({ commands }: CommandProps) =>
           commands.updateAttributes("image", { align }),
 
       setImageAt:
-        (attrs) =>
-        ({ commands }) =>
+        (attrs: ImageAttributes & { pos: number | Range }) =>
+        ({ commands }: CommandProps) =>
           commands.insertContentAt(attrs.pos, {
             attrs,
             type: "image",
@@ -116,12 +114,12 @@ export const CustomImage = Image.extend({
 
       setImageSize:
         (width: number | string, height: number | string) =>
-        ({ commands }) =>
+        ({ commands }: CommandProps) =>
           commands.updateAttributes("image", { height, width }),
 
       setImageWidth:
         (width: number | string) =>
-        ({ commands }) =>
+        ({ commands }: CommandProps) =>
           commands.updateAttributes("image", { width }),
     };
   },

@@ -98,6 +98,16 @@ export const useAltTextControl = ({ editor, nodeName, currentAlt }: UseAltTextCo
         maxRows={4}
         maxLength={ALT_MAX_LENGTH}
         radius={0}
+        styles={{
+          input: {
+            "&:focus": {
+              borderColor: "#b58cff",
+            },
+            "&:focus-within": {
+              borderColor: "#b58cff",
+            },
+          },
+        }}
       />
       <Group justify="space-between" align="center" mt={6} wrap="nowrap">
         <Text size="10px" c="dimmed">
