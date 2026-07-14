@@ -19,6 +19,10 @@ pre-commit:
     autobump:
       run: bun run autobump
       stage_fixed: true
+    shellcheck:
+      run: shellcheck {staged_files}
+      glob:
+        - "**/*.sh"
 pre-push:
   commands:
     monorepo-check:
