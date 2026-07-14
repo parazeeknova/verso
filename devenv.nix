@@ -54,7 +54,6 @@
   env.XDG_DATA_DIRS = "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:$XDG_DATA_DIRS";
   env.SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
   env.NIX_SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-  env.WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS = "1";
   env.GIO_EXTRA_MODULES = "${pkgs.glib-networking}/lib/gio/modules";
   env.GST_PLUGIN_PATH = lib.makeSearchPath "lib/gstreamer-1.0" [
     pkgs.gst_all_1.gst-plugins-base
