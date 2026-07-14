@@ -2,7 +2,6 @@ import type { NodeViewProps } from "@tiptap/react";
 import { NodeViewWrapper } from "@tiptap/react";
 import React, { useCallback, useMemo, useState } from "react";
 import { useTheme } from "#/shared/hooks/use-theme";
-import { YoutubeLogo } from "@phosphor-icons/react";
 import { Button, TextInput } from "@mantine/core";
 
 const parseYoutubeUrl = (url: string): string | null => {
@@ -28,56 +27,56 @@ const YoutubePlaceholder = ({
 
   return (
     <div
-      className={`w-full py-8 px-6 flex flex-col items-center justify-center gap-4 border border-dashed rounded-none ${t(
-        "border-neutral-800 bg-neutral-900/5 text-neutral-400",
-        "border-neutral-200 bg-neutral-50 text-neutral-500",
+      className={`w-full flex items-center justify-between gap-2 p-1.5 border rounded-none ${t(
+        "border-neutral-800 bg-neutral-900/5",
+        "border-neutral-200 bg-neutral-50",
       )}`}
     >
-      <div className="flex items-center gap-2">
-        <YoutubeLogo size={24} className="text-red-600 animate-pulse" />
-        <span className="text-[12px] font-semibold lowercase tracking-wide">
-          embed youtube video
-        </span>
-      </div>
-      <div className="w-full max-w-md flex gap-2">
-        <TextInput
-          placeholder="Paste YouTube link here..."
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          className="flex-1"
-          styles={{
-            input: {
-              "&:focus": {
-                borderColor: "#b58cff",
-              },
-              borderRadius: 0,
-              fontFamily: "monospace",
-              fontSize: "12px",
+      <TextInput
+        placeholder="Paste YouTube link..."
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        className="flex-1"
+        styles={{
+          input: {
+            "&:focus": {
+              borderColor: "transparent",
             },
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              onSubmit(url);
-            }
-          }}
-        />
-        <Button
-          onClick={() => onSubmit(url)}
-          radius="none"
-          size="sm"
-          styles={{
-            root: {
-              "&:hover": {
-                backgroundColor: "#a074ec",
-              },
-              backgroundColor: "#b58cff",
-              color: "#ffffff",
+            backgroundColor: "transparent",
+            border: "none",
+            borderRadius: 0,
+            fontFamily: "monospace",
+            fontSize: "12px",
+            height: "28px",
+            padding: "4px 8px",
+          },
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            onSubmit(url);
+          }
+        }}
+      />
+      <Button
+        onClick={() => onSubmit(url)}
+        radius="none"
+        size="xs"
+        styles={{
+          root: {
+            "&:hover": {
+              backgroundColor: "#a074ec",
             },
-          }}
-        >
-          embed
-        </Button>
-      </div>
+            backgroundColor: "#b58cff",
+            color: "#ffffff",
+            fontSize: "11px",
+            fontWeight: "normal",
+            height: "28px",
+            padding: "0 12px",
+          },
+        }}
+      >
+        embed
+      </Button>
     </div>
   );
 };
@@ -198,9 +197,11 @@ export const YoutubeView = (props: NodeViewProps) => {
     <NodeViewWrapper className={alignmentClass} data-drag-handle>
       <div
         contentEditable={false}
-        className={`relative max-w-full overflow-visible group rounded-none border ${
-          selected ? "border-[#b58cff]" : t("border-neutral-800", "border-neutral-200")
-        } ${src ? "" : t("bg-neutral-900/10", "bg-neutral-100/50")}`}
+        className={`relative max-w-full overflow-visible group rounded-none ${
+          src
+            ? `border ${selected ? "border-[#b58cff]" : t("border-neutral-800", "border-neutral-200")}`
+            : ""
+        }`}
         style={{
           aspectRatio: resolvedAspectRatio,
           height: resolvedAspectRatio ? "auto" : displayHeight,
