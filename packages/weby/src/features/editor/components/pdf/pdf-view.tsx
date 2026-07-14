@@ -31,6 +31,20 @@ const PdfPlaceholder = ({
   </div>
 );
 
+const CornerArrow = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 14 14" width="14" height="14" fill="none" className={className}>
+    <path d="M3 3 L11 11" stroke="currentColor" strokeLinecap="round" strokeWidth="1.6" />
+    <path
+      d="M7 11 L11 11 L11 7"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.6"
+    />
+  </svg>
+);
+
 const PdfError = ({ t }: { t: (dark: string, light: string) => string }) => (
   <div
     data-pdf-error
@@ -92,7 +106,7 @@ export const PdfView = (props: NodeViewProps) => {
 
   const handleResize = useCallback(
     (
-      direction: "bottom-left" | "bottom-right",
+      direction: "top-left" | "top-right" | "bottom-left" | "bottom-right",
       startWidth: number,
       startHeight: number,
       startX: number,
@@ -102,9 +116,11 @@ export const PdfView = (props: NodeViewProps) => {
         const deltaX = moveEvent.clientX - startX;
         const deltaY = moveEvent.clientY - startY;
 
-        const widthFactor = direction === "bottom-right" ? 1 : -1;
+        const widthFactor = direction === "bottom-right" || direction === "top-right" ? 1 : -1;
+        const heightFactor = direction === "bottom-right" || direction === "bottom-left" ? 1 : -1;
+
         const newWidth = Math.max(200, Math.min(1200, startWidth + widthFactor * deltaX));
-        const newHeight = Math.max(200, Math.min(1600, startHeight + deltaY));
+        const newHeight = Math.max(200, Math.min(1600, startHeight + heightFactor * deltaY));
 
         editor.commands.updateAttributes("pdf", {
           height: Math.round(newHeight),
@@ -124,7 +140,7 @@ export const PdfView = (props: NodeViewProps) => {
   );
 
   const handleResizeStart = useCallback(
-    (e: React.MouseEvent, direction: "bottom-left" | "bottom-right") => {
+    (e: React.MouseEvent, direction: "top-left" | "top-right" | "bottom-left" | "bottom-right") => {
       e.preventDefault();
       const wrapper = e.currentTarget.parentElement;
       if (!wrapper) {
@@ -140,7 +156,38 @@ export const PdfView = (props: NodeViewProps) => {
 
   const isLoaded = Boolean(src) && !placeholder;
 
-  const cornerHandleClass = `absolute w-4 h-4 bg-[#b58cff] border border-white/80 z-50 cursor-nwse-resize rounded-none ${handleOpacityClass}`;
+  const cornerHandleClass = `absolute z-50 p-0.5 text-[#b58cff] ${handleOpacityClass}`;
+
+  const corners = [
+    {
+      ariaLabel: "Resize from top-left corner",
+      cursor: "cursor-nwse-resize",
+      direction: "top-left" as const,
+      position: "top-[-7px] left-[-7px]",
+      rotation: "rotate-180",
+    },
+    {
+      ariaLabel: "Resize from top-right corner",
+      cursor: "cursor-nesw-resize",
+      direction: "top-right" as const,
+      position: "top-[-7px] right-[-7px]",
+      rotation: "-rotate-90",
+    },
+    {
+      ariaLabel: "Resize from bottom-left corner",
+      cursor: "cursor-nesw-resize",
+      direction: "bottom-left" as const,
+      position: "bottom-[-7px] left-[-7px]",
+      rotation: "rotate-90",
+    },
+    {
+      ariaLabel: "Resize from bottom-right corner",
+      cursor: "cursor-nwse-resize",
+      direction: "bottom-right" as const,
+      position: "bottom-[-7px] right-[-7px]",
+      rotation: "rotate-0",
+    },
+  ];
 
   return (
     <NodeViewWrapper className="w-full flex justify-center my-4" data-drag-handle>
@@ -162,25 +209,19 @@ export const PdfView = (props: NodeViewProps) => {
           t={t}
         />
 
-        {showHandles && (
-          <button
-            className={`${cornerHandleClass} left-[-8px] bottom-[-8px] cursor-sw-resize`}
-            onMouseDown={(e) => handleResizeStart(e, "bottom-left")}
-            type="button"
-            tabIndex={-1}
-            aria-label="Resize from bottom-left corner"
-          />
-        )}
-
-        {showHandles && (
-          <button
-            className={`${cornerHandleClass} right-[-8px] bottom-[-8px]`}
-            onMouseDown={(e) => handleResizeStart(e, "bottom-right")}
-            type="button"
-            tabIndex={-1}
-            aria-label="Resize from bottom-right corner"
-          />
-        )}
+        {showHandles &&
+          corners.map((corner) => (
+            <button
+              key={corner.direction}
+              aria-label={corner.ariaLabel}
+              className={`${cornerHandleClass} ${corner.position} ${corner.cursor}`}
+              onMouseDown={(e) => handleResizeStart(e, corner.direction)}
+              tabIndex={-1}
+              type="button"
+            >
+              <CornerArrow className={`${corner.rotation}`} />
+            </button>
+          ))}
       </div>
     </NodeViewWrapper>
   );
