@@ -7,16 +7,25 @@ const DEV_SERVER_URL = `http://localhost:${DEV_SERVER_PORT}`;
 const getAppUrl = async (): Promise<string> => {
   const channel = await Updater.localInfo.channel();
   if (channel === "dev") {
-    try {
-      // Check if Vite dev server is running
-      await fetch(DEV_SERVER_URL, { method: "HEAD" });
-      console.log(`HMR enabled: Using Vite dev server at ${DEV_SERVER_URL}`);
-      return DEV_SERVER_URL;
-    } catch {
-      console.log(
-        `Vite dev server not running at ${DEV_SERVER_URL}. Falling back to production behavior.`,
-      );
+    console.log(`Checking for Vite dev server at ${DEV_SERVER_URL}...`);
+    // Retry up to 15 times (3 seconds total) to give Vite time to boot up
+    let retries = 0;
+    while (retries < 15) {
+      try {
+        await fetch(DEV_SERVER_URL, { method: "HEAD" });
+        console.log(`HMR enabled: Using Vite dev server at ${DEV_SERVER_URL}`);
+        return DEV_SERVER_URL;
+      } catch {
+        // eslint-disable-next-line promise/avoid-new
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 200);
+        });
+        retries += 1;
+      }
     }
+    console.log(
+      `Vite dev server not running at ${DEV_SERVER_URL}. Falling back to production behavior.`,
+    );
   }
 
   // Production: Configure environment variables for the SSR server
