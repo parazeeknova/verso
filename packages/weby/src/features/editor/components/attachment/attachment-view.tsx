@@ -76,19 +76,12 @@ export const AttachmentView = (props: NodeViewProps) => {
 
   return (
     <NodeViewWrapper className="w-full my-3" data-drag-handle>
-      <button
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: ProseMirror NodeView selection handler */}
+      <div
         contentEditable={false}
         onClick={handleSelect}
-        className={`group flex items-center justify-between border rounded-none p-3 transition-colors duration-200 select-none w-full text-left ${borderClass}`}
+        className={`group flex items-center justify-between border rounded-none p-3 transition-colors duration-200 select-none ${borderClass}`}
         style={{ cursor: "pointer" }}
-        type="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            handleSelect();
-          }
-        }}
       >
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {!url && placeholder ? (
@@ -159,7 +152,7 @@ export const AttachmentView = (props: NodeViewProps) => {
             )}
           </div>
         )}
-      </button>
+      </div>
     </NodeViewWrapper>
   );
 };
