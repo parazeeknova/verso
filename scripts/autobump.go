@@ -15,11 +15,15 @@ var managedFiles = []string{
 	"lerna.json",
 	"packages/backy/package.json",
 	"packages/weby/package.json",
+	"flake.nix",
+	"packaging/arch/PKGBUILD",
 }
 
 var (
-	semverPattern  = regexp.MustCompile(`^(\d+)\.(\d+)\.(\d+)$`)
-	versionPattern = regexp.MustCompile(`("version"\s*:\s*")[^"]*(")`)
+	semverPattern     = regexp.MustCompile(`^(\d+)\.(\d+)\.(\d+)$`)
+	versionPattern    = regexp.MustCompile(`("version"\s*:\s*")[^"]*(")`)
+	nixVersionPattern = regexp.MustCompile(`(version\s*=\s*")[^"]*(")`)
+	pkgverPattern     = regexp.MustCompile(`(pkgver=)[^\n]*`)
 )
 
 func main() {
@@ -152,7 +156,15 @@ func setVersion(rootDir, relativePath, nextVersion string) error {
 	}
 
 	original := string(originalBytes)
-	updated := versionPattern.ReplaceAllString(original, `${1}`+nextVersion+`${2}`)
+	var updated string
+	if filepath.Base(relativePath) == "flake.nix" {
+		updated = nixVersionPattern.ReplaceAllString(original, `${1}`+nextVersion+`${2}`)
+	} else if filepath.Base(relativePath) == "PKGBUILD" {
+		updated = pkgverPattern.ReplaceAllString(original, `${1}`+nextVersion)
+	} else {
+		updated = versionPattern.ReplaceAllString(original, `${1}`+nextVersion+`${2}`)
+	}
+
 	if updated == original {
 		return fmt.Errorf("version field not found in %s", relativePath)
 	}

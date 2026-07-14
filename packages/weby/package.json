@@ -1,6 +1,6 @@
 {
   "name": "@verso/weby",
-  "version": "0.2.90",
+  "version": "0.2.92",
   "private": true,
   "type": "module",
   "imports": {

@@ -215,6 +215,17 @@ jobs:
           ELECTROBUN_MAC_CODESIGN: ${{ secrets.MACOS_CERTIFICATE != '' && 'true' || 'false' }}
         run: cd packages/native && bun run build:stable
 
+      - name: Install fpm (Deb/RPM packaging tool)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby ruby-dev rubygems build-essential rpm
+          sudo gem install --no-document fpm
+
+      - name: Build Debian, RPM, and AppImage packages
+        if: matrix.platform == 'linux'
+        run: ./packages/native/scripts/build-linux-packages.sh
+
       - name: Upload desktop artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -263,6 +274,10 @@ jobs:
 
           {
             echo "changes<<CHANGES_EOF"
+            echo "<p align=\"center\">"
+            echo "  <img src=\"https://github.com/parazeeknova/verso/blob/main/packages/weby/public/verso.png?raw=true\" alt=\"Verso Logo\" width=\"128\" height=\"128\" />"
+            echo "</p>"
+            echo ""
             echo "## Changes"
             echo ""
             if [ -z "$COMMITS" ]; then
