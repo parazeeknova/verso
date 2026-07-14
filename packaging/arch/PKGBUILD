@@ -10,7 +10,7 @@ depends=('webkit2gtk-4.1' 'gtk3' 'libsoup3' 'libayatana-appindicator3' 'glib-net
 provides=('verso')
 conflicts=('verso')
 source=("https://github.com/parazeeknova/verso/releases/download/v${pkgver}/stable-linux-x64-Verso-Setup.tar.gz")
-sha256sums=('SKIP') # Update this or leave SKIP for dev packaging
+sha256sums=('87d0cce14863a7bee5b8d304a1aee4da8a809483a3fe2e21a780e563d32cc239')
 
 package() {
     # Install application files
