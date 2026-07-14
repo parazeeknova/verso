@@ -8,9 +8,9 @@ const getAppUrl = async (): Promise<string> => {
   const channel = await Updater.localInfo.channel();
   if (channel === "dev") {
     console.log(`Checking for Vite dev server at ${DEV_SERVER_URL}...`);
-    // Retry up to 15 times (3 seconds total) to give Vite time to boot up
+    // Retry up to 50 times (10 seconds total) to give Vite time to boot up
     let retries = 0;
-    while (retries < 15) {
+    while (retries < 50) {
       try {
         await fetch(DEV_SERVER_URL, { method: "HEAD" });
         console.log(`HMR enabled: Using Vite dev server at ${DEV_SERVER_URL}`);
@@ -23,8 +23,8 @@ const getAppUrl = async (): Promise<string> => {
         retries += 1;
       }
     }
-    console.log(
-      `Vite dev server not running at ${DEV_SERVER_URL}. Falling back to production behavior.`,
+    throw new Error(
+      `Vite dev server not detected at ${DEV_SERVER_URL} after 10 seconds. Please make sure the dev server is running (e.g. by running 'bun run dev').`,
     );
   }
 

@@ -1,10 +1,14 @@
 import type { ElectrobunConfig } from "electrobun";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+const packageJson = JSON.parse(readFileSync(join(import.meta.dirname, "package.json"), "utf-8"));
 
 export default {
   app: {
     identifier: "cc.przknv.verso",
     name: "Verso",
-    version: "0.2.71",
+    version: packageJson.version,
   },
   build: {
     copy: {
@@ -16,9 +20,13 @@ export default {
     },
     mac: {
       bundleCEF: false,
-      codesign: !!process.env.ELECTROBUN_DEVELOPER_ID,
+      codesign: process.env.ELECTROBUN_MAC_CODESIGN
+        ? process.env.ELECTROBUN_MAC_CODESIGN === "true"
+        : !!process.env.ELECTROBUN_DEVELOPER_ID,
       icons: "icon.iconset",
-      notarize: !!process.env.ELECTROBUN_APPLEIDPASS,
+      notarize: process.env.ELECTROBUN_MAC_CODESIGN
+        ? process.env.ELECTROBUN_MAC_CODESIGN === "true" && !!process.env.ELECTROBUN_APPLEIDPASS
+        : !!process.env.ELECTROBUN_APPLEIDPASS,
     },
     win: {
       bundleCEF: false,
