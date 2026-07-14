@@ -1,6 +1,6 @@
 import type { NodeViewProps } from "@tiptap/react";
 import { NodeViewWrapper } from "@tiptap/react";
-import { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import { useTheme } from "#/shared/hooks/use-theme";
 
 interface ImageContentProps {
@@ -16,7 +16,7 @@ const ImageContent = ({ src, previewSrc, placeholder, alt, t }: ImageContentProp
     return (
       <img
         alt={alt || "uploaded image"}
-        className="w-full h-auto max-w-full object-contain rounded-md block transition-transform hover:scale-[1.01] duration-300"
+        className="w-full h-full object-contain rounded-md block transition-transform duration-300"
         src={src}
       />
     );
@@ -27,7 +27,7 @@ const ImageContent = ({ src, previewSrc, placeholder, alt, t }: ImageContentProp
       <div className="relative w-full h-full flex items-center justify-center">
         <img
           alt={placeholder?.name || "preview"}
-          className="w-full h-auto max-w-full object-contain opacity-60 blur-[1px] rounded-md block"
+          className="w-full h-full object-contain opacity-60 blur-[1px] rounded-md block"
           src={previewSrc}
         />
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/10 dark:bg-white/5">
@@ -58,7 +58,7 @@ const ImageContent = ({ src, previewSrc, placeholder, alt, t }: ImageContentProp
 
 export const ImageView = (props: NodeViewProps) => {
   const { node, selected, editor } = props;
-  const { src, width, height, aspectRatio, placeholder, alt } = node.attrs;
+  const { src, width, height, aspectRatio, placeholder, alt, align } = node.attrs;
   const { isDarkMode } = useTheme();
 
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
@@ -73,6 +73,7 @@ export const ImageView = (props: NodeViewProps) => {
     return null;
   }, [placeholder?.id, editor?.storage]);
 
+  // Support responsive percentage widths or raw pixels
   let displayWidth = "100%";
   if (width) {
     displayWidth = typeof width === "number" ? `${width}px` : width;
@@ -83,11 +84,85 @@ export const ImageView = (props: NodeViewProps) => {
     displayHeight = typeof height === "number" ? `${height}px` : height;
   }
 
+  // Flex alignment classes on the wrapping block
+  const alignmentClass = useMemo(() => {
+    if (align === "left") {
+      return "w-full flex justify-start my-4";
+    }
+    if (align === "right") {
+      return "w-full flex justify-end my-4";
+    }
+    return "w-full flex justify-center my-4";
+  }, [align]);
+
+  // Mouse / Touch resize handler
+  const handleResize = useCallback(
+    (
+      clientX: number,
+      clientY: number,
+      startWidth: number,
+      startHeight: number,
+      startX: number,
+      startY: number,
+    ) => {
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        const deltaX = moveEvent.clientX - startX;
+        const deltaY = moveEvent.clientY - startY;
+
+        let newWidth = startWidth + deltaX;
+        let newHeight = startHeight + deltaY;
+
+        if (newWidth < 50) {
+          newWidth = 50;
+        }
+        if (newHeight < 50) {
+          newHeight = 50;
+        }
+
+        if (aspectRatio) {
+          newHeight = newWidth / aspectRatio;
+        }
+
+        editor.commands.updateAttributes("image", {
+          height: Math.round(newHeight),
+          width: Math.round(newWidth),
+        });
+      };
+
+      const handleMouseUp = () => {
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    },
+    [editor, aspectRatio],
+  );
+
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const startX = e.clientX;
+      const startY = e.clientY;
+
+      const imgWrapper = e.currentTarget.parentElement;
+      if (!imgWrapper) {
+        return;
+      }
+      const startWidth = imgWrapper.clientWidth;
+      const startHeight = imgWrapper.clientHeight;
+
+      handleResize(startX, startY, startWidth, startHeight, startX, startY);
+    },
+    [handleResize],
+  );
+
   return (
-    <NodeViewWrapper className="my-4 block" data-drag-handle>
+    <NodeViewWrapper className={alignmentClass} data-drag-handle>
       <div
         className={`relative max-w-full overflow-hidden transition-all duration-300 ${
-          selected ? "ring-2 ring-neutral-400 dark:ring-neutral-600 rounded-md" : "rounded-md"
+          selected ? "ring-2 ring-blue-500 dark:ring-blue-400 rounded-md" : "rounded-md"
         } ${t("bg-neutral-900/10", "bg-neutral-100/50")}`}
         style={{
           aspectRatio: aspectRatio ? `${aspectRatio}` : undefined,
@@ -96,6 +171,30 @@ export const ImageView = (props: NodeViewProps) => {
         }}
       >
         <ImageContent alt={alt} placeholder={placeholder} previewSrc={previewSrc} src={src} t={t} />
+
+        {/* Custom drag resize handle */}
+        {selected && src && (
+          <button
+            className="absolute right-1 bottom-1 w-4 h-4 bg-blue-500 border border-white dark:border-neutral-800 rounded-full cursor-se-resize z-50 hover:scale-125 active:scale-95 shadow-md transition-all flex items-center justify-center"
+            onMouseDown={handleResizeStart}
+            type="button"
+            tabIndex={-1}
+            aria-label="Resize image"
+          >
+            {/* Minimal resize lines inside handle */}
+            <svg className="w-2 h-2 text-white" viewBox="0 0 10 10">
+              <line
+                x1="1"
+                y1="9"
+                x2="9"
+                y2="1"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        )}
       </div>
     </NodeViewWrapper>
   );

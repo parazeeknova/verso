@@ -20,6 +20,7 @@ import { useIsPageWatching, useWatchPage } from "#/features/console/hooks/use-pa
 import { TableMenu } from "./table/table-menu";
 import { ColumnsMenu } from "./columns/columns-menu";
 import { CalloutMenu } from "./callout/callout-menu";
+import { ImageMenu } from "./image/image-menu";
 import { TableHandlesLayer } from "./table/handle/table-handles-layer";
 import { BlogTableOfContents } from "#/features/blog/components/blog-table-of-contents";
 import type { BlogHeading } from "#/features/blog/lib/blog-headings";
@@ -990,6 +991,7 @@ export const PageEditor = ({
             <TableMenu editor={editor} />
             <ColumnsMenu editor={editor} />
             <CalloutMenu editor={editor} />
+            <ImageMenu editor={editor} />
             <TableHandlesLayer editor={editor} />
           </>
         )}
