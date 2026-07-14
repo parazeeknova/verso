@@ -91,7 +91,7 @@ describe("useNotificationStream", () => {
     };
 
     const mockFetch = vi.fn().mockResolvedValueOnce(createMockResponse({ id: "user-1" }));
-    globalThis.fetch = mockFetch as typeof fetch;
+    globalThis.fetch = mockFetch as unknown as typeof fetch;
 
     renderHook(() => useNotificationStream(true), { wrapper: Wrapper });
 
@@ -109,7 +109,7 @@ describe("useNotificationStream", () => {
 
   it("does not create EventSource or schedule reconnect when disabled", async () => {
     const mockFetch = vi.fn();
-    globalThis.fetch = mockFetch as typeof fetch;
+    globalThis.fetch = mockFetch as unknown as typeof fetch;
 
     renderHook(() => useNotificationStream(false), { wrapper: Wrapper });
 
