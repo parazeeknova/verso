@@ -204,7 +204,7 @@ jobs:
         run: bun install
 
       - name: Build monorepo packages (weby)
-        run: bun run build
+        run: bun --cwd packages/weby run build
 
       - name: Build Electrobun App
         env:

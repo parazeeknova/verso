@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package.json bun.lock* ./
 COPY packages/weby/package.json ./packages/weby/
 COPY packages/backy/package.json ./packages/backy/
+COPY packages/native/package.json ./packages/native/
 RUN bun install --frozen-lockfile --filter @verso/weby
 
 FROM oven/bun:slim AS build
