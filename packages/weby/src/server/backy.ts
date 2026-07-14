@@ -755,3 +755,20 @@ export const updateSystemSetting = (key: string, value: boolean, cookieHeader?: 
     },
     method: "PATCH",
   });
+
+export const uploadBacky = (
+  endpoint: string,
+  formData: FormData,
+  cookieHeader?: string | null,
+): Promise<Response> => {
+  const url = buildBackyUrl(endpoint);
+  const headers: Record<string, string> = {};
+  if (cookieHeader) {
+    headers.Cookie = cookieHeader;
+  }
+  return fetch(url, {
+    body: formData,
+    headers,
+    method: "POST",
+  });
+};
