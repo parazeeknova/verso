@@ -22,24 +22,16 @@ const renderKatex = (katexString: string, container: HTMLDivElement | null): str
   }
 };
 
-const useMathEditingState = (
-  node: NodeViewProps["node"],
-  selected: NodeViewProps["selected"],
-  getPos: NodeViewProps["getPos"],
-  editor: NodeViewProps["editor"],
-) => {
+const useMathEditingState = (node: NodeViewProps["node"], selected: NodeViewProps["selected"]) => {
   const [isEditing, setIsEditing] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
   useEffect(() => {
-    const pos = getPos();
-    const { from, to } = editor.state.selection;
-    const nodeSelected = selected && from === pos && to === pos + node.nodeSize;
-    setIsEditing(nodeSelected);
-    if (nodeSelected) {
+    setIsEditing(selected);
+    if (selected) {
       setPreview(node.attrs.text ?? "");
     }
-  }, [selected, getPos, node.nodeSize, node.attrs.text, editor.state.selection]);
+  }, [selected, node.attrs.text]);
 
   return { isEditing, preview, setPreview };
 };
@@ -65,7 +57,7 @@ export const BlockMathView = (props: NodeViewProps) => {
   const [mathError, setMathError] = useState<string | null>(null);
   const { isDarkMode } = useTheme();
 
-  const { isEditing, preview, setPreview } = useMathEditingState(node, selected, getPos, editor);
+  const { isEditing, preview, setPreview } = useMathEditingState(node, selected);
 
   const [debouncedPreview] = useDebouncedValue(preview, 500);
   useDebouncedAttributesUpdate(debouncedPreview, updateAttributes);
@@ -87,6 +79,8 @@ export const BlockMathView = (props: NodeViewProps) => {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      e.stopPropagation();
+
       const pos = getPos?.();
       if (pos === undefined) {
         return;

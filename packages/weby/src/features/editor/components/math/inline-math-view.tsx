@@ -44,14 +44,11 @@ export const InlineMathView = (props: NodeViewProps) => {
   }, [preview, isEditing, renderMath, updateAttributes]);
 
   useEffect(() => {
-    const pos = getPos();
-    const { from, to } = editor.state.selection;
-    const nodeSelected = selected && from === pos && to === pos + node.nodeSize;
-    setIsEditing(nodeSelected);
-    if (nodeSelected) {
+    setIsEditing(selected);
+    if (selected) {
       setPreview(node.attrs.text ?? "");
     }
-  }, [selected, getPos, node.nodeSize, node.attrs.text, editor.state.selection]);
+  }, [selected, node.attrs.text]);
 
   const isEmpty = isEditing ? !preview?.trim().length : !node.attrs.text?.trim().length;
 
@@ -122,6 +119,8 @@ export const InlineMathView = (props: NodeViewProps) => {
             },
           }}
           onKeyDown={(e) => {
+            e.stopPropagation();
+
             const pos = getPos?.();
             if (pos === undefined) {
               return;
