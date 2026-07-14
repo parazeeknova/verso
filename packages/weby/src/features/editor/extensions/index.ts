@@ -30,10 +30,12 @@ import { HeadingWithIds } from "#/features/blog/components/tiptap-heading-ids";
 import GlobalDragHandle from "./drag-handle";
 import SlashCommand from "./slash-command";
 import { EmojiCommand } from "./emoji-command";
+import { CustomImage } from "./image";
 
 const lowlight = createLowlight(common);
 
 export const getEditorExtensions = () => [
+  CustomImage,
   StarterKit.configure({
     codeBlock: false,
     dropcursor: {

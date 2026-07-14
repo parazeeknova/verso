@@ -762,6 +762,19 @@ export const PageEditor = ({
 
   const editor = usePageEditorInstance(content, editable, setHeadings, markDirtyRef);
 
+  useEffect(() => {
+    if (editor && !editor.isDestroyed) {
+      const storage = editor.storage as unknown as Record<
+        string,
+        Record<string, string | undefined>
+      >;
+      storage.shared = storage.shared || {};
+      storage.shared.pageId = pageId;
+      storage.shared.spaceName = spaceName;
+      storage.shared.pageName = title;
+    }
+  }, [editor, pageId, spaceName, title]);
+
   const { dirty, cleanup, isSaving, lastSaved, markDirty } = useEditorContent(editor, pageId);
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

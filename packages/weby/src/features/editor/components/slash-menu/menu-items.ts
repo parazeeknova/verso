@@ -18,10 +18,31 @@ import {
   TagIcon,
   SmileyIcon,
   ColumnsIcon,
+  ImageIcon,
 } from "@phosphor-icons/react";
 import type { SlashMenuItemType } from "./types";
 
 export const getSuggestionItems = (): SlashMenuItemType[] => [
+  {
+    command: ({ editor, range }) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.addEventListener("change", async (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          editor.chain().focus().deleteRange(range).run();
+          const { uploadImage } = await import("../image/upload-image");
+          void uploadImage(file, editor, editor.state.selection.from);
+        }
+      });
+      input.click();
+    },
+    description: "Upload an image.",
+    icon: ImageIcon,
+    searchTerms: ["image", "picture", "photo", "upload"],
+    title: "Image",
+  },
   {
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleNode("paragraph", "paragraph").run();

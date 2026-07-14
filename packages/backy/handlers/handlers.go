@@ -21,6 +21,7 @@ import (
 	"verso/backy/repositories"
 	"verso/backy/shared/cache"
 	"verso/backy/shared/logger"
+	"verso/backy/shared/storage"
 	"verso/backy/store"
 )
 
@@ -38,6 +39,7 @@ type Handlers struct {
 	groupService     *groupfeat.GroupService
 	pageFavoriteRepo *repositories.PageFavoriteRepo
 	notifier         notifeat.Notifier
+	storageClient    *storage.Client
 }
 
 // Config holds application configuration
@@ -60,6 +62,11 @@ func New(cfg Config) *Handlers {
 // SetNotifier sets the notification service on the handlers.
 func (h *Handlers) SetNotifier(n notifeat.Notifier) {
 	h.notifier = n
+}
+
+// SetStorageClient sets the S3 storage client on the handlers.
+func (h *Handlers) SetStorageClient(c *storage.Client) {
+	h.storageClient = c
 }
 
 // NewWithDB creates a new handlers instance with database-backed services.
