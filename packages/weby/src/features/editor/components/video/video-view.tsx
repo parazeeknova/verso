@@ -166,7 +166,7 @@ export const VideoView = (props: NodeViewProps) => {
         }`}
         style={{
           aspectRatio: resolvedAspectRatio,
-          height: displayHeight,
+          height: resolvedAspectRatio ? "auto" : displayHeight,
           width: displayWidth,
         }}
       >

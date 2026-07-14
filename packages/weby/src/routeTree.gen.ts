@@ -94,6 +94,7 @@ import { Route as ApiConsolePagesIdFavoriteRouteImport } from './routes/api/cons
 import { Route as ApiConsolePagesIdChildrenRouteImport } from './routes/api/console/pages/$id/children'
 import { Route as ApiConsoleNotificationsIdReadRouteImport } from './routes/api/console/notifications/$id/read'
 import { Route as ApiConsoleGroupsIdMembersRouteImport } from './routes/api/console/groups/$id/members'
+import { Route as ApiConsoleFilesBucketFilenameRouteImport } from './routes/api/console/files/$bucket/$filename'
 import { Route as ApiConsoleDebugTablesTableNameRouteImport } from './routes/api/console/debug/tables/$tableName'
 import { Route as ApiConsoleSpacesIdMembersUserIdRouteImport } from './routes/api/console/spaces/$id/members/$userId'
 import { Route as ApiConsoleSpacesIdGroupsGroupIdRouteImport } from './routes/api/console/spaces/$id/groups/$groupId'
@@ -557,6 +558,12 @@ const ApiConsoleGroupsIdMembersRoute =
     path: '/members',
     getParentRoute: () => ApiConsoleGroupsIdRoute,
   } as any)
+const ApiConsoleFilesBucketFilenameRoute =
+  ApiConsoleFilesBucketFilenameRouteImport.update({
+    id: '/api/console/files/$bucket/$filename',
+    path: '/api/console/files/$bucket/$filename',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiConsoleDebugTablesTableNameRoute =
   ApiConsoleDebugTablesTableNameRouteImport.update({
     id: '/$tableName',
@@ -667,6 +674,7 @@ export interface FileRoutesByFullPath {
   '/api/console/workspaces/$id': typeof ApiConsoleWorkspacesIdRouteWithChildren
   '/s/$spaceSlug/p/$pageid': typeof SSpaceSlugPPageidRoute
   '/api/console/debug/tables/$tableName': typeof ApiConsoleDebugTablesTableNameRouteWithChildren
+  '/api/console/files/$bucket/$filename': typeof ApiConsoleFilesBucketFilenameRoute
   '/api/console/groups/$id/members': typeof ApiConsoleGroupsIdMembersRouteWithChildren
   '/api/console/notifications/$id/read': typeof ApiConsoleNotificationsIdReadRoute
   '/api/console/pages/$id/children': typeof ApiConsolePagesIdChildrenRoute
@@ -759,6 +767,7 @@ export interface FileRoutesByTo {
   '/api/console/workspaces/$id': typeof ApiConsoleWorkspacesIdRouteWithChildren
   '/s/$spaceSlug/p/$pageid': typeof SSpaceSlugPPageidRoute
   '/api/console/debug/tables/$tableName': typeof ApiConsoleDebugTablesTableNameRouteWithChildren
+  '/api/console/files/$bucket/$filename': typeof ApiConsoleFilesBucketFilenameRoute
   '/api/console/groups/$id/members': typeof ApiConsoleGroupsIdMembersRouteWithChildren
   '/api/console/notifications/$id/read': typeof ApiConsoleNotificationsIdReadRoute
   '/api/console/pages/$id/children': typeof ApiConsolePagesIdChildrenRoute
@@ -854,6 +863,7 @@ export interface FileRoutesById {
   '/api/console/workspaces/$id': typeof ApiConsoleWorkspacesIdRouteWithChildren
   '/s/$spaceSlug/p/$pageid': typeof SSpaceSlugPPageidRoute
   '/api/console/debug/tables/$tableName': typeof ApiConsoleDebugTablesTableNameRouteWithChildren
+  '/api/console/files/$bucket/$filename': typeof ApiConsoleFilesBucketFilenameRoute
   '/api/console/groups/$id/members': typeof ApiConsoleGroupsIdMembersRouteWithChildren
   '/api/console/notifications/$id/read': typeof ApiConsoleNotificationsIdReadRoute
   '/api/console/pages/$id/children': typeof ApiConsolePagesIdChildrenRoute
@@ -950,6 +960,7 @@ export interface FileRouteTypes {
     | '/api/console/workspaces/$id'
     | '/s/$spaceSlug/p/$pageid'
     | '/api/console/debug/tables/$tableName'
+    | '/api/console/files/$bucket/$filename'
     | '/api/console/groups/$id/members'
     | '/api/console/notifications/$id/read'
     | '/api/console/pages/$id/children'
@@ -1042,6 +1053,7 @@ export interface FileRouteTypes {
     | '/api/console/workspaces/$id'
     | '/s/$spaceSlug/p/$pageid'
     | '/api/console/debug/tables/$tableName'
+    | '/api/console/files/$bucket/$filename'
     | '/api/console/groups/$id/members'
     | '/api/console/notifications/$id/read'
     | '/api/console/pages/$id/children'
@@ -1136,6 +1148,7 @@ export interface FileRouteTypes {
     | '/api/console/workspaces/$id'
     | '/s/$spaceSlug/p/$pageid'
     | '/api/console/debug/tables/$tableName'
+    | '/api/console/files/$bucket/$filename'
     | '/api/console/groups/$id/members'
     | '/api/console/notifications/$id/read'
     | '/api/console/pages/$id/children'
@@ -1203,6 +1216,7 @@ export interface RootRouteChildren {
   ApiConsolePushSubscribeRoute: typeof ApiConsolePushSubscribeRoute
   ApiConsolePushUnsubscribeRoute: typeof ApiConsolePushUnsubscribeRoute
   ApiConsoleUnsplashSearchRoute: typeof ApiConsoleUnsplashSearchRoute
+  ApiConsoleFilesBucketFilenameRoute: typeof ApiConsoleFilesBucketFilenameRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1802,6 +1816,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiConsoleGroupsIdMembersRouteImport
       parentRoute: typeof ApiConsoleGroupsIdRoute
     }
+    '/api/console/files/$bucket/$filename': {
+      id: '/api/console/files/$bucket/$filename'
+      path: '/api/console/files/$bucket/$filename'
+      fullPath: '/api/console/files/$bucket/$filename'
+      preLoaderRoute: typeof ApiConsoleFilesBucketFilenameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/console/debug/tables/$tableName': {
       id: '/api/console/debug/tables/$tableName'
       path: '/$tableName'
@@ -2235,6 +2256,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiConsolePushSubscribeRoute: ApiConsolePushSubscribeRoute,
   ApiConsolePushUnsubscribeRoute: ApiConsolePushUnsubscribeRoute,
   ApiConsoleUnsplashSearchRoute: ApiConsoleUnsplashSearchRoute,
+  ApiConsoleFilesBucketFilenameRoute: ApiConsoleFilesBucketFilenameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

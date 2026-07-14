@@ -217,18 +217,5 @@ func (h *Handlers) GetUploadedFile(c *gin.Context) {
 		return
 	}
 
-	localFile, err := os.Open(localPath)
-	if err != nil {
-		logger.Log.Error().Err(err).Str("path", localPath).Msg("failed to open local file")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open file"})
-		return
-	}
-	defer func() { _ = localFile.Close() }()
-
-	stat, err := localFile.Stat()
-	if err == nil {
-		c.Header("Content-Length", fmt.Sprintf("%d", stat.Size()))
-	}
-	c.Header("Content-Type", contentType)
-	_, _ = io.Copy(c.Writer, localFile)
+	c.File(localPath)
 }
