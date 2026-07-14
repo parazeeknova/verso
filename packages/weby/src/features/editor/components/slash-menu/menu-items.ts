@@ -26,6 +26,7 @@ import {
   FunctionIcon,
   MathOperationsIcon,
   YoutubeLogo,
+  GitForkIcon,
 } from "@phosphor-icons/react";
 import type { SlashMenuItemType } from "./types";
 
@@ -236,6 +237,15 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
     icon: CodeIcon,
     searchTerms: ["codeblock", "code"],
     title: "Code",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).toggleCodeBlock({ language: "mermaid" }).run();
+    },
+    description: "Insert mermaid diagram.",
+    icon: GitForkIcon,
+    searchTerms: ["mermaid", "diagram", "chart", "flowchart", "uml"],
+    title: "Mermaid diagram",
   },
   {
     command: ({ editor, range }) => {
