@@ -48,7 +48,9 @@ describe("GitHubStats", () => {
   it("renders stats data correctly", async () => {
     globalThis.fetch = vi
       .fn()
-      .mockImplementation(() => Promise.resolve(createMockResponse(mockStats)));
+      .mockImplementation(() =>
+        Promise.resolve(createMockResponse(mockStats)),
+      ) as unknown as typeof fetch;
 
     render(<GitHubStats />, { wrapper: createWrapper() });
 
@@ -70,7 +72,11 @@ describe("GitHubStats", () => {
   });
 
   it("renders error state", async () => {
-    globalThis.fetch = vi.fn().mockImplementation(() => Promise.reject(new Error("Network error")));
+    globalThis.fetch = vi
+      .fn()
+      .mockImplementation(() =>
+        Promise.reject(new Error("Network error")),
+      ) as unknown as typeof fetch;
 
     render(<GitHubStats />, { wrapper: createWrapper() });
 
@@ -83,7 +89,9 @@ describe("GitHubStats", () => {
   it("renders orgs section when data has orgs", async () => {
     globalThis.fetch = vi
       .fn()
-      .mockImplementation(() => Promise.resolve(createMockResponse(mockStats)));
+      .mockImplementation(() =>
+        Promise.resolve(createMockResponse(mockStats)),
+      ) as unknown as typeof fetch;
 
     render(<GitHubStats />, { wrapper: createWrapper() });
 
@@ -103,7 +111,9 @@ describe("GitHubStats", () => {
     const statsNoOrgs = { ...mockStats, orgs: [] };
     globalThis.fetch = vi
       .fn()
-      .mockImplementation(() => Promise.resolve(createMockResponse(statsNoOrgs)));
+      .mockImplementation(() =>
+        Promise.resolve(createMockResponse(statsNoOrgs)),
+      ) as unknown as typeof fetch;
 
     render(<GitHubStats />, { wrapper: createWrapper() });
 
@@ -119,7 +129,9 @@ describe("GitHubStats", () => {
   it("handles HTTP error response", async () => {
     globalThis.fetch = vi
       .fn()
-      .mockImplementation(() => Promise.resolve(createMockResponse({}, false)));
+      .mockImplementation(() =>
+        Promise.resolve(createMockResponse({}, false)),
+      ) as unknown as typeof fetch;
 
     render(<GitHubStats />, { wrapper: createWrapper() });
 
