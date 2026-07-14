@@ -887,7 +887,7 @@ export const PageEditor = ({
       >
         <div className="group relative">
           <span
-            className={`text-[11px] lowercase font-medium ${t("text-text-dark/30", "text-text-light/30")}`}
+            className={`text-[13px] lowercase font-bold ${t("text-text-dark/55", "text-text-light/55")}`}
           >
             {localTitle}
           </span>
