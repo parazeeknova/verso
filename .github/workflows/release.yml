@@ -213,7 +213,7 @@ jobs:
           ELECTROBUN_APPLEID: ${{ secrets.ELECTROBUN_APPLEID }}
           ELECTROBUN_APPLEIDPASS: ${{ secrets.ELECTROBUN_APPLEIDPASS }}
           ELECTROBUN_MAC_CODESIGN: ${{ secrets.MACOS_CERTIFICATE != '' && 'true' || 'false' }}
-        run: bun --cwd packages/native run build:stable
+        run: cd packages/native && bun run build:stable
 
       - name: Upload desktop artifacts
         uses: actions/upload-artifact@v4
