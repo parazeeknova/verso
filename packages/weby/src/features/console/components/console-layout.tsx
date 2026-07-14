@@ -325,7 +325,7 @@ export const ConsoleLayout = () => {
       }}
     >
       <div
-        className={`flex min-h-screen flex-col transition-colors duration-500 ease-out ${t("bg-bg-dark", "bg-bg-light")}`}
+        className={`flex h-screen overflow-hidden flex-col transition-colors duration-500 ease-out ${t("bg-bg-dark", "bg-bg-light")}`}
       >
         <ConsoleNavbar onToggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
 
@@ -355,7 +355,7 @@ export const ConsoleLayout = () => {
           )}
 
           <main
-            className={`min-h-0 flex-1 relative ${isSpaceRoute ? "overflow-hidden" : "overflow-y-auto"}`}
+            className={`min-h-0 flex-1 relative flex flex-col ${isSpaceRoute ? "overflow-hidden" : "overflow-y-auto"}`}
             ref={mainRef}
           >
             <Outlet />
