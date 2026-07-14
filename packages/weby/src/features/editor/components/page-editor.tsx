@@ -23,6 +23,7 @@ import { CalloutMenu } from "./callout/callout-menu";
 import { ImageMenu } from "./image/image-menu";
 import { VideoMenu } from "./video/video-menu";
 import { AudioMenu } from "./audio/audio-menu";
+import { PdfMenu } from "./pdf/pdf-menu";
 import { TableHandlesLayer } from "./table/handle/table-handles-layer";
 import { BlogTableOfContents } from "#/features/blog/components/blog-table-of-contents";
 import type { BlogHeading } from "#/features/blog/lib/blog-headings";
@@ -1001,6 +1002,7 @@ export const PageEditor = ({
             <ImageMenu editor={editor} />
             <VideoMenu editor={editor} />
             <AudioMenu editor={editor} />
+            <PdfMenu editor={editor} />
             <TableHandlesLayer editor={editor} />
           </>
         )}

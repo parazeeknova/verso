@@ -33,6 +33,7 @@ import { EmojiCommand } from "./emoji-command";
 import { CustomImage } from "./image";
 import { CustomVideo } from "./video";
 import { CustomAudio } from "./audio";
+import { CustomPdf } from "./pdf";
 
 const lowlight = createLowlight(common);
 
@@ -40,6 +41,7 @@ export const getEditorExtensions = () => [
   CustomImage,
   CustomVideo,
   CustomAudio,
+  CustomPdf,
   StarterKit.configure({
     codeBlock: false,
     dropcursor: {
