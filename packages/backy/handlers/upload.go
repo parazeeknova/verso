@@ -193,16 +193,39 @@ func (h *Handlers) GetUploadedFile(c *gin.Context) {
 	// Try S3 first if storage client is initialized
 	if h.storageClient != nil {
 		ctx := c.Request.Context()
-		out, err := h.storageClient.S3().GetObject(ctx, &s3.GetObjectInput{
+		rangeHeader := c.Request.Header.Get("Range")
+		input := &s3.GetObjectInput{
 			Bucket: aws.String(bucket),
 			Key:    aws.String(filename),
-		})
+		}
+		if rangeHeader != "" {
+			input.Range = aws.String(rangeHeader)
+		}
+		out, err := h.storageClient.S3().GetObject(ctx, input)
 		if err == nil {
 			defer func() { _ = out.Body.Close() }()
-			c.Header("Content-Type", contentType)
+
+			if out.ContentType != nil {
+				c.Header("Content-Type", *out.ContentType)
+			} else {
+				c.Header("Content-Type", contentType)
+			}
 			if out.ContentLength != nil {
 				c.Header("Content-Length", fmt.Sprintf("%d", *out.ContentLength))
 			}
+			if out.ContentRange != nil {
+				c.Header("Content-Range", *out.ContentRange)
+			}
+			if out.AcceptRanges != nil {
+				c.Header("Accept-Ranges", *out.AcceptRanges)
+			}
+
+			if out.ContentRange != nil && rangeHeader != "" {
+				c.Status(http.StatusPartialContent)
+			} else {
+				c.Status(http.StatusOK)
+			}
+
 			_, _ = io.Copy(c.Writer, out.Body)
 			return
 		}
