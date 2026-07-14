@@ -128,6 +128,7 @@ export const ImageMenu = ({ editor }: EditorMenuProps) => {
       }
 
       const pos = editor.state.selection.from;
+      editor.commands.deleteSelection();
       uploadImage(file, editor, pos);
       // Reset so the same file can be selected again
       e.target.value = "";
