@@ -22,6 +22,9 @@ import {
   FileVideoIcon,
   FileAudioIcon,
   FilePdfIcon,
+  PaperclipIcon,
+  FunctionIcon,
+  MathOperationsIcon,
 } from "@phosphor-icons/react";
 import type { SlashMenuItemType } from "./types";
 
@@ -105,6 +108,43 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
     icon: FilePdfIcon,
     searchTerms: ["pdf", "document", "file", "embed", "upload"],
     title: "PDF",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setMathInline({ text: "" }).run();
+    },
+    description: "Inline mathematical expression.",
+    icon: FunctionIcon,
+    searchTerms: ["math", "latex", "equation", "inline", "formula"],
+    title: "Math (inline)",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setMathBlock({ text: "" }).run();
+    },
+    description: "Block mathematical expression.",
+    icon: MathOperationsIcon,
+    searchTerms: ["math", "latex", "equation", "block", "formula"],
+    title: "Math (block)",
+  },
+  {
+    command: ({ editor, range }) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.addEventListener("change", async (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          editor.chain().focus().deleteRange(range).run();
+          const { uploadAttachment } = await import("../attachment/upload-attachment");
+          void uploadAttachment(file, editor, editor.state.selection.from);
+        }
+      });
+      input.click();
+    },
+    description: "Attach any file.",
+    icon: PaperclipIcon,
+    searchTerms: ["attachment", "file", "attach", "upload", "download"],
+    title: "File Attachment",
   },
   {
     command: ({ editor, range }) => {

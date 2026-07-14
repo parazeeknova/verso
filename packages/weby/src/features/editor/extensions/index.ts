@@ -34,6 +34,8 @@ import { CustomImage } from "./image";
 import { CustomVideo } from "./video";
 import { CustomAudio } from "./audio";
 import { CustomPdf } from "./pdf";
+import { MathInline, MathBlock } from "./math";
+import { CustomAttachment } from "./attachment";
 
 const lowlight = createLowlight(common);
 
@@ -42,6 +44,9 @@ export const getEditorExtensions = () => [
   CustomVideo,
   CustomAudio,
   CustomPdf,
+  MathInline,
+  MathBlock,
+  CustomAttachment,
   StarterKit.configure({
     codeBlock: false,
     dropcursor: {
