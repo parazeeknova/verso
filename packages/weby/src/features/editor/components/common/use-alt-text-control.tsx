@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import type { Editor } from "@tiptap/core";
-import { ActionIcon, Button, Group, Paper, Text, Textarea, Tooltip } from "@mantine/core";
+import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconAlt } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 
@@ -75,59 +75,45 @@ export const useAltTextControl = ({ editor, nodeName, currentAlt }: UseAltTextCo
   );
 
   const panel = showInput ? (
-    <Paper
-      withBorder
-      shadow="md"
-      radius={0}
-      p="xs"
-      w={240}
-      style={{ position: "relative", zIndex: 100 }}
+    <div
+      className="border border-neutral-300 dark:border-neutral-800 shadow-md p-2 w-[240px] text-neutral-800 dark:text-neutral-200 relative z-50 rounded-none"
+      style={{
+        background: "light-dark(var(--mantine-color-body), var(--mantine-color-dark-7))",
+      }}
     >
-      <Text size="xs" fw={600} mb={6}>
-        {t("Alt text")}
-      </Text>
-      <Textarea
-        size="xs"
+      <div className="text-[11px] font-semibold mb-1">{t("Alt text")}</div>
+      <textarea
+        className="w-full text-xs p-1.5 bg-transparent border border-neutral-300 dark:border-neutral-800 outline-none focus:border-[#b58cff] focus:ring-1 focus:ring-[#b58cff] resize-none rounded-none text-neutral-800 dark:text-neutral-200"
         placeholder={t("Add description...")}
         value={draft}
-        onChange={(e) => setDraft(e.currentTarget.value)}
+        onChange={(e) => setDraft(e.target.value)}
         onKeyDown={onKeyDown}
         autoFocus
-        autosize
-        minRows={1}
-        maxRows={4}
+        rows={2}
         maxLength={ALT_MAX_LENGTH}
-        radius={0}
-        styles={{
-          input: {
-            "&:focus": {
-              borderColor: "#b58cff",
-            },
-            "&:focus-within": {
-              borderColor: "#b58cff",
-            },
-          },
-        }}
       />
-      <Group justify="space-between" align="center" mt={6} wrap="nowrap">
-        <Text size="10px" c="dimmed">
+      <div className="flex justify-between items-center mt-1.5">
+        <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
           {draft.length}/{ALT_MAX_LENGTH}
-        </Text>
-        <Group gap={4}>
-          <Button size="compact-xs" variant="default" onClick={cancel} radius={0}>
+        </span>
+        <div className="flex gap-1.5">
+          <button
+            className="px-2.5 py-1 text-[11px] font-medium border border-neutral-300 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-700 dark:text-neutral-300 rounded-none bg-transparent"
+            onClick={cancel}
+            type="button"
+          >
             {t("Cancel")}
-          </Button>
-          <Button
-            size="compact-xs"
+          </button>
+          <button
+            className="px-2.5 py-1 text-[11px] font-medium bg-[#b58cff] hover:bg-[#a37bfa] text-white transition-colors border-none rounded-none"
             onClick={save}
-            radius={0}
-            className="bg-[#b58cff] hover:bg-[#a37bfa] text-white border-none"
+            type="button"
           >
             {t("Save")}
-          </Button>
-        </Group>
-      </Group>
-    </Paper>
+          </button>
+        </div>
+      </div>
+    </div>
   ) : null;
 
   return { button, isEditing: showInput, panel };
