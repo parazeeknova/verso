@@ -23,6 +23,21 @@
     pkgs.gofumpt
     pkgs.gotools
     pkgs.golangci-lint
+    pkgs.webkitgtk_4_1
+    pkgs.gtk3
+    pkgs.libsoup_3
+    pkgs.libayatana-appindicator
+  ];
+
+  env.LD_LIBRARY_PATH = lib.makeLibraryPath [
+    pkgs.webkitgtk_4_1
+    pkgs.gtk3
+    pkgs.cairo
+    pkgs.gdk-pixbuf
+    pkgs.glib
+    pkgs.libsoup_3
+    pkgs.libayatana-appindicator
+    pkgs.stdenv.cc.cc.lib
   ];
 
   # Pre-commit hooks configuration (optional, can be integrated if desired)
