@@ -157,6 +157,8 @@ jobs:
     name: Build Desktop app (${{ matrix.platform }})
     runs-on: ${{ matrix.os }}
     needs: check
+    env:
+      MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
     strategy:
       matrix:
         include:
@@ -183,9 +185,9 @@ jobs:
           bun-version: latest
 
       - name: Setup Apple Certificates
-        if: matrix.platform == 'macos' && secrets.MACOS_CERTIFICATE != ''
+        if: matrix.platform == 'macos' && env.MACOS_CERTIFICATE != ''
         env:
-          BUILD_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE }}
+          BUILD_CERTIFICATE_BASE64: ${{ env.MACOS_CERTIFICATE }}
           P12_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
@@ -210,6 +212,7 @@ jobs:
           ELECTROBUN_TEAMID: ${{ secrets.ELECTROBUN_TEAMID }}
           ELECTROBUN_APPLEID: ${{ secrets.ELECTROBUN_APPLEID }}
           ELECTROBUN_APPLEIDPASS: ${{ secrets.ELECTROBUN_APPLEIDPASS }}
+          ELECTROBUN_MAC_CODESIGN: ${{ secrets.MACOS_CERTIFICATE != '' && 'true' || 'false' }}
         run: bun --cwd packages/native run build:stable
 
       - name: Upload desktop artifacts
