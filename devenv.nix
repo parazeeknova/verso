@@ -47,12 +47,12 @@
   env.GIO_EXTRA_MODULES = "${pkgs.glib-networking}/lib/gio/modules";
 
   # Pre-commit hooks configuration (optional, can be integrated if desired)
-  # pre-commit.hooks = {
-  #   shellcheck.enable = true;
-  # };
+  pre-commit.hooks = {
+    shellcheck.enable = true;
+  };
 
   # Processes (optional, can define background processes to run)
-  # processes = {
-  #   infra.exec = "bun run infra:up";
-  # };
+  processes = {
+    infra.exec = "bun run infra:up";
+  };
 }
