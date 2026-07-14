@@ -1,0 +1,36 @@
+# Maintainer: Harsh Sahu <yesh8harsh+github@gmail.com>
+pkgname=verso-bin
+pkgver=0.2.90
+pkgrel=1
+pkgdesc="A portfolio and knowledge base, two panels, one app"
+arch=('x86_64')
+url="https://github.com/parazeeknova/verso"
+license=('MIT')
+depends=('webkit2gtk-4.1' 'gtk3' 'libsoup3' 'libayatana-appindicator3' 'glib-networking')
+provides=('verso')
+conflicts=('verso')
+source=("https://github.com/parazeeknova/verso/releases/download/v${pkgver}/stable-linux-x64-Verso-Setup.tar.gz")
+sha256sums=('SKIP') # Update this or leave SKIP for dev packaging
+
+package() {
+    # Install application files
+    install -d "${pkgdir}/opt/verso"
+    cp -r "${srcdir}/stable-linux-x64-Verso-Setup/"* "${pkgdir}/opt/verso/"
+    
+    # Create symlink in bin
+    install -d "${pkgdir}/usr/bin"
+    ln -s "/opt/verso/Verso" "${pkgdir}/usr/bin/verso"
+
+    # Add .desktop and icon
+    install -d "${pkgdir}/usr/share/applications"
+    cat << EOF > "${pkgdir}/usr/share/applications/verso.desktop"
+[Desktop Entry]
+Name=Verso
+Exec=verso
+Icon=/opt/verso/resources/verso.png
+Type=Application
+Categories=Utility;
+Terminal=false
+Comment=A portfolio and knowledge base desktop application
+EOF
+}
