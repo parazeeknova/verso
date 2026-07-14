@@ -31,6 +31,140 @@ import {
 import type { SlashMenuItemType } from "./types";
 
 export const getSuggestionItems = (): SlashMenuItemType[] => [
+  // --- Category 1: Standard Writing Blocks (Most Used While Typing) ---
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).toggleNode("paragraph", "paragraph").run();
+    },
+    description: "Just start typing with plain text.",
+    icon: TextTIcon,
+    searchTerms: ["p", "paragraph", "text"],
+    title: "Text",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setNode("heading", { level: 1 }).run();
+    },
+    description: "Big section heading.",
+    icon: TextHOneIcon,
+    searchTerms: ["title", "big", "large", "h1"],
+    title: "Heading 1",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setNode("heading", { level: 2 }).run();
+    },
+    description: "Medium section heading.",
+    icon: TextHTwoIcon,
+    searchTerms: ["subtitle", "medium", "h2"],
+    title: "Heading 2",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setNode("heading", { level: 3 }).run();
+    },
+    description: "Small section heading.",
+    icon: TextHThreeIcon,
+    searchTerms: ["subtitle", "small", "h3"],
+    title: "Heading 3",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).toggleBulletList().run();
+    },
+    description: "Create a simple bullet list.",
+    icon: ListBulletsIcon,
+    searchTerms: ["unordered", "point", "list", "bullet"],
+    title: "Bullet list",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).toggleOrderedList().run();
+    },
+    description: "Create a list with numbering.",
+    icon: ListNumbersIcon,
+    searchTerms: ["numbered", "ordered", "list", "ol"],
+    title: "Numbered list",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).toggleTaskList().run();
+    },
+    description: "Track tasks with a to-do list.",
+    icon: CheckSquareIcon,
+    searchTerms: ["todo", "task", "list", "check", "checkbox"],
+    title: "To-do list",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).toggleBlockquote().run();
+    },
+    description: "Create block quote.",
+    icon: QuotesIcon,
+    searchTerms: ["blockquote", "quotes", "quote"],
+    title: "Quote",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).toggleCodeBlock().run();
+    },
+    description: "Insert code snippet.",
+    icon: CodeIcon,
+    searchTerms: ["codeblock", "code"],
+    title: "Code",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setMathInline({ text: "" }).run();
+    },
+    description: "Inline mathematical expression.",
+    icon: FunctionIcon,
+    searchTerms: ["math", "latex", "equation", "inline", "formula"],
+    title: "Math (inline)",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setMathBlock({ text: "" }).run();
+    },
+    description: "Block mathematical expression.",
+    icon: MathOperationsIcon,
+    searchTerms: ["math", "latex", "equation", "block", "formula"],
+    title: "Math (block)",
+  },
+
+  // --- Category 2: Structure & Media Features (Common Layout/Embeds) ---
+  {
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertTable({ cols: 3, rows: 3, withHeaderRow: true })
+        .run();
+    },
+    description: "Insert a table.",
+    icon: TableIcon,
+    searchTerms: ["table", "rows", "columns"],
+    title: "Table",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).toggleCallout().run();
+    },
+    description: "Insert a callout block.",
+    icon: InfoIcon,
+    searchTerms: ["callout", "info", "alert"],
+    title: "Callout",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setHorizontalRule().run();
+    },
+    description: "Insert horizontal rule divider.",
+    icon: MinusIcon,
+    searchTerms: ["horizontal rule", "hr", "divider", "line"],
+    title: "Divider",
+  },
   {
     command: ({ editor, range }) => {
       const input = document.createElement("input");
@@ -50,6 +184,15 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
     icon: ImageIcon,
     searchTerms: ["image", "picture", "photo", "upload"],
     title: "Image",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setYoutubeVideo({ src: "" }).run();
+    },
+    description: "Embed YouTube video.",
+    icon: YoutubeLogo,
+    searchTerms: ["youtube", "yt", "video", "embed"],
+    title: "YouTube",
   },
   {
     command: ({ editor, range }) => {
@@ -113,33 +256,6 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setMathInline({ text: "" }).run();
-    },
-    description: "Inline mathematical expression.",
-    icon: FunctionIcon,
-    searchTerms: ["math", "latex", "equation", "inline", "formula"],
-    title: "Math (inline)",
-  },
-  {
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setMathBlock({ text: "" }).run();
-    },
-    description: "Block mathematical expression.",
-    icon: MathOperationsIcon,
-    searchTerms: ["math", "latex", "equation", "block", "formula"],
-    title: "Math (block)",
-  },
-  {
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setYoutubeVideo({ src: "" }).run();
-    },
-    description: "Embed YouTube video.",
-    icon: YoutubeLogo,
-    searchTerms: ["youtube", "yt", "video", "embed"],
-    title: "YouTube",
-  },
-  {
-    command: ({ editor, range }) => {
       const input = document.createElement("input");
       input.type = "file";
       input.addEventListener("change", async (e) => {
@@ -157,86 +273,16 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
     searchTerms: ["attachment", "file", "attach", "upload", "download"],
     title: "File Attachment",
   },
+
+  // --- Category 3: Extras (Advanced Options / Inline Helpers / Layouts) ---
   {
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleNode("paragraph", "paragraph").run();
+      editor.chain().focus().deleteRange(range).setDetails().run();
     },
-    description: "Just start typing with plain text.",
-    icon: TextTIcon,
-    searchTerms: ["p", "paragraph", "text"],
-    title: "Text",
-  },
-  {
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleTaskList().run();
-    },
-    description: "Track tasks with a to-do list.",
-    icon: CheckSquareIcon,
-    searchTerms: ["todo", "task", "list", "check", "checkbox"],
-    title: "To-do list",
-  },
-  {
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setNode("heading", { level: 1 }).run();
-    },
-    description: "Big section heading.",
-    icon: TextHOneIcon,
-    searchTerms: ["title", "big", "large", "h1"],
-    title: "Heading 1",
-  },
-  {
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setNode("heading", { level: 2 }).run();
-    },
-    description: "Medium section heading.",
-    icon: TextHTwoIcon,
-    searchTerms: ["subtitle", "medium", "h2"],
-    title: "Heading 2",
-  },
-  {
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setNode("heading", { level: 3 }).run();
-    },
-    description: "Small section heading.",
-    icon: TextHThreeIcon,
-    searchTerms: ["subtitle", "small", "h3"],
-    title: "Heading 3",
-  },
-  {
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleBulletList().run();
-    },
-    description: "Create a simple bullet list.",
-    icon: ListBulletsIcon,
-    searchTerms: ["unordered", "point", "list", "bullet"],
-    title: "Bullet list",
-  },
-  {
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleOrderedList().run();
-    },
-    description: "Create a list with numbering.",
-    icon: ListNumbersIcon,
-    searchTerms: ["numbered", "ordered", "list", "ol"],
-    title: "Numbered list",
-  },
-  {
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleBlockquote().run();
-    },
-    description: "Create block quote.",
-    icon: QuotesIcon,
-    searchTerms: ["blockquote", "quotes", "quote"],
-    title: "Quote",
-  },
-  {
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleCodeBlock().run();
-    },
-    description: "Insert code snippet.",
-    icon: CodeIcon,
-    searchTerms: ["codeblock", "code"],
-    title: "Code",
+    description: "Insert a toggle block.",
+    icon: CaretRightIcon,
+    searchTerms: ["collapsible", "block", "toggle", "details", "expand"],
+    title: "Toggle block",
   },
   {
     command: ({ editor, range }) => {
@@ -255,53 +301,12 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .insertTable({ cols: 3, rows: 3, withHeaderRow: true })
-        .run();
+      editor.chain().focus().deleteRange(range).setStatus({ color: "gray", text: "" }).run();
     },
-    description: "Insert a table.",
-    icon: TableIcon,
-    searchTerms: ["table", "rows", "columns"],
-    title: "Table",
-  },
-  {
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setHorizontalRule().run();
-    },
-    description: "Insert horizontal rule divider.",
-    icon: MinusIcon,
-    searchTerms: ["horizontal rule", "hr", "divider", "line"],
-    title: "Divider",
-  },
-  {
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setPageBreak().run();
-    },
-    description: "Insert a page break for printing.",
-    icon: ScissorsIcon,
-    searchTerms: ["page", "break", "pagebreak", "print"],
-    title: "Page break",
-  },
-  {
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setDetails().run();
-    },
-    description: "Insert a toggle block.",
-    icon: CaretRightIcon,
-    searchTerms: ["collapsible", "block", "toggle", "details", "expand"],
-    title: "Toggle block",
-  },
-  {
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleCallout().run();
-    },
-    description: "Insert a callout block.",
-    icon: InfoIcon,
-    searchTerms: ["callout", "info", "alert"],
-    title: "Callout",
+    description: "Insert inline status badge.",
+    icon: TagIcon,
+    searchTerms: ["status", "badge", "label", "lozenge"],
+    title: "Status",
   },
   {
     command: ({ editor, range }) => {
@@ -332,21 +337,21 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setStatus({ color: "gray", text: "" }).run();
-    },
-    description: "Insert inline status badge.",
-    icon: TagIcon,
-    searchTerms: ["status", "badge", "label", "lozenge"],
-    title: "Status",
-  },
-  {
-    command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).insertContent(":").run();
     },
     description: "Insert emoji.",
     icon: SmileyIcon,
     searchTerms: ["emoji", "face", "smile"],
     title: "Emoji",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setPageBreak().run();
+    },
+    description: "Insert a page break for printing.",
+    icon: ScissorsIcon,
+    searchTerms: ["page", "break", "pagebreak", "print"],
+    title: "Page break",
   },
   {
     command: ({ editor, range }) => {
