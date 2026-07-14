@@ -81,8 +81,11 @@ if [ ! -f "$APPIMAGETOOL" ]; then
   chmod +x "$APPIMAGETOOL"
 fi
 
-# Run appimagetool
+# Run appimagetool (extract first to bypass FUSE requirements in CI container)
 export ARCH=x86_64
-"$APPIMAGETOOL" --appimage-extract-and-run "$APPDIR" "$ARTIFACTS_DIR/Verso-${VERSION}-x86_64.AppImage"
+cd "$NATIVE_DIR/build"
+./appimagetool --appimage-extract
+cd "$REPO_ROOT"
+"$NATIVE_DIR/build/squashfs-root/AppRun" "$APPDIR" "$ARTIFACTS_DIR/Verso-${VERSION}-x86_64.AppImage"
 
 echo "Packaging complete!"
