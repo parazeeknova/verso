@@ -31,11 +31,15 @@ import GlobalDragHandle from "./drag-handle";
 import SlashCommand from "./slash-command";
 import { EmojiCommand } from "./emoji-command";
 import { CustomImage } from "./image";
+import { CustomVideo } from "./video";
+import { CustomAudio } from "./audio";
 
 const lowlight = createLowlight(common);
 
 export const getEditorExtensions = () => [
   CustomImage,
+  CustomVideo,
+  CustomAudio,
   StarterKit.configure({
     codeBlock: false,
     dropcursor: {

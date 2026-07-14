@@ -21,6 +21,8 @@ import { TableMenu } from "./table/table-menu";
 import { ColumnsMenu } from "./columns/columns-menu";
 import { CalloutMenu } from "./callout/callout-menu";
 import { ImageMenu } from "./image/image-menu";
+import { VideoMenu } from "./video/video-menu";
+import { AudioMenu } from "./audio/audio-menu";
 import { TableHandlesLayer } from "./table/handle/table-handles-layer";
 import { BlogTableOfContents } from "#/features/blog/components/blog-table-of-contents";
 import type { BlogHeading } from "#/features/blog/lib/blog-headings";
@@ -997,6 +999,8 @@ export const PageEditor = ({
             <ColumnsMenu editor={editor} />
             <CalloutMenu editor={editor} />
             <ImageMenu editor={editor} />
+            <VideoMenu editor={editor} />
+            <AudioMenu editor={editor} />
             <TableHandlesLayer editor={editor} />
           </>
         )}

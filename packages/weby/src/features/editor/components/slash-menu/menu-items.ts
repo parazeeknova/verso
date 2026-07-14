@@ -19,6 +19,8 @@ import {
   SmileyIcon,
   ColumnsIcon,
   ImageIcon,
+  FileVideoIcon,
+  FileAudioIcon,
 } from "@phosphor-icons/react";
 import type { SlashMenuItemType } from "./types";
 
@@ -42,6 +44,46 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
     icon: ImageIcon,
     searchTerms: ["image", "picture", "photo", "upload"],
     title: "Image",
+  },
+  {
+    command: ({ editor, range }) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "video/*";
+      input.addEventListener("change", async (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          editor.chain().focus().deleteRange(range).run();
+          const { uploadVideo } = await import("../video/upload-video");
+          void uploadVideo(file, editor, editor.state.selection.from);
+        }
+      });
+      input.click();
+    },
+    description: "Upload a video.",
+    icon: FileVideoIcon,
+    searchTerms: ["video", "movie", "film", "upload"],
+    title: "Video",
+  },
+  {
+    command: ({ editor, range }) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "audio/*";
+      input.addEventListener("change", async (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          editor.chain().focus().deleteRange(range).run();
+          const { uploadAudio } = await import("../audio/upload-audio");
+          void uploadAudio(file, editor, editor.state.selection.from);
+        }
+      });
+      input.click();
+    },
+    description: "Upload an audio file.",
+    icon: FileAudioIcon,
+    searchTerms: ["audio", "sound", "music", "podcast", "upload"],
+    title: "Audio",
   },
   {
     command: ({ editor, range }) => {
