@@ -28,6 +28,7 @@ import { SpaceSidebar } from "#/features/space/components/space-sidebar";
 import { useConsoleStore } from "#/features/console/stores/console-store";
 import { useConsoleBootstrap } from "#/features/console/hooks/use-console-bootstrap";
 import { FileTreeSidebar } from "./file-tree-sidebar";
+import { useCreatePage } from "#/features/console/hooks/use-pages";
 
 const SIDEBAR_WIDTH = 280;
 
@@ -60,6 +61,28 @@ export const ConsoleLayout = () => {
     setSelectedSpaceId,
     setSelectedPageId,
   } = useConsoleStore();
+
+  const createPage = useCreatePage();
+  const handleCreatePage = useCallback(() => {
+    const randomSuffix = Math.random().toString(36).slice(2, 10);
+    const slug = `untitled-page-${randomSuffix}`;
+    createPage.mutate(
+      {
+        slugId: slug,
+        spaceId: "",
+        title: "untitled page",
+        workspaceId: selectedWorkspaceId || "",
+      },
+      {
+        onSuccess: (data) => {
+          navigate({
+            params: { pageid: data.slugId, spaceSlug: "nospace" },
+            to: "/s/$spaceSlug/p/$pageid",
+          });
+        },
+      },
+    );
+  }, [selectedWorkspaceId, createPage, navigate]);
 
   const { currentWorkspace } = useConsoleBootstrap();
 
@@ -266,10 +289,11 @@ export const ConsoleLayout = () => {
         <nav className="mb-4 space-y-0.5">
           <button
             className={`flex w-full items-center gap-2 px-1 py-1 text-[11px] lowercase rounded ${t("text-text-dark/50 hover:bg-white/5 hover:text-text-dark/80", "text-text-light/50 hover:bg-black/3 hover:text-text-light/80")}`}
+            onClick={handleCreatePage}
             type="button"
           >
             <PlusIcon size={12} />
-            new note
+            new page
           </button>
           <button
             className={`flex w-full items-center gap-2 px-1 py-1 text-[11px] lowercase rounded ${t("text-text-dark/50 hover:bg-white/5 hover:text-text-dark/80", "text-text-light/50 hover:bg-black/3 hover:text-text-light/80")}`}
