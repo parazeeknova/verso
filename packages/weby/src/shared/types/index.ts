@@ -154,7 +154,8 @@ export interface CreatePageInput {
   slugId: string;
   title: string;
   icon?: string;
-  spaceId: string;
+  spaceId?: string;
+  workspaceId?: string;
   parentPageId?: string;
 }
 

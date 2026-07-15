@@ -396,7 +396,8 @@ type CreateConsolePageRequest struct {
 	SlugID       string  `json:"slugId" binding:"required"`
 	Title        string  `json:"title" binding:"required"`
 	Icon         string  `json:"icon"`
-	SpaceID      string  `json:"spaceId" binding:"required"`
+	SpaceID      string  `json:"spaceId"`
+	WorkspaceID  string  `json:"workspaceId"`
 	ParentPageID *string `json:"parentPageId"`
 }
 
@@ -416,13 +417,51 @@ func (h *Handlers) CreateConsolePage(c *gin.Context) {
 	userID := middleware.GetCurrentUserID(c)
 	now := time.Now().UTC()
 
+	spaceID := req.SpaceID
+	workspaceID := req.WorkspaceID
+
+	if spaceID == "" {
+		if workspaceID == "" && h.workspaceService != nil {
+			workspaces, err := h.workspaceService.ListWorkspaces(c.Request.Context(), userID)
+			if err == nil && len(workspaces) > 0 {
+				workspaceID = workspaces[0].ID
+			}
+		}
+
+		if workspaceID != "" {
+			if h.workspaceService != nil {
+				w, err := h.workspaceService.GetWorkspaceByID(c.Request.Context(), workspaceID)
+				if err == nil && w.DefaultSpaceID != "" {
+					spaceID = w.DefaultSpaceID
+				}
+			}
+			if spaceID == "" && h.spaceService != nil {
+				spaces, err := h.spaceService.ListSpaces(c.Request.Context(), workspaceID)
+				if err == nil && len(spaces) > 0 {
+					spaceID = spaces[0].ID
+				}
+			}
+			if spaceID == "" && h.spaceService != nil {
+				newSpace, err := h.spaceService.CreateSpace(c.Request.Context(), "notes", "notes", "", "default space for notes", workspaceID, userID)
+				if err == nil {
+					spaceID = newSpace.ID
+				}
+			}
+		}
+	}
+
+	if spaceID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "space ID is required or could not be resolved"})
+		return
+	}
+
 	page := models.Page{
 		ID:           uuid.New().String(),
 		SlugID:       req.SlugID,
 		Title:        req.Title,
 		Icon:         req.Icon,
 		ParentPageID: req.ParentPageID,
-		SpaceID:      req.SpaceID,
+		SpaceID:      spaceID,
 		CreatorID:    userID,
 		CreatedAt:    now,
 		UpdatedAt:    now,

@@ -179,15 +179,16 @@ export const PageList = ({
   }, [spaces, selectedSpaceId, onSelectSpace]);
 
   const handleCreate = useCallback(() => {
-    if (!newSlugId.trim() || !newTitle.trim() || !selectedSpaceId) {
+    if (!newSlugId.trim() || !newTitle.trim()) {
       return;
     }
     createPage.mutate(
       {
         parentPageId: createParentId,
         slugId: newSlugId.trim(),
-        spaceId: selectedSpaceId,
+        spaceId: selectedSpaceId || "",
         title: newTitle.trim(),
+        workspaceId: selectedWorkspaceId || "",
       },
       {
         onSuccess: (data) => {
@@ -199,7 +200,15 @@ export const PageList = ({
         },
       },
     );
-  }, [newSlugId, newTitle, createParentId, selectedSpaceId, createPage, onSelectPage]);
+  }, [
+    newSlugId,
+    newTitle,
+    createParentId,
+    selectedSpaceId,
+    selectedWorkspaceId,
+    createPage,
+    onSelectPage,
+  ]);
 
   const handleAddChild = useCallback((parentId: string) => {
     setCreateParentId(parentId);
