@@ -498,7 +498,8 @@ const FavoritedPagesList = ({ favPageIds, favSpaces }: FavoritedPagesListProps) 
 
   const pages = pageQueries.map((q) => q.data).filter((p): p is FavPageDetail => p !== undefined);
 
-  const favSpaceIds = new Set(favSpaces.map((s) => s.id));
+  const activeFavSpaces = favSpaces.filter((s) => s.slug !== "nospace");
+  const favSpaceIds = new Set(activeFavSpaces.map((s) => s.id));
   const pagesBySpace = new Map<string, FavPageDetail[]>();
   const ungrouped: FavPageDetail[] = [];
 
@@ -517,7 +518,7 @@ const FavoritedPagesList = ({ favPageIds, favSpaces }: FavoritedPagesListProps) 
 
   return (
     <>
-      {favSpaces.map((space) => {
+      {activeFavSpaces.map((space) => {
         const spacePages = pagesBySpace.get(space.id);
         return (
           <div key={space.id}>
@@ -643,7 +644,8 @@ export const FileTreeSidebar = () => {
           if (isError) {
             return <p className="px-1 text-[11px] text-red-400">failed to load spaces</p>;
           }
-          if (!spaces || spaces.length === 0) {
+          const activeSpaces = spaces ? spaces.filter((s) => s.slug !== "nospace") : [];
+          if (activeSpaces.length === 0) {
             return (
               <p className={`px-1 text-[11px] ${t("text-text-dark/25", "text-text-light/25")}`}>
                 no spaces yet
@@ -652,7 +654,7 @@ export const FileTreeSidebar = () => {
           }
           return (
             <div className="space-y-0.5">
-              {spaces.map((space) => {
+              {activeSpaces.map((space) => {
                 const isSelected = selectedSpaceId === space.id;
                 return <SpaceTreeNode defaultExpanded={isSelected} key={space.id} space={space} />;
               })}

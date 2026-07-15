@@ -86,7 +86,12 @@ export const QuickActions = () => {
         onSuccess: (data) => {
           setNewTitle("");
           setShowNewPage(false);
-          navigate({ to: `/home/pages/${data.id}` });
+          const space = spaces?.find((s) => s.id === data.spaceId);
+          const spaceSlug = space ? space.slug : "nospace";
+          navigate({
+            params: { pageid: data.slugId, spaceSlug },
+            to: "/s/$spaceSlug/p/$pageid",
+          });
         },
       },
     );

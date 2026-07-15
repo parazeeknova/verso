@@ -173,8 +173,11 @@ export const PageList = ({
 
   // Auto-select first space
   useEffect(() => {
-    if (!selectedSpaceId && spaces && spaces.length > 0) {
-      onSelectSpace(spaces[0].id);
+    if (!selectedSpaceId && spaces) {
+      const activeSpaces = spaces.filter((s) => s.slug !== "nospace");
+      if (activeSpaces.length > 0) {
+        onSelectSpace(activeSpaces[0].id);
+      }
     }
   }, [spaces, selectedSpaceId, onSelectSpace]);
 

@@ -55,7 +55,9 @@ export const useConsoleBootstrap = () => {
       return;
     }
 
-    if (spaces.length === 0) {
+    const activeSpaces = spaces.filter((s) => s.slug !== "nospace");
+
+    if (activeSpaces.length === 0) {
       if (selectedSpaceId !== "") {
         setSelectedSpaceId("");
       }
@@ -69,7 +71,7 @@ export const useConsoleBootstrap = () => {
       }
     }
 
-    setSelectedSpaceId(spaces[0].id);
+    setSelectedSpaceId(activeSpaces[0].id);
   }, [spaces, selectedSpaceId, selectedWorkspaceId, setSelectedSpaceId]);
 
   return {

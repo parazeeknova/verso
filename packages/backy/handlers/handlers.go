@@ -429,25 +429,19 @@ func (h *Handlers) CreateConsolePage(c *gin.Context) {
 		}
 
 		if workspaceID != "" {
-			if h.workspaceService != nil {
-				w, err := h.workspaceService.GetWorkspaceByID(c.Request.Context(), workspaceID)
-				if err == nil && w.DefaultSpaceID != "" {
-					if h.spaceService != nil {
-						_, spaceErr := h.spaceService.GetSpaceByID(c.Request.Context(), w.DefaultSpaceID)
-						if spaceErr == nil {
-							spaceID = w.DefaultSpaceID
+			if h.spaceService != nil {
+				spaces, err := h.spaceService.ListSpaces(c.Request.Context(), workspaceID)
+				if err == nil {
+					for _, s := range spaces {
+						if s.Slug == "nospace" {
+							spaceID = s.ID
+							break
 						}
 					}
 				}
 			}
 			if spaceID == "" && h.spaceService != nil {
-				spaces, err := h.spaceService.ListSpaces(c.Request.Context(), workspaceID)
-				if err == nil && len(spaces) > 0 {
-					spaceID = spaces[0].ID
-				}
-			}
-			if spaceID == "" && h.spaceService != nil {
-				newSpace, err := h.spaceService.CreateSpace(c.Request.Context(), "notes", "notes", "", "default space for notes", workspaceID, userID)
+				newSpace, err := h.spaceService.CreateSpace(c.Request.Context(), "nospace", "nospace", "", "internal space for no-space pages", workspaceID, userID)
 				if err == nil {
 					spaceID = newSpace.ID
 				}
