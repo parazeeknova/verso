@@ -375,12 +375,11 @@ export const ConsoleHome = () => {
                   key={page.id}
                   className={`w-full grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-2 py-1.5 lowercase text-left ${t("hover:bg-white/5", "hover:bg-black/3")}`}
                   onClick={() => {
-                    if (space) {
-                      navigate({
-                        params: { pageid: page.slugId, spaceSlug: space.slug },
-                        to: "/s/$spaceSlug/p/$pageid",
-                      });
-                    }
+                    const slug = space ? space.slug : "nospace";
+                    navigate({
+                      params: { pageid: page.slugId, spaceSlug: slug },
+                      to: "/s/$spaceSlug/p/$pageid",
+                    });
                   }}
                   type="button"
                 >

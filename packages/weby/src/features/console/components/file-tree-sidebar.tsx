@@ -468,6 +468,48 @@ const SpaceTreeNode = ({ space, defaultExpanded }: SpaceTreeNodeProps) => {
   );
 };
 
+const IndependentPagesList = ({ spaceId, spaceSlug }: { spaceId: string; spaceSlug: string }) => {
+  const { isDarkMode } = useTheme();
+  const { data: treeItems, isPending, isError } = usePageTree(spaceId);
+  const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const pageTree = treeItems ? buildPageTree(treeItems) : [];
+
+  if (isPending) {
+    return (
+      <p className={`px-1 py-0.5 text-[10px] ${t("text-text-dark/25", "text-text-light/25")}`}>
+        loading pages...
+      </p>
+    );
+  }
+  if (isError) {
+    return <p className="px-1 py-0.5 text-[10px] text-red-400">failed to load pages</p>;
+  }
+  if (pageTree.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4">
+      <p
+        className={`px-1 mb-1 text-[10px] uppercase tracking-wider ${t("text-text-dark/30", "text-text-light/30")}`}
+      >
+        pages
+      </p>
+      <div className="space-y-0.5 pl-1">
+        {pageTree.map((node) => (
+          <PageNode
+            depth={0}
+            key={node.item.id}
+            node={node}
+            treeItems={treeItems}
+            spaceSlug={spaceSlug}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 interface FavoritedPagesListProps {
   favPageIds: string[];
   favSpaces: Space[];
@@ -664,6 +706,13 @@ export const FileTreeSidebar = () => {
               })}
             </div>
           );
+        })()}
+        {(() => {
+          const nospace = spaces?.find((s) => s.slug === "nospace");
+          if (nospace) {
+            return <IndependentPagesList spaceId={nospace.id} spaceSlug="nospace" />;
+          }
+          return null;
         })()}
       </div>
       <div className="mt-4">
