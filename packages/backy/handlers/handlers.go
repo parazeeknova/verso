@@ -432,7 +432,12 @@ func (h *Handlers) CreateConsolePage(c *gin.Context) {
 			if h.workspaceService != nil {
 				w, err := h.workspaceService.GetWorkspaceByID(c.Request.Context(), workspaceID)
 				if err == nil && w.DefaultSpaceID != "" {
-					spaceID = w.DefaultSpaceID
+					if h.spaceService != nil {
+						_, spaceErr := h.spaceService.GetSpaceByID(c.Request.Context(), w.DefaultSpaceID)
+						if spaceErr == nil {
+							spaceID = w.DefaultSpaceID
+						}
+					}
 				}
 			}
 			if spaceID == "" && h.spaceService != nil {
