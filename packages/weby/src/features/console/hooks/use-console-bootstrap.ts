@@ -51,7 +51,14 @@ export const useConsoleBootstrap = () => {
   ]);
 
   useEffect(() => {
-    if (!spaces || spaces.length === 0 || !selectedWorkspaceId) {
+    if (!spaces || !selectedWorkspaceId) {
+      return;
+    }
+
+    if (spaces.length === 0) {
+      if (selectedSpaceId !== "") {
+        setSelectedSpaceId("");
+      }
       return;
     }
 

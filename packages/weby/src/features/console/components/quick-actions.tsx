@@ -79,12 +79,9 @@ export const QuickActions = () => {
       .replaceAll(/[^\w\s-]/g, "")
       .replaceAll(/[\s_-]+/g, "-")
       .replaceAll(/^-+|-+$/g, "");
-    const spaceId = selectedSpaceId || spaces?.[0]?.id;
-    if (!spaceId) {
-      return;
-    }
+    const spaceId = selectedSpaceId || spaces?.[0]?.id || "";
     createPage.mutate(
-      { slugId: slug, spaceId, title: trimmed },
+      { slugId: slug, spaceId, title: trimmed, workspaceId: selectedWorkspaceId || "" },
       {
         onSuccess: (data) => {
           setNewTitle("");
