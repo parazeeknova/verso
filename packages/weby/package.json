@@ -1,6 +1,6 @@
 {
   "name": "@verso/weby",
-  "version": "0.3.50",
+  "version": "0.3.51",
   "private": true,
   "type": "module",
   "imports": {
@@ -40,6 +40,7 @@
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.24",
     "@tanstack/router-plugin": "^1.167.27",
+    "@tiptap/core": "^3.27.4",
     "@tiptap/extension-code-block-lowlight": "^3.23.4",
     "@tiptap/extension-highlight": "^3.23.4",
     "@tiptap/extension-image": "^3.27.4",
@@ -52,9 +53,9 @@
     "@tiptap/extension-task-list": "^3.23.4",
     "@tiptap/extension-text-align": "^3.23.4",
     "@tiptap/extension-youtube": "^3.27.4",
-    "@tiptap/react": "^3.23.4",
-    "@tiptap/starter-kit": "^3.23.4",
-    "@tiptap/suggestion": "3.23.4",
+    "@tiptap/react": "^3.27.4",
+    "@tiptap/starter-kit": "^3.27.4",
+    "@tiptap/suggestion": "^3.27.4",
     "gsap": "^3.15.0",
     "i18next": "^26.3.6",
     "katex": "^0.17.0",

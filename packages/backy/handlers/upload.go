@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -16,8 +17,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"verso/backy/features/page"
+	"verso/backy/middleware"
 	"verso/backy/shared/logger"
 )
+
+// maxUploadBytes bounds the in-memory buffer used for uploads to prevent
+// unbounded memory consumption from a malicious multipart body.
+const maxUploadBytes = 100 << 20 // 100 MiB
 
 var (
 	invalidBucketChars = regexp.MustCompile(`[^a-z0-9\-\.]`)
@@ -47,22 +54,14 @@ func SanitizeBucketName(spaceName, pageName string) string {
 }
 
 // UploadFile handles POST /api/console/upload.
-// Accepts multipart/form-data with "file", "spaceName", "pageName", and optional "pageId".
+// Accepts multipart/form-data with "file" and "pageId". The bucket and access
+// scope are derived from the authenticated caller's resolved page, never from
+// client-supplied space/page names.
 func (h *Handlers) UploadFile(c *gin.Context) {
 	logger.Log.Info().Msg("UploadFile handler entered")
 
-	// Get form values
-	spaceName := c.PostForm("spaceName")
-	pageName := c.PostForm("pageName")
-	pageId := c.PostForm("pageId")
-
-	if spaceName == "" {
-		spaceName = "default"
-	}
-	if pageName == "" {
-		pageName = "default"
-	}
-
+	// Read the multipart body fully into memory so it can be replayed to the
+	// local fallback after an S3 failure and so the reported size is exact.
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
 		logger.Log.Warn().Err(err).Msg("failed to get file from request form")
@@ -71,75 +70,133 @@ func (h *Handlers) UploadFile(c *gin.Context) {
 	}
 	defer func() { _ = file.Close() }()
 
-	bucketName := SanitizeBucketName(spaceName, pageName)
+	raw, err := io.ReadAll(io.LimitReader(file, maxUploadBytes+1))
+	if err != nil {
+		logger.Log.Error().Err(err).Msg("failed to read uploaded file into memory")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read file"})
+		return
+	}
+	if int64(len(raw)) > maxUploadBytes {
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "file exceeds size limit"})
+		return
+	}
+	size := int64(len(raw))
+
 	attachmentID := uuid.New().String()
 	ext := filepath.Ext(header.Filename)
 	uniqueFilename := fmt.Sprintf("%s%s", attachmentID, ext)
 
-	logger.Log.Info().
-		Str("spaceName", spaceName).
-		Str("pageName", pageName).
-		Str("pageId", pageId).
-		Str("bucketName", bucketName).
-		Str("filename", header.Filename).
-		Str("uniqueFilename", uniqueFilename).
-		Int64("size", header.Size).
-		Msg("starting file upload process")
-
-	// Check if RustFS / S3 storage client is available
-	if h.storageClient != nil {
-		logger.Log.Info().Str("bucket", bucketName).Msg("uploading to S3/RustFS storage")
-		ctx := c.Request.Context()
-
-		// Ensure the bucket exists
-		_, err = h.storageClient.S3().HeadBucket(ctx, &s3.HeadBucketInput{
-			Bucket: aws.String(bucketName),
-		})
-		if err != nil {
-			logger.Log.Info().Str("bucket", bucketName).Msg("bucket does not exist, creating bucket")
-			_, createErr := h.storageClient.S3().CreateBucket(ctx, &s3.CreateBucketInput{
-				Bucket: aws.String(bucketName),
-			})
-			if createErr != nil {
-				logger.Log.Error().Err(createErr).Str("bucket", bucketName).Msg("failed to create bucket, falling back to local storage")
-				h.uploadLocal(c, bucketName, uniqueFilename, file, header.Filename, header.Size, attachmentID)
-				return
-			}
-		}
-
-		// Upload file to S3
-		contentType := mime.TypeByExtension(ext)
-		if contentType == "" {
-			contentType = "application/octet-stream"
-		}
-
-		_, putErr := h.storageClient.S3().PutObject(ctx, &s3.PutObjectInput{
-			Bucket:      aws.String(bucketName),
-			Key:         aws.String(uniqueFilename),
-			Body:        file,
-			ContentType: aws.String(contentType),
-		})
-		if putErr != nil {
-			logger.Log.Error().Err(putErr).Str("bucket", bucketName).Str("key", uniqueFilename).Msg("failed to upload to S3, falling back to local storage")
-			h.uploadLocal(c, bucketName, uniqueFilename, file, header.Filename, header.Size, attachmentID)
+	// The storage bucket is derived from the resolved page identity and is
+	// access-scoped. When a DB-backed page service is present we require a
+	// valid pageId and verify write access before doing any work.
+	if h.pageService != nil {
+		pageID := c.PostForm("pageId")
+		if pageID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "pageId is required"})
 			return
 		}
 
-		logger.Log.Info().Str("bucket", bucketName).Str("key", uniqueFilename).Msg("uploaded to S3 successfully")
-		fileURL := fmt.Sprintf("/api/console/files/%s/%s", bucketName, uniqueFilename)
-		c.JSON(http.StatusOK, gin.H{
-			"id":       attachmentID,
-			"url":      fileURL,
-			"src":      fileURL,
-			"fileName": header.Filename,
-			"fileSize": header.Size,
-		})
+		p, err := h.pageService.GetPageByID(c.Request.Context(), pageID)
+		if err != nil {
+			if errors.Is(err, page.ErrPageNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
+				return
+			}
+			logger.Log.Error().Err(err).Str("pageId", pageID).Msg("failed to resolve page for upload")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to resolve page"})
+			return
+		}
+
+		userID := middleware.GetCurrentUserID(c)
+		canWrite, err := h.pageService.CanWrite(c.Request.Context(), p.SpaceID, userID)
+		if err != nil {
+			logger.Log.Error().Err(err).Str("pageId", pageID).Msg("upload permission check error")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "permission check failed"})
+			return
+		}
+		if !canWrite {
+			c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
+			return
+		}
+
+		// Bucket identity is the canonical page ID: reversible for access
+		// checks on download and immune to client-supplied name spoofing.
+		bucketName := SanitizeBucketName(p.ID, "")
+		h.uploadToStorage(c, bucketName, uniqueFilename, raw, header.Filename, size, attachmentID, ext)
 		return
 	}
 
-	// S3 not available, fall back to local storage
-	logger.Log.Info().Msg("S3 storage client not available, falling back to local storage")
-	h.uploadLocal(c, bucketName, uniqueFilename, file, header.Filename, header.Size, attachmentID)
+	// Legacy / no-DB mode: bucket is derived from client names as before.
+	spaceName := c.PostForm("spaceName")
+	pageName := c.PostForm("pageName")
+	if spaceName == "" {
+		spaceName = "default"
+	}
+	if pageName == "" {
+		pageName = "default"
+	}
+	bucketName := SanitizeBucketName(spaceName, pageName)
+
+	logger.Log.Info().
+		Str("bucketName", bucketName).
+		Str("filename", header.Filename).
+		Str("uniqueFilename", uniqueFilename).
+		Int64("size", size).
+		Msg("starting file upload process")
+
+	h.uploadToStorage(c, bucketName, uniqueFilename, raw, header.Filename, size, attachmentID, ext)
+}
+
+// uploadToStorage writes the in-memory content to S3 (RustFS) when available and
+// falls back to local storage on failure. Because the complete payload is held in
+// raw, every S3/fallback attempt gets a fresh reader and is never truncated.
+func (h *Handlers) uploadToStorage(c *gin.Context, bucketName, uniqueFilename string, raw []byte, originalFilename string, size int64, attachmentID, ext string) {
+	if h.storageClient == nil {
+		h.uploadLocal(c, bucketName, uniqueFilename, bytes.NewReader(raw), originalFilename, size, attachmentID)
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	_, err := h.storageClient.S3().HeadBucket(ctx, &s3.HeadBucketInput{
+		Bucket: aws.String(bucketName),
+	})
+	if err != nil {
+		logger.Log.Info().Str("bucket", bucketName).Msg("bucket does not exist, creating bucket")
+		if _, createErr := h.storageClient.S3().CreateBucket(ctx, &s3.CreateBucketInput{
+			Bucket: aws.String(bucketName),
+		}); createErr != nil {
+			logger.Log.Error().Err(createErr).Str("bucket", bucketName).Msg("failed to create bucket, falling back to local storage")
+			h.uploadLocal(c, bucketName, uniqueFilename, bytes.NewReader(raw), originalFilename, size, attachmentID)
+			return
+		}
+	}
+
+	contentType := mime.TypeByExtension(ext)
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	if _, putErr := h.storageClient.S3().PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      aws.String(bucketName),
+		Key:         aws.String(uniqueFilename),
+		Body:        bytes.NewReader(raw),
+		ContentType: aws.String(contentType),
+	}); putErr != nil {
+		logger.Log.Error().Err(putErr).Str("bucket", bucketName).Str("key", uniqueFilename).Msg("failed to upload to S3, falling back to local storage")
+		h.uploadLocal(c, bucketName, uniqueFilename, bytes.NewReader(raw), originalFilename, size, attachmentID)
+		return
+	}
+
+	logger.Log.Info().Str("bucket", bucketName).Str("key", uniqueFilename).Msg("uploaded to S3 successfully")
+	fileURL := fmt.Sprintf("/api/console/files/%s/%s", bucketName, uniqueFilename)
+	c.JSON(http.StatusOK, gin.H{
+		"id":       attachmentID,
+		"url":      fileURL,
+		"src":      fileURL,
+		"fileName": originalFilename,
+		"fileSize": size,
+	})
 }
 
 func (h *Handlers) uploadLocal(c *gin.Context, bucketName, uniqueFilename string, file io.Reader, originalFilename string, size int64, attachmentID string) {
@@ -159,8 +216,14 @@ func (h *Handlers) uploadLocal(c *gin.Context, bucketName, uniqueFilename string
 	}
 	defer func() { _ = destFile.Close() }()
 
-	if _, err = io.Copy(destFile, file); err != nil {
+	written, err := io.Copy(destFile, file)
+	if err != nil {
 		logger.Log.Error().Err(err).Str("path", destPath).Msg("failed to copy uploaded file content")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to write file locally"})
+		return
+	}
+	if written != size {
+		logger.Log.Error().Int64("written", written).Int64("expected", size).Str("path", destPath).Msg("uploaded file size mismatch")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to write file locally"})
 		return
 	}
@@ -178,11 +241,32 @@ func (h *Handlers) uploadLocal(c *gin.Context, bucketName, uniqueFilename string
 
 // GetUploadedFile handles GET /api/console/files/:bucket/:filename.
 // Streams the file from S3 (RustFS) if available, or reads it from local uploads.
+// When a DB-backed page service is present, the bucket is the page ID and read
+// access is enforced before any object is served.
 func (h *Handlers) GetUploadedFile(c *gin.Context) {
 	bucket := c.Param("bucket")
 	filename := c.Param("filename")
 
 	logger.Log.Debug().Str("bucket", bucket).Str("filename", filename).Msg("GetUploadedFile request received")
+
+	if h.pageService != nil {
+		p, err := h.pageService.GetPageByID(c.Request.Context(), bucket)
+		if err != nil {
+			if errors.Is(err, page.ErrPageNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
+				return
+			}
+			logger.Log.Error().Err(err).Str("bucket", bucket).Msg("failed to resolve page for download")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to resolve page"})
+			return
+		}
+
+		userID := middleware.GetCurrentUserID(c)
+		if err := h.pageService.RequireRead(c.Request.Context(), p.SpaceID, userID); err != nil {
+			c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
+			return
+		}
+	}
 
 	ext := filepath.Ext(filename)
 	contentType := mime.TypeByExtension(ext)
