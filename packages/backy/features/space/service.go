@@ -14,10 +14,10 @@ import (
 )
 
 // ErrSpaceNotFound is returned when a space is not found.
-var ErrSpaceNotFound = errors.New("space not found")
+var ErrSpaceNotFound = repositories.ErrSpaceNotFound
 
 // ErrSpaceNotEmpty is returned when trying to delete a space that still has pages.
-var ErrSpaceNotEmpty = errors.New("space is not empty")
+var ErrSpaceNotEmpty = repositories.ErrSpaceNotEmpty
 
 // ErrSpacePermissionDenied is returned when a user lacks permission for an action.
 var ErrSpacePermissionDenied = errors.New("permission denied for this space")

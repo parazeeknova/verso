@@ -348,13 +348,18 @@ func (h *Handlers) GetUploadedFile(c *gin.Context) {
 			_, _ = io.Copy(c.Writer, out.Body)
 			return
 		}
-		logger.Log.Warn().Err(err).Str("bucket", bucket).Str("filename", filename).Msg("failed to get object from S3, trying local fallback")
+		errStr := err.Error()
+		if strings.Contains(errStr, "NoSuchBucket") || strings.Contains(errStr, "NoSuchKey") || strings.Contains(errStr, "404") {
+			logger.Log.Debug().Err(err).Str("bucket", bucket).Str("filename", filename).Msg("failed to get object from S3, trying local fallback")
+		} else {
+			logger.Log.Warn().Err(err).Str("bucket", bucket).Str("filename", filename).Msg("failed to get object from S3, trying local fallback")
+		}
 	}
 
 	// Fallback to local storage
 	localPath := filepath.Join(".", "uploads", bucket, filename)
 	if _, err := os.Stat(localPath); errors.Is(err, os.ErrNotExist) {
-		logger.Log.Warn().Str("path", localPath).Msg("file not found locally")
+		logger.Log.Debug().Str("path", localPath).Msg("file not found locally")
 		c.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
 		return
 	}

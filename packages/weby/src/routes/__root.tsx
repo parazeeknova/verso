@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createTheme, MantineProvider } from "@mantine/core";
 
 import { useTheme } from "#/shared/hooks/use-theme";
+import "#/shared/lib/i18n";
 
 import mantineCss from "@mantine/core/styles.css?url";
 import appCss from "../styles.css?url";
