@@ -22,6 +22,7 @@ import {
   useUpdateSpaceMemberRole,
   useUpdateSpaceGroupRole,
 } from "#/features/console/hooks/use-spaces";
+import { usePageTree } from "#/features/console/hooks/use-pages";
 import { useUsers } from "#/features/console/hooks/use-users";
 import { AvatarBadge } from "#/shared/components/avatar-badge";
 import { compressImage } from "#/shared/lib/image-compress";
@@ -404,18 +405,21 @@ const SecuritySection = ({ isDarkMode }: { isDarkMode: boolean }) => {
     </div>
   );
 };
-
 const DangerSection = ({
   isDarkMode,
   spaceName,
   onDelete,
+  spaceId,
 }: {
   isDarkMode: boolean;
   spaceName: string;
   onDelete: () => void;
+  spaceId: string;
 }) => {
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
   const [confirm, setConfirm] = useState("");
+  const { data: treeItems } = usePageTree(spaceId);
+
   return (
     <div className={`border ${t("border-red-500/20", "border-red-500/20")}`}>
       <div className="px-3 py-3">
@@ -438,11 +442,29 @@ const DangerSection = ({
             <TrashIcon size={11} />
           </button>
         </div>
+
+        {treeItems && treeItems.length > 0 && (
+          <div className="mt-3 px-1">
+            <p
+              className={`text-[9px] lowercase mb-1 font-semibold ${t("text-text-dark/30", "text-text-light/30")}`}
+            >
+              the following pages will also be deleted recursively:
+            </p>
+            <ul
+              className={`text-[9px] list-disc list-inside max-h-24 overflow-y-auto ${t("text-text-dark/50", "text-text-light/50")}`}
+            >
+              {treeItems.map((p) => (
+                <li key={p.id} className="truncate">
+                  {p.title || "untitled page"}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
 };
-
 interface SettingsViewProps {
   avGroups: Group[];
   avUsers: { id: string; name: string; email: string; avatar_url: string }[];
@@ -638,7 +660,12 @@ const SettingsView = (props: SettingsViewProps) => {
       >
         danger zone
       </p>
-      <DangerSection isDarkMode={isDarkMode} spaceName={space?.name ?? ""} onDelete={props.onDel} />
+      <DangerSection
+        isDarkMode={isDarkMode}
+        spaceName={space?.name ?? ""}
+        onDelete={props.onDel}
+        spaceId={space?.id ?? ""}
+      />
 
       {props.showUnsplash && (
         <UnsplashPicker onClose={() => props.setShowUnsplash(false)} onSelect={props.onPick} />

@@ -22,6 +22,7 @@ import {
   useUpdateSpaceGroupRole,
   useUpdateSpaceMemberRole,
 } from "#/features/console/hooks/use-spaces";
+import { usePageTree } from "#/features/console/hooks/use-pages";
 import { useUsers } from "#/features/console/hooks/use-users";
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
 import type { ConsoleUser, Group, Space, SpaceMemberMixed } from "#/shared/types";
@@ -626,6 +627,7 @@ export const SpaceDetailSidebar = ({
   const { data: currentUser } = useAuth();
   const { data: groupsData } = useGroups(space.workspaceId);
   const updateSpace = useUpdateSpace();
+  const { data: treeItems } = usePageTree(space.id);
   const updateRole = useUpdateSpaceMemberRole();
   const removeMember = useRemoveSpaceMember();
   const addSpaceGroup = useAddSpaceGroup();
@@ -1039,6 +1041,25 @@ export const SpaceDetailSidebar = ({
           {deleteConfirm ? "confirm?" : "delete"}
         </button>
       </div>
+
+      {treeItems && treeItems.length > 0 && (
+        <div className="mt-3">
+          <p
+            className={`text-[9px] lowercase mb-1 font-semibold ${t("text-text-dark/30", "text-text-light/30")}`}
+          >
+            the following pages will also be deleted recursively:
+          </p>
+          <ul
+            className={`text-[9px] list-disc list-inside max-h-24 overflow-y-auto ${t("text-text-dark/50", "text-text-light/50")}`}
+          >
+            {treeItems.map((p) => (
+              <li key={p.id} className="truncate">
+                {p.title || "untitled page"}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 
