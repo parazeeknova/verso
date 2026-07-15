@@ -2,10 +2,11 @@ import type { Editor } from "@tiptap/core";
 import type { Node as ProsemirrorNode } from "@tiptap/pm/model";
 import { setFlashToast } from "#/features/console/components/flash-toast";
 import { logger } from "#/shared/lib/logger";
+import type { SharedEditorStorage } from "../common/storage";
 
 const getImageDimensions = (file: File): Promise<{ width: number; height: number }> =>
   // eslint-disable-next-line promise/avoid-new
-  new Promise((resolve) => {
+  new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.addEventListener("load", () => {
@@ -13,8 +14,8 @@ const getImageDimensions = (file: File): Promise<{ width: number; height: number
       URL.revokeObjectURL(url);
     });
     img.addEventListener("error", () => {
-      resolve({ height: 0, width: 0 });
       URL.revokeObjectURL(url);
+      reject(new Error("failed to read image dimensions"));
     });
     img.src = url;
   });
@@ -59,53 +60,59 @@ export const uploadImage = async (file: File, editor: Editor, pos: number) => {
   );
 
   // Store preview object URL in editor storage
-  const storage = editor.storage as unknown as {
-    shared: {
-      pageId?: string;
-      spaceName?: string;
-      pageName?: string;
-      imagePreviews?: Record<string, string | undefined>;
-    };
-  };
+  const storage = editor.storage as SharedEditorStorage;
   storage.shared = storage.shared || {};
   storage.shared.imagePreviews = storage.shared.imagePreviews || {};
   storage.shared.imagePreviews[placeholderId] = objectUrl;
 
-  // Retrieve dimensions
-  const dimensions = await getImageDimensions(file);
-  const width = dimensions.width || undefined;
-  const height = dimensions.height || undefined;
-  const aspectRatio =
-    dimensions.width && dimensions.height ? dimensions.width / dimensions.height : undefined;
-
-  // Insert placeholder image block optimistically
+  // Insert placeholder image block optimistically before reading dimensions
   editor.view.dispatch(
     editor.state.tr.insert(
       pos,
       editor.state.schema.nodes.image.create({
-        aspectRatio,
-        height,
+        aspectRatio: undefined,
+        height: undefined,
         placeholder: { id: placeholderId, name: file.name },
-        width,
+        width: undefined,
       }),
     ),
   );
 
-  // Retrieve page/space parameters from editor storage
-  const spaceName = storage.shared.spaceName || "default";
-  const pageName = storage.shared.pageName || "default";
-  const pageId = storage.shared.pageId || "";
-
-  // Perform upload request
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("spaceName", spaceName);
-  formData.append("pageName", pageName);
-  if (pageId) {
-    formData.append("pageId", pageId);
-  }
-
   try {
+    // Retrieve dimensions (rejects on read failure, before any fetch)
+    const dimensions = await getImageDimensions(file);
+    const width = dimensions.width || undefined;
+    const height = dimensions.height || undefined;
+    const aspectRatio =
+      dimensions.width && dimensions.height ? dimensions.width / dimensions.height : undefined;
+
+    // Update the existing optimistic placeholder node with resolved dimensions
+    const dimensionsPlaceholder = findImageNodeByPlaceholderId(editor.state.doc, placeholderId);
+    if (dimensionsPlaceholder) {
+      editor.view.dispatch(
+        editor.state.tr.setNodeMarkup(dimensionsPlaceholder.pos, undefined, {
+          aspectRatio,
+          height,
+          placeholder: { id: placeholderId, name: file.name },
+          width,
+        }),
+      );
+    }
+
+    // Retrieve page/space parameters from editor storage
+    const spaceName = storage.shared.spaceName || "default";
+    const pageName = storage.shared.pageName || "default";
+    const pageId = storage.shared.pageId || "";
+
+    // Perform upload request
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("spaceName", spaceName);
+    formData.append("pageName", pageName);
+    if (pageId) {
+      formData.append("pageId", pageId);
+    }
+
     const res = await fetch("/api/console/upload", {
       body: formData,
       method: "POST",

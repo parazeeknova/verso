@@ -28,9 +28,18 @@ export const useAltTextControl = ({ editor, nodeName, currentAlt }: UseAltTextCo
     setShowInput(true);
   }, [currentAlt]);
 
+  const commit = useCallback(() => {
+    editor
+      .chain()
+      .focus(undefined, { scrollIntoView: false })
+      .updateAttributes(nodeName, { alt: sanitizeAlt(draft) || undefined })
+      .run();
+  }, [editor, nodeName, draft]);
+
   useEffect(() => {
     const handler = () => {
       if (!editor.isActive(nodeName)) {
+        commit();
         setShowInput(false);
       }
     };
@@ -38,20 +47,16 @@ export const useAltTextControl = ({ editor, nodeName, currentAlt }: UseAltTextCo
     return () => {
       editor.off("selectionUpdate", handler);
     };
-  }, [editor, nodeName]);
+  }, [editor, nodeName, commit]);
 
   const cancel = useCallback(() => {
     setShowInput(false);
   }, []);
 
   const save = useCallback(() => {
-    editor
-      .chain()
-      .focus(undefined, { scrollIntoView: false })
-      .updateAttributes(nodeName, { alt: sanitizeAlt(draft) || undefined })
-      .run();
+    commit();
     setShowInput(false);
-  }, [editor, nodeName, draft]);
+  }, [commit]);
 
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

@@ -23,7 +23,7 @@ export const MathInline = Node.create({
     return {
       text: {
         default: "",
-        parseHTML: (element) => element.innerHTML,
+        parseHTML: (element) => element.textContent,
       },
     };
   },
@@ -60,7 +60,6 @@ export const MathInline = Node.create({
     ];
   },
   addNodeView() {
-    this.editor.isInitialized = true;
     return ReactNodeViewRenderer(this.options.view);
   },
 
@@ -98,7 +97,7 @@ export const MathBlock = Node.create({
     return {
       text: {
         default: "",
-        parseHTML: (element) => element.innerHTML,
+        parseHTML: (element) => element.textContent,
       },
     };
   },
@@ -135,7 +134,6 @@ export const MathBlock = Node.create({
     ];
   },
   addNodeView() {
-    this.editor.isInitialized = true;
     return ReactNodeViewRenderer(this.options.view);
   },
 

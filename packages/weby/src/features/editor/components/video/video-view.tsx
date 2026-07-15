@@ -64,7 +64,7 @@ const VideoContent = React.memo(
 );
 
 export const VideoView = (props: NodeViewProps) => {
-  const { node, editor } = props;
+  const { node, editor, updateAttributes } = props;
   const { src, width, height, aspectRatio, placeholder, alt, align } = node.attrs;
   const { isDarkMode } = useTheme();
 
@@ -115,7 +115,7 @@ export const VideoView = (props: NodeViewProps) => {
 
         const newHeight = aspectRatio ? newWidth / aspectRatio : newWidth / 1.777;
 
-        editor.commands.updateAttributes("video", {
+        updateAttributes({
           height: Math.round(newHeight),
           width: Math.round(newWidth),
         });
@@ -129,7 +129,7 @@ export const VideoView = (props: NodeViewProps) => {
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
     },
-    [editor, aspectRatio],
+    [aspectRatio, updateAttributes],
   );
 
   const handleResizeStart = useCallback(

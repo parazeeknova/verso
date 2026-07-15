@@ -4,16 +4,54 @@ import React, { useCallback, useMemo, useState } from "react";
 import { useTheme } from "#/shared/hooks/use-theme";
 import { Button, TextInput } from "@mantine/core";
 
+const YOUTUBE_HOSTS = new Set([
+  "youtube.com",
+  "www.youtube.com",
+  "youtu.be",
+  "www.youtu.be",
+  "youtube-nocookie.com",
+  "www.youtube-nocookie.com",
+]);
+
+const VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
+
 const parseYoutubeUrl = (url: string): string | null => {
   if (!url) {
     return null;
   }
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
-  if (match && match[2].length === 11) {
-    return `https://www.youtube-nocookie.com/embed/${match[2]}`;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
   }
-  return null;
+
+  const hostname = parsed.hostname.toLowerCase();
+  if (!YOUTUBE_HOSTS.has(hostname)) {
+    return null;
+  }
+
+  let videoId: string | null = null;
+  if (hostname.endsWith(".youtu.be") || hostname === "youtu.be") {
+    const id = parsed.pathname.slice(1).split("/").at(0) ?? "";
+    videoId = VIDEO_ID_PATTERN.test(id) ? id : null;
+  } else if (parsed.pathname.startsWith("/embed/")) {
+    const id = parsed.pathname.slice("/embed/".length).split("/").at(0) ?? "";
+    videoId = VIDEO_ID_PATTERN.test(id) ? id : null;
+  } else if (parsed.pathname.startsWith("/shorts/")) {
+    const id = parsed.pathname.slice("/shorts/".length).split("/").at(0) ?? "";
+    videoId = VIDEO_ID_PATTERN.test(id) ? id : null;
+  } else if (parsed.pathname === "/watch") {
+    const id = parsed.searchParams.get("v");
+    videoId = id && VIDEO_ID_PATTERN.test(id) ? id : null;
+  }
+
+  if (!videoId) {
+    return null;
+  }
+
+  return `https://www.youtube-nocookie.com/embed/${videoId}`;
 };
 
 const YoutubePlaceholder = ({
@@ -248,7 +286,7 @@ export const YoutubeView = (props: NodeViewProps) => {
             />
             <button
               aria-label="Resize from bottom-left corner"
-              className={`absolute bottom-[-3px] left-[-3px]. w-4 h-4 cursor-nesw-resize border-b-2 border-l-2 border-[#b58cff] z-50 ${handlesVisibleClass}`}
+              className={`absolute bottom-[-3px] left-[-3px] w-4 h-4 cursor-nesw-resize border-b-2 border-l-2 border-[#b58cff] z-50 ${handlesVisibleClass}`}
               onMouseDown={(e) => handleResizeStart(e, "bl")}
               tabIndex={-1}
               type="button"

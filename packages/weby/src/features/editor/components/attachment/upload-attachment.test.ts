@@ -1,4 +1,3 @@
-/* eslint-disable promise/prefer-await-to-callbacks */
 import type { Mock } from "vitest";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { uploadAttachment } from "./upload-attachment";
@@ -99,7 +98,9 @@ describe("uploadAttachment", () => {
 
     const descendantsMock = mockEditor.state.doc.descendants as unknown as Mock;
     descendantsMock.mockImplementation(
+      // eslint-disable-next-line eslint-plugin-promise/prefer-await-to-callbacks
       (callback: (node: ProsemirrorNode, pos: number) => boolean) => {
+        // eslint-disable-next-line eslint-plugin-promise/prefer-await-to-callbacks
         callback(
           {
             attrs: { placeholder: { id: createdPlaceholderId, name: "notes.txt" } },
@@ -132,7 +133,9 @@ describe("uploadAttachment", () => {
 
     const descendantsMock = mockEditor.state.doc.descendants as unknown as Mock;
     descendantsMock.mockImplementation(
+      // eslint-disable-next-line eslint-plugin-promise/prefer-await-to-callbacks
       (callback: (node: ProsemirrorNode, pos: number) => boolean) => {
+        // eslint-disable-next-line eslint-plugin-promise/prefer-await-to-callbacks
         callback(
           {
             attrs: { placeholder: { id: createdPlaceholderId, name: "readme.zip" } },
@@ -184,7 +187,9 @@ describe("uploadAttachment", () => {
 
     const descendantsMock = mockEditor.state.doc.descendants as unknown as Mock;
     descendantsMock.mockImplementation(
+      // eslint-disable-next-line eslint-plugin-promise/prefer-await-to-callbacks
       (callback: (node: ProsemirrorNode, pos: number) => boolean) => {
+        // eslint-disable-next-line eslint-plugin-promise/prefer-await-to-callbacks
         callback(
           {
             attrs: { placeholder: { id: createdPlaceholderId, name: "readme.zip" } },

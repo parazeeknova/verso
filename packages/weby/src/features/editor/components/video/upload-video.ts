@@ -37,7 +37,120 @@ const findVideoNodeByPlaceholderId = (
   return result;
 };
 
-export const uploadVideo = async (file: File, editor: Editor, pos: number) => {
+const updatePlaceholderProgress = (
+  editor: Editor,
+  placeholderId: string,
+  fileName: string,
+  percent: number,
+) => {
+  const { state } = editor;
+  const placeholderNode = findVideoNodeByPlaceholderId(state.doc, placeholderId);
+  if (placeholderNode) {
+    editor.view.dispatch(
+      state.tr.setNodeMarkup(placeholderNode.pos, undefined, {
+        ...placeholderNode.node.attrs,
+        placeholder: {
+          id: placeholderId,
+          name: fileName,
+          progress: percent,
+        },
+      }),
+    );
+  }
+};
+
+const sendVideoUpload = (
+  editor: Editor,
+  formData: FormData,
+  placeholderId: string,
+  fileName: string,
+): Promise<{ src: string }> =>
+  // eslint-disable-next-line promise/avoid-new
+  new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/console/upload");
+
+    let lastPercent = 0;
+    xhr.upload.addEventListener("progress", (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        if (percent !== lastPercent) {
+          lastPercent = percent;
+          updatePlaceholderProgress(editor, placeholderId, fileName, percent);
+        }
+      }
+    });
+
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText) as { src: string });
+        } catch {
+          reject(new Error("Invalid server response"));
+        }
+      } else {
+        reject(new Error(`Upload failed with status ${xhr.status}`));
+      }
+    });
+
+    xhr.addEventListener("error", () => {
+      reject(new Error("Network error during upload"));
+    });
+    xhr.send(formData);
+  });
+
+interface UploadVideoOptions {
+  alt?: string;
+  align?: string;
+}
+
+const buildPreservedAttrs = (options?: UploadVideoOptions) =>
+  options?.alt !== undefined || options?.align !== undefined
+    ? { align: options?.align, alt: options?.alt }
+    : {};
+
+interface VideoDimensions {
+  width?: number;
+  height?: number;
+  aspectRatio?: number;
+}
+
+const computeVideoDimensions = (dimensions: {
+  width: number;
+  height: number;
+}): VideoDimensions => ({
+  aspectRatio:
+    dimensions.width && dimensions.height ? dimensions.width / dimensions.height : undefined,
+  height: dimensions.height || undefined,
+  width: dimensions.width || undefined,
+});
+
+const replacePlaceholderWithVideo = (
+  editor: Editor,
+  placeholderId: string,
+  attrs: Record<string, unknown>,
+) => {
+  const { state } = editor;
+  const placeholderNode = findVideoNodeByPlaceholderId(state.doc, placeholderId);
+  if (placeholderNode) {
+    editor.view.dispatch(state.tr.setNodeMarkup(placeholderNode.pos, undefined, attrs));
+  }
+};
+
+const removeVideoPlaceholder = (editor: Editor, placeholderId: string) => {
+  const { state } = editor;
+  const placeholderNode = findVideoNodeByPlaceholderId(state.doc, placeholderId);
+  if (placeholderNode) {
+    editor.view.dispatch(state.tr.delete(placeholderNode.pos, placeholderNode.pos + 1));
+  }
+};
+
+export const uploadVideo = async (
+  file: File,
+  editor: Editor,
+  pos: number,
+  options?: UploadVideoOptions,
+) => {
   if (!file.type.startsWith("video/")) {
     setFlashToast("only video files are allowed");
     return;
@@ -49,6 +162,9 @@ export const uploadVideo = async (file: File, editor: Editor, pos: number) => {
     setFlashToast("file exceeds the 50mb limit");
     return;
   }
+
+  // Preserve prior node attributes when replacing an existing video node.
+  const preservedAttrs = buildPreservedAttrs(options);
 
   const placeholderId = Math.random().toString(36).slice(2, 9);
   const objectUrl = URL.createObjectURL(file);
@@ -73,16 +189,14 @@ export const uploadVideo = async (file: File, editor: Editor, pos: number) => {
 
   // Retrieve dimensions
   const dimensions = await getVideoDimensions(file);
-  const width = dimensions.width || undefined;
-  const height = dimensions.height || undefined;
-  const aspectRatio =
-    dimensions.width && dimensions.height ? dimensions.width / dimensions.height : undefined;
+  const { width, height, aspectRatio } = computeVideoDimensions(dimensions);
 
   // Insert placeholder video block optimistically
   editor.view.dispatch(
     editor.state.tr.insert(
       pos,
       editor.state.schema.nodes.video.create({
+        ...preservedAttrs,
         aspectRatio,
         height,
         placeholder: { id: placeholderId, name: file.name, progress: 0 },
@@ -106,70 +220,19 @@ export const uploadVideo = async (file: File, editor: Editor, pos: number) => {
   }
 
   try {
-    // eslint-disable-next-line promise/avoid-new
-    const data = await new Promise<{ src: string }>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", "/api/console/upload");
-
-      let lastPercent = 0;
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) {
-          const percent = Math.round((e.loaded / e.total) * 100);
-          if (percent !== lastPercent) {
-            lastPercent = percent;
-
-            const { state } = editor;
-            const placeholderNode = findVideoNodeByPlaceholderId(state.doc, placeholderId);
-            if (placeholderNode) {
-              editor.view.dispatch(
-                state.tr.setNodeMarkup(placeholderNode.pos, undefined, {
-                  ...placeholderNode.node.attrs,
-                  placeholder: {
-                    id: placeholderId,
-                    name: file.name,
-                    progress: percent,
-                  },
-                }),
-              );
-            }
-          }
-        }
-      });
-
-      xhr.addEventListener("load", () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            resolve(JSON.parse(xhr.responseText) as { src: string });
-          } catch {
-            reject(new Error("Invalid server response"));
-          }
-        } else {
-          reject(new Error(`Upload failed with status ${xhr.status}`));
-        }
-      });
-
-      xhr.addEventListener("error", () => {
-        reject(new Error("Network error during upload"));
-      });
-      xhr.send(formData);
-    });
+    const data = await sendVideoUpload(editor, formData, placeholderId, file.name);
 
     logger.info({ placeholderId, src: data.src }, "optimistic video upload succeeded");
 
     // Replace placeholder with final served video URL
-    const { state } = editor;
-    const placeholderNode = findVideoNodeByPlaceholderId(state.doc, placeholderId);
-    if (placeholderNode) {
-      editor.view.dispatch(
-        state.tr.setNodeMarkup(placeholderNode.pos, undefined, {
-          aspectRatio,
-          height,
-          placeholder: null,
-          src: data.src,
-          width,
-        }),
-      );
-    }
+    replacePlaceholderWithVideo(editor, placeholderId, {
+      ...preservedAttrs,
+      aspectRatio,
+      height,
+      placeholder: null,
+      src: data.src,
+      width,
+    });
 
     setFlashToast("video uploaded successfully");
   } catch (error: unknown) {
@@ -177,11 +240,7 @@ export const uploadVideo = async (file: File, editor: Editor, pos: number) => {
     logger.error({ error: errMsg, placeholderId }, "video upload failed");
 
     // Remove placeholder on failure
-    const { state } = editor;
-    const placeholderNode = findVideoNodeByPlaceholderId(state.doc, placeholderId);
-    if (placeholderNode) {
-      editor.view.dispatch(state.tr.delete(placeholderNode.pos, placeholderNode.pos + 1));
-    }
+    removeVideoPlaceholder(editor, placeholderId);
 
     setFlashToast(`failed to upload video: ${errMsg}`);
   } finally {

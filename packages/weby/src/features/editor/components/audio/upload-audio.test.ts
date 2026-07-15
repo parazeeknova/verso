@@ -5,54 +5,19 @@ import { uploadAudio } from "./upload-audio";
 import { setFlashToast } from "#/features/console/components/flash-toast";
 import type { Editor } from "@tiptap/core";
 import type { Node as ProsemirrorNode } from "@tiptap/pm/model";
+import { createMockXHRClass } from "../common/test-mock-xhr";
+import type { MockXHRConfig } from "../common/test-mock-xhr";
 
 // Mock setFlashToast
 vi.mock("#/features/console/components/flash-toast", () => ({
   setFlashToast: vi.fn(),
 }));
 
-class MockXMLHttpRequest {
-  open = vi.fn();
-  send = vi.fn().mockImplementation(function send(this: any) {
-    if (mockXHRInstance.shouldSucceed) {
-      this.status = 200;
-      this.responseText = JSON.stringify(mockXHRInstance.mockResponse);
-      if (this.onload) {
-        this.onload();
-      }
-    } else {
-      this.status = 500;
-      if (this.onerror) {
-        this.onerror();
-      }
-    }
-  });
-  upload = {
-    addEventListener: vi.fn().mockImplementation((event, cb) => {
-      // Simulate progress callback immediately
-      if (event === "progress") {
-        cb({ lengthComputable: true, loaded: 50, total: 100 });
-      }
-    }),
-  };
-  status = 0;
-  responseText = "";
-  addEventListener = vi.fn().mockImplementation(function addEventListener(this: any, event, cb) {
-    if (event === "load") {
-      this.onload = cb;
-    }
-    if (event === "error") {
-      this.onerror = cb;
-    }
-  });
-  onload: any = null;
-  onerror: any = null;
-}
-
-const mockXHRInstance = {
+const mockXHRConfig: MockXHRConfig = {
   mockResponse: { src: "/api/console/files/my-test-space-my-test-page/unique.mp3" },
   shouldSucceed: true,
 };
+const MockXMLHttpRequest = createMockXHRClass(mockXHRConfig);
 
 describe("uploadAudio", () => {
   let mockEditor: Editor;
@@ -60,8 +25,8 @@ describe("uploadAudio", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    mockXHRInstance.shouldSucceed = true;
-    mockXHRInstance.mockResponse = {
+    mockXHRConfig.shouldSucceed = true;
+    mockXHRConfig.mockResponse = {
       src: "/api/console/files/my-test-space-my-test-page/unique.mp3",
     };
 
@@ -182,7 +147,7 @@ describe("uploadAudio", () => {
   });
 
   it("should clean up and remove placeholder on fetch failure", async () => {
-    mockXHRInstance.shouldSucceed = false;
+    mockXHRConfig.shouldSucceed = false;
 
     const storage = mockEditor.storage as unknown as {
       shared: {
@@ -210,6 +175,40 @@ describe("uploadAudio", () => {
     await uploadAudio(mockFile, mockEditor, 5);
 
     // Verify delete placeholder transaction
+    expect(mockEditor.state.tr.delete).toHaveBeenCalledWith(15, 16);
+    expect(setFlashToast).toHaveBeenCalledWith(expect.stringContaining("failed to upload audio"));
+  });
+
+  it("should clean up and remove placeholder on non-2xx HTTP status", async () => {
+    mockXHRConfig.shouldSucceed = false;
+    mockXHRConfig.failStatusCode = 404;
+
+    const storage = mockEditor.storage as unknown as {
+      shared: {
+        pageId?: string;
+        spaceName?: string;
+        pageName?: string;
+        audioPreviews?: Record<string, string | undefined>;
+      };
+    };
+
+    const descendantsMock = mockEditor.state.doc.descendants as unknown as Mock;
+    descendantsMock.mockImplementation(
+      (callback: (node: ProsemirrorNode, pos: number) => boolean) => {
+        const generatedId = Object.keys(storage.shared.audioPreviews || {})[0] || "mock-id";
+        callback(
+          {
+            attrs: { placeholder: { id: generatedId, name: "song.mp3" } },
+            type: { name: "audio" },
+          } as unknown as ProsemirrorNode,
+          15,
+        );
+      },
+    );
+
+    await uploadAudio(mockFile, mockEditor, 5);
+
+    // load-event with a non-2xx status should reject and remove the placeholder
     expect(mockEditor.state.tr.delete).toHaveBeenCalledWith(15, 16);
     expect(setFlashToast).toHaveBeenCalledWith(expect.stringContaining("failed to upload audio"));
   });

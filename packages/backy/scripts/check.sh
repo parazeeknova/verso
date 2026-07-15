@@ -21,7 +21,7 @@ fi
 
 if ! [ -x "$GOPATH_BIN/golangci-lint" ]; then
     echo "golangci-lint not found in $GOPATH_BIN, installing..."
-    go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$GOPATH_BIN" v1.64.8
 fi
 
 echo "Running gofumpt check..."

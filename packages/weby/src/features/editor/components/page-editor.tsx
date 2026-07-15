@@ -783,9 +783,9 @@ export const PageEditor = ({
       storage.shared = storage.shared || {};
       storage.shared.pageId = pageId;
       storage.shared.spaceName = spaceName;
-      storage.shared.pageName = title;
+      storage.shared.pageName = localTitle;
     }
-  }, [editor, pageId, spaceName, title]);
+  }, [editor, pageId, spaceName, localTitle]);
 
   const { dirty, cleanup, isSaving, lastSaved, markDirty } = useEditorContent(editor, pageId);
 

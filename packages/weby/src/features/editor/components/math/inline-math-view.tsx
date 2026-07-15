@@ -4,6 +4,7 @@ import type { NodeViewProps } from "@tiptap/react";
 import { NodeViewWrapper } from "@tiptap/react";
 import { render } from "katex";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "#/shared/hooks/use-theme";
 import classes from "./math.module.css";
 
@@ -16,6 +17,7 @@ export const InlineMathView = (props: NodeViewProps) => {
   const [preview, setPreview] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const { isDarkMode } = useTheme();
+  const { t } = useTranslation();
 
   const renderMath = useCallback((katexString: string, container: HTMLDivElement | null) => {
     if (!container) {
@@ -90,8 +92,8 @@ export const InlineMathView = (props: NodeViewProps) => {
         >
           <div style={{ display: isEditing ? undefined : "none" }} ref={mathPreviewContainer} />
           <div style={{ display: isEditing ? "none" : undefined }} ref={mathResultContainer} />
-          {isEmpty && <span className="text-[11px] lowercase">empty equation</span>}
-          {mathError && <span className="text-[11px] lowercase">invalid equation</span>}
+          {isEmpty && <span className="text-[11px] lowercase">{t("empty equation")}</span>}
+          {mathError && <span className="text-[11px] lowercase">{t("invalid equation")}</span>}
         </NodeViewWrapper>
       </Popover.Target>
       <Popover.Dropdown>

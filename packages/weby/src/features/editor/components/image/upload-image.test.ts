@@ -11,6 +11,45 @@ vi.mock("#/features/console/components/flash-toast", () => ({
   setFlashToast: vi.fn(),
 }));
 
+// Configurable mock Image used across success and failure scenarios. A single
+// class is reused (instead of separate success/error classes) so the file keeps
+// only one class definition.
+let mockImageShouldSucceed = true;
+let mockImageNaturalWidth = 800;
+let mockImageNaturalHeight = 600;
+
+class MockImage {
+  naturalWidth = mockImageNaturalWidth;
+  naturalHeight = mockImageNaturalHeight;
+  onload: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+  private currentSrc = "";
+  private readonly listeners: Record<string, (() => void)[]> = {};
+
+  addEventListener(event: string, callback: () => void) {
+    this.listeners[event] = this.listeners[event] || [];
+    this.listeners[event].push(callback);
+  }
+
+  get src() {
+    return this.currentSrc;
+  }
+
+  set src(value: string) {
+    this.currentSrc = value;
+    if (mockImageShouldSucceed && this.onload) {
+      setTimeout(() => this.onload?.(), 0);
+    }
+    const eventName = mockImageShouldSucceed ? "load" : "error";
+    const eventListeners = this.listeners[eventName];
+    if (eventListeners) {
+      for (const listener of eventListeners) {
+        setTimeout(listener, 0);
+      }
+    }
+  }
+}
+
 describe("uploadImage", () => {
   let mockEditor: Editor;
   let mockFile: File;
@@ -23,33 +62,9 @@ describe("uploadImage", () => {
     globalThis.URL.revokeObjectURL = vi.fn();
 
     // Mock Image object to simulate dimensions loading instantly
-    class MockImage {
-      naturalWidth = 800;
-      naturalHeight = 600;
-      onload: (() => void) | null = null;
-      onerror: (() => void) | null = null;
-      private listeners: Record<string, (() => void)[]> = {};
-
-      addEventListener(event: string, callback: () => void) {
-        this.listeners[event] = this.listeners[event] || [];
-        this.listeners[event].push(callback);
-      }
-
-      get src() {
-        return this.naturalWidth ? "" : "";
-      }
-      set src(_val: string) {
-        if (this.onload) {
-          setTimeout(() => this.onload?.(), 0);
-        }
-        const loadListeners = this.listeners["load"];
-        if (loadListeners) {
-          for (const cb of loadListeners) {
-            setTimeout(cb, 0);
-          }
-        }
-      }
-    }
+    mockImageShouldSucceed = true;
+    mockImageNaturalWidth = 800;
+    mockImageNaturalHeight = 600;
     vi.stubGlobal("Image", MockImage);
 
     // Mock Editor Tiptap
@@ -149,10 +164,7 @@ describe("uploadImage", () => {
     expect(storage.shared.imagePreviews).toBeDefined();
     expect(mockEditor.state.schema.nodes.image.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        aspectRatio: 800 / 600,
-        height: 600,
         placeholder: expect.objectContaining({ name: "avatar.png" }),
-        width: 800,
       }),
     );
 
@@ -216,6 +228,48 @@ describe("uploadImage", () => {
 
     // Verify delete placeholder transaction
     expect(mockEditor.state.tr.delete).toHaveBeenCalledWith(15, 16);
+    expect(setFlashToast).toHaveBeenCalledWith(expect.stringContaining("failed to upload image"));
+  });
+
+  it("should not fetch and should fail gracefully when image dimensions fail to read", async () => {
+    globalThis.fetch = vi.fn() as unknown as typeof fetch;
+
+    // Image that fails to load, triggering a getImageDimensions rejection
+    mockImageShouldSucceed = false;
+    mockImageNaturalWidth = 0;
+    mockImageNaturalHeight = 0;
+    vi.stubGlobal("Image", MockImage);
+
+    const storage = mockEditor.storage as unknown as {
+      shared: {
+        pageId?: string;
+        spaceName?: string;
+        pageName?: string;
+        imagePreviews?: Record<string, string | undefined>;
+      };
+    };
+
+    const descendantsMock = mockEditor.state.doc.descendants as unknown as Mock;
+    // eslint-disable-next-line promise/prefer-await-to-callbacks
+    descendantsMock.mockImplementation(
+      (callback: (node: ProsemirrorNode, pos: number) => boolean) => {
+        const generatedId = Object.keys(storage.shared.imagePreviews || {})[0] || "mock-id";
+        callback(
+          {
+            attrs: { placeholder: { id: generatedId, name: "avatar.png" } },
+            type: { name: "image" },
+          } as unknown as ProsemirrorNode,
+          15,
+        );
+      },
+    );
+
+    await uploadImage(mockFile, mockEditor, 5);
+
+    // No upload request should be made before dimensions resolve
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    // Failure handling should remove the placeholder and surface the error toast
+    expect(mockEditor.state.tr.delete).toHaveBeenCalled();
     expect(setFlashToast).toHaveBeenCalledWith(expect.stringContaining("failed to upload image"));
   });
 });

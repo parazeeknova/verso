@@ -32,6 +32,21 @@ var (
 	consecutiveDots    = regexp.MustCompile(`\.+`)
 )
 
+// inlineSafeMedia matches content types that are safe to serve inline.
+var inlineSafeMedia = regexp.MustCompile(`^(image|video|audio)/`)
+
+// setDownloadSecurityHeaders applies consistent content-type hardening to file
+// serving responses: disable MIME sniffing and force a download disposition
+// unless the content is a safe inline media type.
+func setDownloadSecurityHeaders(c *gin.Context, contentType string) {
+	c.Header("X-Content-Type-Options", "nosniff")
+	if inlineSafeMedia.MatchString(contentType) {
+		c.Header("Content-Disposition", "inline")
+	} else {
+		c.Header("Content-Disposition", "attachment")
+	}
+}
+
 // SanitizeBucketName sanitizes space and page names into a valid S3 bucket name.
 // S3 bucket names: 3-63 characters, lowercase letters, numbers, periods, and hyphens.
 // Starts and ends with a letter or number.
@@ -60,10 +75,18 @@ func SanitizeBucketName(spaceName, pageName string) string {
 func (h *Handlers) UploadFile(c *gin.Context) {
 	logger.Log.Info().Msg("UploadFile handler entered")
 
+	// Enforce the upload size limit before parsing the multipart body so
+	// oversized requests are rejected without reading the full payload.
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadBytes)
+
 	// Read the multipart body fully into memory so it can be replayed to the
 	// local fallback after an S3 failure and so the reported size is exact.
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
+		if strings.Contains(err.Error(), "request body too large") {
+			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "file exceeds size limit"})
+			return
+		}
 		logger.Log.Warn().Err(err).Msg("failed to get file from request form")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
 		return
@@ -219,6 +242,8 @@ func (h *Handlers) uploadLocal(c *gin.Context, bucketName, uniqueFilename string
 	written, err := io.Copy(destFile, file)
 	if err != nil {
 		logger.Log.Error().Err(err).Str("path", destPath).Msg("failed to copy uploaded file content")
+		_ = destFile.Close()
+		_ = os.Remove(destPath)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to write file locally"})
 		return
 	}
@@ -249,22 +274,29 @@ func (h *Handlers) GetUploadedFile(c *gin.Context) {
 
 	logger.Log.Debug().Str("bucket", bucket).Str("filename", filename).Msg("GetUploadedFile request received")
 
+	// When a DB-backed page service is present, uploads are stored under the
+	// page's UUID as the bucket, so read access can be enforced. Legacy
+	// uploads used spaceSlug-pageSlug bucket names that are not page IDs;
+	// those skip the access check and are served directly to preserve backward
+	// compatibility and to avoid failing on non-UUID bucket names.
 	if h.pageService != nil {
-		p, err := h.pageService.GetPageByID(c.Request.Context(), bucket)
-		if err != nil {
-			if errors.Is(err, page.ErrPageNotFound) {
-				c.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
+		if _, err := uuid.Parse(bucket); err == nil {
+			p, err := h.pageService.GetPageByID(c.Request.Context(), bucket)
+			if err != nil {
+				if errors.Is(err, page.ErrPageNotFound) {
+					c.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
+					return
+				}
+				logger.Log.Error().Err(err).Str("bucket", bucket).Msg("failed to resolve page for download")
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to resolve page"})
 				return
 			}
-			logger.Log.Error().Err(err).Str("bucket", bucket).Msg("failed to resolve page for download")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to resolve page"})
-			return
-		}
 
-		userID := middleware.GetCurrentUserID(c)
-		if err := h.pageService.RequireRead(c.Request.Context(), p.SpaceID, userID); err != nil {
-			c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
-			return
+			userID := middleware.GetCurrentUserID(c)
+			if err := h.pageService.RequireRead(c.Request.Context(), p.SpaceID, userID); err != nil {
+				c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
+				return
+			}
 		}
 	}
 
@@ -289,11 +321,14 @@ func (h *Handlers) GetUploadedFile(c *gin.Context) {
 		if err == nil {
 			defer func() { _ = out.Body.Close() }()
 
-			if out.ContentType != nil {
+			servedType := contentType
+			if out.ContentType != nil && *out.ContentType != "" {
+				servedType = *out.ContentType
 				c.Header("Content-Type", *out.ContentType)
 			} else {
 				c.Header("Content-Type", contentType)
 			}
+			setDownloadSecurityHeaders(c, servedType)
 			if out.ContentLength != nil {
 				c.Header("Content-Length", fmt.Sprintf("%d", *out.ContentLength))
 			}
@@ -324,5 +359,6 @@ func (h *Handlers) GetUploadedFile(c *gin.Context) {
 		return
 	}
 
+	setDownloadSecurityHeaders(c, contentType)
 	c.File(localPath)
 }

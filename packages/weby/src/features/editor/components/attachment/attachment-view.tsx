@@ -67,10 +67,9 @@ export const AttachmentView = (props: NodeViewProps) => {
     }
   }, [editor, getPos]);
 
-  let outlineColor = isDarkMode ? "#525252" : "#d4d4d4";
-  if (selected) {
-    outlineColor = "#b58cff";
-  }
+  const outlineClass = selected
+    ? "outline-[#b58cff]"
+    : "outline-neutral-300 dark:outline-neutral-600";
   const textClass = t("text-neutral-200", "text-neutral-800");
   const sizeClass = t("text-neutral-500", "text-neutral-400");
   const actionBtnClass = t(
@@ -80,18 +79,15 @@ export const AttachmentView = (props: NodeViewProps) => {
 
   return (
     <NodeViewWrapper className="w-full my-1" data-drag-handle>
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
         contentEditable={false}
-        onClick={handleSelect}
-        className="group flex items-center justify-between py-1.5 px-2.5 select-none"
-        style={{
-          cursor: "pointer",
-          outline: `1px solid ${outlineColor}`,
-          outlineOffset: "-1px",
-        }}
+        className={`group flex items-center justify-between py-1.5 px-2.5 select-none cursor-pointer outline outline-1 outline-offset-[-1px] ${outlineClass}`}
       >
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+        <button
+          type="button"
+          onClick={handleSelect}
+          className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer bg-transparent border-0 p-0 text-left m-0"
+        >
           {!url && placeholder ? (
             <div className="w-4 h-4 border-2 border-[#b58cff] border-t-transparent rounded-full animate-spin flex-shrink-0" />
           ) : (
@@ -107,10 +103,10 @@ export const AttachmentView = (props: NodeViewProps) => {
               {formatBytes(size)}
             </span>
           )}
-        </div>
+        </button>
 
         {url && (
-          <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 ml-2">
+          <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-150 ml-2">
             {isPdf && editor.isEditable && (
               <button
                 onClick={(e) => {

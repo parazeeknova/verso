@@ -28,7 +28,33 @@ import {
   YoutubeLogo,
   GitForkIcon,
 } from "@phosphor-icons/react";
+import type { Editor, Range } from "@tiptap/core";
 import type { SlashMenuItemType } from "./types";
+
+type FileUploader = (file: File, editor: Editor, pos: number) => Promise<void>;
+
+// Shared file-picker + upload flow used by the media/file slash commands.
+// It deletes the range, opens a native file picker restricted by `accept`, and
+// invokes the lazily-imported uploader with the chosen file.
+const triggerFileUpload = (
+  editor: Editor,
+  range: Range,
+  accept: string,
+  loadUploader: () => Promise<FileUploader>,
+) => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = accept;
+  input.addEventListener("change", async (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (file) {
+      editor.chain().focus().deleteRange(range).run();
+      const upload = await loadUploader();
+      void upload(file, editor, editor.state.selection.from);
+    }
+  });
+  input.click();
+};
 
 export const getSuggestionItems = (): SlashMenuItemType[] => [
   // --- Category 1: Standard Writing Blocks (Most Used While Typing) ---
@@ -167,18 +193,10 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*";
-      input.addEventListener("change", async (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (file) {
-          editor.chain().focus().deleteRange(range).run();
-          const { uploadImage } = await import("../image/upload-image");
-          void uploadImage(file, editor, editor.state.selection.from);
-        }
+      triggerFileUpload(editor, range, "image/*", async () => {
+        const { uploadImage } = await import("../image/upload-image");
+        return uploadImage;
       });
-      input.click();
     },
     description: "Upload an image.",
     icon: ImageIcon,
@@ -196,18 +214,10 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "video/*";
-      input.addEventListener("change", async (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (file) {
-          editor.chain().focus().deleteRange(range).run();
-          const { uploadVideo } = await import("../video/upload-video");
-          void uploadVideo(file, editor, editor.state.selection.from);
-        }
+      triggerFileUpload(editor, range, "video/*", async () => {
+        const { uploadVideo } = await import("../video/upload-video");
+        return uploadVideo;
       });
-      input.click();
     },
     description: "Upload a video.",
     icon: FileVideoIcon,
@@ -216,18 +226,10 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "audio/*";
-      input.addEventListener("change", async (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (file) {
-          editor.chain().focus().deleteRange(range).run();
-          const { uploadAudio } = await import("../audio/upload-audio");
-          void uploadAudio(file, editor, editor.state.selection.from);
-        }
+      triggerFileUpload(editor, range, "audio/*", async () => {
+        const { uploadAudio } = await import("../audio/upload-audio");
+        return uploadAudio;
       });
-      input.click();
     },
     description: "Upload an audio file.",
     icon: FileAudioIcon,
@@ -236,18 +238,10 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "application/pdf";
-      input.addEventListener("change", async (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (file) {
-          editor.chain().focus().deleteRange(range).run();
-          const { uploadPdf } = await import("../pdf/upload-pdf");
-          void uploadPdf(file, editor, editor.state.selection.from);
-        }
+      triggerFileUpload(editor, range, "application/pdf", async () => {
+        const { uploadPdf } = await import("../pdf/upload-pdf");
+        return uploadPdf;
       });
-      input.click();
     },
     description: "Upload a PDF document.",
     icon: FilePdfIcon,
@@ -256,17 +250,10 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.addEventListener("change", async (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (file) {
-          editor.chain().focus().deleteRange(range).run();
-          const { uploadAttachment } = await import("../attachment/upload-attachment");
-          void uploadAttachment(file, editor, editor.state.selection.from);
-        }
+      triggerFileUpload(editor, range, "", async () => {
+        const { uploadAttachment } = await import("../attachment/upload-attachment");
+        return uploadAttachment;
       });
-      input.click();
     },
     description: "Attach any file.",
     icon: PaperclipIcon,

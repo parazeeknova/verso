@@ -11,6 +11,7 @@ export const Route = createFileRoute("/api/console/files/$bucket/$filename")({
         if (range) {
           headers["Range"] = range;
         }
+        headers["Accept"] = request.headers.get("accept") ?? "*/*";
 
         const backyResponse = await getBacky(
           `console/files/${encodeURIComponent(params.bucket)}/${encodeURIComponent(params.filename)}`,

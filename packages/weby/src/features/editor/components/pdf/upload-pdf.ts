@@ -1,9 +1,13 @@
 import type { Editor } from "@tiptap/core";
-import type { Node as ProsemirrorNode } from "@tiptap/pm/model";
 import { setFlashToast } from "#/features/console/components/flash-toast";
 import { logger } from "#/shared/lib/logger";
+import { findNodeByPlaceholderId } from "../common/placeholder";
 
 const MAX_SIZE = 50 * 1024 * 1024;
+
+// 30s ceiling for an in-flight upload; on expiry we abort so the optimistic
+// placeholder can be reclaimed instead of staying stuck "uploading".
+const UPLOAD_TIMEOUT_MS = 30_000;
 
 interface UploadResponse {
   id?: string;
@@ -12,24 +16,6 @@ interface UploadResponse {
   fileName?: string;
   fileSize?: number;
 }
-
-const findPdfNodeByPlaceholderId = (
-  doc: ProsemirrorNode,
-  placeholderId: string,
-): { node: ProsemirrorNode; pos: number } | null => {
-  let result: { node: ProsemirrorNode; pos: number } | null = null;
-  doc.descendants((node: ProsemirrorNode, pos: number) => {
-    if (result) {
-      return false;
-    }
-    if (node.type.name === "pdf" && node.attrs.placeholder?.id === placeholderId) {
-      result = { node, pos };
-      return false;
-    }
-    return true;
-  });
-  return result;
-};
 
 export const uploadPdf = async (file: File, editor: Editor, pos: number) => {
   if (file.type !== "application/pdf") {
@@ -80,11 +66,18 @@ export const uploadPdf = async (file: File, editor: Editor, pos: number) => {
     formData.append("pageId", pageId);
   }
 
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
+    const controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+
     const res = await fetch("/api/console/upload", {
       body: formData,
       method: "POST",
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`);
@@ -97,7 +90,7 @@ export const uploadPdf = async (file: File, editor: Editor, pos: number) => {
     );
 
     const { state } = editor;
-    const placeholderNode = findPdfNodeByPlaceholderId(state.doc, placeholderId);
+    const placeholderNode = findNodeByPlaceholderId(state.doc, "pdf", placeholderId);
     if (placeholderNode) {
       editor.view.dispatch(
         state.tr.setNodeMarkup(placeholderNode.pos, undefined, {
@@ -116,12 +109,16 @@ export const uploadPdf = async (file: File, editor: Editor, pos: number) => {
     logger.error({ error: errMsg, placeholderId }, "pdf upload failed");
 
     const { state } = editor;
-    const placeholderNode = findPdfNodeByPlaceholderId(state.doc, placeholderId);
+    const placeholderNode = findNodeByPlaceholderId(state.doc, "pdf", placeholderId);
     if (placeholderNode) {
       editor.view.dispatch(state.tr.delete(placeholderNode.pos, placeholderNode.pos + 1));
     }
 
     setFlashToast(`failed to upload pdf: ${errMsg}`);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
   }
 };
 

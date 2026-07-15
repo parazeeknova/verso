@@ -174,7 +174,9 @@ func (h *NotificationHandlers) Stream(c *gin.Context) {
 			}
 		case <-heartbeat.C:
 			// SSE comment line; ignored by clients but resets idle timers.
-			_, _ = fmt.Fprintf(c.Writer, ": ping\n\n")
+			if _, err := fmt.Fprintf(c.Writer, ": ping\n\n"); err != nil {
+				return
+			}
 			if flusher != nil {
 				flusher.Flush()
 			}

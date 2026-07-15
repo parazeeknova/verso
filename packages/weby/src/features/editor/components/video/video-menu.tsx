@@ -128,8 +128,13 @@ export const VideoMenu = ({ editor }: EditorMenuProps) => {
       }
 
       const pos = editor.state.selection.from;
+      // Capture the existing node's attributes before it is removed so the
+      // replacement can preserve them.
+      const videoAttrs = editor.getAttributes("video");
+      const alt = videoAttrs?.alt;
+      const align = videoAttrs?.align;
       editor.commands.deleteSelection();
-      uploadVideo(file, editor, pos);
+      uploadVideo(file, editor, pos, { align, alt });
       // Reset so the same file can be selected again
       e.target.value = "";
     },

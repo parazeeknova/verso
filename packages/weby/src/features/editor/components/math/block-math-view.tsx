@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import "katex/dist/katex.min.css";
 import { render } from "katex";
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -49,6 +48,7 @@ const useDebouncedAttributesUpdate = (
   }, [debouncedPreview, updateAttributes]);
 };
 
+// eslint-disable-next-line complexity
 export const BlockMathView = (props: NodeViewProps) => {
   const { node, updateAttributes, editor, selected, getPos } = props;
   const mathResultContainer = useRef<HTMLDivElement>(null);

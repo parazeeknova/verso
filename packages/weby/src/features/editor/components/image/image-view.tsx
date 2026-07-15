@@ -2,16 +2,17 @@ import type { NodeViewProps } from "@tiptap/react";
 import { NodeViewWrapper } from "@tiptap/react";
 import React, { useMemo, useCallback } from "react";
 import { useTheme } from "#/shared/hooks/use-theme";
+import type { SharedEditorStorage } from "../common/storage";
 
 interface ImageContentProps {
   src?: string;
   previewSrc: string | null;
   placeholder?: { id: string; name: string } | null;
   alt?: string;
-  t: (dark: string, light: string) => string;
+  isDark: (dark: string, light: string) => string;
 }
 
-const ImageContent = ({ src, previewSrc, placeholder, alt, t }: ImageContentProps) => {
+const ImageContent = ({ src, previewSrc, placeholder, alt, isDark }: ImageContentProps) => {
   if (src) {
     return (
       <img
@@ -33,7 +34,7 @@ const ImageContent = ({ src, previewSrc, placeholder, alt, t }: ImageContentProp
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/10 dark:bg-white/5">
           <div className="w-6 h-6 border-2 border-neutral-400 border-t-transparent dark:border-neutral-600 dark:border-t-transparent rounded-full animate-spin" />
           <span
-            className={`text-[10px] lowercase tracking-wide font-medium ${t("text-white", "text-black")}`}
+            className={`text-[10px] lowercase tracking-wide font-medium ${isDark("text-white", "text-black")}`}
           >
             uploading {placeholder?.name}...
           </span>
@@ -45,7 +46,7 @@ const ImageContent = ({ src, previewSrc, placeholder, alt, t }: ImageContentProp
   if (placeholder) {
     return (
       <div
-        className={`w-full py-8 flex flex-col items-center justify-center gap-2 border border-dashed rounded-none ${t("border-neutral-800 bg-neutral-900/5 text-neutral-400", "border-neutral-200 bg-neutral-50 text-neutral-500")}`}
+        className={`w-full py-8 flex flex-col items-center justify-center gap-2 border border-dashed rounded-none ${isDark("border-neutral-800 bg-neutral-900/5 text-neutral-400", "border-neutral-200 bg-neutral-50 text-neutral-500")}`}
       >
         <div className="w-5 h-5 border-2 border-neutral-400 border-t-transparent dark:border-neutral-500 dark:border-t-transparent rounded-full animate-spin" />
         <span className="text-[10px] lowercase">uploading {placeholder.name}...</span>
@@ -57,16 +58,14 @@ const ImageContent = ({ src, previewSrc, placeholder, alt, t }: ImageContentProp
 };
 
 export const ImageView = (props: NodeViewProps) => {
-  const { node, editor } = props;
+  const { node, editor, updateAttributes } = props;
   const { src, width, height, aspectRatio, placeholder, alt, align } = node.attrs;
   const { isDarkMode } = useTheme();
 
-  const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const isDark = (dark: string, light: string) => (isDarkMode ? dark : light);
 
   const previewSrc = useMemo(() => {
-    const storage = editor?.storage as unknown as
-      | Record<string, Record<string, Record<string, string | undefined>>>
-      | undefined;
+    const storage = editor?.storage as SharedEditorStorage | undefined;
     if (placeholder?.id && storage?.shared?.imagePreviews) {
       return storage.shared.imagePreviews[placeholder.id] || null;
     }
@@ -111,7 +110,7 @@ export const ImageView = (props: NodeViewProps) => {
           newHeight = newWidth / aspectRatio;
         }
 
-        editor.commands.updateAttributes("image", {
+        updateAttributes({
           height: Math.round(newHeight),
           width: Math.round(newWidth),
         });
@@ -125,7 +124,7 @@ export const ImageView = (props: NodeViewProps) => {
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
     },
-    [editor, aspectRatio],
+    [updateAttributes, aspectRatio],
   );
 
   const handleResizeStart = useCallback(
@@ -153,7 +152,7 @@ export const ImageView = (props: NodeViewProps) => {
     <NodeViewWrapper className={alignmentClass} data-drag-handle>
       <div
         className={`relative max-w-full overflow-visible group rounded-none ${
-          src ? "" : t("bg-neutral-900/10", "bg-neutral-100/50")
+          src ? "" : isDark("bg-neutral-900/10", "bg-neutral-100/50")
         }`}
         style={{
           aspectRatio: aspectRatio ? `${aspectRatio}` : undefined,
@@ -161,7 +160,13 @@ export const ImageView = (props: NodeViewProps) => {
           width: displayWidth,
         }}
       >
-        <ImageContent alt={alt} placeholder={placeholder} previewSrc={previewSrc} src={src} t={t} />
+        <ImageContent
+          alt={alt}
+          placeholder={placeholder}
+          previewSrc={previewSrc}
+          src={src}
+          isDark={isDark}
+        />
 
         {/* Custom Left resize handle */}
         {showHandles && (

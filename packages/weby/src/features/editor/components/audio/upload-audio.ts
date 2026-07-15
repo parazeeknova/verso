@@ -1,25 +1,11 @@
 import type { Editor } from "@tiptap/core";
-import type { Node as ProsemirrorNode } from "@tiptap/pm/model";
 import { setFlashToast } from "#/features/console/components/flash-toast";
 import { logger } from "#/shared/lib/logger";
+import { findNodeByPlaceholderId } from "../common/placeholder";
 
-const findAudioNodeByPlaceholderId = (
-  doc: ProsemirrorNode,
-  placeholderId: string,
-): { node: ProsemirrorNode; pos: number } | null => {
-  let result: { node: ProsemirrorNode; pos: number } | null = null;
-  doc.descendants((node: ProsemirrorNode, pos: number) => {
-    if (result) {
-      return false;
-    }
-    if (node.type.name === "audio" && node.attrs.placeholder?.id === placeholderId) {
-      result = { node, pos };
-      return false;
-    }
-    return true;
-  });
-  return result;
-};
+// 30s ceiling for an in-flight upload; on expiry the timeout event rejects so the
+// optimistic placeholder can be reclaimed instead of staying stuck "uploading".
+const UPLOAD_TIMEOUT_MS = 30_000;
 
 export const uploadAudio = async (file: File, editor: Editor, pos: number) => {
   if (!file.type.startsWith("audio/")) {
@@ -84,6 +70,8 @@ export const uploadAudio = async (file: File, editor: Editor, pos: number) => {
     const data = await new Promise<{ src: string }>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open("POST", "/api/console/upload");
+      xhr.timeout = UPLOAD_TIMEOUT_MS;
+      xhr.addEventListener("timeout", () => reject(new Error("Upload timed out")));
 
       let lastPercent = 0;
       xhr.upload.addEventListener("progress", (e) => {
@@ -93,7 +81,7 @@ export const uploadAudio = async (file: File, editor: Editor, pos: number) => {
             lastPercent = percent;
 
             const { state } = editor;
-            const placeholderNode = findAudioNodeByPlaceholderId(state.doc, placeholderId);
+            const placeholderNode = findNodeByPlaceholderId(state.doc, "audio", placeholderId);
             if (placeholderNode) {
               editor.view.dispatch(
                 state.tr.setNodeMarkup(placeholderNode.pos, undefined, {
@@ -130,7 +118,7 @@ export const uploadAudio = async (file: File, editor: Editor, pos: number) => {
 
     // Replace placeholder with final served audio URL
     const { state } = editor;
-    const placeholderNode = findAudioNodeByPlaceholderId(state.doc, placeholderId);
+    const placeholderNode = findNodeByPlaceholderId(state.doc, "audio", placeholderId);
     if (placeholderNode) {
       editor.view.dispatch(
         state.tr.setNodeMarkup(placeholderNode.pos, undefined, {
@@ -147,7 +135,7 @@ export const uploadAudio = async (file: File, editor: Editor, pos: number) => {
 
     // Remove placeholder on failure
     const { state } = editor;
-    const placeholderNode = findAudioNodeByPlaceholderId(state.doc, placeholderId);
+    const placeholderNode = findNodeByPlaceholderId(state.doc, "audio", placeholderId);
     if (placeholderNode) {
       editor.view.dispatch(state.tr.delete(placeholderNode.pos, placeholderNode.pos + 1));
     }

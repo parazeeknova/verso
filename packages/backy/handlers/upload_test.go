@@ -44,8 +44,8 @@ func TestLocalUploadAndDownload(t *testing.T) {
 	r.POST("/api/console/upload", h.UploadFile)
 	r.GET("/api/console/files/:bucket/:filename", h.GetUploadedFile)
 
-	// Clean up local uploads directory created by tests
-	defer func() { _ = os.RemoveAll("./uploads") }()
+	// Clean up only the test-owned directory created by tests
+	defer func() { _ = os.RemoveAll("./uploads/test-space-test-page") }()
 
 	testCases := []struct {
 		name        string
@@ -129,6 +129,22 @@ func TestLocalUploadAndDownload(t *testing.T) {
 
 			if w2.Body.String() != tc.content {
 				t.Errorf("Downloaded content mismatch: got %q, want %q", w2.Body.String(), tc.content)
+			}
+
+			// Range download should return 206 with the requested byte span.
+			w3 := httptest.NewRecorder()
+			req3, _ := http.NewRequest("GET", urlVal, nil)
+			req3.Header.Set("Range", "bytes=0-3")
+			r.ServeHTTP(w3, req3)
+
+			if w3.Code != http.StatusPartialContent {
+				t.Fatalf("Range download status = %d, want %d", w3.Code, http.StatusPartialContent)
+			}
+			if w3.Body.String() != tc.content[:4] {
+				t.Errorf("Range content mismatch: got %q, want %q", w3.Body.String(), tc.content[:4])
+			}
+			if got := w3.Header().Get("Content-Range"); got == "" {
+				t.Errorf("expected Content-Range header on 206 response")
 			}
 		})
 	}

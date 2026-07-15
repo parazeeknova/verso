@@ -3,6 +3,27 @@ import { Node, mergeAttributes } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { AttachmentView } from "../components/attachment/attachment-view";
 
+// Only relative URLs and http/https protocols are allowed; anything else
+// (e.g. `javascript:`) is dropped so it can never become an href attribute.
+const sanitizeAttachmentUrl = (url: string | undefined): string => {
+  if (!url) {
+    return "";
+  }
+  if (url.startsWith("/") || url.startsWith("#") || url.startsWith(".") || url.startsWith("?")) {
+    return url;
+  }
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return url;
+    }
+  } catch {
+    // Not an absolute URL; treat the remainder as a relative path.
+    return url;
+  }
+  return "";
+};
+
 export interface AttachmentAttributes {
   url?: string;
   name?: string;
@@ -60,9 +81,9 @@ export const CustomAttachment = Node.create({
       },
       url: {
         default: "",
-        parseHTML: (element: HTMLElement) => element.dataset.attachmentUrl,
+        parseHTML: (element: HTMLElement) => sanitizeAttachmentUrl(element.dataset.attachmentUrl),
         renderHTML: (attributes: AttachmentAttributes) => ({
-          "data-attachment-url": attributes.url,
+          "data-attachment-url": sanitizeAttachmentUrl(attributes.url),
         }),
       },
     };
@@ -101,6 +122,7 @@ export const CustomAttachment = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
+    const href = sanitizeAttachmentUrl(HTMLAttributes["data-attachment-url"] || "");
     return [
       "div",
       mergeAttributes({ "data-type": this.name }, HTMLAttributes),
@@ -108,7 +130,8 @@ export const CustomAttachment = Node.create({
         "a",
         {
           class: "attachment",
-          href: HTMLAttributes["data-attachment-url"] || "",
+          href,
+          rel: "noopener noreferrer",
           target: "_blank",
         },
         `${HTMLAttributes["data-attachment-name"] || "attachment"}`,
