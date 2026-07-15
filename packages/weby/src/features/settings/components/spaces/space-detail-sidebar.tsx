@@ -8,6 +8,7 @@ import {
   XIcon,
 } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useTheme } from "#/shared/hooks/use-theme";
 import { useAuth } from "#/features/auth/hooks/use-auth";
 import {
@@ -597,6 +598,8 @@ export const SpaceDetailSidebar = ({
   workspaceName,
 }: SpaceDetailSidebarProps) => {
   const { isDarkMode } = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
 
   const [name, setName] = useState(space.name);
@@ -784,6 +787,10 @@ export const SpaceDetailSidebar = ({
       deleteSpace.mutate(space.id, {
         onSuccess: () => {
           onClose();
+          const pathPrefix = `/s/${space.slug}`;
+          if (location.pathname === pathPrefix || location.pathname.startsWith(`${pathPrefix}/`)) {
+            navigate({ to: "/home" });
+          }
         },
       });
     } else {

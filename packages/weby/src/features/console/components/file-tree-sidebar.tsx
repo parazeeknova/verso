@@ -185,7 +185,19 @@ const PageNode = ({ node, depth, treeItems, spaceSlug }: PageNodeProps) => {
   };
 
   const submitDelete = () => {
-    deletePage.mutate(node.item.id);
+    const shouldRedirect =
+      selectedPageId === node.item.id ||
+      (selectedPageId ? isDescendant(treeItems, node.item.id, selectedPageId) : false);
+    deletePage.mutate(node.item.id, {
+      onSuccess: () => {
+        if (shouldRedirect) {
+          navigate({
+            params: { spaceSlug },
+            to: "/s/$spaceSlug",
+          });
+        }
+      },
+    });
     setMenuOpen(false);
     setShowDeleteConfirm(false);
   };
