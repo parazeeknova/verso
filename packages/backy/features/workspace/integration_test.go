@@ -726,6 +726,60 @@ func TestSpaceService_SoftDeletedSpacesDisappearFromList(t *testing.T) {
 	}
 }
 
+func TestSpaceService_DeleteSpace_RecursiveCleanup(t *testing.T) {
+	db := setupTestDB(t)
+	ctx := context.Background()
+
+	ownerID := createTestUser(t, ctx, db, "owner", "owner@example.com")
+	w := createTestWorkspace(t, ctx, db, "Test Workspace", "test-workspace-"+uuid.New().String()[:8], ownerID)
+
+	s, err := db.spaceSvc.CreateSpace(ctx, "Deletable Space", "deletable-space", "", "", w.ID, ownerID)
+	if err != nil {
+		t.Fatalf("create space: %v", err)
+	}
+
+	p := models.Page{
+		ID:          uuid.New().String(),
+		SlugID:      uuid.New().String(),
+		Title:       "Test Page in Space",
+		SpaceID:     s.ID,
+		CreatorID:   ownerID,
+		ContentJSON: []byte("{}"),
+	}
+
+	if err := db.pageSvc.CreatePage(ctx, p); err != nil {
+		t.Fatalf("create page: %v", err)
+	}
+
+	// Verify page exists.
+	_, err = db.pageRepo.GetByID(ctx, p.ID)
+	if err != nil {
+		t.Fatalf("expected page to exist before deletion: %v", err)
+	}
+
+	// Delete space.
+	if err := db.spaceSvc.DeleteSpace(ctx, s.ID, ownerID); err != nil {
+		t.Fatalf("delete space: %v", err)
+	}
+
+	// Verify space is soft-deleted.
+	spaces, err := db.spaceRepo.ListAll(ctx, w.ID)
+	if err != nil {
+		t.Fatalf("list spaces after delete: %v", err)
+	}
+	for _, sp := range spaces {
+		if sp.ID == s.ID {
+			t.Fatal("expected soft-deleted space to not appear in list")
+		}
+	}
+
+	// Verify page is soft-deleted.
+	_, err = db.pageRepo.GetByID(ctx, p.ID)
+	if !errors.Is(err, repositories.ErrPageNotFound) {
+		t.Fatalf("expected page to be soft-deleted, got %v", err)
+	}
+}
+
 // ============================================================================
 // Cross-workspace isolation
 // ============================================================================
