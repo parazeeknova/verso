@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,6 +13,7 @@ import (
 	"verso/backy/database/models"
 	notifeat "verso/backy/features/notification"
 	"verso/backy/repositories"
+	"verso/backy/shared/storage"
 )
 
 // ErrSpaceNotFound is returned when a space is not found.
@@ -24,10 +27,11 @@ var ErrSpacePermissionDenied = errors.New("permission denied for this space")
 
 // SpaceService provides business logic for spaces.
 type SpaceService struct {
-	spaceRepo *repositories.SpaceRepo
-	pageRepo  *repositories.PageRepo
-	groupRepo *repositories.GroupRepo
-	notifier  notifeat.Notifier
+	spaceRepo     *repositories.SpaceRepo
+	pageRepo      *repositories.PageRepo
+	groupRepo     *repositories.GroupRepo
+	notifier      notifeat.Notifier
+	storageClient *storage.Client
 }
 
 // NewSpaceService creates a new space service.
@@ -43,6 +47,11 @@ func NewSpaceService(spaceRepo *repositories.SpaceRepo, pageRepo *repositories.P
 // SetNotifier sets the notification service on the space service.
 func (s *SpaceService) SetNotifier(n notifeat.Notifier) {
 	s.notifier = n
+}
+
+// SetStorageClient sets the storage client on the space service.
+func (s *SpaceService) SetStorageClient(c *storage.Client) {
+	s.storageClient = c
 }
 
 // CreateSpace creates a new space within a workspace and adds the creator as admin.
@@ -180,18 +189,31 @@ func (s *SpaceService) workspaceMemberIDsForSpace(ctx context.Context, workspace
 	return members, nil
 }
 
-// DeleteSpace soft-deletes a space only if it has no pages. Requires admin role.
+// DeleteSpace soft-deletes a space and recursively deletes all pages inside it (and their S3/local assets). Requires admin role.
 func (s *SpaceService) DeleteSpace(ctx context.Context, id, userID string) error {
 	if err := s.RequireAdmin(ctx, id, userID); err != nil {
 		return err
 	}
 
-	count, err := s.spaceRepo.PageCount(ctx, id)
+	pageIDs, err := s.pageRepo.ListIDsInSpace(ctx, id)
 	if err != nil {
-		return fmt.Errorf("checking page count: %w", err)
+		return fmt.Errorf("listing pages in space: %w", err)
 	}
-	if count > 0 {
-		return ErrSpaceNotEmpty
+
+	for _, pageID := range pageIDs {
+		// Clean S3 / RustFS assets
+		if s.storageClient != nil {
+			_ = s.storageClient.DeleteBucketAndObjects(ctx, pageID)
+		}
+		// Clean local assets
+		localPath := filepath.Join(".", "uploads", pageID)
+		_ = os.RemoveAll(localPath)
+	}
+
+	if len(pageIDs) > 0 {
+		if err := s.pageRepo.SoftDeleteAllInSpace(ctx, id, userID); err != nil {
+			return fmt.Errorf("deleting pages from database: %w", err)
+		}
 	}
 
 	if err := s.spaceRepo.SoftDelete(ctx, id); err != nil {

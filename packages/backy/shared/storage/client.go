@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -102,4 +104,60 @@ func (c *Client) ensureBucket(ctx context.Context, bucket string) error {
 // S3 returns the underlying S3 client.
 func (c *Client) S3() *s3.Client {
 	return c.s3
+}
+
+// DeleteBucketAndObjects deletes all objects in the bucket, then deletes the bucket itself.
+func (c *Client) DeleteBucketAndObjects(ctx context.Context, bucket string) error {
+	in := &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucket),
+	}
+	for {
+		out, err := c.s3.ListObjectsV2(ctx, in)
+		if err != nil {
+			errStr := err.Error()
+			if strings.Contains(errStr, "NoSuchBucket") || strings.Contains(errStr, "NoSuchKey") || strings.Contains(errStr, "404") {
+				return nil
+			}
+			return fmt.Errorf("list objects: %w", err)
+		}
+		if len(out.Contents) == 0 {
+			break
+		}
+
+		var objects []types.ObjectIdentifier
+		for _, obj := range out.Contents {
+			objects = append(objects, types.ObjectIdentifier{
+				Key: obj.Key,
+			})
+		}
+
+		_, err = c.s3.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+			Bucket: aws.String(bucket),
+			Delete: &types.Delete{
+				Objects: objects,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("delete objects: %w", err)
+		}
+
+		if out.IsTruncated != nil && *out.IsTruncated {
+			in.ContinuationToken = out.NextContinuationToken
+		} else {
+			break
+		}
+	}
+
+	_, err := c.s3.DeleteBucket(ctx, &s3.DeleteBucketInput{
+		Bucket: aws.String(bucket),
+	})
+	if err != nil {
+		errStr := err.Error()
+		if strings.Contains(errStr, "NoSuchBucket") || strings.Contains(errStr, "404") {
+			return nil
+		}
+		return fmt.Errorf("delete bucket: %w", err)
+	}
+
+	return nil
 }

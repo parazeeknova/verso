@@ -154,6 +154,9 @@ func main() {
 	}
 	if storageClient != nil {
 		h.SetStorageClient(storageClient)
+		if spaceService != nil {
+			spaceService.SetStorageClient(storageClient)
+		}
 	}
 
 	// Create auth service and handlers
