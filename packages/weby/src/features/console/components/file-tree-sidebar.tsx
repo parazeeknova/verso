@@ -191,10 +191,14 @@ const PageNode = ({ node, depth, treeItems, spaceSlug }: PageNodeProps) => {
     deletePage.mutate(node.item.id, {
       onSuccess: () => {
         if (shouldRedirect) {
-          navigate({
-            params: { spaceSlug },
-            to: "/s/$spaceSlug",
-          });
+          if (spaceSlug === "nospace") {
+            navigate({ to: "/home" });
+          } else {
+            navigate({
+              params: { spaceSlug },
+              to: "/s/$spaceSlug",
+            });
+          }
         }
       },
     });

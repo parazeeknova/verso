@@ -308,7 +308,7 @@ export const EditorMoreMenu = ({
         },
         onSuccess: () => {
           setFlashToast(`deleted ${title}`);
-          if (spaceSlug) {
+          if (spaceSlug && spaceSlug !== "nospace") {
             navigate({ to: `/s/${spaceSlug}` });
             return;
           }
