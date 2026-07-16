@@ -148,7 +148,7 @@ export const ConsoleHome = () => {
 
   const subMessage = useMemo(() => subMessages[Math.floor(Math.random() * subMessages.length)], []);
 
-  const mySpaces = spaces ?? [];
+  const mySpaces = (spaces ?? []).filter((s) => s.slug !== "nospace");
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col px-4 pt-12 min-h-full">
@@ -215,27 +215,27 @@ export const ConsoleHome = () => {
               </p>
             </button>
           ))}
-          <div className="shrink-0">
-            <button
-              className={`w-44 shrink-0 border border-dashed px-3 py-2 text-left lowercase bg-linear-to-b ${t("border-border-dark from-white/3 to-transparent hover:bg-white/5 text-text-dark/25 hover:text-text-dark/40", "border-border-light from-black/2 to-transparent hover:bg-black/3 text-text-light/25 hover:text-text-light/40")}`}
-              onClick={() => {
-                setShowCreateSpace(true);
-                setNewName("");
-                setNewSlug("");
-                setNewDescription("");
-                setCreateError("");
-              }}
-              type="button"
+          <button
+            className={`w-44 shrink-0 border border-dashed px-3 py-2 text-left lowercase bg-linear-to-b ${t("border-border-dark from-white/3 to-transparent hover:bg-white/5 text-text-dark/25 hover:text-text-dark/40", "border-border-light from-black/2 to-transparent hover:bg-black/3 text-text-light/25 hover:text-text-light/40")}`}
+            onClick={() => {
+              setShowCreateSpace(true);
+              setNewName("");
+              setNewSlug("");
+              setNewDescription("");
+              setCreateError("");
+            }}
+            type="button"
+          >
+            <div className="flex items-center gap-2">
+              <PlusIcon size={14} />
+              <p className="text-[13px]">create space</p>
+            </div>
+            <p
+              className={`mt-1.5 text-[10px] line-clamp-2 ${t("text-text-dark/20", "text-text-light/20")}`}
             >
-              <div className="flex items-center gap-2">
-                <PlusIcon size={14} />
-                <p className="text-[13px]">create space</p>
-              </div>
-              <p className={`mt-1.5 text-[10px] ${t("text-text-dark/20", "text-text-light/20")}`}>
-                {createSubMessages[Math.floor(Math.random() * createSubMessages.length)]}
-              </p>
-            </button>
-          </div>
+              {createSubMessages[Math.floor(Math.random() * createSubMessages.length)]}
+            </p>
+          </button>
         </div>
       </div>
       {showCreateSpace && (
