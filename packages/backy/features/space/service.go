@@ -195,6 +195,18 @@ func (s *SpaceService) DeleteSpace(ctx context.Context, id, userID string) error
 		return err
 	}
 
+	existing, err := s.spaceRepo.GetByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, ErrSpaceNotFound) {
+			return ErrSpaceNotFound
+		}
+		return fmt.Errorf("getting space: %w", err)
+	}
+
+	if existing.Slug == "nospace" {
+		return fmt.Errorf("cannot delete system space nospace")
+	}
+
 	pageIDs, err := s.pageRepo.ListIDsInSpace(ctx, id)
 	if err != nil {
 		return fmt.Errorf("listing pages in space: %w", err)

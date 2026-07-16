@@ -780,6 +780,30 @@ func TestSpaceService_DeleteSpace_RecursiveCleanup(t *testing.T) {
 	}
 }
 
+func TestSpaceService_DeleteSpace_CannotDeleteNoSpace(t *testing.T) {
+	db := setupTestDB(t)
+	ctx := context.Background()
+
+	ownerID := createTestUser(t, ctx, db, "owner", "owner@example.com")
+	w := createTestWorkspace(t, ctx, db, "Test Workspace", "test-workspace-"+uuid.New().String()[:8], ownerID)
+
+	// Create nospace system space.
+	s, err := db.spaceSvc.CreateSpace(ctx, "nospace", "nospace", "", "", w.ID, ownerID)
+	if err != nil {
+		t.Fatalf("create nospace space: %v", err)
+	}
+
+	// Try to delete space.
+	err = db.spaceSvc.DeleteSpace(ctx, s.ID, ownerID)
+	if err == nil {
+		t.Fatal("expected error when deleting nospace, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "cannot delete system space nospace") {
+		t.Fatalf("expected cannot delete system space nospace error, got %v", err)
+	}
+}
+
 // ============================================================================
 // Cross-workspace isolation
 // ============================================================================
