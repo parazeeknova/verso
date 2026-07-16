@@ -14,7 +14,7 @@ optdepends=('gstreamer: audio/video support'
 provides=('verso')
 conflicts=('verso')
 source=("https://github.com/parazeeknova/verso/releases/download/v${pkgver}/stable-linux-x64-Verso-Setup.tar.gz")
-sha256sums=('0019dfc4b32d63c1392aa264aed2253c1e0c2fb09216f8e2cc269bbfb8bb49b5')
+sha256sums=('a6b53ec007b8627f4a51040ea62ac45a4fc612038be223bc38aa80211118b10b')
 
 package() {
     # Install application files
