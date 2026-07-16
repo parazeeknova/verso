@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/smithy-go"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -114,9 +116,12 @@ func (c *Client) DeleteBucketAndObjects(ctx context.Context, bucket string) erro
 	for {
 		out, err := c.s3.ListObjectsV2(ctx, in)
 		if err != nil {
-			errStr := err.Error()
-			if strings.Contains(errStr, "NoSuchBucket") || strings.Contains(errStr, "NoSuchKey") || strings.Contains(errStr, "404") {
-				return nil
+			var apiErr smithy.APIError
+			if errors.As(err, &apiErr) {
+				code := apiErr.ErrorCode()
+				if code == "NoSuchBucket" || code == "NoSuchKey" || code == "NotFound" {
+					return nil
+				}
 			}
 			return fmt.Errorf("list objects: %w", err)
 		}

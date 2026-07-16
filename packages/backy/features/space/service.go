@@ -13,6 +13,7 @@ import (
 	"verso/backy/database/models"
 	notifeat "verso/backy/features/notification"
 	"verso/backy/repositories"
+	"verso/backy/shared/logger"
 	"verso/backy/shared/storage"
 )
 
@@ -215,11 +216,15 @@ func (s *SpaceService) DeleteSpace(ctx context.Context, id, userID string) error
 	for _, pageID := range pageIDs {
 		// Clean S3 / RustFS assets
 		if s.storageClient != nil {
-			_ = s.storageClient.DeleteBucketAndObjects(ctx, pageID)
+			if err := s.storageClient.DeleteBucketAndObjects(ctx, pageID); err != nil {
+				logger.Log.Error().Err(err).Str("pageID", pageID).Msg("failed to clean storage assets on space deletion")
+			}
 		}
 		// Clean local assets
 		localPath := filepath.Join(".", "uploads", pageID)
-		_ = os.RemoveAll(localPath)
+		if err := os.RemoveAll(localPath); err != nil {
+			logger.Log.Error().Err(err).Str("pageID", pageID).Str("path", localPath).Msg("failed to remove local uploads on space deletion")
+		}
 	}
 
 	if len(pageIDs) > 0 {

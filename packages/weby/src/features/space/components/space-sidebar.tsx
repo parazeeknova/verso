@@ -33,6 +33,7 @@ import {
 } from "#/features/console/hooks/use-page-favorites";
 import { useTheme } from "#/shared/hooks/use-theme";
 import { useConsoleContext } from "#/features/console/components/console-context";
+import { usePageDnDAndMutation } from "#/features/console/hooks/use-page-dnd-and-mutation";
 
 const toSlug = (title: string): string =>
   title
@@ -69,28 +70,6 @@ const buildPageTree = (items: PageTreeItem[]): TreeNode[] => {
   };
   return build(null);
 };
-
-const isDescendant = (items: PageTreeItem[], ancestorId: string, descendantId: string): boolean => {
-  const parentMap = new Map(items.map((i) => [i.id, i.parentPageId]));
-  const visited = new Set<string>();
-  let current: string | null | undefined = descendantId;
-  while (current) {
-    if (visited.has(current)) {
-      return false;
-    }
-    visited.add(current);
-    const parent = parentMap.get(current);
-    if (parent === ancestorId) {
-      return true;
-    }
-    if (!parent) {
-      return false;
-    }
-    current = parent;
-  }
-  return false;
-};
-
 interface ContextMenuState {
   x: number;
   y: number;
@@ -207,27 +186,18 @@ const PageNode = ({ node, depth, spaceId, spaceSlug, treeItems }: PageNodeProps)
     }
   };
 
-  const submitDelete = () => {
-    const shouldRedirect =
-      selectedPageId === node.item.id ||
-      (selectedPageId ? isDescendant(treeItems, node.item.id, selectedPageId) : false);
-    deletePage.mutate(node.item.id, {
-      onSuccess: () => {
-        if (shouldRedirect) {
-          if (spaceSlug === "nospace") {
-            navigate({ to: "/home" });
-          } else {
-            navigate({
-              params: { spaceSlug },
-              to: "/s/$spaceSlug",
-            });
-          }
-        }
-      },
-    });
-    setContextMenu(null);
-    setShowDeleteConfirm(false);
-  };
+  const { handleDragOver, handleDragStart, handleDrop, submitDelete } = usePageDnDAndMutation({
+    deletePage,
+    hasChildren,
+    movePage,
+    navigate,
+    node,
+    selectedPageId,
+    setContextMenu,
+    setShowDeleteConfirm,
+    spaceSlug,
+    treeItems,
+  });
 
   const submitCreateChild = () => {
     const trimmed = newChildTitle.trim();
@@ -250,30 +220,6 @@ const PageNode = ({ node, depth, spaceId, spaceSlug, treeItems }: PageNodeProps)
       submitCreateChild();
     } else if (e.key === "Escape") {
       setIsCreatingChild(false);
-    }
-  };
-
-  const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.setData("text/plain", node.item.id);
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    if (hasChildren) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const draggedId = e.dataTransfer.getData("text/plain");
-    if (
-      draggedId &&
-      draggedId !== node.item.id &&
-      !isDescendant(treeItems, draggedId, node.item.id)
-    ) {
-      movePage.mutate({ id: draggedId, input: { parentPageId: node.item.id } });
     }
   };
 

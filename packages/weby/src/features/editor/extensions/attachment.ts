@@ -18,8 +18,7 @@ const sanitizeAttachmentUrl = (url: string | undefined): string => {
       return url;
     }
   } catch {
-    // Not an absolute URL; treat the remainder as a relative path.
-    return url;
+    return "";
   }
   return "";
 };

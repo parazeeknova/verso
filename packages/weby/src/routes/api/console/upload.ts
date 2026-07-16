@@ -12,7 +12,12 @@ export const Route = createFileRoute("/api/console/upload")({
 
         try {
           const formData = await request.formData();
-          const backyResponse = await uploadBacky("console/upload", formData, cookieHeader);
+          const pageId = formData.get("pageId") as string;
+          let path = "console/upload";
+          if (pageId) {
+            path = `console/upload?pageId=${encodeURIComponent(pageId)}`;
+          }
+          const backyResponse = await uploadBacky(path, formData, cookieHeader);
 
           if (!backyResponse.ok) {
             const bodyText = await backyResponse.text().catch(() => "");

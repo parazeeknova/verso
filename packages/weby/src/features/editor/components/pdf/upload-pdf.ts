@@ -77,8 +77,6 @@ export const uploadPdf = async (file: File, editor: Editor, pos: number) => {
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
-
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`);
     }

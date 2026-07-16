@@ -421,10 +421,19 @@ func (h *Handlers) CreateConsolePage(c *gin.Context) {
 	workspaceID := req.WorkspaceID
 
 	if spaceID == "" {
-		if workspaceID == "" && h.workspaceService != nil {
-			workspaces, err := h.workspaceService.ListWorkspaces(c.Request.Context(), userID)
-			if err == nil && len(workspaces) > 0 {
-				workspaceID = workspaces[0].ID
+		if workspaceID != "" {
+			if h.workspaceService != nil {
+				if err := h.workspaceService.RequireMembership(c.Request.Context(), workspaceID, userID); err != nil {
+					c.JSON(http.StatusForbidden, gin.H{"error": "permission denied for this workspace"})
+					return
+				}
+			}
+		} else {
+			if h.workspaceService != nil {
+				workspaces, err := h.workspaceService.ListWorkspaces(c.Request.Context(), userID)
+				if err == nil && len(workspaces) > 0 {
+					workspaceID = workspaces[0].ID
+				}
 			}
 		}
 

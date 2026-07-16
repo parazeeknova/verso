@@ -17,6 +17,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"verso/backy/database/models"
 	"verso/backy/features/page"
 	"verso/backy/middleware"
 	"verso/backy/shared/logger"
@@ -75,45 +76,12 @@ func SanitizeBucketName(spaceName, pageName string) string {
 func (h *Handlers) UploadFile(c *gin.Context) {
 	logger.Log.Info().Msg("UploadFile handler entered")
 
-	// Enforce the upload size limit before parsing the multipart body so
-	// oversized requests are rejected without reading the full payload.
-	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadBytes)
-
-	// Read the multipart body fully into memory so it can be replayed to the
-	// local fallback after an S3 failure and so the reported size is exact.
-	file, header, err := c.Request.FormFile("file")
-	if err != nil {
-		if strings.Contains(err.Error(), "request body too large") {
-			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "file exceeds size limit"})
-			return
-		}
-		logger.Log.Warn().Err(err).Msg("failed to get file from request form")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
-		return
-	}
-	defer func() { _ = file.Close() }()
-
-	raw, err := io.ReadAll(io.LimitReader(file, maxUploadBytes+1))
-	if err != nil {
-		logger.Log.Error().Err(err).Msg("failed to read uploaded file into memory")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read file"})
-		return
-	}
-	if int64(len(raw)) > maxUploadBytes {
-		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "file exceeds size limit"})
-		return
-	}
-	size := int64(len(raw))
-
-	attachmentID := uuid.New().String()
-	ext := filepath.Ext(header.Filename)
-	uniqueFilename := fmt.Sprintf("%s%s", attachmentID, ext)
-
-	// The storage bucket is derived from the resolved page identity and is
-	// access-scoped. When a DB-backed page service is present we require a
-	// valid pageId and verify write access before doing any work.
+	var resolvedPage *models.Page
 	if h.pageService != nil {
-		pageID := c.PostForm("pageId")
+		pageID := c.Query("pageId")
+		if pageID == "" {
+			pageID = c.GetHeader("X-Page-Id")
+		}
 		if pageID == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "pageId is required"})
 			return
@@ -141,10 +109,54 @@ func (h *Handlers) UploadFile(c *gin.Context) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
 			return
 		}
+		resolvedPage = &p
+	}
 
+	// Enforce the upload size limit before parsing the multipart body so
+	// oversized requests are rejected without reading the full payload.
+	// We add 32 KiB of overhead to allow form metadata, headers, boundaries, etc.
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadBytes+32*1024)
+
+	// Read the multipart body fully into memory so it can be replayed to the
+	// local fallback after an S3 failure and so the reported size is exact.
+	file, header, err := c.Request.FormFile("file")
+	if err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "file exceeds size limit"})
+			return
+		}
+		logger.Log.Warn().Err(err).Msg("failed to get file from request form")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
+		return
+	}
+	defer func() { _ = file.Close() }()
+
+	raw, err := io.ReadAll(io.LimitReader(file, maxUploadBytes+1))
+	if err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "file exceeds size limit"})
+			return
+		}
+		logger.Log.Error().Err(err).Msg("failed to read uploaded file into memory")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read file"})
+		return
+	}
+	if int64(len(raw)) > maxUploadBytes {
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "file exceeds size limit"})
+		return
+	}
+	size := int64(len(raw))
+
+	attachmentID := uuid.New().String()
+	ext := filepath.Ext(header.Filename)
+	uniqueFilename := fmt.Sprintf("%s%s", attachmentID, ext)
+
+	if resolvedPage != nil {
 		// Bucket identity is the canonical page ID: reversible for access
 		// checks on download and immune to client-supplied name spoofing.
-		bucketName := SanitizeBucketName(p.ID, "")
+		bucketName := SanitizeBucketName(resolvedPage.ID, "")
 		h.uploadToStorage(c, bucketName, uniqueFilename, raw, header.Filename, size, attachmentID, ext)
 		return
 	}
@@ -297,6 +309,45 @@ func (h *Handlers) GetUploadedFile(c *gin.Context) {
 				c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
 				return
 			}
+		} else {
+			userID := middleware.GetCurrentUserID(c)
+			var resolvedPage *models.Page
+
+			var hyphenIdxs []int
+			for i, char := range bucket {
+				if char == '-' {
+					hyphenIdxs = append(hyphenIdxs, i)
+				}
+			}
+
+			for _, idx := range hyphenIdxs {
+				spaceSlug := bucket[:idx]
+				pageSlug := bucket[idx+1:]
+				if spaceSlug == "" || pageSlug == "" {
+					continue
+				}
+
+				sp, err := h.spaceService.GetSpaceBySlug(c.Request.Context(), spaceSlug, userID)
+				if err != nil {
+					continue
+				}
+
+				p, err := h.pageService.GetPageBySpaceAndSlug(c.Request.Context(), sp.ID, pageSlug)
+				if err == nil {
+					resolvedPage = &p
+					break
+				}
+			}
+
+			if resolvedPage == nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
+				return
+			}
+
+			if err := h.pageService.RequireRead(c.Request.Context(), resolvedPage.SpaceID, userID); err != nil {
+				c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
+				return
+			}
 		}
 	}
 
@@ -357,7 +408,24 @@ func (h *Handlers) GetUploadedFile(c *gin.Context) {
 	}
 
 	// Fallback to local storage
+	if strings.Contains(bucket, "..") || strings.Contains(filename, "..") {
+		c.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
+		return
+	}
+
+	uploadsDir, err := filepath.Abs(filepath.Join(".", "uploads"))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
+		return
+	}
+
 	localPath := filepath.Join(".", "uploads", bucket, filename)
+	absPath, err := filepath.Abs(localPath)
+	if err != nil || !strings.HasPrefix(absPath, uploadsDir) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
+		return
+	}
+
 	if _, err := os.Stat(localPath); errors.Is(err, os.ErrNotExist) {
 		logger.Log.Debug().Str("path", localPath).Msg("file not found locally")
 		c.JSON(http.StatusNotFound, gin.H{"error": "file not found"})

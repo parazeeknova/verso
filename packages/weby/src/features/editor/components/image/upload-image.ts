@@ -1,8 +1,8 @@
 import type { Editor } from "@tiptap/core";
-import type { Node as ProsemirrorNode } from "@tiptap/pm/model";
 import { setFlashToast } from "#/features/console/components/flash-toast";
 import { logger } from "#/shared/lib/logger";
 import type { SharedEditorStorage } from "../common/storage";
+import { findNodeByPlaceholderId } from "../common/placeholder";
 
 const getImageDimensions = (file: File): Promise<{ width: number; height: number }> =>
   // eslint-disable-next-line promise/avoid-new
@@ -19,24 +19,6 @@ const getImageDimensions = (file: File): Promise<{ width: number; height: number
     });
     img.src = url;
   });
-
-const findImageNodeByPlaceholderId = (
-  doc: ProsemirrorNode,
-  placeholderId: string,
-): { node: ProsemirrorNode; pos: number } | null => {
-  let result: { node: ProsemirrorNode; pos: number } | null = null;
-  doc.descendants((node: ProsemirrorNode, pos: number) => {
-    if (result) {
-      return false;
-    }
-    if (node.type.name === "image" && node.attrs.placeholder?.id === placeholderId) {
-      result = { node, pos };
-      return false;
-    }
-    return true;
-  });
-  return result;
-};
 
 export const uploadImage = async (file: File, editor: Editor, pos: number) => {
   if (!file.type.startsWith("image/")) {
@@ -87,7 +69,7 @@ export const uploadImage = async (file: File, editor: Editor, pos: number) => {
       dimensions.width && dimensions.height ? dimensions.width / dimensions.height : undefined;
 
     // Update the existing optimistic placeholder node with resolved dimensions
-    const dimensionsPlaceholder = findImageNodeByPlaceholderId(editor.state.doc, placeholderId);
+    const dimensionsPlaceholder = findNodeByPlaceholderId(editor.state.doc, "image", placeholderId);
     if (dimensionsPlaceholder) {
       editor.view.dispatch(
         editor.state.tr.setNodeMarkup(dimensionsPlaceholder.pos, undefined, {
@@ -127,7 +109,7 @@ export const uploadImage = async (file: File, editor: Editor, pos: number) => {
 
     // Replace placeholder with final S3/Local served image URL
     const { state } = editor;
-    const placeholderNode = findImageNodeByPlaceholderId(state.doc, placeholderId);
+    const placeholderNode = findNodeByPlaceholderId(state.doc, "image", placeholderId);
     if (placeholderNode) {
       editor.view.dispatch(
         state.tr.setNodeMarkup(placeholderNode.pos, undefined, {
@@ -147,7 +129,7 @@ export const uploadImage = async (file: File, editor: Editor, pos: number) => {
 
     // Remove placeholder on failure
     const { state } = editor;
-    const placeholderNode = findImageNodeByPlaceholderId(state.doc, placeholderId);
+    const placeholderNode = findNodeByPlaceholderId(state.doc, "image", placeholderId);
     if (placeholderNode) {
       editor.view.dispatch(state.tr.delete(placeholderNode.pos, placeholderNode.pos + 1));
     }

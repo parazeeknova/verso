@@ -38,7 +38,7 @@ export const useAltTextControl = ({ editor, nodeName, currentAlt }: UseAltTextCo
 
   useEffect(() => {
     const handler = () => {
-      if (!editor.isActive(nodeName)) {
+      if (showInput && !editor.isActive(nodeName)) {
         commit();
         setShowInput(false);
       }
@@ -47,7 +47,7 @@ export const useAltTextControl = ({ editor, nodeName, currentAlt }: UseAltTextCo
     return () => {
       editor.off("selectionUpdate", handler);
     };
-  }, [editor, nodeName, commit]);
+  }, [editor, nodeName, commit, showInput]);
 
   const cancel = useCallback(() => {
     setShowInput(false);

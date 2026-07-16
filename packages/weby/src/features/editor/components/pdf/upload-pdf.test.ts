@@ -177,4 +177,65 @@ describe("uploadPdf", () => {
     expect(mockEditor.state.tr.delete).toHaveBeenCalledWith(15, 16);
     expect(setFlashToast).toHaveBeenCalledWith(expect.stringContaining("failed to upload pdf"));
   });
+
+  it("should abort and clean up if the response json body parsing hangs indefinitely", async () => {
+    vi.useFakeTimers();
+
+    const originalAbortController = globalThis.AbortController;
+    let controller: AbortController | undefined;
+
+    const MockAbortController = function MockAbortController() {
+      controller = new originalAbortController();
+      return controller;
+    };
+    globalThis.AbortController = MockAbortController as unknown as typeof AbortController;
+
+    globalThis.fetch = vi.fn().mockImplementation((_url, options) => {
+      const signal = options?.signal;
+      return Promise.resolve({
+        json: () =>
+          // eslint-disable-next-line promise/avoid-new
+          new Promise((_resolve, reject) => {
+            if (signal?.aborted) {
+              reject(new DOMException("The user aborted a request.", "AbortError"));
+              return;
+            }
+            signal?.addEventListener?.("abort", () => {
+              reject(new DOMException("The user aborted a request.", "AbortError"));
+            });
+          }),
+        ok: true,
+        status: 200,
+      } as unknown as Response);
+    }) as unknown as typeof fetch;
+
+    const descendantsMock = mockEditor.state.doc.descendants as unknown as Mock;
+    descendantsMock.mockImplementation(
+      // eslint-disable-next-line eslint-plugin-promise/prefer-await-to-callbacks
+      (callback: (node: ProsemirrorNode, pos: number) => boolean) => {
+        // eslint-disable-next-line eslint-plugin-promise/prefer-await-to-callbacks
+        callback(
+          {
+            attrs: { placeholder: { id: createdPlaceholderId, name: "doc.pdf" } },
+            type: { name: "pdf" },
+          } as unknown as ProsemirrorNode,
+          15,
+        );
+      },
+    );
+
+    const uploadPromise = uploadPdf(makePdfFile(), mockEditor, 5);
+
+    // Fast-forward the timers to trigger the timeout
+    vi.advanceTimersByTime(31_000);
+
+    await uploadPromise;
+
+    expect(controller?.signal.aborted).toBe(true);
+    expect(mockEditor.state.tr.delete).toHaveBeenCalledWith(15, 16);
+    expect(setFlashToast).toHaveBeenCalledWith(expect.stringContaining("failed to upload pdf"));
+
+    globalThis.AbortController = originalAbortController;
+    vi.useRealTimers();
+  });
 });

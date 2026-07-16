@@ -65,7 +65,7 @@ export const useConsoleBootstrap = () => {
     }
 
     if (selectedSpaceId) {
-      const stillExists = spaces.some((s) => s.id === selectedSpaceId);
+      const stillExists = activeSpaces.some((s) => s.id === selectedSpaceId);
       if (stillExists) {
         return;
       }

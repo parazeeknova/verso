@@ -457,6 +457,9 @@ func (r *PageRepo) ListIDsInSpace(ctx context.Context, spaceID string) ([]string
 		}
 		ids = append(ids, id)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating page ids: %w", err)
+	}
 	return ids, nil
 }
 

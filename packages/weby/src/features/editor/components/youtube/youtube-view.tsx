@@ -15,7 +15,7 @@ const YOUTUBE_HOSTS = new Set([
 
 const VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 
-const parseYoutubeUrl = (url: string): string | null => {
+export const parseYoutubeUrl = (url: string): string | null => {
   if (!url) {
     return null;
   }

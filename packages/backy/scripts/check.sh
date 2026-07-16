@@ -21,6 +21,7 @@ fi
 
 if ! [ -x "$GOPATH_BIN/golangci-lint" ]; then
     echo "golangci-lint not found in $GOPATH_BIN, installing..."
+    # Pin v1.64.8 to ensure exact linting consistency across different developer and CI environments.
     curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$GOPATH_BIN" v1.64.8
 fi
 

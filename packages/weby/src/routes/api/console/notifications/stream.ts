@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Agent } from "undici";
 
+const sseDispatcher = new Agent({ bodyTimeout: 0, headersTimeout: 0 });
+
 export const Route = createFileRoute("/api/console/notifications/stream")({
   server: {
     handlers: {
@@ -9,11 +11,8 @@ export const Route = createFileRoute("/api/console/notifications/stream")({
           process.env.BACKY_ORIGIN?.replace(/\/$/, "") ?? "http://localhost:7000";
         const backendUrl = `${backendOrigin}/api/console/notifications/stream`;
 
-        // Disable the default 300s bodyTimeout/headersTimeout so idle SSE
-        // streams aren't killed (the backend also sends a periodic heartbeat).
-        const dispatcher = new Agent({ bodyTimeout: 0, headersTimeout: 0 });
         const fetchOptions = {
-          dispatcher,
+          dispatcher: sseDispatcher,
           headers: {
             Accept: "text/event-stream",
             Cookie: request.headers.get("cookie") ?? "",
