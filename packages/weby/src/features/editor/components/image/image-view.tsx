@@ -1,7 +1,6 @@
 import type { NodeViewProps } from "@tiptap/react";
 import { NodeViewWrapper } from "@tiptap/react";
 import React, { useMemo, useCallback } from "react";
-import { useTheme } from "#/shared/hooks/use-theme";
 import type { SharedEditorStorage } from "../common/storage";
 
 interface ImageContentProps {
@@ -9,16 +8,9 @@ interface ImageContentProps {
   previewSrc: string | null;
   placeholder?: { id: string; name: string } | null;
   alt?: string;
-  resolveThemeClass: (dark: string, light: string) => string;
 }
 
-const ImageContent = ({
-  src,
-  previewSrc,
-  placeholder,
-  alt,
-  resolveThemeClass,
-}: ImageContentProps) => {
+const ImageContent = ({ src, previewSrc, placeholder, alt }: ImageContentProps) => {
   if (src) {
     return (
       <img
@@ -39,9 +31,7 @@ const ImageContent = ({
         />
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/10 dark:bg-white/5">
           <div className="w-6 h-6 border-2 border-neutral-400 border-t-transparent dark:border-neutral-600 dark:border-t-transparent rounded-full animate-spin" />
-          <span
-            className={`text-[10px] lowercase tracking-wide font-medium ${resolveThemeClass("text-white", "text-black")}`}
-          >
+          <span className="text-[10px] lowercase tracking-wide font-medium text-black dark:text-white">
             uploading {placeholder?.name}...
           </span>
         </div>
@@ -51,9 +41,7 @@ const ImageContent = ({
 
   if (placeholder) {
     return (
-      <div
-        className={`w-full py-8 flex flex-col items-center justify-center gap-2 border border-dashed rounded-none ${resolveThemeClass("border-neutral-800 bg-neutral-900/5 text-neutral-400", "border-neutral-200 bg-neutral-50 text-neutral-500")}`}
-      >
+      <div className="w-full py-8 flex flex-col items-center justify-center gap-2 border border-dashed rounded-none border-neutral-200 bg-neutral-50 text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900/5 dark:text-neutral-400">
         <div className="w-5 h-5 border-2 border-neutral-400 border-t-transparent dark:border-neutral-500 dark:border-t-transparent rounded-full animate-spin" />
         <span className="text-[10px] lowercase">uploading {placeholder.name}...</span>
       </div>
@@ -66,9 +54,6 @@ const ImageContent = ({
 export const ImageView = (props: NodeViewProps) => {
   const { node, editor, updateAttributes } = props;
   const { src, width, height, aspectRatio, placeholder, alt, align } = node.attrs;
-  const { isDarkMode } = useTheme();
-
-  const resolveThemeClass = (dark: string, light: string) => (isDarkMode ? dark : light);
 
   const previewSrc = useMemo(() => {
     const storage = editor?.storage as SharedEditorStorage | undefined;
@@ -158,7 +143,7 @@ export const ImageView = (props: NodeViewProps) => {
     <NodeViewWrapper className={alignmentClass} data-drag-handle>
       <div
         className={`relative max-w-full overflow-visible group rounded-none ${
-          src ? "" : resolveThemeClass("bg-neutral-900/10", "bg-neutral-100/50")
+          src ? "" : "bg-neutral-100/50 dark:bg-neutral-900/10"
         }`}
         style={{
           aspectRatio: aspectRatio ? `${aspectRatio}` : undefined,
@@ -166,13 +151,7 @@ export const ImageView = (props: NodeViewProps) => {
           width: displayWidth,
         }}
       >
-        <ImageContent
-          alt={alt}
-          placeholder={placeholder}
-          previewSrc={previewSrc}
-          src={src}
-          resolveThemeClass={resolveThemeClass}
-        />
+        <ImageContent alt={alt} placeholder={placeholder} previewSrc={previewSrc} src={src} />
 
         {/* Custom Left resize handle */}
         {showHandles && (

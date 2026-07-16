@@ -224,18 +224,20 @@ describe("uploadPdf", () => {
       },
     );
 
-    const uploadPromise = uploadPdf(makePdfFile(), mockEditor, 5);
+    try {
+      const uploadPromise = uploadPdf(makePdfFile(), mockEditor, 5);
 
-    // Fast-forward the timers to trigger the timeout
-    vi.advanceTimersByTime(31_000);
+      // Fast-forward the timers to trigger the timeout
+      vi.advanceTimersByTime(31_000);
 
-    await uploadPromise;
+      await uploadPromise;
 
-    expect(controller?.signal.aborted).toBe(true);
-    expect(mockEditor.state.tr.delete).toHaveBeenCalledWith(15, 16);
-    expect(setFlashToast).toHaveBeenCalledWith(expect.stringContaining("failed to upload pdf"));
-
-    globalThis.AbortController = originalAbortController;
-    vi.useRealTimers();
+      expect(controller?.signal.aborted).toBe(true);
+      expect(mockEditor.state.tr.delete).toHaveBeenCalledWith(15, 16);
+      expect(setFlashToast).toHaveBeenCalledWith(expect.stringContaining("failed to upload pdf"));
+    } finally {
+      globalThis.AbortController = originalAbortController;
+      vi.useRealTimers();
+    }
   });
 });

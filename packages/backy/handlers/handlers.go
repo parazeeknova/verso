@@ -422,11 +422,13 @@ func (h *Handlers) CreateConsolePage(c *gin.Context) {
 
 	if spaceID == "" {
 		if workspaceID != "" {
-			if h.workspaceService != nil {
-				if err := h.workspaceService.RequireMembership(c.Request.Context(), workspaceID, userID); err != nil {
-					c.JSON(http.StatusForbidden, gin.H{"error": "permission denied for this workspace"})
-					return
-				}
+			if h.workspaceService == nil {
+				c.JSON(http.StatusServiceUnavailable, gin.H{"error": "workspace service unavailable"})
+				return
+			}
+			if err := h.workspaceService.RequireMembership(c.Request.Context(), workspaceID, userID); err != nil {
+				c.JSON(http.StatusForbidden, gin.H{"error": "permission denied for this workspace"})
+				return
 			}
 		} else {
 			if h.workspaceService != nil {

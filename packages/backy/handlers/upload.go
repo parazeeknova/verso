@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -33,15 +32,38 @@ var (
 	consecutiveDots    = regexp.MustCompile(`\.+`)
 )
 
-// inlineSafeMedia matches content types that are safe to serve inline.
-var inlineSafeMedia = regexp.MustCompile(`^(image|video|audio)/`)
+// safeInlineMimeTypes holds the allowlist of safe media MIME types that are safe to serve inline.
+var safeInlineMimeTypes = map[string]bool{
+	"image/jpeg":      true,
+	"image/png":       true,
+	"image/gif":       true,
+	"image/webp":      true,
+	"image/bmp":       true,
+	"image/tiff":      true,
+	"image/apng":      true,
+	"image/avif":      true,
+	"audio/mpeg":      true,
+	"audio/ogg":       true,
+	"audio/wav":       true,
+	"audio/webm":      true,
+	"audio/aac":       true,
+	"audio/flac":      true,
+	"audio/mp4":       true,
+	"video/mp4":       true,
+	"video/webm":      true,
+	"video/ogg":       true,
+	"video/mpeg":      true,
+	"video/quicktime": true,
+}
 
 // setDownloadSecurityHeaders applies consistent content-type hardening to file
 // serving responses: disable MIME sniffing and force a download disposition
 // unless the content is a safe inline media type.
 func setDownloadSecurityHeaders(c *gin.Context, contentType string) {
 	c.Header("X-Content-Type-Options", "nosniff")
-	if inlineSafeMedia.MatchString(contentType) {
+	mimeType := strings.Split(contentType, ";")[0]
+	mimeType = strings.TrimSpace(mimeType)
+	if safeInlineMimeTypes[mimeType] {
 		c.Header("Content-Disposition", "inline")
 	} else {
 		c.Header("Content-Disposition", "attachment")
@@ -132,22 +154,47 @@ func (h *Handlers) UploadFile(c *gin.Context) {
 	}
 	defer func() { _ = file.Close() }()
 
-	raw, err := io.ReadAll(io.LimitReader(file, maxUploadBytes+1))
+	tempSpool, err := os.CreateTemp("", "verso-upload-spool-*")
 	if err != nil {
-		var maxBytesErr *http.MaxBytesError
-		if errors.As(err, &maxBytesErr) {
-			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "file exceeds size limit"})
+		logger.Log.Error().Err(err).Msg("failed to create temporary spool file")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to initialize upload spool"})
+		return
+	}
+	defer func() {
+		_ = tempSpool.Close()
+		_ = os.Remove(tempSpool.Name())
+	}()
+
+	var size int64
+	buf := make([]byte, 32*1024)
+	for {
+		n, rErr := file.Read(buf)
+		if n > 0 {
+			if size+int64(n) > maxUploadBytes {
+				c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "file exceeds size limit"})
+				return
+			}
+			if _, wErr := tempSpool.Write(buf[:n]); wErr != nil {
+				logger.Log.Error().Err(wErr).Msg("failed to write spool file")
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to write spool"})
+				return
+			}
+			size += int64(n)
+		}
+		if rErr != nil {
+			if errors.Is(rErr, io.EOF) {
+				break
+			}
+			var maxBytesErr *http.MaxBytesError
+			if errors.As(rErr, &maxBytesErr) {
+				c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "file exceeds size limit"})
+				return
+			}
+			logger.Log.Error().Err(rErr).Msg("failed to read upload stream")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read upload stream"})
 			return
 		}
-		logger.Log.Error().Err(err).Msg("failed to read uploaded file into memory")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read file"})
-		return
 	}
-	if int64(len(raw)) > maxUploadBytes {
-		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "file exceeds size limit"})
-		return
-	}
-	size := int64(len(raw))
 
 	attachmentID := uuid.New().String()
 	ext := filepath.Ext(header.Filename)
@@ -157,7 +204,7 @@ func (h *Handlers) UploadFile(c *gin.Context) {
 		// Bucket identity is the canonical page ID: reversible for access
 		// checks on download and immune to client-supplied name spoofing.
 		bucketName := SanitizeBucketName(resolvedPage.ID, "")
-		h.uploadToStorage(c, bucketName, uniqueFilename, raw, header.Filename, size, attachmentID, ext)
+		h.uploadToStorage(c, bucketName, uniqueFilename, tempSpool, header.Filename, size, attachmentID, ext)
 		return
 	}
 
@@ -179,15 +226,20 @@ func (h *Handlers) UploadFile(c *gin.Context) {
 		Int64("size", size).
 		Msg("starting file upload process")
 
-	h.uploadToStorage(c, bucketName, uniqueFilename, raw, header.Filename, size, attachmentID, ext)
+	h.uploadToStorage(c, bucketName, uniqueFilename, tempSpool, header.Filename, size, attachmentID, ext)
 }
 
-// uploadToStorage writes the in-memory content to S3 (RustFS) when available and
-// falls back to local storage on failure. Because the complete payload is held in
-// raw, every S3/fallback attempt gets a fresh reader and is never truncated.
-func (h *Handlers) uploadToStorage(c *gin.Context, bucketName, uniqueFilename string, raw []byte, originalFilename string, size int64, attachmentID, ext string) {
+// uploadToStorage writes the spooled temporary file to S3 (RustFS) when available and
+// falls back to local storage on failure. Every S3/fallback attempt rewinds the
+// spool so it reads from start and is never truncated.
+func (h *Handlers) uploadToStorage(c *gin.Context, bucketName, uniqueFilename string, spool *os.File, originalFilename string, size int64, attachmentID, ext string) {
 	if h.storageClient == nil {
-		h.uploadLocal(c, bucketName, uniqueFilename, bytes.NewReader(raw), originalFilename, size, attachmentID)
+		if _, err := spool.Seek(0, io.SeekStart); err != nil {
+			logger.Log.Error().Err(err).Msg("failed to seek spool file")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload"})
+			return
+		}
+		h.uploadLocal(c, bucketName, uniqueFilename, spool, originalFilename, size, attachmentID)
 		return
 	}
 
@@ -202,7 +254,12 @@ func (h *Handlers) uploadToStorage(c *gin.Context, bucketName, uniqueFilename st
 			Bucket: aws.String(bucketName),
 		}); createErr != nil {
 			logger.Log.Error().Err(createErr).Str("bucket", bucketName).Msg("failed to create bucket, falling back to local storage")
-			h.uploadLocal(c, bucketName, uniqueFilename, bytes.NewReader(raw), originalFilename, size, attachmentID)
+			if _, err := spool.Seek(0, io.SeekStart); err != nil {
+				logger.Log.Error().Err(err).Msg("failed to seek spool file")
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload"})
+				return
+			}
+			h.uploadLocal(c, bucketName, uniqueFilename, spool, originalFilename, size, attachmentID)
 			return
 		}
 	}
@@ -212,14 +269,24 @@ func (h *Handlers) uploadToStorage(c *gin.Context, bucketName, uniqueFilename st
 		contentType = "application/octet-stream"
 	}
 
+	if _, err := spool.Seek(0, io.SeekStart); err != nil {
+		logger.Log.Error().Err(err).Msg("failed to seek spool file")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload"})
+		return
+	}
 	if _, putErr := h.storageClient.S3().PutObject(ctx, &s3.PutObjectInput{
 		Bucket:      aws.String(bucketName),
 		Key:         aws.String(uniqueFilename),
-		Body:        bytes.NewReader(raw),
+		Body:        spool,
 		ContentType: aws.String(contentType),
 	}); putErr != nil {
 		logger.Log.Error().Err(putErr).Str("bucket", bucketName).Str("key", uniqueFilename).Msg("failed to upload to S3, falling back to local storage")
-		h.uploadLocal(c, bucketName, uniqueFilename, bytes.NewReader(raw), originalFilename, size, attachmentID)
+		if _, err := spool.Seek(0, io.SeekStart); err != nil {
+			logger.Log.Error().Err(err).Msg("failed to seek spool file")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload"})
+			return
+		}
+		h.uploadLocal(c, bucketName, uniqueFilename, spool, originalFilename, size, attachmentID)
 		return
 	}
 
@@ -310,6 +377,10 @@ func (h *Handlers) GetUploadedFile(c *gin.Context) {
 				return
 			}
 		} else {
+			if h.spaceService == nil {
+				c.JSON(http.StatusServiceUnavailable, gin.H{"error": "space service unavailable"})
+				return
+			}
 			userID := middleware.GetCurrentUserID(c)
 			var resolvedPage *models.Page
 

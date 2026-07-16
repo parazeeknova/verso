@@ -14,7 +14,6 @@ import (
 	notifeat "verso/backy/features/notification"
 	"verso/backy/repositories"
 	"verso/backy/shared/logger"
-	"verso/backy/shared/storage"
 )
 
 // ErrSpaceNotFound is returned when a space is not found.
@@ -26,13 +25,17 @@ var ErrSpaceNotEmpty = repositories.ErrSpaceNotEmpty
 // ErrSpacePermissionDenied is returned when a user lacks permission for an action.
 var ErrSpacePermissionDenied = errors.New("permission denied for this space")
 
+type StorageClient interface {
+	DeleteBucketAndObjects(ctx context.Context, bucket string) error
+}
+
 // SpaceService provides business logic for spaces.
 type SpaceService struct {
 	spaceRepo     *repositories.SpaceRepo
 	pageRepo      *repositories.PageRepo
 	groupRepo     *repositories.GroupRepo
 	notifier      notifeat.Notifier
-	storageClient *storage.Client
+	storageClient StorageClient
 }
 
 // NewSpaceService creates a new space service.
@@ -51,7 +54,7 @@ func (s *SpaceService) SetNotifier(n notifeat.Notifier) {
 }
 
 // SetStorageClient sets the storage client on the space service.
-func (s *SpaceService) SetStorageClient(c *storage.Client) {
+func (s *SpaceService) SetStorageClient(c StorageClient) {
 	s.storageClient = c
 }
 
@@ -213,20 +216,6 @@ func (s *SpaceService) DeleteSpace(ctx context.Context, id, userID string) error
 		return fmt.Errorf("listing pages in space: %w", err)
 	}
 
-	for _, pageID := range pageIDs {
-		// Clean S3 / RustFS assets
-		if s.storageClient != nil {
-			if err := s.storageClient.DeleteBucketAndObjects(ctx, pageID); err != nil {
-				logger.Log.Error().Err(err).Str("pageID", pageID).Msg("failed to clean storage assets on space deletion")
-			}
-		}
-		// Clean local assets
-		localPath := filepath.Join(".", "uploads", pageID)
-		if err := os.RemoveAll(localPath); err != nil {
-			logger.Log.Error().Err(err).Str("pageID", pageID).Str("path", localPath).Msg("failed to remove local uploads on space deletion")
-		}
-	}
-
 	if len(pageIDs) > 0 {
 		if err := s.pageRepo.SoftDeleteAllInSpace(ctx, id, userID); err != nil {
 			return fmt.Errorf("deleting pages from database: %w", err)
@@ -239,6 +228,33 @@ func (s *SpaceService) DeleteSpace(ctx context.Context, id, userID string) error
 		}
 		return fmt.Errorf("deleting space: %w", err)
 	}
+
+	// Trigger asynchronous cleanup after successful database commit
+	go func() {
+		cleanupCtx := context.Background()
+		for _, pageID := range pageIDs {
+			for attempt := 0; attempt < 3; attempt++ {
+				var storageErr, localErr error
+				if s.storageClient != nil {
+					storageErr = s.storageClient.DeleteBucketAndObjects(cleanupCtx, pageID)
+				}
+				localPath := filepath.Join(".", "uploads", pageID)
+				localErr = os.RemoveAll(localPath)
+
+				if storageErr == nil && localErr == nil {
+					break
+				}
+
+				if storageErr != nil {
+					logger.Log.Error().Err(storageErr).Str("pageID", pageID).Int("attempt", attempt+1).Msg("failed to clean storage assets on space deletion")
+				}
+				if localErr != nil {
+					logger.Log.Error().Err(localErr).Str("pageID", pageID).Str("path", localPath).Int("attempt", attempt+1).Msg("failed to remove local uploads on space deletion")
+				}
+				time.Sleep(100 * time.Millisecond)
+			}
+		}
+	}()
 
 	return nil
 }

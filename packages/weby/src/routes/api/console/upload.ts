@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { uploadBacky } from "#/server/backy";
+import { uploadBacky, getConsolePage } from "#/server/backy";
+import { logger } from "#/shared/lib/logger";
 
 export const Route = createFileRoute("/api/console/upload")({
   server: {
@@ -13,10 +14,17 @@ export const Route = createFileRoute("/api/console/upload")({
         try {
           const formData = await request.formData();
           const pageId = formData.get("pageId") as string;
-          let path = "console/upload";
-          if (pageId) {
-            path = `console/upload?pageId=${encodeURIComponent(pageId)}`;
+          if (!pageId) {
+            return Response.json({ error: "pageId is required" }, { status: 400 });
           }
+
+          // Authorize the requested page before accepting the upload
+          const page = await getConsolePage(pageId, cookieHeader);
+          if (!page || !page.editable) {
+            return Response.json({ error: "Forbidden" }, { status: 403 });
+          }
+
+          const path = `console/upload?pageId=${encodeURIComponent(pageId)}`;
           const backyResponse = await uploadBacky(path, formData, cookieHeader);
 
           if (!backyResponse.ok) {
@@ -30,8 +38,8 @@ export const Route = createFileRoute("/api/console/upload")({
           const responseData = await backyResponse.json();
           return Response.json(responseData);
         } catch (error) {
-          const errMsg = error instanceof Error ? error.message : String(error);
-          return Response.json({ error: errMsg }, { status: 500 });
+          logger.error({ error }, "upload handler exception");
+          return Response.json({ error: "Internal Server Error" }, { status: 500 });
         }
       },
     },

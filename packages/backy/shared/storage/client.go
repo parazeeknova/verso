@@ -136,7 +136,7 @@ func (c *Client) DeleteBucketAndObjects(ctx context.Context, bucket string) erro
 			})
 		}
 
-		_, err = c.s3.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+		deleteOut, err := c.s3.DeleteObjects(ctx, &s3.DeleteObjectsInput{
 			Bucket: aws.String(bucket),
 			Delete: &types.Delete{
 				Objects: objects,
@@ -144,6 +144,13 @@ func (c *Client) DeleteBucketAndObjects(ctx context.Context, bucket string) erro
 		})
 		if err != nil {
 			return fmt.Errorf("delete objects: %w", err)
+		}
+		if deleteOut != nil && len(deleteOut.Errors) > 0 {
+			var errMsgs []string
+			for _, e := range deleteOut.Errors {
+				errMsgs = append(errMsgs, fmt.Sprintf("key %s: %s", aws.ToString(e.Key), aws.ToString(e.Message)))
+			}
+			return fmt.Errorf("failed to delete some objects: %s", strings.Join(errMsgs, "; "))
 		}
 
 		if out.IsTruncated != nil && *out.IsTruncated {

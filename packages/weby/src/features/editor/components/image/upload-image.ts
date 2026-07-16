@@ -1,7 +1,6 @@
 import type { Editor } from "@tiptap/core";
 import { setFlashToast } from "#/features/console/components/flash-toast";
 import { logger } from "#/shared/lib/logger";
-import type { SharedEditorStorage } from "../common/storage";
 import { findNodeByPlaceholderId } from "../common/placeholder";
 
 const getImageDimensions = (file: File): Promise<{ width: number; height: number }> =>
@@ -19,6 +18,8 @@ const getImageDimensions = (file: File): Promise<{ width: number; height: number
     });
     img.src = url;
   });
+
+const UPLOAD_TIMEOUT_MS = 30_000;
 
 export const uploadImage = async (file: File, editor: Editor, pos: number) => {
   if (!file.type.startsWith("image/")) {
@@ -41,45 +42,35 @@ export const uploadImage = async (file: File, editor: Editor, pos: number) => {
     "starting optimistic image upload",
   );
 
-  // Store preview object URL in editor storage
-  const storage = editor.storage as SharedEditorStorage;
+  const storage = editor.storage as unknown as {
+    shared: {
+      pageId?: string;
+      spaceName?: string;
+      pageName?: string;
+      imagePreviews?: Record<string, string | undefined>;
+    };
+  };
   storage.shared = storage.shared || {};
   storage.shared.imagePreviews = storage.shared.imagePreviews || {};
   storage.shared.imagePreviews[placeholderId] = objectUrl;
 
-  // Insert placeholder image block optimistically before reading dimensions
-  editor.view.dispatch(
-    editor.state.tr.insert(
-      pos,
-      editor.state.schema.nodes.image.create({
-        aspectRatio: undefined,
-        height: undefined,
-        placeholder: { id: placeholderId, name: file.name },
-        width: undefined,
-      }),
-    ),
-  );
-
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
-    // Retrieve dimensions (rejects on read failure, before any fetch)
-    const dimensions = await getImageDimensions(file);
-    const width = dimensions.width || undefined;
-    const height = dimensions.height || undefined;
-    const aspectRatio =
-      dimensions.width && dimensions.height ? dimensions.width / dimensions.height : undefined;
+    const { width, height } = await getImageDimensions(file);
+    const aspectRatio = width / height;
 
-    // Update the existing optimistic placeholder node with resolved dimensions
-    const dimensionsPlaceholder = findNodeByPlaceholderId(editor.state.doc, "image", placeholderId);
-    if (dimensionsPlaceholder) {
-      editor.view.dispatch(
-        editor.state.tr.setNodeMarkup(dimensionsPlaceholder.pos, undefined, {
+    // Insert optimistic image block with loading preview
+    editor.view.dispatch(
+      editor.state.tr.insert(
+        pos,
+        editor.state.schema.nodes.image.create({
           aspectRatio,
           height,
           placeholder: { id: placeholderId, name: file.name },
           width,
         }),
-      );
-    }
+      ),
+    );
 
     // Retrieve page/space parameters from editor storage
     const spaceName = storage.shared.spaceName || "default";
@@ -95,9 +86,13 @@ export const uploadImage = async (file: File, editor: Editor, pos: number) => {
       formData.append("pageId", pageId);
     }
 
+    const controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+
     const res = await fetch("/api/console/upload", {
       body: formData,
       method: "POST",
+      signal: controller.signal,
     });
 
     if (!res.ok) {
@@ -136,6 +131,9 @@ export const uploadImage = async (file: File, editor: Editor, pos: number) => {
 
     setFlashToast(`failed to upload image: ${errMsg}`);
   } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
     // Revoke preview URL and clean storage
     URL.revokeObjectURL(objectUrl);
     if (storage.shared.imagePreviews) {

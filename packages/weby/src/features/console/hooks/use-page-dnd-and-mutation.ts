@@ -6,6 +6,7 @@ export interface PageTreeItem {
   slugId: string;
   title: string;
   icon?: string;
+  spaceId: string;
 }
 
 export interface TreeNode {
@@ -122,10 +123,14 @@ export const usePageDnDAndMutation = ({
         draggedId !== node.item.id &&
         !isDescendant(treeItems, draggedId, node.item.id)
       ) {
+        const draggedPage = treeItems.find((item) => item.id === draggedId);
+        if (!draggedPage || draggedPage.spaceId !== node.item.spaceId) {
+          return;
+        }
         movePage.mutate({ id: draggedId, input: { parentPageId: node.item.id } });
       }
     },
-    [node.item.id, treeItems, movePage],
+    [node.item.id, node.item.spaceId, treeItems, movePage],
   );
 
   return {
