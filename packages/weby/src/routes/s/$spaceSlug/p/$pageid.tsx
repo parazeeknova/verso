@@ -71,7 +71,7 @@ const PageView = () => {
   }
 
   return (
-    <div className="h-full">
+    <div className="h-full flex flex-col overflow-hidden">
       <PageEditor
         contentJson={page.contentJson}
         editable={page.editable}

@@ -392,17 +392,25 @@ export const DragHandlePlugin = (options: GlobalDragHandleOptions & { pluginKey:
             return;
           }
 
-          const compStyle = window.getComputedStyle(node);
-          const parsedLineHeight = Number.parseInt(compStyle.lineHeight, 10);
-          const lineHeight = Number.isNaN(parsedLineHeight)
-            ? Number.parseInt(compStyle.fontSize, 10) * 1.2
-            : parsedLineHeight;
-          const paddingTop = Number.parseInt(compStyle.paddingTop, 10);
+          const blockComponent = node.closest(
+            '.react-renderer, [data-type="attachment"], .node-attachment, [data-type="audio"], .node-audio, [data-type="video"], .node-video, [data-type="pdf"], .node-pdf',
+          ) as HTMLElement | null;
 
-          const rect = absoluteRect(node);
+          const rect = absoluteRect(blockComponent || node);
 
-          rect.top += (lineHeight - 20) / 2;
-          rect.top += paddingTop;
+          if (blockComponent) {
+            rect.top += (blockComponent.offsetHeight - 20) / 2;
+          } else {
+            const compStyle = window.getComputedStyle(node);
+            const parsedLineHeight = Number.parseInt(compStyle.lineHeight, 10);
+            const lineHeight = Number.isNaN(parsedLineHeight)
+              ? Number.parseInt(compStyle.fontSize, 10) * 1.2
+              : parsedLineHeight;
+            const paddingTop = Number.parseInt(compStyle.paddingTop, 10);
+
+            rect.top += (lineHeight - 20) / 2;
+            rect.top += paddingTop;
+          }
           // Li markers
           if (node.matches("ul:not([data-type=taskList]) li, ol li")) {
             rect.left -= options.dragHandleWidth;

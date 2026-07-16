@@ -1,4 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Agent } from "undici";
+
+const sseDispatcher = new Agent({ bodyTimeout: 0, headersTimeout: 0 });
 
 export const Route = createFileRoute("/api/console/notifications/stream")({
   server: {
@@ -8,13 +11,16 @@ export const Route = createFileRoute("/api/console/notifications/stream")({
           process.env.BACKY_ORIGIN?.replace(/\/$/, "") ?? "http://localhost:7000";
         const backendUrl = `${backendOrigin}/api/console/notifications/stream`;
 
-        const backendRes = await fetch(backendUrl, {
+        const fetchOptions = {
+          dispatcher: sseDispatcher,
           headers: {
             Accept: "text/event-stream",
             Cookie: request.headers.get("cookie") ?? "",
           },
           signal: request.signal,
-        });
+        } satisfies RequestInit & { dispatcher: Agent };
+
+        const backendRes = await fetch(backendUrl, fetchOptions);
 
         return new Response(backendRes.body, {
           headers: {

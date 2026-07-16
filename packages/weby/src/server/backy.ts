@@ -107,11 +107,15 @@ export const getAuthMe = (cookieHeader?: string | null) =>
     headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
   });
 
-export const getBacky = (endpoint: string, cookieHeader?: string | null): Promise<Response> => {
+export const getBacky = (
+  endpoint: string,
+  cookieHeader?: string | null,
+  extraHeaders?: Record<string, string>,
+): Promise<Response> => {
   const url = buildBackyUrl(endpoint);
-  const headers: Record<string, string> = { Accept: "application/json" };
+  const headers = new Headers({ Accept: "application/json", ...extraHeaders });
   if (cookieHeader) {
-    headers.Cookie = cookieHeader;
+    headers.set("Cookie", cookieHeader);
   }
   return fetch(url, { headers });
 };
@@ -755,3 +759,20 @@ export const updateSystemSetting = (key: string, value: boolean, cookieHeader?: 
     },
     method: "PATCH",
   });
+
+export const uploadBacky = (
+  endpoint: string,
+  formData: FormData,
+  cookieHeader?: string | null,
+): Promise<Response> => {
+  const url = buildBackyUrl(endpoint);
+  const headers = new Headers();
+  if (cookieHeader) {
+    headers.set("Cookie", cookieHeader);
+  }
+  return fetch(url, {
+    body: formData,
+    headers,
+    method: "POST",
+  });
+};

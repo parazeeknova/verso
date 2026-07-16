@@ -173,21 +173,25 @@ export const PageList = ({
 
   // Auto-select first space
   useEffect(() => {
-    if (!selectedSpaceId && spaces && spaces.length > 0) {
-      onSelectSpace(spaces[0].id);
+    if (!selectedSpaceId && spaces) {
+      const activeSpaces = spaces.filter((s) => s.slug !== "nospace");
+      if (activeSpaces.length > 0) {
+        onSelectSpace(activeSpaces[0].id);
+      }
     }
   }, [spaces, selectedSpaceId, onSelectSpace]);
 
   const handleCreate = useCallback(() => {
-    if (!newSlugId.trim() || !newTitle.trim() || !selectedSpaceId) {
+    if (!newSlugId.trim() || !newTitle.trim()) {
       return;
     }
     createPage.mutate(
       {
         parentPageId: createParentId,
         slugId: newSlugId.trim(),
-        spaceId: selectedSpaceId,
+        spaceId: selectedSpaceId || "",
         title: newTitle.trim(),
+        workspaceId: selectedWorkspaceId || "",
       },
       {
         onSuccess: (data) => {
@@ -199,7 +203,15 @@ export const PageList = ({
         },
       },
     );
-  }, [newSlugId, newTitle, createParentId, selectedSpaceId, createPage, onSelectPage]);
+  }, [
+    newSlugId,
+    newTitle,
+    createParentId,
+    selectedSpaceId,
+    selectedWorkspaceId,
+    createPage,
+    onSelectPage,
+  ]);
 
   const handleAddChild = useCallback((parentId: string) => {
     setCreateParentId(parentId);

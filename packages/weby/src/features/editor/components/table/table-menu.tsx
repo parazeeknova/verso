@@ -1,8 +1,8 @@
 /* eslint-disable */
 import { posToDOMRect, findParentNode } from "@tiptap/react";
 import type { Node as PMNode } from "@tiptap/pm/model";
-import React, { useCallback } from 'react';
-import type { JSX } from 'react';
+import React, { useCallback } from "react";
+import type { JSX } from "react";
 import type { EditorMenuProps, ShouldShowProps } from "./types/types";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import {
@@ -29,7 +29,9 @@ export const TableMenu = React.memo(({ editor }: EditorMenuProps): JSX.Element =
         return false;
       }
 
-      if (isTextSelected(editor)) {return false;}
+      if (isTextSelected(editor)) {
+        return false;
+      }
       return editor.isActive("table") && !isCellSelection(state.selection);
     },
     [editor],

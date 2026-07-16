@@ -55,7 +55,9 @@ export const CellChevron = React.memo(function CellChevron({
   const isResizingColumn = useEditorState({
     editor,
     selector: (ctx) => {
-      if (!ctx.editor) {return false;}
+      if (!ctx.editor) {
+        return false;
+      }
       const state = columnResizingPluginKey.getState(ctx.editor.state) as
         | { activeHandle: number }
         | undefined;
@@ -64,7 +66,9 @@ export const CellChevron = React.memo(function CellChevron({
   });
 
   const onOpen = useCallback(() => {
-    if (!isEditorReady(editor)) {return;}
+    if (!isEditorReady(editor)) {
+      return;
+    }
     const current = editor.state.selection;
 
     // Preserve an existing multi-cell CellSelection that already covers
@@ -72,7 +76,9 @@ export const CellChevron = React.memo(function CellChevron({
     let preserveExisting = false;
     if (isCellSelection(current)) {
       current.forEachCell((_node, pos) => {
-        if (pos === cellPos) {preserveExisting = true;}
+        if (pos === cellPos) {
+          preserveExisting = true;
+        }
       });
     }
 
@@ -92,15 +98,28 @@ export const CellChevron = React.memo(function CellChevron({
   }, [editor, cellPos]);
 
   const onClose = useCallback(() => {
-    if (!isEditorReady(editor)) {return;}
+    if (!isEditorReady(editor)) {
+      return;
+    }
     editor.commands.unfreezeHandles();
   }, [editor]);
 
-  if (!cellDom) {return null;}
-  if (isResizingColumn) {return null;}
+  if (!cellDom) {
+    return null;
+  }
+  if (isResizingColumn) {
+    return null;
+  }
 
   return (
-    <Menu position="bottom-end" onOpen={onOpen} onClose={onClose} withinPortal shadow="md" classNames={{ dropdown: "table-handle-dropdown", item: "table-handle-dropdown-item" }}>
+    <Menu
+      position="bottom-end"
+      onOpen={onOpen}
+      onClose={onClose}
+      withinPortal
+      shadow="md"
+      classNames={{ dropdown: "table-handle-dropdown", item: "table-handle-dropdown-item" }}
+    >
       <Menu.Target>
         <UnstyledButton
           ref={refs.setFloating}

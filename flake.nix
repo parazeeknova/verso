@@ -14,7 +14,7 @@
         # Derivation that fetches the release tarball and wraps it
         verso = pkgs.stdenv.mkDerivation rec {
           pname = "verso";
-          version = "0.2.92"; # Dynamically updated by release scripts
+          version = "0.3.70"; # Dynamically updated by release scripts
 
           src = pkgs.fetchurl {
             url = "https://github.com/parazeeknova/verso/releases/download/v${version}/stable-linux-x64-Verso-Setup.tar.gz";
@@ -26,6 +26,7 @@
           buildInputs = [
             pkgs.webkitgtk_4_1
             pkgs.gtk3
+            pkgs.gsettings-desktop-schemas
             pkgs.cairo
             pkgs.gdk-pixbuf
             pkgs.glib
@@ -56,7 +57,7 @@
               --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath buildInputs}" \
               --prefix GIO_EXTRA_MODULES : "${pkgs.glib-networking}/lib/gio/modules" \
               --prefix GST_PLUGIN_PATH : "${pkgs.lib.makeSearchPath "lib/gstreamer-1.0" [ pkgs.gst_all_1.gst-plugins-base pkgs.gst_all_1.gst-plugins-good pkgs.gst_all_1.gst-plugins-bad ]}" \
-              --set WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS 1 \
+              --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}" \
               --set SSL_CERT_FILE "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt" \
               --set NIX_SSL_CERT_FILE "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
           '';

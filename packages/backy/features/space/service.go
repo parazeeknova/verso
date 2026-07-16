@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,23 +13,29 @@ import (
 	"verso/backy/database/models"
 	notifeat "verso/backy/features/notification"
 	"verso/backy/repositories"
+	"verso/backy/shared/logger"
 )
 
 // ErrSpaceNotFound is returned when a space is not found.
-var ErrSpaceNotFound = errors.New("space not found")
+var ErrSpaceNotFound = repositories.ErrSpaceNotFound
 
 // ErrSpaceNotEmpty is returned when trying to delete a space that still has pages.
-var ErrSpaceNotEmpty = errors.New("space is not empty")
+var ErrSpaceNotEmpty = repositories.ErrSpaceNotEmpty
 
 // ErrSpacePermissionDenied is returned when a user lacks permission for an action.
 var ErrSpacePermissionDenied = errors.New("permission denied for this space")
 
+type StorageClient interface {
+	DeleteBucketAndObjects(ctx context.Context, bucket string) error
+}
+
 // SpaceService provides business logic for spaces.
 type SpaceService struct {
-	spaceRepo *repositories.SpaceRepo
-	pageRepo  *repositories.PageRepo
-	groupRepo *repositories.GroupRepo
-	notifier  notifeat.Notifier
+	spaceRepo     *repositories.SpaceRepo
+	pageRepo      *repositories.PageRepo
+	groupRepo     *repositories.GroupRepo
+	notifier      notifeat.Notifier
+	storageClient StorageClient
 }
 
 // NewSpaceService creates a new space service.
@@ -43,6 +51,11 @@ func NewSpaceService(spaceRepo *repositories.SpaceRepo, pageRepo *repositories.P
 // SetNotifier sets the notification service on the space service.
 func (s *SpaceService) SetNotifier(n notifeat.Notifier) {
 	s.notifier = n
+}
+
+// SetStorageClient sets the storage client on the space service.
+func (s *SpaceService) SetStorageClient(c StorageClient) {
+	s.storageClient = c
 }
 
 // CreateSpace creates a new space within a workspace and adds the creator as admin.
@@ -180,18 +193,33 @@ func (s *SpaceService) workspaceMemberIDsForSpace(ctx context.Context, workspace
 	return members, nil
 }
 
-// DeleteSpace soft-deletes a space only if it has no pages. Requires admin role.
+// DeleteSpace soft-deletes a space and recursively deletes all pages inside it (and their S3/local assets). Requires admin role.
 func (s *SpaceService) DeleteSpace(ctx context.Context, id, userID string) error {
 	if err := s.RequireAdmin(ctx, id, userID); err != nil {
 		return err
 	}
 
-	count, err := s.spaceRepo.PageCount(ctx, id)
+	existing, err := s.spaceRepo.GetByID(ctx, id)
 	if err != nil {
-		return fmt.Errorf("checking page count: %w", err)
+		if errors.Is(err, ErrSpaceNotFound) {
+			return ErrSpaceNotFound
+		}
+		return fmt.Errorf("getting space: %w", err)
 	}
-	if count > 0 {
-		return ErrSpaceNotEmpty
+
+	if existing.Slug == "nospace" {
+		return fmt.Errorf("cannot delete system space nospace")
+	}
+
+	pageIDs, err := s.pageRepo.ListIDsInSpace(ctx, id)
+	if err != nil {
+		return fmt.Errorf("listing pages in space: %w", err)
+	}
+
+	if len(pageIDs) > 0 {
+		if err := s.pageRepo.SoftDeleteAllInSpace(ctx, id, userID); err != nil {
+			return fmt.Errorf("deleting pages from database: %w", err)
+		}
 	}
 
 	if err := s.spaceRepo.SoftDelete(ctx, id); err != nil {
@@ -200,6 +228,33 @@ func (s *SpaceService) DeleteSpace(ctx context.Context, id, userID string) error
 		}
 		return fmt.Errorf("deleting space: %w", err)
 	}
+
+	// Trigger asynchronous cleanup after successful database commit
+	go func() {
+		cleanupCtx := context.Background()
+		for _, pageID := range pageIDs {
+			for attempt := 0; attempt < 3; attempt++ {
+				var storageErr, localErr error
+				if s.storageClient != nil {
+					storageErr = s.storageClient.DeleteBucketAndObjects(cleanupCtx, pageID)
+				}
+				localPath := filepath.Join(".", "uploads", pageID)
+				localErr = os.RemoveAll(localPath)
+
+				if storageErr == nil && localErr == nil {
+					break
+				}
+
+				if storageErr != nil {
+					logger.Log.Error().Err(storageErr).Str("pageID", pageID).Int("attempt", attempt+1).Msg("failed to clean storage assets on space deletion")
+				}
+				if localErr != nil {
+					logger.Log.Error().Err(localErr).Str("pageID", pageID).Str("path", localPath).Int("attempt", attempt+1).Msg("failed to remove local uploads on space deletion")
+				}
+				time.Sleep(100 * time.Millisecond)
+			}
+		}
+	}()
 
 	return nil
 }

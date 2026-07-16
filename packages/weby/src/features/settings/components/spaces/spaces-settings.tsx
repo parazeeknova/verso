@@ -257,11 +257,12 @@ export const SpacesSettings = ({ urlWorkspaceName }: SpacesSettingsProps) => {
   const { data: spaces, isPending } = useSpaces(workspace?.id ?? "");
 
   const filteredSpaces = useMemo(() => {
+    const list = (spaces ?? []).filter((s) => s.slug !== "nospace");
     if (!searchQuery) {
-      return spaces ?? [];
+      return list;
     }
     const term = searchQuery.toLowerCase();
-    return (spaces ?? []).filter(
+    return list.filter(
       (s) => s.name.toLowerCase().includes(term) || s.slug.toLowerCase().includes(term),
     );
   }, [spaces, searchQuery]);
@@ -416,7 +417,7 @@ export const SpacesSettings = ({ urlWorkspaceName }: SpacesSettingsProps) => {
               isDarkMode={isDarkMode}
               isPending={isPending}
               onRowClick={(space) => setSelectedSpace(space)}
-              spacesLength={spaces?.length ?? 0}
+              spacesLength={spaces?.filter((s) => s.slug !== "nospace").length ?? 0}
               tableRows={table.getRowModel().rows}
             />
           </tbody>

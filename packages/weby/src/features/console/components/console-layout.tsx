@@ -18,7 +18,7 @@ import { useAuth } from "#/features/auth/hooks/use-auth";
 import { useTheme } from "#/shared/hooks/use-theme";
 import { useSpaceBySlug } from "#/features/console/hooks/use-spaces";
 import { ConsoleContext } from "./console-context";
-import { FlashToast } from "./flash-toast";
+import { FlashToast, setFlashToast } from "./flash-toast";
 import { ConsoleNavbar } from "./console-navbar";
 import { DebugSidebar } from "./debug/sidebar";
 import { FloatingSidebar } from "./floating-sidebar";
@@ -28,6 +28,7 @@ import { SpaceSidebar } from "#/features/space/components/space-sidebar";
 import { useConsoleStore } from "#/features/console/stores/console-store";
 import { useConsoleBootstrap } from "#/features/console/hooks/use-console-bootstrap";
 import { FileTreeSidebar } from "./file-tree-sidebar";
+import { useCreatePage } from "#/features/console/hooks/use-pages";
 
 const SIDEBAR_WIDTH = 280;
 
@@ -60,6 +61,32 @@ export const ConsoleLayout = () => {
     setSelectedSpaceId,
     setSelectedPageId,
   } = useConsoleStore();
+
+  const createPage = useCreatePage();
+  const handleCreatePage = useCallback(() => {
+    const randomSuffix = Math.random().toString(36).slice(2, 10);
+    const slug = `untitled-page-${randomSuffix}`;
+    createPage.mutate(
+      {
+        slugId: slug,
+        spaceId: "",
+        title: "untitled page",
+        workspaceId: selectedWorkspaceId || "",
+      },
+      {
+        onError: (error) => {
+          const errMsg = error instanceof Error ? error.message : String(error);
+          setFlashToast(`failed to create page: ${errMsg}`);
+        },
+        onSuccess: (data) => {
+          navigate({
+            params: { pageid: data.slugId, spaceSlug: "nospace" },
+            to: "/s/$spaceSlug/p/$pageid",
+          });
+        },
+      },
+    );
+  }, [selectedWorkspaceId, createPage, navigate]);
 
   const { currentWorkspace } = useConsoleBootstrap();
 
@@ -266,10 +293,11 @@ export const ConsoleLayout = () => {
         <nav className="mb-4 space-y-0.5">
           <button
             className={`flex w-full items-center gap-2 px-1 py-1 text-[11px] lowercase rounded ${t("text-text-dark/50 hover:bg-white/5 hover:text-text-dark/80", "text-text-light/50 hover:bg-black/3 hover:text-text-light/80")}`}
+            onClick={handleCreatePage}
             type="button"
           >
             <PlusIcon size={12} />
-            new note
+            new page
           </button>
           <button
             className={`flex w-full items-center gap-2 px-1 py-1 text-[11px] lowercase rounded ${t("text-text-dark/50 hover:bg-white/5 hover:text-text-dark/80", "text-text-light/50 hover:bg-black/3 hover:text-text-light/80")}`}
@@ -325,7 +353,7 @@ export const ConsoleLayout = () => {
       }}
     >
       <div
-        className={`flex min-h-screen flex-col transition-colors duration-500 ease-out ${t("bg-bg-dark", "bg-bg-light")}`}
+        className={`flex h-screen overflow-hidden flex-col transition-colors duration-500 ease-out ${t("bg-bg-dark", "bg-bg-light")}`}
       >
         <ConsoleNavbar onToggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
 
@@ -354,7 +382,10 @@ export const ConsoleLayout = () => {
             </FloatingSidebar>
           )}
 
-          <main className="min-h-0 flex-1 overflow-y-auto relative" ref={mainRef}>
+          <main
+            className={`min-h-0 flex-1 relative flex flex-col ${isSpaceRoute ? "overflow-hidden" : "overflow-y-auto"}`}
+            ref={mainRef}
+          >
             <Outlet />
           </main>
         </div>

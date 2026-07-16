@@ -8,6 +8,7 @@ import {
   XIcon,
 } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useTheme } from "#/shared/hooks/use-theme";
 import { useAuth } from "#/features/auth/hooks/use-auth";
 import {
@@ -21,6 +22,7 @@ import {
   useUpdateSpaceGroupRole,
   useUpdateSpaceMemberRole,
 } from "#/features/console/hooks/use-spaces";
+import { usePageTree } from "#/features/console/hooks/use-pages";
 import { useUsers } from "#/features/console/hooks/use-users";
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
 import type { ConsoleUser, Group, Space, SpaceMemberMixed } from "#/shared/types";
@@ -597,6 +599,8 @@ export const SpaceDetailSidebar = ({
   workspaceName,
 }: SpaceDetailSidebarProps) => {
   const { isDarkMode } = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
 
   const [name, setName] = useState(space.name);
@@ -623,6 +627,7 @@ export const SpaceDetailSidebar = ({
   const { data: currentUser } = useAuth();
   const { data: groupsData } = useGroups(space.workspaceId);
   const updateSpace = useUpdateSpace();
+  const { data: treeItems } = usePageTree(space.id);
   const updateRole = useUpdateSpaceMemberRole();
   const removeMember = useRemoveSpaceMember();
   const addSpaceGroup = useAddSpaceGroup();
@@ -784,6 +789,10 @@ export const SpaceDetailSidebar = ({
       deleteSpace.mutate(space.id, {
         onSuccess: () => {
           onClose();
+          const pathPrefix = `/s/${space.slug}`;
+          if (location.pathname === pathPrefix || location.pathname.startsWith(`${pathPrefix}/`)) {
+            navigate({ to: "/home" });
+          }
         },
       });
     } else {
@@ -1032,6 +1041,25 @@ export const SpaceDetailSidebar = ({
           {deleteConfirm ? "confirm?" : "delete"}
         </button>
       </div>
+
+      {treeItems && treeItems.length > 0 && (
+        <div className="mt-3">
+          <p
+            className={`text-[9px] lowercase mb-1 font-semibold ${t("text-text-dark/30", "text-text-light/30")}`}
+          >
+            the following pages will also be deleted recursively:
+          </p>
+          <ul
+            className={`text-[9px] list-disc list-inside max-h-24 overflow-y-auto ${t("text-text-dark/50", "text-text-light/50")}`}
+          >
+            {treeItems.map((p) => (
+              <li key={p.id} className="truncate">
+                {p.title || "untitled page"}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 

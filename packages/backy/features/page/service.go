@@ -543,7 +543,7 @@ func (s *PageService) RestorePage(ctx context.Context, pageID string, historyID 
 var ErrBlogPostNotFound = errors.New("blog post not found")
 
 // ErrPageNotFound is returned when a page is not found.
-var ErrPageNotFound = errors.New("page not found")
+var ErrPageNotFound = repositories.ErrPageNotFound
 
 // ErrHistoryNotFound is returned when a history entry is not found.
 var ErrHistoryNotFound = errors.New("history entry not found")

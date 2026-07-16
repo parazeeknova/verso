@@ -80,6 +80,7 @@ func main() {
 	}
 	dbErr := database.InitPool(context.Background(), dbCfg)
 	dbAvailable := dbErr == nil
+	var storageClient *storage.Client
 	if !dbAvailable {
 		log.Warn().Err(dbErr).Msg("database init warning, blog endpoints will be unavailable")
 	} else {
@@ -88,13 +89,15 @@ func main() {
 			log.Fatal().Err(err).Msg("migration failed")
 		}
 		// Ensure S3 buckets exist
-		s3Client, err := storage.NewClient()
+		var s3Client *storage.Client
+		s3Client, err = storage.NewClient()
 		if err != nil {
 			log.Warn().Err(err).Msg("storage init warning, file uploads will be unavailable")
 		} else {
 			if err := s3Client.EnsureBuckets(context.Background()); err != nil {
 				log.Warn().Err(err).Msg("bucket ensure warning, file uploads may be unavailable")
 			}
+			storageClient = s3Client
 		}
 	}
 
@@ -148,6 +151,12 @@ func main() {
 		h.SetPageFavoriteRepo(pageFavRepo)
 	} else {
 		h = handlers.New(cfg)
+	}
+	if storageClient != nil {
+		h.SetStorageClient(storageClient)
+		if spaceService != nil {
+			spaceService.SetStorageClient(storageClient)
+		}
 	}
 
 	// Create auth service and handlers
@@ -321,6 +330,8 @@ func main() {
 			console.GET("/pages/:id", h.GetConsolePage)
 			console.PUT("/pages/:id", h.UpdateConsolePage)
 			console.DELETE("/pages/:id", h.DeleteConsolePage)
+			console.POST("/upload", h.UploadFile)
+			console.GET("/files/:bucket/:filename", h.GetUploadedFile)
 
 			// Publish / Unpublish
 			console.POST("/pages/:id/publish", h.PublishConsolePage)

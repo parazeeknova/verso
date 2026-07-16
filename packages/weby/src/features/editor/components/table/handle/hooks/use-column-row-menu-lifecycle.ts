@@ -22,7 +22,9 @@ export function useColumnRowMenuLifecycle({
   tablePos,
 }: Args) {
   const onOpen = useCallback(() => {
-    if (!isEditorReady(editor)) {return;}
+    if (!isEditorReady(editor)) {
+      return;
+    }
     const selection = buildRowOrColumnSelection(
       editor.state,
       tableNode,
@@ -30,14 +32,18 @@ export function useColumnRowMenuLifecycle({
       orientation,
       index,
     );
-    const {tr} = editor.state;
-    if (selection) {tr.setSelection(selection);}
+    const { tr } = editor.state;
+    if (selection) {
+      tr.setSelection(selection);
+    }
     editor.view.dispatch(tr);
     editor.commands.freezeHandles();
   }, [editor, orientation, index, tableNode, tablePos]);
 
   const onClose = useCallback(() => {
-    if (!isEditorReady(editor)) {return;}
+    if (!isEditorReady(editor)) {
+      return;
+    }
     editor.commands.unfreezeHandles();
   }, [editor]);
 

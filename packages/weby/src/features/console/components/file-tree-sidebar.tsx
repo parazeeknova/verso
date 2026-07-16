@@ -30,6 +30,7 @@ import { useTheme } from "#/shared/hooks/use-theme";
 import { useConsoleContext } from "./console-context";
 import { useNavigate } from "@tanstack/react-router";
 import { setFlashToast } from "#/features/console/components/flash-toast";
+import { usePageDnDAndMutation } from "#/features/console/hooks/use-page-dnd-and-mutation";
 
 interface TreeNode {
   item: PageTreeItem;
@@ -58,27 +59,6 @@ const buildPageTree = (items: PageTreeItem[]): TreeNode[] => {
     }));
   };
   return build(null);
-};
-
-const isDescendant = (items: PageTreeItem[], ancestorId: string, descendantId: string): boolean => {
-  const parentMap = new Map(items.map((i) => [i.id, i.parentPageId]));
-  const visited = new Set<string>();
-  let current: string | null | undefined = descendantId;
-  while (current) {
-    if (visited.has(current)) {
-      return false;
-    }
-    visited.add(current);
-    const parent = parentMap.get(current);
-    if (parent === ancestorId) {
-      return true;
-    }
-    if (!parent) {
-      return false;
-    }
-    current = parent;
-  }
-  return false;
 };
 
 interface PageNodeProps {
@@ -184,35 +164,18 @@ const PageNode = ({ node, depth, treeItems, spaceSlug }: PageNodeProps) => {
     }
   };
 
-  const submitDelete = () => {
-    deletePage.mutate(node.item.id);
-    setMenuOpen(false);
-    setShowDeleteConfirm(false);
-  };
-
-  const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.setData("text/plain", node.item.id);
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    if (hasChildren) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const draggedId = e.dataTransfer.getData("text/plain");
-    if (
-      draggedId &&
-      draggedId !== node.item.id &&
-      !isDescendant(treeItems, draggedId, node.item.id)
-    ) {
-      movePage.mutate({ id: draggedId, input: { parentPageId: node.item.id } });
-    }
-  };
+  const { handleDragOver, handleDragStart, handleDrop, submitDelete } = usePageDnDAndMutation({
+    deletePage,
+    hasChildren,
+    movePage,
+    navigate,
+    node,
+    selectedPageId,
+    setMenuOpen,
+    setShowDeleteConfirm,
+    spaceSlug,
+    treeItems,
+  });
 
   return (
     <li>
@@ -452,6 +415,48 @@ const SpaceTreeNode = ({ space, defaultExpanded }: SpaceTreeNodeProps) => {
   );
 };
 
+const IndependentPagesList = ({ spaceId, spaceSlug }: { spaceId: string; spaceSlug: string }) => {
+  const { isDarkMode } = useTheme();
+  const { data: treeItems, isPending, isError } = usePageTree(spaceId);
+  const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const pageTree = treeItems ? buildPageTree(treeItems) : [];
+
+  if (isPending) {
+    return (
+      <p className={`px-1 py-0.5 text-[10px] ${t("text-text-dark/25", "text-text-light/25")}`}>
+        loading pages...
+      </p>
+    );
+  }
+  if (isError) {
+    return <p className="px-1 py-0.5 text-[10px] text-red-400">failed to load pages</p>;
+  }
+  if (pageTree.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4">
+      <p
+        className={`px-1 mb-1 text-[10px] uppercase tracking-wider ${t("text-text-dark/30", "text-text-light/30")}`}
+      >
+        pages
+      </p>
+      <ul>
+        {pageTree.map((node) => (
+          <PageNode
+            depth={0}
+            key={node.item.id}
+            node={node}
+            treeItems={treeItems}
+            spaceSlug={spaceSlug}
+          />
+        ))}
+      </ul>
+    </div>
+  );
+};
+
 interface FavoritedPagesListProps {
   favPageIds: string[];
   favSpaces: Space[];
@@ -486,7 +491,8 @@ const FavoritedPagesList = ({ favPageIds, favSpaces }: FavoritedPagesListProps) 
 
   const pages = pageQueries.map((q) => q.data).filter((p): p is FavPageDetail => p !== undefined);
 
-  const favSpaceIds = new Set(favSpaces.map((s) => s.id));
+  const activeFavSpaces = favSpaces.filter((s) => s.slug !== "nospace");
+  const favSpaceIds = new Set(activeFavSpaces.map((s) => s.id));
   const pagesBySpace = new Map<string, FavPageDetail[]>();
   const ungrouped: FavPageDetail[] = [];
 
@@ -505,7 +511,7 @@ const FavoritedPagesList = ({ favPageIds, favSpaces }: FavoritedPagesListProps) 
 
   return (
     <>
-      {favSpaces.map((space) => {
+      {activeFavSpaces.map((space) => {
         const spacePages = pagesBySpace.get(space.id);
         return (
           <div key={space.id}>
@@ -631,7 +637,8 @@ export const FileTreeSidebar = () => {
           if (isError) {
             return <p className="px-1 text-[11px] text-red-400">failed to load spaces</p>;
           }
-          if (!spaces || spaces.length === 0) {
+          const activeSpaces = spaces ? spaces.filter((s) => s.slug !== "nospace") : [];
+          if (activeSpaces.length === 0) {
             return (
               <p className={`px-1 text-[11px] ${t("text-text-dark/25", "text-text-light/25")}`}>
                 no spaces yet
@@ -640,12 +647,19 @@ export const FileTreeSidebar = () => {
           }
           return (
             <div className="space-y-0.5">
-              {spaces.map((space) => {
+              {activeSpaces.map((space) => {
                 const isSelected = selectedSpaceId === space.id;
                 return <SpaceTreeNode defaultExpanded={isSelected} key={space.id} space={space} />;
               })}
             </div>
           );
+        })()}
+        {(() => {
+          const nospace = spaces?.find((s) => s.slug === "nospace");
+          if (nospace) {
+            return <IndependentPagesList spaceId={nospace.id} spaceSlug="nospace" />;
+          }
+          return null;
         })()}
       </div>
       <div className="mt-4">

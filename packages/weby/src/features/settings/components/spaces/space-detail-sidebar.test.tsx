@@ -3,6 +3,11 @@ import { render, screen } from "@testing-library/react";
 import { SpaceDetailSidebar } from "./space-detail-sidebar";
 import { createWrapper } from "#/shared/test/utils";
 
+vi.mock("@tanstack/react-router", () => ({
+  useLocation: () => ({ pathname: "/home" }),
+  useNavigate: () => vi.fn(),
+}));
+
 const mockSpace = {
   createdAt: "2025-01-01T00:00:00Z",
   createdBy: "user-1",

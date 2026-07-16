@@ -35,6 +35,7 @@ import { Route as SSpaceSlugSettingsRouteImport } from './routes/s/$spaceSlug/se
 import { Route as ApiGithubStatsRouteImport } from './routes/api/github/stats'
 import { Route as ApiConsoleWorkspacesRouteImport } from './routes/api/console/workspaces'
 import { Route as ApiConsoleUsersRouteImport } from './routes/api/console/users'
+import { Route as ApiConsoleUploadRouteImport } from './routes/api/console/upload'
 import { Route as ApiConsoleSystemSettingsRouteImport } from './routes/api/console/system-settings'
 import { Route as ApiConsoleSpacesRouteImport } from './routes/api/console/spaces'
 import { Route as ApiConsoleProfileRouteImport } from './routes/api/console/profile'
@@ -93,6 +94,7 @@ import { Route as ApiConsolePagesIdFavoriteRouteImport } from './routes/api/cons
 import { Route as ApiConsolePagesIdChildrenRouteImport } from './routes/api/console/pages/$id/children'
 import { Route as ApiConsoleNotificationsIdReadRouteImport } from './routes/api/console/notifications/$id/read'
 import { Route as ApiConsoleGroupsIdMembersRouteImport } from './routes/api/console/groups/$id/members'
+import { Route as ApiConsoleFilesBucketFilenameRouteImport } from './routes/api/console/files/$bucket/$filename'
 import { Route as ApiConsoleDebugTablesTableNameRouteImport } from './routes/api/console/debug/tables/$tableName'
 import { Route as ApiConsoleSpacesIdMembersUserIdRouteImport } from './routes/api/console/spaces/$id/members/$userId'
 import { Route as ApiConsoleSpacesIdGroupsGroupIdRouteImport } from './routes/api/console/spaces/$id/groups/$groupId'
@@ -230,6 +232,11 @@ const ApiConsoleWorkspacesRoute = ApiConsoleWorkspacesRouteImport.update({
 const ApiConsoleUsersRoute = ApiConsoleUsersRouteImport.update({
   id: '/api/console/users',
   path: '/api/console/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiConsoleUploadRoute = ApiConsoleUploadRouteImport.update({
+  id: '/api/console/upload',
+  path: '/api/console/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiConsoleSystemSettingsRoute =
@@ -551,6 +558,12 @@ const ApiConsoleGroupsIdMembersRoute =
     path: '/members',
     getParentRoute: () => ApiConsoleGroupsIdRoute,
   } as any)
+const ApiConsoleFilesBucketFilenameRoute =
+  ApiConsoleFilesBucketFilenameRouteImport.update({
+    id: '/api/console/files/$bucket/$filename',
+    path: '/api/console/files/$bucket/$filename',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiConsoleDebugTablesTableNameRoute =
   ApiConsoleDebugTablesTableNameRouteImport.update({
     id: '/$tableName',
@@ -624,6 +637,7 @@ export interface FileRoutesByFullPath {
   '/api/console/profile': typeof ApiConsoleProfileRouteWithChildren
   '/api/console/spaces': typeof ApiConsoleSpacesRouteWithChildren
   '/api/console/system-settings': typeof ApiConsoleSystemSettingsRoute
+  '/api/console/upload': typeof ApiConsoleUploadRoute
   '/api/console/users': typeof ApiConsoleUsersRouteWithChildren
   '/api/console/workspaces': typeof ApiConsoleWorkspacesRouteWithChildren
   '/api/github/stats': typeof ApiGithubStatsRoute
@@ -660,6 +674,7 @@ export interface FileRoutesByFullPath {
   '/api/console/workspaces/$id': typeof ApiConsoleWorkspacesIdRouteWithChildren
   '/s/$spaceSlug/p/$pageid': typeof SSpaceSlugPPageidRoute
   '/api/console/debug/tables/$tableName': typeof ApiConsoleDebugTablesTableNameRouteWithChildren
+  '/api/console/files/$bucket/$filename': typeof ApiConsoleFilesBucketFilenameRoute
   '/api/console/groups/$id/members': typeof ApiConsoleGroupsIdMembersRouteWithChildren
   '/api/console/notifications/$id/read': typeof ApiConsoleNotificationsIdReadRoute
   '/api/console/pages/$id/children': typeof ApiConsolePagesIdChildrenRoute
@@ -715,6 +730,7 @@ export interface FileRoutesByTo {
   '/api/console/profile': typeof ApiConsoleProfileRouteWithChildren
   '/api/console/spaces': typeof ApiConsoleSpacesRouteWithChildren
   '/api/console/system-settings': typeof ApiConsoleSystemSettingsRoute
+  '/api/console/upload': typeof ApiConsoleUploadRoute
   '/api/console/users': typeof ApiConsoleUsersRouteWithChildren
   '/api/console/workspaces': typeof ApiConsoleWorkspacesRouteWithChildren
   '/api/github/stats': typeof ApiGithubStatsRoute
@@ -751,6 +767,7 @@ export interface FileRoutesByTo {
   '/api/console/workspaces/$id': typeof ApiConsoleWorkspacesIdRouteWithChildren
   '/s/$spaceSlug/p/$pageid': typeof SSpaceSlugPPageidRoute
   '/api/console/debug/tables/$tableName': typeof ApiConsoleDebugTablesTableNameRouteWithChildren
+  '/api/console/files/$bucket/$filename': typeof ApiConsoleFilesBucketFilenameRoute
   '/api/console/groups/$id/members': typeof ApiConsoleGroupsIdMembersRouteWithChildren
   '/api/console/notifications/$id/read': typeof ApiConsoleNotificationsIdReadRoute
   '/api/console/pages/$id/children': typeof ApiConsolePagesIdChildrenRoute
@@ -809,6 +826,7 @@ export interface FileRoutesById {
   '/api/console/profile': typeof ApiConsoleProfileRouteWithChildren
   '/api/console/spaces': typeof ApiConsoleSpacesRouteWithChildren
   '/api/console/system-settings': typeof ApiConsoleSystemSettingsRoute
+  '/api/console/upload': typeof ApiConsoleUploadRoute
   '/api/console/users': typeof ApiConsoleUsersRouteWithChildren
   '/api/console/workspaces': typeof ApiConsoleWorkspacesRouteWithChildren
   '/api/github/stats': typeof ApiGithubStatsRoute
@@ -845,6 +863,7 @@ export interface FileRoutesById {
   '/api/console/workspaces/$id': typeof ApiConsoleWorkspacesIdRouteWithChildren
   '/s/$spaceSlug/p/$pageid': typeof SSpaceSlugPPageidRoute
   '/api/console/debug/tables/$tableName': typeof ApiConsoleDebugTablesTableNameRouteWithChildren
+  '/api/console/files/$bucket/$filename': typeof ApiConsoleFilesBucketFilenameRoute
   '/api/console/groups/$id/members': typeof ApiConsoleGroupsIdMembersRouteWithChildren
   '/api/console/notifications/$id/read': typeof ApiConsoleNotificationsIdReadRoute
   '/api/console/pages/$id/children': typeof ApiConsolePagesIdChildrenRoute
@@ -904,6 +923,7 @@ export interface FileRouteTypes {
     | '/api/console/profile'
     | '/api/console/spaces'
     | '/api/console/system-settings'
+    | '/api/console/upload'
     | '/api/console/users'
     | '/api/console/workspaces'
     | '/api/github/stats'
@@ -940,6 +960,7 @@ export interface FileRouteTypes {
     | '/api/console/workspaces/$id'
     | '/s/$spaceSlug/p/$pageid'
     | '/api/console/debug/tables/$tableName'
+    | '/api/console/files/$bucket/$filename'
     | '/api/console/groups/$id/members'
     | '/api/console/notifications/$id/read'
     | '/api/console/pages/$id/children'
@@ -995,6 +1016,7 @@ export interface FileRouteTypes {
     | '/api/console/profile'
     | '/api/console/spaces'
     | '/api/console/system-settings'
+    | '/api/console/upload'
     | '/api/console/users'
     | '/api/console/workspaces'
     | '/api/github/stats'
@@ -1031,6 +1053,7 @@ export interface FileRouteTypes {
     | '/api/console/workspaces/$id'
     | '/s/$spaceSlug/p/$pageid'
     | '/api/console/debug/tables/$tableName'
+    | '/api/console/files/$bucket/$filename'
     | '/api/console/groups/$id/members'
     | '/api/console/notifications/$id/read'
     | '/api/console/pages/$id/children'
@@ -1088,6 +1111,7 @@ export interface FileRouteTypes {
     | '/api/console/profile'
     | '/api/console/spaces'
     | '/api/console/system-settings'
+    | '/api/console/upload'
     | '/api/console/users'
     | '/api/console/workspaces'
     | '/api/github/stats'
@@ -1124,6 +1148,7 @@ export interface FileRouteTypes {
     | '/api/console/workspaces/$id'
     | '/s/$spaceSlug/p/$pageid'
     | '/api/console/debug/tables/$tableName'
+    | '/api/console/files/$bucket/$filename'
     | '/api/console/groups/$id/members'
     | '/api/console/notifications/$id/read'
     | '/api/console/pages/$id/children'
@@ -1175,6 +1200,7 @@ export interface RootRouteChildren {
   ApiConsoleProfileRoute: typeof ApiConsoleProfileRouteWithChildren
   ApiConsoleSpacesRoute: typeof ApiConsoleSpacesRouteWithChildren
   ApiConsoleSystemSettingsRoute: typeof ApiConsoleSystemSettingsRoute
+  ApiConsoleUploadRoute: typeof ApiConsoleUploadRoute
   ApiConsoleUsersRoute: typeof ApiConsoleUsersRouteWithChildren
   ApiConsoleWorkspacesRoute: typeof ApiConsoleWorkspacesRouteWithChildren
   ApiGithubStatsRoute: typeof ApiGithubStatsRoute
@@ -1190,6 +1216,7 @@ export interface RootRouteChildren {
   ApiConsolePushSubscribeRoute: typeof ApiConsolePushSubscribeRoute
   ApiConsolePushUnsubscribeRoute: typeof ApiConsolePushUnsubscribeRoute
   ApiConsoleUnsplashSearchRoute: typeof ApiConsoleUnsplashSearchRoute
+  ApiConsoleFilesBucketFilenameRoute: typeof ApiConsoleFilesBucketFilenameRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1374,6 +1401,13 @@ declare module '@tanstack/react-router' {
       path: '/api/console/users'
       fullPath: '/api/console/users'
       preLoaderRoute: typeof ApiConsoleUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/console/upload': {
+      id: '/api/console/upload'
+      path: '/api/console/upload'
+      fullPath: '/api/console/upload'
+      preLoaderRoute: typeof ApiConsoleUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/console/system-settings': {
@@ -1781,6 +1815,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/console/groups/$id/members'
       preLoaderRoute: typeof ApiConsoleGroupsIdMembersRouteImport
       parentRoute: typeof ApiConsoleGroupsIdRoute
+    }
+    '/api/console/files/$bucket/$filename': {
+      id: '/api/console/files/$bucket/$filename'
+      path: '/api/console/files/$bucket/$filename'
+      fullPath: '/api/console/files/$bucket/$filename'
+      preLoaderRoute: typeof ApiConsoleFilesBucketFilenameRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/console/debug/tables/$tableName': {
       id: '/api/console/debug/tables/$tableName'
@@ -2199,6 +2240,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiConsoleProfileRoute: ApiConsoleProfileRouteWithChildren,
   ApiConsoleSpacesRoute: ApiConsoleSpacesRouteWithChildren,
   ApiConsoleSystemSettingsRoute: ApiConsoleSystemSettingsRoute,
+  ApiConsoleUploadRoute: ApiConsoleUploadRoute,
   ApiConsoleUsersRoute: ApiConsoleUsersRouteWithChildren,
   ApiConsoleWorkspacesRoute: ApiConsoleWorkspacesRouteWithChildren,
   ApiGithubStatsRoute: ApiGithubStatsRoute,
@@ -2214,6 +2256,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiConsolePushSubscribeRoute: ApiConsolePushSubscribeRoute,
   ApiConsolePushUnsubscribeRoute: ApiConsolePushUnsubscribeRoute,
   ApiConsoleUnsplashSearchRoute: ApiConsoleUnsplashSearchRoute,
+  ApiConsoleFilesBucketFilenameRoute: ApiConsoleFilesBucketFilenameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

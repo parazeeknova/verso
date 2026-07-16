@@ -99,9 +99,8 @@ export const useCreatePage = () => {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["pageTree", variables.spaceId],
-        refetchType: "all",
       });
-      queryClient.invalidateQueries({ queryKey: ["consolePages"], refetchType: "all" });
+      queryClient.invalidateQueries({ queryKey: ["consolePages"] });
     },
   });
 };
@@ -117,10 +116,9 @@ export const useUpdatePage = () => {
     onSuccess: (_data, _variables) => {
       queryClient.invalidateQueries({
         queryKey: ["consolePage"],
-        refetchType: "all",
       });
-      queryClient.invalidateQueries({ queryKey: ["consolePages"], refetchType: "all" });
-      queryClient.invalidateQueries({ queryKey: ["pageTree"], refetchType: "all" });
+      queryClient.invalidateQueries({ queryKey: ["consolePages"] });
+      queryClient.invalidateQueries({ queryKey: ["pageTree"] });
     },
   });
 };
@@ -132,9 +130,16 @@ export const useDeletePage = () => {
       fetchProtected<{ status: string }>(`/api/console/pages/${id}`, {
         method: "DELETE",
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["consolePages"], refetchType: "all" });
-      queryClient.invalidateQueries({ queryKey: ["pageTree"], refetchType: "all" });
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: ["consolePages"] });
+      queryClient.removeQueries({
+        predicate: (query) => {
+          const data = query.state.data as ConsolePageDetail | undefined;
+          return data?.id === id || query.queryKey.includes(id);
+        },
+        queryKey: ["consolePage"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["pageTree"] });
     },
   });
 };

@@ -30,10 +30,28 @@ import { HeadingWithIds } from "#/features/blog/components/tiptap-heading-ids";
 import GlobalDragHandle from "./drag-handle";
 import SlashCommand from "./slash-command";
 import { EmojiCommand } from "./emoji-command";
+import { CustomImage } from "./image";
+import { CustomVideo } from "./video";
+import { CustomAudio } from "./audio";
+import { CustomPdf } from "./pdf";
+import { MathInline, MathBlock } from "./math";
+import { CustomAttachment } from "./attachment";
+import { CustomYoutube } from "./youtube";
+
+import plaintext from "highlight.js/lib/languages/plaintext";
 
 const lowlight = createLowlight(common);
+lowlight.register("mermaid", plaintext);
 
 export const getEditorExtensions = () => [
+  CustomImage,
+  CustomVideo,
+  CustomAudio,
+  CustomPdf,
+  MathInline,
+  MathBlock,
+  CustomAttachment,
+  CustomYoutube,
   StarterKit.configure({
     codeBlock: false,
     dropcursor: {

@@ -18,10 +18,46 @@ import {
   TagIcon,
   SmileyIcon,
   ColumnsIcon,
+  ImageIcon,
+  FileVideoIcon,
+  FileAudioIcon,
+  FilePdfIcon,
+  PaperclipIcon,
+  FunctionIcon,
+  MathOperationsIcon,
+  YoutubeLogo,
+  GitForkIcon,
 } from "@phosphor-icons/react";
+import type { Editor, Range } from "@tiptap/core";
 import type { SlashMenuItemType } from "./types";
 
+type FileUploader = (file: File, editor: Editor, pos: number) => Promise<void>;
+
+// Shared file-picker + upload flow used by the media/file slash commands.
+// It deletes the range, opens a native file picker restricted by `accept`, and
+// invokes the lazily-imported uploader with the chosen file.
+const triggerFileUpload = (
+  editor: Editor,
+  range: Range,
+  accept: string,
+  loadUploader: () => Promise<FileUploader>,
+) => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = accept;
+  input.addEventListener("change", async (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (file) {
+      editor.chain().focus().deleteRange(range).run();
+      const upload = await loadUploader();
+      void upload(file, editor, editor.state.selection.from);
+    }
+  });
+  input.click();
+};
+
 export const getSuggestionItems = (): SlashMenuItemType[] => [
+  // --- Category 1: Standard Writing Blocks (Most Used While Typing) ---
   {
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleNode("paragraph", "paragraph").run();
@@ -30,15 +66,6 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
     icon: TextTIcon,
     searchTerms: ["p", "paragraph", "text"],
     title: "Text",
-  },
-  {
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleTaskList().run();
-    },
-    description: "Track tasks with a to-do list.",
-    icon: CheckSquareIcon,
-    searchTerms: ["todo", "task", "list", "check", "checkbox"],
-    title: "To-do list",
   },
   {
     command: ({ editor, range }) => {
@@ -87,6 +114,15 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).toggleTaskList().run();
+    },
+    description: "Track tasks with a to-do list.",
+    icon: CheckSquareIcon,
+    searchTerms: ["todo", "task", "list", "check", "checkbox"],
+    title: "To-do list",
+  },
+  {
+    command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleBlockquote().run();
     },
     description: "Create block quote.",
@@ -105,6 +141,26 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setMathInline({ text: "" }).run();
+    },
+    description: "Inline mathematical expression.",
+    icon: FunctionIcon,
+    searchTerms: ["math", "latex", "equation", "inline", "formula"],
+    title: "Math (inline)",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setMathBlock({ text: "" }).run();
+    },
+    description: "Block mathematical expression.",
+    icon: MathOperationsIcon,
+    searchTerms: ["math", "latex", "equation", "block", "formula"],
+    title: "Math (block)",
+  },
+
+  // --- Category 2: Structure & Media Features (Common Layout/Embeds) ---
+  {
+    command: ({ editor, range }) => {
       editor
         .chain()
         .focus()
@@ -119,6 +175,15 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).toggleCallout().run();
+    },
+    description: "Insert a callout block.",
+    icon: InfoIcon,
+    searchTerms: ["callout", "info", "alert"],
+    title: "Callout",
+  },
+  {
+    command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setHorizontalRule().run();
     },
     description: "Insert horizontal rule divider.",
@@ -128,13 +193,75 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setPageBreak().run();
+      triggerFileUpload(editor, range, "image/*", async () => {
+        const { uploadImage } = await import("../image/upload-image");
+        return uploadImage;
+      });
     },
-    description: "Insert a page break for printing.",
-    icon: ScissorsIcon,
-    searchTerms: ["page", "break", "pagebreak", "print"],
-    title: "Page break",
+    description: "Upload an image.",
+    icon: ImageIcon,
+    searchTerms: ["image", "picture", "photo", "upload"],
+    title: "Image",
   },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setYoutubeVideo({ src: "" }).run();
+    },
+    description: "Embed YouTube video.",
+    icon: YoutubeLogo,
+    searchTerms: ["youtube", "yt", "video", "embed"],
+    title: "YouTube",
+  },
+  {
+    command: ({ editor, range }) => {
+      triggerFileUpload(editor, range, "video/*", async () => {
+        const { uploadVideo } = await import("../video/upload-video");
+        return uploadVideo;
+      });
+    },
+    description: "Upload a video.",
+    icon: FileVideoIcon,
+    searchTerms: ["video", "movie", "film", "upload"],
+    title: "Video",
+  },
+  {
+    command: ({ editor, range }) => {
+      triggerFileUpload(editor, range, "audio/*", async () => {
+        const { uploadAudio } = await import("../audio/upload-audio");
+        return uploadAudio;
+      });
+    },
+    description: "Upload an audio file.",
+    icon: FileAudioIcon,
+    searchTerms: ["audio", "sound", "music", "podcast", "upload"],
+    title: "Audio",
+  },
+  {
+    command: ({ editor, range }) => {
+      triggerFileUpload(editor, range, "application/pdf", async () => {
+        const { uploadPdf } = await import("../pdf/upload-pdf");
+        return uploadPdf;
+      });
+    },
+    description: "Upload a PDF document.",
+    icon: FilePdfIcon,
+    searchTerms: ["pdf", "document", "file", "embed", "upload"],
+    title: "PDF",
+  },
+  {
+    command: ({ editor, range }) => {
+      triggerFileUpload(editor, range, "", async () => {
+        const { uploadAttachment } = await import("../attachment/upload-attachment");
+        return uploadAttachment;
+      });
+    },
+    description: "Attach any file.",
+    icon: PaperclipIcon,
+    searchTerms: ["attachment", "file", "attach", "upload", "download"],
+    title: "File Attachment",
+  },
+
+  // --- Category 3: Extras (Advanced Options / Inline Helpers / Layouts) ---
   {
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setDetails().run();
@@ -146,12 +273,27 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleCallout().run();
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .setCodeBlock({ language: "mermaid" })
+        .insertContent("flowchart LR\n    A --> B")
+        .run();
     },
-    description: "Insert a callout block.",
-    icon: InfoIcon,
-    searchTerms: ["callout", "info", "alert"],
-    title: "Callout",
+    description: "Insert mermaid diagram.",
+    icon: GitForkIcon,
+    searchTerms: ["mermaid", "diagram", "chart", "flowchart", "uml"],
+    title: "Mermaid diagram",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setStatus({ color: "gray", text: "" }).run();
+    },
+    description: "Insert inline status badge.",
+    icon: TagIcon,
+    searchTerms: ["status", "badge", "label", "lozenge"],
+    title: "Status",
   },
   {
     command: ({ editor, range }) => {
@@ -182,21 +324,21 @@ export const getSuggestionItems = (): SlashMenuItemType[] => [
   },
   {
     command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setStatus({ color: "gray", text: "" }).run();
-    },
-    description: "Insert inline status badge.",
-    icon: TagIcon,
-    searchTerms: ["status", "badge", "label", "lozenge"],
-    title: "Status",
-  },
-  {
-    command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).insertContent(":").run();
     },
     description: "Insert emoji.",
     icon: SmileyIcon,
     searchTerms: ["emoji", "face", "smile"],
     title: "Emoji",
+  },
+  {
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setPageBreak().run();
+    },
+    description: "Insert a page break for printing.",
+    icon: ScissorsIcon,
+    searchTerms: ["page", "break", "pagebreak", "print"],
+    title: "Page break",
   },
   {
     command: ({ editor, range }) => {

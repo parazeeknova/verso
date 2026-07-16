@@ -4,7 +4,6 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { useEffect, useCallback, useMemo, useRef, useState } from "react";
 import { BookmarkSimpleIcon, InfoIcon, ListBulletsIcon, XIcon } from "@phosphor-icons/react";
 import { gsap } from "gsap";
-
 import { useTheme } from "#/shared/hooks/use-theme";
 import { getEditorExtensions } from "#/features/editor/extensions";
 import { useEditorContent } from "#/features/editor/hooks/use-editor-content";
@@ -20,6 +19,11 @@ import { useIsPageWatching, useWatchPage } from "#/features/console/hooks/use-pa
 import { TableMenu } from "./table/table-menu";
 import { ColumnsMenu } from "./columns/columns-menu";
 import { CalloutMenu } from "./callout/callout-menu";
+import { ImageMenu } from "./image/image-menu";
+import { VideoMenu } from "./video/video-menu";
+import { AudioMenu } from "./audio/audio-menu";
+import { PdfMenu } from "./pdf/pdf-menu";
+import { YoutubeMenu } from "./youtube/youtube-menu";
 import { TableHandlesLayer } from "./table/handle/table-handles-layer";
 import { BlogTableOfContents } from "#/features/blog/components/blog-table-of-contents";
 import type { BlogHeading } from "#/features/blog/lib/blog-headings";
@@ -343,6 +347,11 @@ const useSyncEditorContent = (
     if (previousContentJsonRef.current === contentJson) {
       return;
     }
+    const localJsonString = JSON.stringify(editor.getJSON());
+    if (localJsonString === contentJson) {
+      previousContentJsonRef.current = contentJson;
+      return;
+    }
     if (dirty || editor.isFocused) {
       return;
     }
@@ -659,7 +668,10 @@ const TableOfContentsModal = ({
       />
       <div
         ref={sidebarRef}
-        className={`absolute right-0 top-0 flex h-full w-[min(92vw,18rem)] flex-col border-l shadow-2xl pointer-events-auto ${t("border-border-dark bg-text-light", "border-border-light bg-white")}`}
+        className={`absolute right-0 top-0 flex h-full w-[min(92vw,18rem)] flex-col border-l shadow-2xl pointer-events-auto ${t(
+          "border-border-dark bg-neutral-900 text-neutral-200",
+          "border-border-light bg-white text-neutral-800",
+        )}`}
       >
         <div
           className={`flex items-center justify-between border-b px-3 py-2 ${t("border-border-dark", "border-border-light")}`}
@@ -761,6 +773,19 @@ export const PageEditor = ({
   const markDirtyRef = useRef<(() => void) | null>(null);
 
   const editor = usePageEditorInstance(content, editable, setHeadings, markDirtyRef);
+
+  useEffect(() => {
+    if (editor && !editor.isDestroyed) {
+      const storage = editor.storage as unknown as Record<
+        string,
+        Record<string, string | undefined>
+      >;
+      storage.shared = storage.shared || {};
+      storage.shared.pageId = pageId;
+      storage.shared.spaceName = spaceName;
+      storage.shared.pageName = localTitle;
+    }
+  }, [editor, pageId, spaceName, localTitle]);
 
   const { dirty, cleanup, isSaving, lastSaved, markDirty } = useEditorContent(editor, pageId);
 
@@ -864,8 +889,10 @@ export const PageEditor = ({
   const derivedReadingTime = Math.max(1, Math.ceil(derivedWordCount / 200));
 
   return (
-    <div ref={wrapperRef} className="relative h-full flex flex-col pb-16">
-      <div className="flex items-center justify-between pt-1.5 pb-1 pl-4 pr-4 shrink-0">
+    <div ref={wrapperRef} className="relative h-full flex flex-col overflow-hidden">
+      <div
+        className={`sticky top-0 z-30 flex items-center justify-between pt-1.5 pb-1 pl-4 pr-4 shrink-0 transition-colors duration-500 ease-out ${t("bg-bg-dark", "bg-bg-light")}`}
+      >
         <div className="group relative">
           <span
             className={`text-[11px] lowercase font-medium ${t("text-text-dark/30", "text-text-light/30")}`}
@@ -947,7 +974,7 @@ export const PageEditor = ({
 
       <div
         ref={contentRef}
-        className={`w-full blog-reader-prose flex-1 min-h-0 overflow-y-auto ${fullWidth ? "px-8 md:px-16 lg:px-24" : "px-4 mx-auto max-w-2xl"}`}
+        className={`w-full blog-reader-prose flex-1 min-h-0 overflow-y-auto pb-32 ${fullWidth ? "px-8 md:px-16 lg:px-24" : "px-4 mx-auto max-w-2xl"}`}
         onClick={handleContentClick}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -962,7 +989,7 @@ export const PageEditor = ({
         <textarea
           ref={titleRef}
           rows={1}
-          className={`w-full resize-none overflow-hidden bg-transparent text-4xl font-bold border-none outline-none focus:outline-none focus:border-none focus:ring-0 pt-8 pb-0 px-0 mb-0.5 font-sans tracking-tight leading-tight ${t("text-neutral-200 placeholder-neutral-700", "text-neutral-800 placeholder-neutral-300")}`}
+          className={`w-full resize-none overflow-hidden bg-transparent !text-5xl !font-black border-none outline-none focus:outline-none focus:border-none focus:ring-0 pt-8 pb-0 px-0 mb-0.5 font-sans tracking-tight leading-tight ${t("text-neutral-200 placeholder-neutral-700", "text-neutral-800 placeholder-neutral-300")}`}
           placeholder="Untitled"
           value={localTitle}
           onChange={(e) => handleTitleChange(e.target.value)}
@@ -977,6 +1004,11 @@ export const PageEditor = ({
             <TableMenu editor={editor} />
             <ColumnsMenu editor={editor} />
             <CalloutMenu editor={editor} />
+            <ImageMenu editor={editor} />
+            <VideoMenu editor={editor} />
+            <AudioMenu editor={editor} />
+            <PdfMenu editor={editor} />
+            <YoutubeMenu editor={editor} />
             <TableHandlesLayer editor={editor} />
           </>
         )}

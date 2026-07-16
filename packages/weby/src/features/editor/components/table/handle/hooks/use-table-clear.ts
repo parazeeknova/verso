@@ -17,7 +17,9 @@ function deriveIndexFromSelection(
 ): number | null {
   const $head = editor.state.selection.$head;
   const table = findTable($head);
-  if (!table) {return null;}
+  if (!table) {
+    return null;
+  }
   const map = TableMap.get(table.node);
   const tableStart = table.pos;
   const cellRect = map.findCell($head.pos - tableStart);
@@ -31,18 +33,24 @@ export function useTableClear(
   scope: Scope,
 ) {
   return useCallback(() => {
-    if (!isEditorReady(editor)) {return;}
+    if (!isEditorReady(editor)) {
+      return;
+    }
 
     const table = findTable(editor.state.selection.$from);
-    if (!table) {return;}
+    if (!table) {
+      return;
+    }
     const currentTableNode = table.node;
     const currentTablePos = table.pos;
 
-    const {tr} = editor.state;
+    const { tr } = editor.state;
     const tableStart = currentTablePos + 1;
     const map = TableMap.get(currentTableNode);
-    const {paragraph} = editor.schema.nodes;
-    if (!paragraph) {return;}
+    const { paragraph } = editor.schema.nodes;
+    if (!paragraph) {
+      return;
+    }
 
     const cellOffsets: number[] = [];
 
@@ -71,12 +79,16 @@ export function useTableClear(
 
     for (const cellPos of targets) {
       const node = tr.doc.nodeAt(cellPos);
-      if (!node) {continue;}
+      if (!node) {
+        continue;
+      }
       const start = cellPos + 1;
       const end = cellPos + node.nodeSize - 1;
       tr.replaceWith(start, end, paragraph.create());
     }
 
-    if (tr.docChanged) {editor.view.dispatch(tr);}
+    if (tr.docChanged) {
+      editor.view.dispatch(tr);
+    }
   }, [editor, scope]);
 }

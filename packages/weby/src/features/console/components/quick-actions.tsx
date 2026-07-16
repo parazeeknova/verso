@@ -79,17 +79,19 @@ export const QuickActions = () => {
       .replaceAll(/[^\w\s-]/g, "")
       .replaceAll(/[\s_-]+/g, "-")
       .replaceAll(/^-+|-+$/g, "");
-    const spaceId = selectedSpaceId || spaces?.[0]?.id;
-    if (!spaceId) {
-      return;
-    }
+    const spaceId = selectedSpaceId || spaces?.[0]?.id || "";
     createPage.mutate(
-      { slugId: slug, spaceId, title: trimmed },
+      { slugId: slug, spaceId, title: trimmed, workspaceId: selectedWorkspaceId || "" },
       {
         onSuccess: (data) => {
           setNewTitle("");
           setShowNewPage(false);
-          navigate({ to: `/home/pages/${data.id}` });
+          const space = spaces?.find((s) => s.id === data.spaceId);
+          const spaceSlug = space ? space.slug : "nospace";
+          navigate({
+            params: { pageid: data.slugId, spaceSlug },
+            to: "/s/$spaceSlug/p/$pageid",
+          });
         },
       },
     );

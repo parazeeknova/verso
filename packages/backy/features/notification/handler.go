@@ -3,6 +3,7 @@ package notification
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -154,6 +155,12 @@ func (h *NotificationHandlers) Stream(c *gin.Context) {
 	unsub := h.hub.Subscribe(userID, ch)
 	defer unsub()
 
+	// Heartbeat keeps the connection alive. Without it, idle SSE streams
+	// get killed by idle timeouts (e.g. undici's 300s bodyTimeout on the
+	// proxy) or intermediary proxies, forcing clients to reconnect.
+	heartbeat := time.NewTicker(15 * time.Second)
+	defer heartbeat.Stop()
+
 	ctx := c.Request.Context()
 	for {
 		select {
@@ -162,6 +169,14 @@ func (h *NotificationHandlers) Stream(c *gin.Context) {
 				return
 			}
 			_, _ = fmt.Fprintf(c.Writer, "data: %s\n\n", msg)
+			if flusher != nil {
+				flusher.Flush()
+			}
+		case <-heartbeat.C:
+			// SSE comment line; ignored by clients but resets idle timers.
+			if _, err := fmt.Fprintf(c.Writer, ": ping\n\n"); err != nil {
+				return
+			}
 			if flusher != nil {
 				flusher.Flush()
 			}

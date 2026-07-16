@@ -142,8 +142,17 @@ export const useDeleteSpace = () => {
       fetchProtected<{ status: string }>(`/api/console/spaces/${id}`, {
         method: "DELETE",
       }),
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: ["spaces"] });
+      queryClient.removeQueries({ queryKey: ["pageTree", id] });
+      queryClient.removeQueries({ queryKey: ["space", id] });
+      queryClient.removeQueries({
+        predicate: (query) => {
+          const data = query.state.data as Space | undefined;
+          return data?.id === id;
+        },
+        queryKey: ["spaceBySlug"],
+      });
       queryClient.invalidateQueries({ queryKey: ["pageTree"] });
     },
   });

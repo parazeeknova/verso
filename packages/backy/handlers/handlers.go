@@ -21,6 +21,7 @@ import (
 	"verso/backy/repositories"
 	"verso/backy/shared/cache"
 	"verso/backy/shared/logger"
+	"verso/backy/shared/storage"
 	"verso/backy/store"
 )
 
@@ -38,6 +39,7 @@ type Handlers struct {
 	groupService     *groupfeat.GroupService
 	pageFavoriteRepo *repositories.PageFavoriteRepo
 	notifier         notifeat.Notifier
+	storageClient    *storage.Client
 }
 
 // Config holds application configuration
@@ -60,6 +62,11 @@ func New(cfg Config) *Handlers {
 // SetNotifier sets the notification service on the handlers.
 func (h *Handlers) SetNotifier(n notifeat.Notifier) {
 	h.notifier = n
+}
+
+// SetStorageClient sets the S3 storage client on the handlers.
+func (h *Handlers) SetStorageClient(c *storage.Client) {
+	h.storageClient = c
 }
 
 // NewWithDB creates a new handlers instance with database-backed services.
@@ -389,7 +396,8 @@ type CreateConsolePageRequest struct {
 	SlugID       string  `json:"slugId" binding:"required"`
 	Title        string  `json:"title" binding:"required"`
 	Icon         string  `json:"icon"`
-	SpaceID      string  `json:"spaceId" binding:"required"`
+	SpaceID      string  `json:"spaceId"`
+	WorkspaceID  string  `json:"workspaceId"`
 	ParentPageID *string `json:"parentPageId"`
 }
 
@@ -409,13 +417,61 @@ func (h *Handlers) CreateConsolePage(c *gin.Context) {
 	userID := middleware.GetCurrentUserID(c)
 	now := time.Now().UTC()
 
+	spaceID := req.SpaceID
+	workspaceID := req.WorkspaceID
+
+	if spaceID == "" {
+		if workspaceID != "" {
+			if h.workspaceService == nil {
+				c.JSON(http.StatusServiceUnavailable, gin.H{"error": "workspace service unavailable"})
+				return
+			}
+			if err := h.workspaceService.RequireMembership(c.Request.Context(), workspaceID, userID); err != nil {
+				c.JSON(http.StatusForbidden, gin.H{"error": "permission denied for this workspace"})
+				return
+			}
+		} else {
+			if h.workspaceService != nil {
+				workspaces, err := h.workspaceService.ListWorkspaces(c.Request.Context(), userID)
+				if err == nil && len(workspaces) > 0 {
+					workspaceID = workspaces[0].ID
+				}
+			}
+		}
+
+		if workspaceID != "" {
+			if h.spaceService != nil {
+				spaces, err := h.spaceService.ListSpaces(c.Request.Context(), workspaceID)
+				if err == nil {
+					for _, s := range spaces {
+						if s.Slug == "nospace" {
+							spaceID = s.ID
+							break
+						}
+					}
+				}
+			}
+			if spaceID == "" && h.spaceService != nil {
+				newSpace, err := h.spaceService.CreateSpace(c.Request.Context(), "nospace", "nospace", "", "internal space for no-space pages", workspaceID, userID)
+				if err == nil {
+					spaceID = newSpace.ID
+				}
+			}
+		}
+	}
+
+	if spaceID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "space ID is required or could not be resolved"})
+		return
+	}
+
 	page := models.Page{
 		ID:           uuid.New().String(),
 		SlugID:       req.SlugID,
 		Title:        req.Title,
 		Icon:         req.Icon,
 		ParentPageID: req.ParentPageID,
-		SpaceID:      req.SpaceID,
+		SpaceID:      spaceID,
 		CreatorID:    userID,
 		CreatedAt:    now,
 		UpdatedAt:    now,

@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -723,6 +725,164 @@ func TestSpaceService_SoftDeletedSpacesDisappearFromList(t *testing.T) {
 		if sp.ID == s.ID {
 			t.Fatal("expected soft-deleted space to not appear in list")
 		}
+	}
+}
+
+func TestSpaceService_DeleteSpace_RecursiveCleanup(t *testing.T) {
+	db := setupTestDB(t)
+	ctx := context.Background()
+
+	ownerID := createTestUser(t, ctx, db, "owner", "owner@example.com")
+	w := createTestWorkspace(t, ctx, db, "Test Workspace", "test-workspace-"+uuid.New().String()[:8], ownerID)
+
+	s, err := db.spaceSvc.CreateSpace(ctx, "Deletable Space", "deletable-space", "", "", w.ID, ownerID)
+	if err != nil {
+		t.Fatalf("create space: %v", err)
+	}
+
+	p := models.Page{
+		ID:          uuid.New().String(),
+		SlugID:      uuid.New().String(),
+		Title:       "Test Page in Space",
+		SpaceID:     s.ID,
+		CreatorID:   ownerID,
+		ContentJSON: []byte("{}"),
+	}
+
+	if err := db.pageSvc.CreatePage(ctx, p); err != nil {
+		t.Fatalf("create page: %v", err)
+	}
+
+	// Verify page exists.
+	_, err = db.pageRepo.GetByID(ctx, p.ID)
+	if err != nil {
+		t.Fatalf("expected page to exist before deletion: %v", err)
+	}
+
+	// Create local upload folder
+	localPath := filepath.Join(".", "uploads", p.ID)
+	if err := os.MkdirAll(localPath, 0o755); err != nil {
+		t.Fatalf("failed to create fake local asset directory: %v", err)
+	}
+
+	// Delete space.
+	if err := db.spaceSvc.DeleteSpace(ctx, s.ID, ownerID); err != nil {
+		t.Fatalf("delete space: %v", err)
+	}
+
+	// Verify space is soft-deleted.
+	spaces, err := db.spaceRepo.ListAll(ctx, w.ID)
+	if err != nil {
+		t.Fatalf("list spaces after delete: %v", err)
+	}
+	for _, sp := range spaces {
+		if sp.ID == s.ID {
+			t.Fatal("expected soft-deleted space to not appear in list")
+		}
+	}
+
+	// Verify page is soft-deleted.
+	_, err = db.pageRepo.GetByID(ctx, p.ID)
+	if !errors.Is(err, repositories.ErrPageNotFound) {
+		t.Fatalf("expected page to be soft-deleted, got %v", err)
+	}
+
+	// Verify local uploads are removed (wait for async goroutine)
+	deadline := time.Now().Add(1 * time.Second)
+	removed := false
+	for time.Now().Before(deadline) {
+		if _, err := os.Stat(localPath); os.IsNotExist(err) {
+			removed = true
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if !removed {
+		t.Errorf("expected local upload directory %s to be removed", localPath)
+	}
+}
+
+type mockStorageClient struct {
+	deletedBuckets []string
+}
+
+func (m *mockStorageClient) DeleteBucketAndObjects(ctx context.Context, bucket string) error {
+	m.deletedBuckets = append(m.deletedBuckets, bucket)
+	return nil
+}
+
+func TestSpaceService_DeleteSpace_StorageCleanup(t *testing.T) {
+	db := setupTestDB(t)
+	ctx := context.Background()
+
+	ownerID := createTestUser(t, ctx, db, "owner", "owner@example.com")
+	w := createTestWorkspace(t, ctx, db, "Test Workspace", "test-workspace-"+uuid.New().String()[:8], ownerID)
+
+	s, err := db.spaceSvc.CreateSpace(ctx, "Deletable Space", "deletable-space", "", "", w.ID, ownerID)
+	if err != nil {
+		t.Fatalf("create space: %v", err)
+	}
+
+	p := models.Page{
+		ID:          uuid.New().String(),
+		SlugID:      uuid.New().String(),
+		Title:       "Test Page in Space",
+		SpaceID:     s.ID,
+		CreatorID:   ownerID,
+		ContentJSON: []byte("{}"),
+	}
+
+	if err := db.pageSvc.CreatePage(ctx, p); err != nil {
+		t.Fatalf("create page: %v", err)
+	}
+
+	mockStorage := &mockStorageClient{}
+	db.spaceSvc.SetStorageClient(mockStorage)
+
+	// Delete space.
+	if err := db.spaceSvc.DeleteSpace(ctx, s.ID, ownerID); err != nil {
+		t.Fatalf("delete space: %v", err)
+	}
+
+	// Verify storage cleanup is triggered asynchronously
+	deadline := time.Now().Add(1 * time.Second)
+	called := false
+	for time.Now().Before(deadline) {
+		if len(mockStorage.deletedBuckets) > 0 {
+			called = true
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if !called {
+		t.Fatal("expected mock storage client to be called for bucket cleanup")
+	}
+	if mockStorage.deletedBuckets[0] != p.ID {
+		t.Errorf("expected deleted bucket to be %s, got %s", p.ID, mockStorage.deletedBuckets[0])
+	}
+}
+
+func TestSpaceService_DeleteSpace_CannotDeleteNoSpace(t *testing.T) {
+	db := setupTestDB(t)
+	ctx := context.Background()
+
+	ownerID := createTestUser(t, ctx, db, "owner", "owner@example.com")
+	w := createTestWorkspace(t, ctx, db, "Test Workspace", "test-workspace-"+uuid.New().String()[:8], ownerID)
+
+	// Create nospace system space.
+	s, err := db.spaceSvc.CreateSpace(ctx, "nospace", "nospace", "", "", w.ID, ownerID)
+	if err != nil {
+		t.Fatalf("create nospace space: %v", err)
+	}
+
+	// Try to delete space.
+	err = db.spaceSvc.DeleteSpace(ctx, s.ID, ownerID)
+	if err == nil {
+		t.Fatal("expected error when deleting nospace, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "cannot delete system space nospace") {
+		t.Fatalf("expected cannot delete system space nospace error, got %v", err)
 	}
 }
 

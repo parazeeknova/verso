@@ -78,7 +78,9 @@ export const ColumnHandle = React.memo(function ColumnHandle({
     tablePos,
   });
 
-  if (!cellDom) {return null;}
+  if (!cellDom) {
+    return null;
+  }
 
   return (
     <Menu

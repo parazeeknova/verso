@@ -15,8 +15,12 @@ export const TableHandlesLayer = React.memo(function TableHandlesLayer({
 }: TableHandlesLayerProps) {
   const state = useTableHandleState(editor);
 
-  if (!editor || !editor.isEditable) {return null;}
-  if (!state.hoveringCell || !state.tableNode || state.tablePos === null) {return null;}
+  if (!editor || !editor.isEditable) {
+    return null;
+  }
+  if (!state.hoveringCell || !state.tableNode || state.tablePos === null) {
+    return null;
+  }
 
   return (
     <>

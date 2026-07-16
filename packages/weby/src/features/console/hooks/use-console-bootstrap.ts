@@ -51,18 +51,27 @@ export const useConsoleBootstrap = () => {
   ]);
 
   useEffect(() => {
-    if (!spaces || spaces.length === 0 || !selectedWorkspaceId) {
+    if (!spaces || !selectedWorkspaceId) {
+      return;
+    }
+
+    const activeSpaces = spaces.filter((s) => s.slug !== "nospace");
+
+    if (activeSpaces.length === 0) {
+      if (selectedSpaceId !== "") {
+        setSelectedSpaceId("");
+      }
       return;
     }
 
     if (selectedSpaceId) {
-      const stillExists = spaces.some((s) => s.id === selectedSpaceId);
+      const stillExists = activeSpaces.some((s) => s.id === selectedSpaceId);
       if (stillExists) {
         return;
       }
     }
 
-    setSelectedSpaceId(spaces[0].id);
+    setSelectedSpaceId(activeSpaces[0].id);
   }, [spaces, selectedSpaceId, selectedWorkspaceId, setSelectedSpaceId]);
 
   return {

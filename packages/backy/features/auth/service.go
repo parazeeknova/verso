@@ -100,6 +100,9 @@ func (s *AuthService) Login(ctx context.Context, usernameOrEmail, password, emai
 
 	dbUser, err := s.userRepo.FindUserByUsernameOrEmail(ctx, usernameOrEmail)
 	if err != nil {
+		if errors.Is(err, repositories.ErrUserNotFound) {
+			return nil, nil, nil
+		}
 		return nil, nil, fmt.Errorf("lookup user: %w", err)
 	}
 	if dbUser == nil {

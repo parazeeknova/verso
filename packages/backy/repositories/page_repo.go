@@ -440,3 +440,34 @@ func scanPageTreeItems(rows pgx.Rows) ([]models.PageTreeItem, error) {
 	}
 	return items, nil
 }
+
+// ListIDsInSpace returns all non-deleted page IDs in a space.
+func (r *PageRepo) ListIDsInSpace(ctx context.Context, spaceID string) ([]string, error) {
+	rows, err := r.pool.Query(ctx, `SELECT id FROM pages WHERE space_id = $1 AND deleted_at IS NULL`, spaceID)
+	if err != nil {
+		return nil, fmt.Errorf("querying page ids: %w", err)
+	}
+	defer rows.Close()
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("scanning page id: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating page ids: %w", err)
+	}
+	return ids, nil
+}
+
+// SoftDeleteAllInSpace soft-deletes all pages belonging to a space.
+func (r *PageRepo) SoftDeleteAllInSpace(ctx context.Context, spaceID, deletedByID string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE pages SET deleted_at = now(), deleted_by_id = $1 WHERE space_id = $2 AND deleted_at IS NULL`, deletedByID, spaceID)
+	if err != nil {
+		return fmt.Errorf("soft-deleting all pages in space: %w", err)
+	}
+	return nil
+}
