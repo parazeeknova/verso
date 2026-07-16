@@ -495,7 +495,7 @@ const IndependentPagesList = ({ spaceId, spaceSlug }: { spaceId: string; spaceSl
       >
         pages
       </p>
-      <div className="space-y-0.5 pl-1">
+      <ul>
         {pageTree.map((node) => (
           <PageNode
             depth={0}
@@ -505,7 +505,7 @@ const IndependentPagesList = ({ spaceId, spaceSlug }: { spaceId: string; spaceSl
             spaceSlug={spaceSlug}
           />
         ))}
-      </div>
+      </ul>
     </div>
   );
 };
