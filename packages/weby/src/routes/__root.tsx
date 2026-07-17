@@ -42,13 +42,22 @@ const RootComponent = () => {
 };
 
 const THEME_SCRIPT = [
-  "(function(){var t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';",
-  "try{var s=localStorage.getItem('verso-theme');",
+  "(function(){",
+  "var t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';",
+  "try{var stored=null;",
+  "var s=localStorage.getItem('verso-theme');",
   "if(s){var j=JSON.parse(s);var p=j.state&&j.state.preference;",
-  "if(p==='light'||p==='dark')t=p;else if(p==='system')",
-  "t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}",
-  "}catch(e){}document.documentElement.dataset.theme=t;",
-  "document.documentElement.dataset.mantineColorScheme=t})()",
+  "if(p==='light'||p==='dark'||p==='system')stored=p}",
+  "if(!stored){var lp=localStorage.getItem('theme-preference');",
+  "if(lp==='light'||lp==='dark'||lp==='system')stored=lp}",
+  "if(!stored){var ot=localStorage.getItem('theme');",
+  "if(ot==='light'||ot==='dark')stored=ot}",
+  "if(stored){t=stored==='system'",
+  "?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')",
+  ":stored}}catch(e){}",
+  "document.documentElement.dataset.theme=t;",
+  "document.documentElement.dataset.mantineColorScheme=t",
+  "})()",
 ].join("");
 
 const RootShell = ({ children }: { children: React.ReactNode }) => (

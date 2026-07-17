@@ -1,6 +1,6 @@
 # Maintainer: Harsh Sahu <harsh@itssingularity.com> (Singularity Works - itssingularity.com)
 pkgname=verso-bin
-pkgver=0.3.74
+pkgver=0.3.75
 pkgrel=1
 pkgdesc="Personal knowledge base and folio, blog for public face & private brain, one app"
 arch=('x86_64')

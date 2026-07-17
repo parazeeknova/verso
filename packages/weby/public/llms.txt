@@ -19,8 +19,8 @@
 - Nix: nix run github:parazeeknova/verso
 
 ## Self-hosting
-- Web image: https://ghcr.io/parazeeknova/verso-web:latest
-- Server image: https://ghcr.io/parazeeknova/verso-serve:latest
+- Web image: ghcr.io/parazeeknova/verso-web:latest
+- Server image: ghcr.io/parazeeknova/verso-serve:latest
 
 ## Details
 Verso is free and open source under the MIT license. No subscriptions, no lock-in — your data stays yours. It can be fully self-hosted and is air-gap compatible. Made possible via Singularity Works (https://itssingularity.com) and asocialmedia.cc (https://asocialmedia.cc).

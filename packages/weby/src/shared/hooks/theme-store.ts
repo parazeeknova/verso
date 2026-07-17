@@ -16,7 +16,9 @@ interface ThemeActions {
 }
 
 const getSystemTheme = (): "light" | "dark" =>
-  typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 
@@ -88,14 +90,10 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
         set({ preference, resolved });
       },
       toggle: () => {
-        const { preference, resolved } = get();
+        const { resolved } = get();
         const nextResolved = resolved === "dark" ? "light" : "dark";
         applyDOM(nextResolved);
-        if (preference === "system") {
-          set({ resolved: nextResolved });
-        } else {
-          set({ preference: nextResolved, resolved: nextResolved });
-        }
+        set({ preference: nextResolved, resolved: nextResolved });
       },
     }),
     {
@@ -106,12 +104,20 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
   ),
 );
 
+// Once the desktop shell provides a theme via `verso:os-theme`, it is treated
+// as authoritative: matchMedia changes (unreliable on some Linux webviews) no
+// longer override it. The OS listener keeps applying later shell events.
+let osThemeAuthoritative = false;
+
 const setupSystemThemeListener = () => {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
     return;
   }
   const mql = window.matchMedia("(prefers-color-scheme: dark)");
   const handler = () => {
+    if (osThemeAuthoritative) {
+      return;
+    }
     const state = useThemeStore.getState();
     if (state.preference !== "system") {
       return;
@@ -140,6 +146,7 @@ const setupOsThemeListener = () => {
       return;
     }
     const resolved = (event as CustomEvent<string>).detail === "dark" ? "dark" : "light";
+    osThemeAuthoritative = true;
     if (state.resolved !== resolved) {
       applyDOM(resolved);
       useThemeStore.setState({ resolved });

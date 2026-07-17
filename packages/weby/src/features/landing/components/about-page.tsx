@@ -70,6 +70,14 @@ const GradientText = ({
   );
 };
 
+const selectThemeClass = (isDarkMode: boolean, dark: string, light: string): string =>
+  isDarkMode ? dark : light;
+
+const prefersReducedMotion = (): boolean =>
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 const REPO = "parazeeknova/verso";
 const GH = `https://github.com/${REPO}`;
 const API = `https://api.github.com/repos/${REPO}`;
@@ -330,7 +338,7 @@ const FeatureRow = ({
   title: string;
 }) => {
   const { isDarkMode } = useTheme();
-  const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const t = (dark: string, light: string) => selectThemeClass(isDarkMode, dark, light);
   return (
     <div
       className={`border p-4 flex flex-col gap-2 transition-colors ${t("border-border-dark hover:bg-white/3", "border-border-light hover:bg-black/3")}`}
@@ -394,7 +402,7 @@ const slashItems = [
 
 const SlashMenuPreview = () => {
   const { isDarkMode } = useTheme();
-  const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const t = (dark: string, light: string) => selectThemeClass(isDarkMode, dark, light);
   return (
     <div>
       <div className={`text-[11px] lowercase mb-3 ${t("text-text-dark/45", "text-text-light/45")}`}>
@@ -462,7 +470,7 @@ const SlashMenuPreview = () => {
 
 const MentionsPreview = () => {
   const { isDarkMode } = useTheme();
-  const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const t = (dark: string, light: string) => selectThemeClass(isDarkMode, dark, light);
   return (
     <div>
       <div className={`text-[11px] lowercase mb-3 ${t("text-text-dark/45", "text-text-light/45")}`}>
@@ -559,7 +567,7 @@ const MentionsPreview = () => {
 
 const SearchPreview = () => {
   const { isDarkMode } = useTheme();
-  const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const t = (dark: string, light: string) => selectThemeClass(isDarkMode, dark, light);
   return (
     <div className="space-y-2.5">
       <div
@@ -634,7 +642,7 @@ const SearchPreview = () => {
 
 const EditorPreview = () => {
   const { isDarkMode } = useTheme();
-  const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const t = (dark: string, light: string) => selectThemeClass(isDarkMode, dark, light);
   return (
     <div className="space-y-2.5">
       <div className={`text-[10px] lowercase ${t("text-text-dark/40", "text-text-light/40")}`}>
@@ -763,13 +771,28 @@ const InteractivePreview = () => {
   const previewRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startTimeRef = useRef(0);
+  const cancelledRef = useRef(false);
   const DURATION = 4000;
 
-  const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const t = (dark: string, light: string) => selectThemeClass(isDarkMode, dark, light);
 
-  const cancelledRef = useRef(false);
+  const [reducedMotion, setReducedMotion] = useState(() => prefersReducedMotion());
+  const [paused, setPaused] = useState(() => prefersReducedMotion());
 
   useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => setReducedMotion(mql.matches);
+    mql.addEventListener?.("change", onChange);
+    return () => mql.removeEventListener?.("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    if (paused || reducedMotion) {
+      return;
+    }
     cancelledRef.current = false;
     startTimeRef.current = Date.now();
 
@@ -799,7 +822,7 @@ const InteractivePreview = () => {
         clearTimeout(timerRef.current);
       }
     };
-  }, [active]);
+  }, [active, paused, reducedMotion]);
 
   useEffect(() => {
     if (previewRef.current) {
@@ -865,6 +888,13 @@ const InteractivePreview = () => {
             >
               {DEMOS[active].title}
             </span>
+            <button
+              className={`ml-auto border px-2 py-0.5 text-[9px] lowercase ${t("border-border-dark/50 hover:border-border-dark", "border-border-light/50 hover:border-border-light")}`}
+              onClick={() => setPaused((p) => !p)}
+              type="button"
+            >
+              {paused || reducedMotion ? "play" : "pause"}
+            </button>
           </div>
 
           <div className="p-4">
@@ -889,7 +919,7 @@ export const AboutPage = () => {
   const [showFixedNav, setShowFixedNav] = useState(false);
   const topSentinelRef = useRef<HTMLDivElement>(null);
 
-  const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const t = (dark: string, light: string) => selectThemeClass(isDarkMode, dark, light);
 
   useEffect(() => {
     const el = topSentinelRef.current;
@@ -1006,12 +1036,15 @@ export const AboutPage = () => {
     >
       <div aria-hidden="true" className="absolute left-0 top-0 h-px w-full" ref={topSentinelRef} />
       <script
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replaceAll("<", "\\u003c"),
+        }}
         type="application/ld+json"
       />
-      {/* Fixed scroll nav */}
       <div
+        aria-hidden={!showFixedNav}
         className={`fixed top-0 left-0 right-0 z-50 pt-3 transition-transform duration-200 ease-out ${showFixedNav ? "translate-y-0" : "-translate-y-full"}`}
+        inert={!showFixedNav}
       >
         <nav
           className={`mx-auto max-w-180 px-4 sm:px-6 flex items-center justify-between border py-2 text-[13px] ${t("border-border-dark bg-bg-dark", "border-border-light bg-bg-light")}`}
@@ -1043,9 +1076,7 @@ export const AboutPage = () => {
         </nav>
       </div>
 
-      {/* === Markdown Document Body === */}
       <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-12 sm:pt-20 pb-8">
-        {/* Inline nav / header bar */}
         <div
           className={`flex items-center justify-between border-b pb-3 mb-10 text-[13px] ${t("border-border-dark", "border-border-light")}`}
         >
@@ -1068,7 +1099,6 @@ export const AboutPage = () => {
           </div>
         </div>
 
-        {/* # Hero heading */}
         <div className="flex items-start justify-between gap-4">
           <GradientText
             as="h1"
@@ -1122,7 +1152,6 @@ export const AboutPage = () => {
           </a>
         </div>
 
-        {/* ## what is verso */}
         <section className="mt-16">
           <GradientText as="h2" className="text-2xl sm:text-3xl font-bold lowercase mb-6">
             ## what is verso
@@ -1187,7 +1216,6 @@ export const AboutPage = () => {
             </FeatureRow>
           </div>
 
-          {/* ### two chat experiences */}
           <GradientText as="h3" className="text-lg sm:text-xl font-bold lowercase mt-10 mb-4">
             ### two chat experiences
           </GradientText>
@@ -1229,7 +1257,6 @@ export const AboutPage = () => {
           </blockquote>
         </section>
 
-        {/* ## releases */}
         <section className="mt-16">
           <div className="flex items-end justify-between gap-4 flex-wrap">
             <GradientText as="h2" className="text-2xl sm:text-3xl font-bold lowercase">
@@ -1305,7 +1332,6 @@ export const AboutPage = () => {
           </div>
         </section>
 
-        {/* ## downloads */}
         <section className="mt-16">
           <GradientText as="h2" className="text-2xl sm:text-3xl font-bold lowercase mb-2">
             ## downloads
@@ -1320,7 +1346,6 @@ export const AboutPage = () => {
             .
           </p>
 
-          {/* Desktop apps */}
           <h3 className="text-[12px] lowercase font-bold mb-3 flex items-center gap-2">
             <CloudArrowDownIcon
               className={t("text-text-dark/40", "text-text-light/40")}
@@ -1330,7 +1355,6 @@ export const AboutPage = () => {
           </h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{desktop.map(renderCard)}</div>
 
-          {/* Package managers */}
           <h3 className="text-[12px] lowercase font-bold mt-8 mb-3 flex items-center gap-2">
             <StackIcon className={t("text-text-dark/40", "text-text-light/40")} size={14} />
             package managers
@@ -1344,7 +1368,6 @@ export const AboutPage = () => {
             latest tagged release.
           </p>
 
-          {/* Containers */}
           <h3 className="text-[12px] lowercase font-bold mt-8 mb-3 flex items-center gap-2">
             <CubeIcon className={t("text-text-dark/40", "text-text-light/40")} size={14} />
             containers
@@ -1363,7 +1386,6 @@ export const AboutPage = () => {
           </p>
         </section>
 
-        {/* ## self-hosted */}
         <section id="self-hosted" className="mt-16">
           <GradientText as="h2" className="text-2xl sm:text-3xl font-bold lowercase mb-6">
             ## self-hosted
@@ -1436,7 +1458,6 @@ export const AboutPage = () => {
           </div>
         </section>
 
-        {/* ## see verso in action */}
         <section className="mt-16">
           <GradientText as="h2" className="text-2xl sm:text-3xl font-bold lowercase mb-6">
             ## see verso in action
@@ -1444,7 +1465,6 @@ export const AboutPage = () => {
           <InteractivePreview />
         </section>
 
-        {/* ## integrations */}
         <section className="mt-16">
           <GradientText as="h2" className="text-2xl sm:text-3xl font-bold lowercase mb-6">
             ## integrations
@@ -1526,7 +1546,6 @@ export const AboutPage = () => {
           </div>
         </section>
 
-        {/* ## changelog */}
         <section className="mt-16 pb-8">
           <GradientText as="h2" className="text-2xl sm:text-3xl font-bold lowercase mb-6">
             ## changelog
@@ -1617,7 +1636,6 @@ export const AboutPage = () => {
           </div>
         </section>
 
-        {/* ## get started */}
         <section className="mt-16 pb-8">
           <GradientText
             as="h2"
@@ -1659,7 +1677,6 @@ export const AboutPage = () => {
         </section>
       </div>
 
-      {/* Footer */}
       <footer className="pb-10 pt-16">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 overflow-visible">
           <div className={`border-t ${t("border-border-dark", "border-border-light")}`} />
