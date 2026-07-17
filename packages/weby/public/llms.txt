@@ -1,0 +1,26 @@
+# Verso
+
+> Verso is a self-hosted personal knowledge base, blog, and portfolio: a public face for visitors and a private, retrieval-augmented mind for its owner. One app with two access tiers — a public portfolio and blog anyone can browse, and an authenticated markdown workspace with RAG, OCR, and capture channels for notes, documents, and long-term memory.
+
+## Documentation
+- About & downloads: https://przknv.cc/about
+- GitHub repository: https://github.com/parazeeknova/verso
+- Release notes: https://github.com/parazeeknova/verso/releases
+- Live demo: https://przknv.cc
+
+## Install
+- macOS (arm64): https://github.com/parazeeknova/verso/releases/latest/download/stable-macos-arm64-Verso.dmg
+- Windows (x64): https://github.com/parazeeknova/verso/releases/latest/download/stable-win-x64-Verso-Setup.zip
+- Linux (x64): https://github.com/parazeeknova/verso/releases/latest/download/stable-linux-x64-Verso-Setup.tar.gz
+- Debian / Ubuntu (.deb): https://github.com/parazeeknova/verso/releases/latest/download/verso_0.3.70_amd64.deb
+- Fedora / RHEL (.rpm): https://github.com/parazeeknova/verso/releases/latest/download/verso-0.3.70-1.x86_64.rpm
+- AppImage (x86_64): https://github.com/parazeeknova/verso/releases/latest/download/Verso-0.3.70-x86_64.AppImage
+- Arch (AUR): https://aur.archlinux.org/packages/verso-bin
+- Nix: nix run github:parazeeknova/verso
+
+## Self-hosting
+- Web image: https://ghcr.io/parazeeknova/verso-web:latest
+- Server image: https://ghcr.io/parazeeknova/verso-serve:latest
+
+## Details
+Verso is free and open source under the MIT license. No subscriptions, no lock-in — your data stays yours. It can be fully self-hosted and is air-gap compatible. Made possible via Singularity Works (https://itssingularity.com) and asocialmedia.cc (https://asocialmedia.cc).

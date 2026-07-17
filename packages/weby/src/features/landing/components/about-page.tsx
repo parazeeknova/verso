@@ -936,6 +936,25 @@ export const AboutPage = () => {
   }, []);
 
   const downloads = buildDownloads(latest);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    applicationCategory: "ProductivityApplication",
+    author: {
+      "@type": "Organization",
+      name: "parazeeknova",
+      url: "https://github.com/parazeeknova",
+    },
+    description:
+      "Verso is a self-hosted personal knowledge base, blog, and portfolio with two access tiers: a public portfolio and blog, and an authenticated markdown workspace with RAG, OCR, and capture channels.",
+    downloadUrl: downloads.map((d) => d.href),
+    name: "Verso",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    operatingSystem: "macOS, Windows, Linux",
+    sameAs: [GH],
+    softwareVersion: stripV(latest.tag_name),
+    url: "https://przknv.cc/about",
+  };
   const desktopKeys = new Set<DownloadKey>(["appimage", "deb", "linux", "mac", "rpm", "win"]);
   const managerKeys = new Set<DownloadKey>(["arch", "nix"]);
   const containerKeys = new Set<DownloadKey>(["serve", "web"]);
@@ -986,6 +1005,10 @@ export const AboutPage = () => {
       className={`relative min-h-screen transition-colors duration-500 ease-out ${t("bg-bg-dark text-text-dark", "bg-bg-light text-text-light")}`}
     >
       <div aria-hidden="true" className="absolute left-0 top-0 h-px w-full" ref={topSentinelRef} />
+      <script
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        type="application/ld+json"
+      />
       {/* Fixed scroll nav */}
       <div
         className={`fixed top-0 left-0 right-0 z-50 pt-3 transition-transform duration-200 ease-out ${showFixedNav ? "translate-y-0" : "-translate-y-full"}`}
