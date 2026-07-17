@@ -70,11 +70,17 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
           applyDOM(resolved);
           set({ hydrated: true, preference: stored, resolved });
         } else {
-          set({ hydrated: true });
+          // no stored preference: default to system, but keep whatever theme the
+          // pre-hydration script (or the desktop shell) already applied to the DOM
+          const current =
+            typeof document === "undefined" ? null : document.documentElement.dataset.theme;
+          const resolved = current === "light" || current === "dark" ? current : getSystemTheme();
+          applyDOM(resolved);
+          set({ hydrated: true, preference: "system", resolved });
         }
       },
       hydrated: false,
-      preference: "dark",
+      preference: "system",
       resolved: "dark",
       setPreference: (preference: ThemePreference) => {
         const resolved = resolvePreference(preference);
@@ -99,3 +105,47 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
     },
   ),
 );
+
+const setupSystemThemeListener = () => {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return;
+  }
+  const mql = window.matchMedia("(prefers-color-scheme: dark)");
+  const handler = () => {
+    const state = useThemeStore.getState();
+    if (state.preference !== "system") {
+      return;
+    }
+    const resolved = mql.matches ? "dark" : "light";
+    if (state.resolved !== resolved) {
+      applyDOM(resolved);
+      useThemeStore.setState({ resolved });
+    }
+  };
+  if (typeof mql.addEventListener === "function") {
+    mql.addEventListener("change", handler);
+  }
+};
+
+// The desktop shell (Electrobun) forwards the OS theme via this event so Linux
+// webviews (where matchMedia can be unreliable) still follow the system theme.
+// Only applied while the preference is "system", so manual choices are kept.
+const setupOsThemeListener = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.addEventListener("verso:os-theme", (event) => {
+    const state = useThemeStore.getState();
+    if (state.preference !== "system") {
+      return;
+    }
+    const resolved = (event as CustomEvent<string>).detail === "dark" ? "dark" : "light";
+    if (state.resolved !== resolved) {
+      applyDOM(resolved);
+      useThemeStore.setState({ resolved });
+    }
+  });
+};
+
+setupSystemThemeListener();
+setupOsThemeListener();

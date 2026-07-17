@@ -42,10 +42,11 @@ const RootComponent = () => {
 };
 
 const THEME_SCRIPT = [
-  "(function(){var t='dark';try{var s=localStorage.getItem('verso-theme');",
-  "if(s){var j=JSON.parse(s);var p=j.state?.preference;",
+  "(function(){var t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';",
+  "try{var s=localStorage.getItem('verso-theme');",
+  "if(s){var j=JSON.parse(s);var p=j.state&&j.state.preference;",
   "if(p==='light'||p==='dark')t=p;else if(p==='system')",
-  "t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}",
+  "t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}",
   "}catch(e){}document.documentElement.dataset.theme=t;",
   "document.documentElement.dataset.mantineColorScheme=t})()",
 ].join("");
