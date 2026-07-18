@@ -340,6 +340,20 @@ jobs:
             echo "Warning: stable-linux-x64-Verso-Setup.tar.gz not found, skipping hash updates."
           fi
 
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26"
+
+      - name: Sync and verify version across all files
+        run: |
+          go run scripts/autobump.go sync
+          go run scripts/autobump.go check
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore(release): Sync versions for v${{ needs.check-release-tag.outputs.version }} [skip ci]" || echo "Versions already in sync"
+          git push origin HEAD:${{ github.ref_name }} || true
+
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
