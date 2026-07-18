@@ -141,6 +141,14 @@ const setupOsThemeListener = () => {
     return;
   }
   window.addEventListener("verso:os-theme", (event) => {
+    // A saved explicit preference may not be restored into state yet: the shell
+    // can dispatch this before hydration runs, when preference is still the
+    // initial "system". The pre-hydration script already applied the saved
+    // theme, so defer to it and avoid a flash; hydration restores state.
+    const stored = readStoredPreference();
+    if (stored === "light" || stored === "dark") {
+      return;
+    }
     const state = useThemeStore.getState();
     if (state.preference !== "system") {
       return;
