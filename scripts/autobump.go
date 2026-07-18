@@ -10,11 +10,16 @@ import (
 	"strings"
 )
 
+// managedFiles is the single source of truth for where the version lives.
+// The root package.json "version" is authoritative; every other file is kept
+// in sync with it by this tool (locally through the pre-commit hook, and in
+// CI during the release job).
 var managedFiles = []string{
 	"package.json",
 	"lerna.json",
 	"packages/backy/package.json",
 	"packages/weby/package.json",
+	"packages/native/package.json",
 	"flake.nix",
 	"packaging/arch/PKGBUILD",
 }
@@ -27,41 +32,147 @@ var (
 )
 
 func main() {
-	rootDir, err := gitOutput("rev-parse", "--show-toplevel")
-	if err != nil {
-		panic(fmt.Sprintf("failed to resolve repository root: %v", err))
+	args := os.Args[1:]
+	cmd := "bump"
+	if len(args) > 0 {
+		cmd = args[0]
+		args = args[1:]
 	}
 
-	stagedFiles, err := getStagedFiles(rootDir)
+	switch cmd {
+	case "bump":
+		runBump()
+	case "set":
+		if len(args) < 1 {
+			fail("usage: autobump set <version>")
+		}
+		runSet(args[0])
+	case "sync":
+		runSync()
+	case "check":
+		runCheck()
+	case "get":
+		root, err := repoRoot()
+		if err != nil {
+			fail("%v", err)
+		}
+		v, err := readVersion(root, "package.json")
+		if err != nil {
+			fail("%v", err)
+		}
+		fmt.Println(v)
+	default:
+		fail("unknown command %q (expected bump|set|sync|check|get)", cmd)
+	}
+}
+
+func runBump() {
+	root, err := repoRoot()
 	if err != nil {
-		panic(fmt.Sprintf("failed to read staged files: %v", err))
+		fail("%v", err)
 	}
 
-	if !hasMeaningfulStagedChanges(stagedFiles) {
+	staged, err := getStagedFiles(root)
+	if err != nil {
+		fail("%v", err)
+	}
+
+	// Only bump when there are real (non-version) changes staged, so a
+	// commit produced by this tool itself does not trigger another bump.
+	if !hasMeaningfulStagedChanges(staged) {
 		return
 	}
 
-	currentVersion, err := readVersion(rootDir, "package.json")
+	current, err := readVersion(root, "package.json")
 	if err != nil {
-		panic(fmt.Sprintf("failed to read current version: %v", err))
+		fail("%v", err)
 	}
 
-	nextVersion, err := bumpPatch(currentVersion)
+	next, err := bumpPatch(current)
 	if err != nil {
-		panic(fmt.Sprintf("failed to bump version: %v", err))
+		fail("%v", err)
 	}
 
 	for _, file := range managedFiles {
-		if err := setVersion(rootDir, file, nextVersion); err != nil {
-			panic(fmt.Sprintf("failed to update %s: %v", file, err))
+		if err := setVersion(root, file, next); err != nil {
+			fail("failed to update %s: %v", file, err)
 		}
 	}
 
-	if err := stageFiles(rootDir, managedFiles); err != nil {
-		panic(fmt.Sprintf("failed to stage bumped versions: %v", err))
+	if err := stageFiles(root, managedFiles); err != nil {
+		fail("%v", err)
 	}
 
-	fmt.Printf("Bumped versions: %s -> %s\n", currentVersion, nextVersion)
+	fmt.Printf("Bumped versions: %s -> %s\n", current, next)
+}
+
+func runSet(version string) {
+	if !semverPattern.MatchString(version) {
+		fail("invalid semver: %s", version)
+	}
+	root, err := repoRoot()
+	if err != nil {
+		fail("%v", err)
+	}
+	for _, file := range managedFiles {
+		if err := setVersion(root, file, version); err != nil {
+			fail("failed to update %s: %v", file, err)
+		}
+	}
+	if err := stageFiles(root, managedFiles); err != nil {
+		fail("%v", err)
+	}
+	fmt.Printf("Set version: %s\n", version)
+}
+
+func runSync() {
+	root, err := repoRoot()
+	if err != nil {
+		fail("%v", err)
+	}
+	current, err := readVersion(root, "package.json")
+	if err != nil {
+		fail("%v", err)
+	}
+	for _, file := range managedFiles {
+		if err := setVersion(root, file, current); err != nil {
+			fail("failed to update %s: %v", file, err)
+		}
+	}
+	if err := stageFiles(root, managedFiles); err != nil {
+		fail("%v", err)
+	}
+	fmt.Printf("Synced all files to %s\n", current)
+}
+
+func runCheck() {
+	root, err := repoRoot()
+	if err != nil {
+		fail("%v", err)
+	}
+	current, err := readVersion(root, "package.json")
+	if err != nil {
+		fail("%v", err)
+	}
+
+	ok := true
+	for _, file := range managedFiles {
+		v, err := readManagedVersion(root, file)
+		if err != nil {
+			fmt.Printf("  MISSING version in %s: %v\n", file, err)
+			ok = false
+			continue
+		}
+		if v != current {
+			fmt.Printf("  MISMATCH %s: %s != %s\n", file, v, current)
+			ok = false
+		}
+	}
+
+	if !ok {
+		fail("version consistency check failed")
+	}
+	fmt.Printf("All %d files consistent at %s\n", len(managedFiles), current)
 }
 
 func hasMeaningfulStagedChanges(stagedFiles []string) bool {
@@ -127,16 +238,49 @@ func readVersion(rootDir, relativePath string) (string, error) {
 	return payload.Version, nil
 }
 
+func readManagedVersion(rootDir, relativePath string) (string, error) {
+	path := filepath.Join(rootDir, relativePath)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+
+	base := filepath.Base(relativePath)
+	var re *regexp.Regexp
+	switch base {
+	case "flake.nix":
+		re = nixVersionPattern
+	case "PKGBUILD":
+		re = pkgverPattern
+	default:
+		re = versionPattern
+	}
+
+	m := re.FindStringSubmatch(string(data))
+	if m == nil {
+		return "", fmt.Errorf("version field not found in %s", relativePath)
+	}
+
+	if base == "PKGBUILD" {
+		// pkgverPattern has a single capture group (the "pkgver=" prefix);
+		// the value is the remainder of the match.
+		return strings.TrimSpace(strings.TrimPrefix(m[0], m[1])), nil
+	}
+
+	// versionPattern / nixVersionPattern capture: group1 = prefix
+	// (inclosing opening quote), group2 = suffix (closing quote).
+	// The value sits between them; group2 is not the value.
+	inner := strings.TrimPrefix(m[0], m[1])
+	inner = strings.TrimSuffix(inner, m[2])
+	return inner, nil
+}
+
 func bumpPatch(version string) (string, error) {
-	match := semverPattern.FindStringSubmatch(version)
-	if match == nil {
+	if !semverPattern.MatchString(version) {
 		return "", fmt.Errorf("invalid semver: %s", version)
 	}
 
-	var major int
-	var minor int
-	var patch int
-
+	var major, minor, patch int
 	if _, err := fmt.Sscanf(version, "%d.%d.%d", &major, &minor, &patch); err != nil {
 		return "", err
 	}
@@ -157,16 +301,18 @@ func setVersion(rootDir, relativePath, nextVersion string) error {
 
 	original := string(originalBytes)
 	var updated string
-	if filepath.Base(relativePath) == "flake.nix" {
+	switch filepath.Base(relativePath) {
+	case "flake.nix":
 		updated = nixVersionPattern.ReplaceAllString(original, `${1}`+nextVersion+`${2}`)
-	} else if filepath.Base(relativePath) == "PKGBUILD" {
+	case "PKGBUILD":
 		updated = pkgverPattern.ReplaceAllString(original, `${1}`+nextVersion)
-	} else {
+	default:
 		updated = versionPattern.ReplaceAllString(original, `${1}`+nextVersion+`${2}`)
 	}
 
 	if updated == original {
-		return fmt.Errorf("version field not found in %s", relativePath)
+		// Already at the target version (or field absent): treat as a no-op.
+		return nil
 	}
 
 	return os.WriteFile(path, []byte(updated), 0o644)
@@ -189,6 +335,10 @@ func stageFiles(rootDir string, files []string) error {
 	return nil
 }
 
+func repoRoot() (string, error) {
+	return gitOutput("rev-parse", "--show-toplevel")
+}
+
 func gitOutput(args ...string) (string, error) {
 	cmd := exec.Command("git", args...)
 	out, err := cmd.CombinedOutput()
@@ -197,4 +347,9 @@ func gitOutput(args ...string) (string, error) {
 	}
 
 	return strings.TrimSpace(string(out)), nil
+}
+
+func fail(format string, a ...any) {
+	fmt.Fprintf(os.Stderr, format+"\n", a...)
+	os.Exit(1)
 }

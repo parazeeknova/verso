@@ -16,7 +16,9 @@ interface ThemeActions {
 }
 
 const getSystemTheme = (): "light" | "dark" =>
-  typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 
@@ -70,11 +72,17 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
           applyDOM(resolved);
           set({ hydrated: true, preference: stored, resolved });
         } else {
-          set({ hydrated: true });
+          // no stored preference: default to system, but keep whatever theme the
+          // pre-hydration script (or the desktop shell) already applied to the DOM
+          const current =
+            typeof document === "undefined" ? null : document.documentElement.dataset.theme;
+          const resolved = current === "light" || current === "dark" ? current : getSystemTheme();
+          applyDOM(resolved);
+          set({ hydrated: true, preference: "system", resolved });
         }
       },
       hydrated: false,
-      preference: "dark",
+      preference: "system",
       resolved: "dark",
       setPreference: (preference: ThemePreference) => {
         const resolved = resolvePreference(preference);
@@ -82,14 +90,10 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
         set({ preference, resolved });
       },
       toggle: () => {
-        const { preference, resolved } = get();
+        const { resolved } = get();
         const nextResolved = resolved === "dark" ? "light" : "dark";
         applyDOM(nextResolved);
-        if (preference === "system") {
-          set({ resolved: nextResolved });
-        } else {
-          set({ preference: nextResolved, resolved: nextResolved });
-        }
+        set({ preference: nextResolved, resolved: nextResolved });
       },
     }),
     {
@@ -99,3 +103,64 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
     },
   ),
 );
+
+// Once the desktop shell provides a theme via `verso:os-theme`, it is treated
+// as authoritative: matchMedia changes (unreliable on some Linux webviews) no
+// longer override it. The OS listener keeps applying later shell events.
+let osThemeAuthoritative = false;
+
+const setupSystemThemeListener = () => {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return;
+  }
+  const mql = window.matchMedia("(prefers-color-scheme: dark)");
+  const handler = () => {
+    if (osThemeAuthoritative) {
+      return;
+    }
+    const state = useThemeStore.getState();
+    if (state.preference !== "system") {
+      return;
+    }
+    const resolved = mql.matches ? "dark" : "light";
+    if (state.resolved !== resolved) {
+      applyDOM(resolved);
+      useThemeStore.setState({ resolved });
+    }
+  };
+  if (typeof mql.addEventListener === "function") {
+    mql.addEventListener("change", handler);
+  }
+};
+
+// The desktop shell (Electrobun) forwards the OS theme via this event so Linux
+// webviews (where matchMedia can be unreliable) still follow the system theme.
+// Only applied while the preference is "system", so manual choices are kept.
+const setupOsThemeListener = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.addEventListener("verso:os-theme", (event) => {
+    // A saved explicit preference may not be restored into state yet: the shell
+    // can dispatch this before hydration runs, when preference is still the
+    // initial "system". The pre-hydration script already applied the saved
+    // theme, so defer to it and avoid a flash; hydration restores state.
+    const stored = readStoredPreference();
+    if (stored === "light" || stored === "dark") {
+      return;
+    }
+    const state = useThemeStore.getState();
+    if (state.preference !== "system") {
+      return;
+    }
+    const resolved = (event as CustomEvent<string>).detail === "dark" ? "dark" : "light";
+    osThemeAuthoritative = true;
+    if (state.resolved !== resolved) {
+      applyDOM(resolved);
+      useThemeStore.setState({ resolved });
+    }
+  });
+};
+
+setupSystemThemeListener();
+setupOsThemeListener();

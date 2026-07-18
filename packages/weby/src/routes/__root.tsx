@@ -42,12 +42,22 @@ const RootComponent = () => {
 };
 
 const THEME_SCRIPT = [
-  "(function(){var t='dark';try{var s=localStorage.getItem('verso-theme');",
-  "if(s){var j=JSON.parse(s);var p=j.state?.preference;",
-  "if(p==='light'||p==='dark')t=p;else if(p==='system')",
-  "t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}",
-  "}catch(e){}document.documentElement.dataset.theme=t;",
-  "document.documentElement.dataset.mantineColorScheme=t})()",
+  "(function(){",
+  "var resolvedTheme=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';",
+  "try{var storedVersoTheme=null;",
+  "var storedVersoThemeRaw=localStorage.getItem('verso-theme');",
+  "if(storedVersoThemeRaw){var parsedVersoTheme=JSON.parse(storedVersoThemeRaw);var versoPreference=parsedVersoTheme.state&&parsedVersoTheme.state.preference;",
+  "if(versoPreference==='light'||versoPreference==='dark'||versoPreference==='system')storedVersoTheme=versoPreference}",
+  "if(!storedVersoTheme){var legacyPreference=localStorage.getItem('theme-preference');",
+  "if(legacyPreference==='light'||legacyPreference==='dark'||legacyPreference==='system')storedVersoTheme=legacyPreference}",
+  "if(!storedVersoTheme){var legacyTheme=localStorage.getItem('theme');",
+  "if(legacyTheme==='light'||legacyTheme==='dark')storedVersoTheme=legacyTheme}",
+  "if(storedVersoTheme){resolvedTheme=storedVersoTheme==='system'",
+  "?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')",
+  ":storedVersoTheme}}catch(e){}",
+  "document.documentElement.dataset.theme=resolvedTheme;",
+  "document.documentElement.dataset.mantineColorScheme=resolvedTheme",
+  "})()",
 ].join("");
 
 const RootShell = ({ children }: { children: React.ReactNode }) => (
