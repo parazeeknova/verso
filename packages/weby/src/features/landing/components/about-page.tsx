@@ -825,14 +825,15 @@ const InteractivePreview = () => {
   }, [active, paused, reducedMotion]);
 
   useEffect(() => {
-    if (previewRef.current) {
-      gsap.fromTo(
-        previewRef.current,
-        { opacity: 0, y: 8 },
-        { duration: 0.25, ease: "power2.out", opacity: 1, y: 0 },
-      );
+    if (reducedMotion || !previewRef.current) {
+      return;
     }
-  }, [active]);
+    gsap.fromTo(
+      previewRef.current,
+      { opacity: 0, y: 8 },
+      { duration: 0.25, ease: "power2.out", opacity: 1, y: 0 },
+    );
+  }, [active, reducedMotion]);
 
   return (
     <div className="grid sm:grid-cols-2 gap-8">
@@ -889,7 +890,8 @@ const InteractivePreview = () => {
               {DEMOS[active].title}
             </span>
             <button
-              className={`ml-auto border px-2 py-0.5 text-[9px] lowercase ${t("border-border-dark/50 hover:border-border-dark", "border-border-light/50 hover:border-border-light")}`}
+              className={`ml-auto border px-2 py-0.5 text-[9px] lowercase ${t("border-border-dark/50 hover:border-border-dark", "border-border-light/50 hover:border-border-light")} ${reducedMotion ? "opacity-40 cursor-not-allowed" : ""}`}
+              disabled={reducedMotion}
               onClick={() => setPaused((p) => !p)}
               type="button"
             >

@@ -198,14 +198,17 @@ void (async () => {
   const initialTheme = await getOsTheme();
   applyOsTheme(mainWindow, initialTheme);
 
-  let lastTheme = await getOsTheme();
-  setInterval(async () => {
+  let lastTheme = initialTheme;
+  const poll = async () => {
     const theme = await getOsTheme();
     if (theme !== lastTheme) {
       lastTheme = theme;
       applyOsTheme(mainWindow, theme);
     }
-  }, 2000);
+    await Bun.sleep(2000);
+    void poll();
+  };
+  void poll();
 })();
 
 console.log(`Verso desktop application started! Window ID: ${mainWindow.id}`);
