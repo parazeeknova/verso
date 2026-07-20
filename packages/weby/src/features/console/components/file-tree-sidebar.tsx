@@ -69,6 +69,147 @@ interface PageNodeProps {
   spaceSlug: string;
 }
 
+interface RenameInputProps {
+  renameInputRef: React.RefObject<HTMLInputElement | null>;
+  renameTitle: string;
+  setRenameTitle: (v: string) => void;
+  submitRename: () => void;
+  handleRenameKeyDown: (e: React.KeyboardEvent) => void;
+  setIsRenaming: (v: boolean) => void;
+  t: (dark: string, light: string) => string;
+}
+
+const RenameInput = ({
+  renameInputRef,
+  renameTitle,
+  setRenameTitle,
+  submitRename,
+  handleRenameKeyDown,
+  setIsRenaming,
+  t,
+}: RenameInputProps) => (
+  <div className="flex-1 flex items-center gap-1">
+    <input
+      ref={renameInputRef}
+      className={`flex-1 bg-transparent outline-none text-[11px] lowercase border-b ${t("border-white/20 text-text-dark", "border-black/20 text-text-light")}`}
+      onBlur={submitRename}
+      onChange={(e) => setRenameTitle(e.target.value)}
+      onKeyDown={handleRenameKeyDown}
+      value={renameTitle}
+    />
+    <button
+      className={`shrink-0 text-[10px] lowercase px-1 cursor-pointer ${t("text-text-dark/40 hover:text-text-dark", "text-text-light/40 hover:text-text-light")}`}
+      onClick={submitRename}
+      type="button"
+    >
+      save
+    </button>
+    <button
+      className={`shrink-0 text-[10px] lowercase px-1 cursor-pointer ${t("text-text-dark/25 hover:text-text-dark/60", "text-text-light/25 hover:text-text-light/60")}`}
+      onClick={() => setIsRenaming(false)}
+      type="button"
+    >
+      cancel
+    </button>
+  </div>
+);
+
+interface PageNodeActionsMenuProps {
+  node: TreeNode;
+  hasChildren: boolean;
+  isFaved: boolean;
+  toggleFav: { mutate: (id: string) => void };
+  menuRef: React.RefObject<HTMLDivElement | null>;
+  menuOpen: boolean;
+  menuPos: { x: number; y: number } | null;
+  handleDotsClick: (e: React.MouseEvent) => void;
+  showDeleteConfirm: boolean;
+  setShowDeleteConfirm: (v: boolean) => void;
+  startRename: () => void;
+  submitDelete: () => void;
+  setSelectedPageId: (id: string) => void;
+  t: (dark: string, light: string) => string;
+}
+
+const PageNodeActionsMenu = ({
+  node,
+  hasChildren,
+  isFaved,
+  toggleFav,
+  menuRef,
+  menuOpen,
+  menuPos,
+  handleDotsClick,
+  showDeleteConfirm,
+  setShowDeleteConfirm,
+  startRename,
+  submitDelete,
+  setSelectedPageId,
+  t,
+}: PageNodeActionsMenuProps) => (
+  <div className="flex items-center gap-0.5 shrink-0 pr-0.5">
+    {hasChildren ? (
+      <button
+        className="cursor-pointer opacity-60 hover:opacity-100 flex items-center"
+        onClick={() => setSelectedPageId(node.item.id)}
+        title="Open folder"
+        type="button"
+      >
+        <PlusIcon size={10} />
+      </button>
+    ) : (
+      <button
+        className={`cursor-pointer flex items-center ${isFaved ? "text-yellow-400" : "opacity-60 hover:opacity-100"}`}
+        onClick={() => toggleFav.mutate(node.item.id)}
+        type="button"
+      >
+        <BookmarkSimpleIcon size={10} weight={isFaved ? "fill" : "regular"} />
+      </button>
+    )}
+    <div className="flex items-center" ref={menuRef}>
+      <button
+        className="cursor-pointer opacity-60 hover:opacity-100 flex items-center"
+        onClick={handleDotsClick}
+        type="button"
+      >
+        <DotsThreeCircleVerticalIcon size={10} />
+      </button>
+      {menuOpen && menuPos && (
+        <div
+          className={`fixed z-9999 py-1 w-32 text-[11px] lowercase shadow-lg ${t(
+            "bg-neutral-800 border border-white/10 text-text-dark",
+            "bg-white border border-black/10 text-text-light",
+          )}`}
+          style={{ left: `${menuPos.x - 128}px`, top: `${menuPos.y}px` }}
+        >
+          <button
+            className={`flex w-full items-center gap-1.5 px-2 py-1 cursor-pointer ${t("hover:bg-white/10", "hover:bg-black/5")}`}
+            onClick={startRename}
+            type="button"
+          >
+            <PencilSimpleIcon size={10} />
+            rename
+          </button>
+          <button
+            className={`flex w-full items-center gap-1.5 px-2 py-1 cursor-pointer ${showDeleteConfirm ? "text-red-400" : t("hover:bg-white/10", "hover:bg-black/5")}`}
+            onClick={() => {
+              if (showDeleteConfirm) {
+                submitDelete();
+              } else {
+                setShowDeleteConfirm(true);
+              }
+            }}
+            type="button"
+          >
+            <TrashIcon size={10} />
+            {showDeleteConfirm ? "confirm?" : "delete"}
+          </button>
+        </div>
+      )}
+    </div>
+  </div>
+);
+
 const PageNode = ({ node, depth, treeItems, spaceSlug }: PageNodeProps) => {
   const { isDarkMode } = useTheme();
   const { selectedPageId, setSelectedPageId } = useConsoleContext();
@@ -97,15 +238,12 @@ const PageNode = ({ node, depth, treeItems, spaceSlug }: PageNodeProps) => {
   const hasChildren = node.children.length > 0 || node.item.icon === "folder";
   const isSelected = selectedPageId === node.item.id;
 
-  const renderNodeIcon = (() => {
-    if (node.item.isShared) {
-      return <GlobeIcon className="shrink-0 text-green-500" size={10} />;
-    }
-    if (hasChildren) {
-      return <FolderIcon className="shrink-0" size={10} />;
-    }
-    return <FileTextIcon className="shrink-0" size={10} />;
-  })();
+  let renderNodeIcon = <FileTextIcon className="shrink-0" size={10} />;
+  if (node.item.isShared) {
+    renderNodeIcon = <GlobeIcon className="shrink-0 text-green-500" size={10} />;
+  } else if (hasChildren) {
+    renderNodeIcon = <FolderIcon className="shrink-0" size={10} />;
+  }
 
   useEffect(() => {
     if (!menuOpen) {
@@ -222,30 +360,15 @@ const PageNode = ({ node, depth, treeItems, spaceSlug }: PageNodeProps) => {
         {renderNodeIcon}
 
         {isRenaming ? (
-          <div className="flex-1 flex items-center gap-1">
-            <input
-              ref={renameInputRef}
-              className={`flex-1 bg-transparent outline-none text-[11px] lowercase border-b ${t("border-white/20 text-text-dark", "border-black/20 text-text-light")}`}
-              onBlur={submitRename}
-              onChange={(e) => setRenameTitle(e.target.value)}
-              onKeyDown={handleRenameKeyDown}
-              value={renameTitle}
-            />
-            <button
-              className={`shrink-0 text-[10px] lowercase px-1 cursor-pointer ${t("text-text-dark/40 hover:text-text-dark", "text-text-light/40 hover:text-text-light")}`}
-              onClick={submitRename}
-              type="button"
-            >
-              save
-            </button>
-            <button
-              className={`shrink-0 text-[10px] lowercase px-1 cursor-pointer ${t("text-text-dark/25 hover:text-text-dark/60", "text-text-light/25 hover:text-text-light/60")}`}
-              onClick={() => setIsRenaming(false)}
-              type="button"
-            >
-              cancel
-            </button>
-          </div>
+          <RenameInput
+            renameInputRef={renameInputRef}
+            renameTitle={renameTitle}
+            setRenameTitle={setRenameTitle}
+            submitRename={submitRename}
+            handleRenameKeyDown={handleRenameKeyDown}
+            setIsRenaming={setIsRenaming}
+            t={t}
+          />
         ) : (
           <button
             className="flex-1 text-left truncate"
@@ -266,68 +389,27 @@ const PageNode = ({ node, depth, treeItems, spaceSlug }: PageNodeProps) => {
           </button>
         )}
 
+        {node.item.isShared && !isRenaming && !isHovered && (
+          <GlobeIcon className="shrink-0 text-green-500 mr-1" size={10} />
+        )}
+
         {isHovered && !isRenaming && (
-          <div className="flex items-center gap-0.5 shrink-0 pr-0.5">
-            {hasChildren ? (
-              <button
-                className="cursor-pointer opacity-60 hover:opacity-100 flex items-center"
-                onClick={() => setSelectedPageId(node.item.id)}
-                title="Open folder"
-                type="button"
-              >
-                <PlusIcon size={10} />
-              </button>
-            ) : (
-              <button
-                className={`cursor-pointer flex items-center ${isFaved ? "text-yellow-400" : "opacity-60 hover:opacity-100"}`}
-                onClick={() => toggleFav.mutate(node.item.id)}
-                type="button"
-              >
-                <BookmarkSimpleIcon size={10} weight={isFaved ? "fill" : "regular"} />
-              </button>
-            )}
-            <div className="flex items-center" ref={menuRef}>
-              <button
-                className="cursor-pointer opacity-60 hover:opacity-100 flex items-center"
-                onClick={handleDotsClick}
-                type="button"
-              >
-                <DotsThreeCircleVerticalIcon size={10} />
-              </button>
-              {menuOpen && menuPos && (
-                <div
-                  className={`fixed z-9999 py-1 w-32 text-[11px] lowercase shadow-lg ${t(
-                    "bg-neutral-800 border border-white/10 text-text-dark",
-                    "bg-white border border-black/10 text-text-light",
-                  )}`}
-                  style={{ left: `${menuPos.x - 128}px`, top: `${menuPos.y}px` }}
-                >
-                  <button
-                    className={`flex w-full items-center gap-1.5 px-2 py-1 cursor-pointer ${t("hover:bg-white/10", "hover:bg-black/5")}`}
-                    onClick={startRename}
-                    type="button"
-                  >
-                    <PencilSimpleIcon size={10} />
-                    rename
-                  </button>
-                  <button
-                    className={`flex w-full items-center gap-1.5 px-2 py-1 cursor-pointer ${showDeleteConfirm ? "text-red-400" : t("hover:bg-white/10", "hover:bg-black/5")}`}
-                    onClick={() => {
-                      if (showDeleteConfirm) {
-                        submitDelete();
-                      } else {
-                        setShowDeleteConfirm(true);
-                      }
-                    }}
-                    type="button"
-                  >
-                    <TrashIcon size={10} />
-                    {showDeleteConfirm ? "confirm?" : "delete"}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+          <PageNodeActionsMenu
+            node={node}
+            hasChildren={hasChildren}
+            isFaved={isFaved}
+            toggleFav={toggleFav}
+            menuRef={menuRef}
+            menuOpen={menuOpen}
+            menuPos={menuPos}
+            handleDotsClick={handleDotsClick}
+            showDeleteConfirm={showDeleteConfirm}
+            setShowDeleteConfirm={setShowDeleteConfirm}
+            startRename={startRename}
+            submitDelete={submitDelete}
+            setSelectedPageId={setSelectedPageId}
+            t={t}
+          />
         )}
       </div>
       {expanded && hasChildren && (
@@ -562,6 +644,7 @@ const FavoritedPagesList = ({ favPageIds, favSpaces }: FavoritedPagesListProps) 
                   <FileTextIcon size={10} />
                 )}
                 <span className="flex-1 truncate">{page.title}</span>
+                {page.isShared && <GlobeIcon className="shrink-0 text-green-500 mr-1" size={10} />}
                 <span
                   className={`shrink-0 text-[8px] px-1 py-0.5 lowercase ${t("text-text-dark/25", "text-text-light/25")}`}
                 >
@@ -599,6 +682,7 @@ const FavoritedPagesList = ({ favPageIds, favSpaces }: FavoritedPagesListProps) 
             <FileTextIcon size={10} />
           )}
           <span className="flex-1 truncate">{page.title}</span>
+          {page.isShared && <GlobeIcon className="shrink-0 text-green-500 mr-1" size={10} />}
           <span
             className={`shrink-0 text-[8px] px-1 py-0.5 lowercase ${t("text-text-dark/25", "text-text-light/25")}`}
           >

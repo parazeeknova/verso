@@ -134,7 +134,7 @@ const SharedPageComponent = () => {
       )}`}
     >
       <div className="w-full blog-reader-prose px-4 mx-auto max-w-2xl pt-24 pb-32">
-        <h1 className="text-5xl font-black mb-8 tracking-tight leading-tight">
+        <h1 className="w-full text-5xl font-black pt-8 pb-0 px-0 mb-0.5 font-sans tracking-tight leading-tight">
           {data.page.title || "Untitled"}
         </h1>
         <EditorContent editor={editor} />
