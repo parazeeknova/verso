@@ -393,11 +393,11 @@ type PushSubscription struct {
 // PageShare represents a public share setting for a page.
 type PageShare struct {
 	ID             string    `json:"id"`
-	PageID         string    `json:"page_id"`
-	ShareToken     string    `json:"share_token"`
-	ShortCode      *string   `json:"short_code,omitempty"`
-	SearchIndexing bool      `json:"search_indexing"`
-	IsEnabled      bool      `json:"is_enabled"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	PageID         string    `json:"pageId"`
+	ShareToken     string    `json:"shareToken"`
+	ShortCode      *string   `json:"shortCode,omitempty"`
+	SearchIndexing bool      `json:"searchIndexing"`
+	IsEnabled      bool      `json:"isEnabled"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
 }
