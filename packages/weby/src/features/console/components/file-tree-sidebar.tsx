@@ -239,9 +239,7 @@ const PageNode = ({ node, depth, treeItems, spaceSlug }: PageNodeProps) => {
   const isSelected = selectedPageId === node.item.id;
 
   let renderNodeIcon = <FileTextIcon className="shrink-0" size={10} />;
-  if (node.item.isShared) {
-    renderNodeIcon = <GlobeIcon className="shrink-0 text-green-500" size={10} />;
-  } else if (hasChildren) {
+  if (hasChildren) {
     renderNodeIcon = <FolderIcon className="shrink-0" size={10} />;
   }
 

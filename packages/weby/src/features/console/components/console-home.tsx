@@ -384,25 +384,24 @@ export const ConsoleHome = () => {
                   type="button"
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    {page.isShared ? (
-                      <GlobeIcon className="text-green-500 shrink-0" size={14} />
-                    ) : (
-                      <FileTextIcon
-                        className={t("text-text-dark/25", "text-text-light/25")}
-                        size={14}
-                      />
-                    )}
+                    <FileTextIcon
+                      className={t("text-text-dark/25", "text-text-light/25")}
+                      size={14}
+                    />
                     <span
                       className={`truncate text-[12px] ${t("text-text-dark/60", "text-text-light/60")}`}
                     >
                       {page.title}
                     </span>
                   </div>
-                  <span
-                    className={`shrink-0 text-[10px] lowercase truncate max-w-32 text-center ${t("text-text-dark/20", "text-text-light/20")}`}
-                  >
-                    {parentTitle ? `${parentTitle} / ${space?.name || "—"}` : space?.name || "—"}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {page.isShared && <GlobeIcon className="text-green-500 shrink-0" size={12} />}
+                    <span
+                      className={`text-[10px] lowercase truncate max-w-32 text-center ${t("text-text-dark/20", "text-text-light/20")}`}
+                    >
+                      {parentTitle ? `${parentTitle} / ${space?.name || "—"}` : space?.name || "—"}
+                    </span>
+                  </div>
                   <span
                     className={`shrink-0 text-[10px] font-mono text-right ${t("text-text-dark/25", "text-text-light/25")}`}
                   >
