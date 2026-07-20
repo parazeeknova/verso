@@ -29,7 +29,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const { data: share, isPending } = usePageShare(pageId, { enabled: open });
+  const { data: share, isPending } = usePageShare(pageId);
   const updateShare = useUpdatePageShare();
   const shortenShare = useShortenPageShare();
 

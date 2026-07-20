@@ -10,6 +10,7 @@ import {
   FolderIcon,
   FolderPlusIcon,
   GearSixIcon,
+  GlobeIcon,
   MagnifyingGlassIcon,
   PencilSimpleIcon,
   PlusIcon,
@@ -306,6 +307,10 @@ const PageNode = ({ node, depth, spaceId, spaceSlug, treeItems }: PageNodeProps)
           >
             {node.item.title}
           </button>
+        )}
+
+        {node.item.isShared && !isRenaming && !isHovered && (
+          <GlobeIcon className="shrink-0 text-green-500 mr-1" size={10} />
         )}
 
         {isHovered && !isRenaming && (

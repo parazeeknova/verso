@@ -638,11 +638,7 @@ const FavoritedPagesList = ({ favPageIds, favSpaces }: FavoritedPagesListProps) 
                 <span className={`shrink-0 ${t("text-text-dark/20", "text-text-light/20")}`}>
                   {i === arr.length - 1 ? "\u2514" : "\u251C"}
                 </span>
-                {page.isShared ? (
-                  <GlobeIcon className="text-green-500 shrink-0" size={10} />
-                ) : (
-                  <FileTextIcon size={10} />
-                )}
+                <FileTextIcon size={10} />
                 <span className="flex-1 truncate">{page.title}</span>
                 {page.isShared && <GlobeIcon className="shrink-0 text-green-500 mr-1" size={10} />}
                 <span
@@ -676,11 +672,7 @@ const FavoritedPagesList = ({ favPageIds, favSpaces }: FavoritedPagesListProps) 
           }}
           type="button"
         >
-          {page.isShared ? (
-            <GlobeIcon className="text-green-500 shrink-0" size={10} />
-          ) : (
-            <FileTextIcon size={10} />
-          )}
+          <FileTextIcon size={10} />
           <span className="flex-1 truncate">{page.title}</span>
           {page.isShared && <GlobeIcon className="shrink-0 text-green-500 mr-1" size={10} />}
           <span
