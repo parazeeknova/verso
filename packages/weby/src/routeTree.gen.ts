@@ -34,6 +34,8 @@ import { Route as SettingsSystemsDebugRouteImport } from './routes/settings/syst
 import { Route as SettingsAccountProfileRouteImport } from './routes/settings/account/profile'
 import { Route as SettingsAccountPreferencesRouteImport } from './routes/settings/account/preferences'
 import { Route as SSpaceSlugSettingsRouteImport } from './routes/s/$spaceSlug/settings'
+import { Route as ApiShortShortcodeRouteImport } from './routes/api/short/$shortcode'
+import { Route as ApiSharesTokenRouteImport } from './routes/api/shares/$token'
 import { Route as ApiGithubStatsRouteImport } from './routes/api/github/stats'
 import { Route as ApiConsoleWorkspacesRouteImport } from './routes/api/console/workspaces'
 import { Route as ApiConsoleUsersRouteImport } from './routes/api/console/users'
@@ -87,6 +89,7 @@ import { Route as ApiConsoleProfileSessionRevokeRouteImport } from './routes/api
 import { Route as ApiConsolePagesIdWatchingRouteImport } from './routes/api/console/pages/$id/watching'
 import { Route as ApiConsolePagesIdWatchRouteImport } from './routes/api/console/pages/$id/watch'
 import { Route as ApiConsolePagesIdUnpublishRouteImport } from './routes/api/console/pages/$id/unpublish'
+import { Route as ApiConsolePagesIdShareRouteImport } from './routes/api/console/pages/$id/share'
 import { Route as ApiConsolePagesIdRestoreRouteImport } from './routes/api/console/pages/$id/restore'
 import { Route as ApiConsolePagesIdPublishRouteImport } from './routes/api/console/pages/$id/publish'
 import { Route as ApiConsolePagesIdMoveRouteImport } from './routes/api/console/pages/$id/move'
@@ -100,6 +103,7 @@ import { Route as ApiConsoleFilesBucketFilenameRouteImport } from './routes/api/
 import { Route as ApiConsoleDebugTablesTableNameRouteImport } from './routes/api/console/debug/tables/$tableName'
 import { Route as ApiConsoleSpacesIdMembersUserIdRouteImport } from './routes/api/console/spaces/$id/members/$userId'
 import { Route as ApiConsoleSpacesIdGroupsGroupIdRouteImport } from './routes/api/console/spaces/$id/groups/$groupId'
+import { Route as ApiConsolePagesIdShareShortenRouteImport } from './routes/api/console/pages/$id/share/shorten'
 import { Route as ApiConsolePagesIdHistoryHistoryIdRouteImport } from './routes/api/console/pages/$id/history/$historyId'
 import { Route as ApiConsoleGroupsIdMembersUserIdRouteImport } from './routes/api/console/groups/$id/members/$userId'
 import { Route as ApiConsoleDebugTablesTableNameRowsRouteImport } from './routes/api/console/debug/tables/$tableName/rows'
@@ -230,6 +234,16 @@ const SSpaceSlugSettingsRoute = SSpaceSlugSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => SSpaceSlugRoute,
+} as any)
+const ApiShortShortcodeRoute = ApiShortShortcodeRouteImport.update({
+  id: '/api/short/$shortcode',
+  path: '/api/short/$shortcode',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSharesTokenRoute = ApiSharesTokenRouteImport.update({
+  id: '/api/shares/$token',
+  path: '/api/shares/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiGithubStatsRoute = ApiGithubStatsRouteImport.update({
   id: '/api/github/stats',
@@ -517,6 +531,11 @@ const ApiConsolePagesIdUnpublishRoute =
     path: '/unpublish',
     getParentRoute: () => ApiConsolePagesIdRoute,
   } as any)
+const ApiConsolePagesIdShareRoute = ApiConsolePagesIdShareRouteImport.update({
+  id: '/share',
+  path: '/share',
+  getParentRoute: () => ApiConsolePagesIdRoute,
+} as any)
 const ApiConsolePagesIdRestoreRoute =
   ApiConsolePagesIdRestoreRouteImport.update({
     id: '/restore',
@@ -594,6 +613,12 @@ const ApiConsoleSpacesIdGroupsGroupIdRoute =
     path: '/groups/$groupId',
     getParentRoute: () => ApiConsoleSpacesIdRoute,
   } as any)
+const ApiConsolePagesIdShareShortenRoute =
+  ApiConsolePagesIdShareShortenRouteImport.update({
+    id: '/shorten',
+    path: '/shorten',
+    getParentRoute: () => ApiConsolePagesIdShareRoute,
+  } as any)
 const ApiConsolePagesIdHistoryHistoryIdRoute =
   ApiConsolePagesIdHistoryHistoryIdRouteImport.update({
     id: '/$historyId',
@@ -655,6 +680,8 @@ export interface FileRoutesByFullPath {
   '/api/console/users': typeof ApiConsoleUsersRouteWithChildren
   '/api/console/workspaces': typeof ApiConsoleWorkspacesRouteWithChildren
   '/api/github/stats': typeof ApiGithubStatsRoute
+  '/api/shares/$token': typeof ApiSharesTokenRoute
+  '/api/short/$shortcode': typeof ApiShortShortcodeRoute
   '/s/$spaceSlug/settings': typeof SSpaceSlugSettingsRoute
   '/settings/account/preferences': typeof SettingsAccountPreferencesRoute
   '/settings/account/profile': typeof SettingsAccountProfileRoute
@@ -698,6 +725,7 @@ export interface FileRoutesByFullPath {
   '/api/console/pages/$id/move': typeof ApiConsolePagesIdMoveRoute
   '/api/console/pages/$id/publish': typeof ApiConsolePagesIdPublishRoute
   '/api/console/pages/$id/restore': typeof ApiConsolePagesIdRestoreRoute
+  '/api/console/pages/$id/share': typeof ApiConsolePagesIdShareRouteWithChildren
   '/api/console/pages/$id/unpublish': typeof ApiConsolePagesIdUnpublishRoute
   '/api/console/pages/$id/watch': typeof ApiConsolePagesIdWatchRoute
   '/api/console/pages/$id/watching': typeof ApiConsolePagesIdWatchingRoute
@@ -712,6 +740,7 @@ export interface FileRoutesByFullPath {
   '/api/console/debug/tables/$tableName/rows': typeof ApiConsoleDebugTablesTableNameRowsRoute
   '/api/console/groups/$id/members/$userId': typeof ApiConsoleGroupsIdMembersUserIdRoute
   '/api/console/pages/$id/history/$historyId': typeof ApiConsolePagesIdHistoryHistoryIdRoute
+  '/api/console/pages/$id/share/shorten': typeof ApiConsolePagesIdShareShortenRoute
   '/api/console/spaces/$id/groups/$groupId': typeof ApiConsoleSpacesIdGroupsGroupIdRoute
   '/api/console/spaces/$id/members/$userId': typeof ApiConsoleSpacesIdMembersUserIdRoute
   '/api/console/spaces/$spaceId/pages/by-slug/$slugId': typeof ApiConsoleSpacesSpaceIdPagesBySlugSlugIdRoute
@@ -750,6 +779,8 @@ export interface FileRoutesByTo {
   '/api/console/users': typeof ApiConsoleUsersRouteWithChildren
   '/api/console/workspaces': typeof ApiConsoleWorkspacesRouteWithChildren
   '/api/github/stats': typeof ApiGithubStatsRoute
+  '/api/shares/$token': typeof ApiSharesTokenRoute
+  '/api/short/$shortcode': typeof ApiShortShortcodeRoute
   '/s/$spaceSlug/settings': typeof SSpaceSlugSettingsRoute
   '/settings/account/preferences': typeof SettingsAccountPreferencesRoute
   '/settings/account/profile': typeof SettingsAccountProfileRoute
@@ -793,6 +824,7 @@ export interface FileRoutesByTo {
   '/api/console/pages/$id/move': typeof ApiConsolePagesIdMoveRoute
   '/api/console/pages/$id/publish': typeof ApiConsolePagesIdPublishRoute
   '/api/console/pages/$id/restore': typeof ApiConsolePagesIdRestoreRoute
+  '/api/console/pages/$id/share': typeof ApiConsolePagesIdShareRouteWithChildren
   '/api/console/pages/$id/unpublish': typeof ApiConsolePagesIdUnpublishRoute
   '/api/console/pages/$id/watch': typeof ApiConsolePagesIdWatchRoute
   '/api/console/pages/$id/watching': typeof ApiConsolePagesIdWatchingRoute
@@ -807,6 +839,7 @@ export interface FileRoutesByTo {
   '/api/console/debug/tables/$tableName/rows': typeof ApiConsoleDebugTablesTableNameRowsRoute
   '/api/console/groups/$id/members/$userId': typeof ApiConsoleGroupsIdMembersUserIdRoute
   '/api/console/pages/$id/history/$historyId': typeof ApiConsolePagesIdHistoryHistoryIdRoute
+  '/api/console/pages/$id/share/shorten': typeof ApiConsolePagesIdShareShortenRoute
   '/api/console/spaces/$id/groups/$groupId': typeof ApiConsoleSpacesIdGroupsGroupIdRoute
   '/api/console/spaces/$id/members/$userId': typeof ApiConsoleSpacesIdMembersUserIdRoute
   '/api/console/spaces/$spaceId/pages/by-slug/$slugId': typeof ApiConsoleSpacesSpaceIdPagesBySlugSlugIdRoute
@@ -848,6 +881,8 @@ export interface FileRoutesById {
   '/api/console/users': typeof ApiConsoleUsersRouteWithChildren
   '/api/console/workspaces': typeof ApiConsoleWorkspacesRouteWithChildren
   '/api/github/stats': typeof ApiGithubStatsRoute
+  '/api/shares/$token': typeof ApiSharesTokenRoute
+  '/api/short/$shortcode': typeof ApiShortShortcodeRoute
   '/s/$spaceSlug/settings': typeof SSpaceSlugSettingsRoute
   '/settings/account/preferences': typeof SettingsAccountPreferencesRoute
   '/settings/account/profile': typeof SettingsAccountProfileRoute
@@ -891,6 +926,7 @@ export interface FileRoutesById {
   '/api/console/pages/$id/move': typeof ApiConsolePagesIdMoveRoute
   '/api/console/pages/$id/publish': typeof ApiConsolePagesIdPublishRoute
   '/api/console/pages/$id/restore': typeof ApiConsolePagesIdRestoreRoute
+  '/api/console/pages/$id/share': typeof ApiConsolePagesIdShareRouteWithChildren
   '/api/console/pages/$id/unpublish': typeof ApiConsolePagesIdUnpublishRoute
   '/api/console/pages/$id/watch': typeof ApiConsolePagesIdWatchRoute
   '/api/console/pages/$id/watching': typeof ApiConsolePagesIdWatchingRoute
@@ -905,6 +941,7 @@ export interface FileRoutesById {
   '/api/console/debug/tables/$tableName/rows': typeof ApiConsoleDebugTablesTableNameRowsRoute
   '/api/console/groups/$id/members/$userId': typeof ApiConsoleGroupsIdMembersUserIdRoute
   '/api/console/pages/$id/history/$historyId': typeof ApiConsolePagesIdHistoryHistoryIdRoute
+  '/api/console/pages/$id/share/shorten': typeof ApiConsolePagesIdShareShortenRoute
   '/api/console/spaces/$id/groups/$groupId': typeof ApiConsoleSpacesIdGroupsGroupIdRoute
   '/api/console/spaces/$id/members/$userId': typeof ApiConsoleSpacesIdMembersUserIdRoute
   '/api/console/spaces/$spaceId/pages/by-slug/$slugId': typeof ApiConsoleSpacesSpaceIdPagesBySlugSlugIdRoute
@@ -947,6 +984,8 @@ export interface FileRouteTypes {
     | '/api/console/users'
     | '/api/console/workspaces'
     | '/api/github/stats'
+    | '/api/shares/$token'
+    | '/api/short/$shortcode'
     | '/s/$spaceSlug/settings'
     | '/settings/account/preferences'
     | '/settings/account/profile'
@@ -990,6 +1029,7 @@ export interface FileRouteTypes {
     | '/api/console/pages/$id/move'
     | '/api/console/pages/$id/publish'
     | '/api/console/pages/$id/restore'
+    | '/api/console/pages/$id/share'
     | '/api/console/pages/$id/unpublish'
     | '/api/console/pages/$id/watch'
     | '/api/console/pages/$id/watching'
@@ -1004,6 +1044,7 @@ export interface FileRouteTypes {
     | '/api/console/debug/tables/$tableName/rows'
     | '/api/console/groups/$id/members/$userId'
     | '/api/console/pages/$id/history/$historyId'
+    | '/api/console/pages/$id/share/shorten'
     | '/api/console/spaces/$id/groups/$groupId'
     | '/api/console/spaces/$id/members/$userId'
     | '/api/console/spaces/$spaceId/pages/by-slug/$slugId'
@@ -1042,6 +1083,8 @@ export interface FileRouteTypes {
     | '/api/console/users'
     | '/api/console/workspaces'
     | '/api/github/stats'
+    | '/api/shares/$token'
+    | '/api/short/$shortcode'
     | '/s/$spaceSlug/settings'
     | '/settings/account/preferences'
     | '/settings/account/profile'
@@ -1085,6 +1128,7 @@ export interface FileRouteTypes {
     | '/api/console/pages/$id/move'
     | '/api/console/pages/$id/publish'
     | '/api/console/pages/$id/restore'
+    | '/api/console/pages/$id/share'
     | '/api/console/pages/$id/unpublish'
     | '/api/console/pages/$id/watch'
     | '/api/console/pages/$id/watching'
@@ -1099,6 +1143,7 @@ export interface FileRouteTypes {
     | '/api/console/debug/tables/$tableName/rows'
     | '/api/console/groups/$id/members/$userId'
     | '/api/console/pages/$id/history/$historyId'
+    | '/api/console/pages/$id/share/shorten'
     | '/api/console/spaces/$id/groups/$groupId'
     | '/api/console/spaces/$id/members/$userId'
     | '/api/console/spaces/$spaceId/pages/by-slug/$slugId'
@@ -1139,6 +1184,8 @@ export interface FileRouteTypes {
     | '/api/console/users'
     | '/api/console/workspaces'
     | '/api/github/stats'
+    | '/api/shares/$token'
+    | '/api/short/$shortcode'
     | '/s/$spaceSlug/settings'
     | '/settings/account/preferences'
     | '/settings/account/profile'
@@ -1182,6 +1229,7 @@ export interface FileRouteTypes {
     | '/api/console/pages/$id/move'
     | '/api/console/pages/$id/publish'
     | '/api/console/pages/$id/restore'
+    | '/api/console/pages/$id/share'
     | '/api/console/pages/$id/unpublish'
     | '/api/console/pages/$id/watch'
     | '/api/console/pages/$id/watching'
@@ -1196,6 +1244,7 @@ export interface FileRouteTypes {
     | '/api/console/debug/tables/$tableName/rows'
     | '/api/console/groups/$id/members/$userId'
     | '/api/console/pages/$id/history/$historyId'
+    | '/api/console/pages/$id/share/shorten'
     | '/api/console/spaces/$id/groups/$groupId'
     | '/api/console/spaces/$id/members/$userId'
     | '/api/console/spaces/$spaceId/pages/by-slug/$slugId'
@@ -1230,6 +1279,8 @@ export interface RootRouteChildren {
   ApiConsoleUsersRoute: typeof ApiConsoleUsersRouteWithChildren
   ApiConsoleWorkspacesRoute: typeof ApiConsoleWorkspacesRouteWithChildren
   ApiGithubStatsRoute: typeof ApiGithubStatsRoute
+  ApiSharesTokenRoute: typeof ApiSharesTokenRoute
+  ApiShortShortcodeRoute: typeof ApiShortShortcodeRoute
   ApiAuthMfaVerifyRoute: typeof ApiAuthMfaVerifyRoute
   ApiConsoleDebugTablesRoute: typeof ApiConsoleDebugTablesRouteWithChildren
   ApiConsoleGroupsIdRoute: typeof ApiConsoleGroupsIdRouteWithChildren
@@ -1421,6 +1472,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/s/$spaceSlug/settings'
       preLoaderRoute: typeof SSpaceSlugSettingsRouteImport
       parentRoute: typeof SSpaceSlugRoute
+    }
+    '/api/short/$shortcode': {
+      id: '/api/short/$shortcode'
+      path: '/api/short/$shortcode'
+      fullPath: '/api/short/$shortcode'
+      preLoaderRoute: typeof ApiShortShortcodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/shares/$token': {
+      id: '/api/shares/$token'
+      path: '/api/shares/$token'
+      fullPath: '/api/shares/$token'
+      preLoaderRoute: typeof ApiSharesTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/github/stats': {
       id: '/api/github/stats'
@@ -1793,6 +1858,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiConsolePagesIdUnpublishRouteImport
       parentRoute: typeof ApiConsolePagesIdRoute
     }
+    '/api/console/pages/$id/share': {
+      id: '/api/console/pages/$id/share'
+      path: '/share'
+      fullPath: '/api/console/pages/$id/share'
+      preLoaderRoute: typeof ApiConsolePagesIdShareRouteImport
+      parentRoute: typeof ApiConsolePagesIdRoute
+    }
     '/api/console/pages/$id/restore': {
       id: '/api/console/pages/$id/restore'
       path: '/restore'
@@ -1883,6 +1955,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/console/spaces/$id/groups/$groupId'
       preLoaderRoute: typeof ApiConsoleSpacesIdGroupsGroupIdRouteImport
       parentRoute: typeof ApiConsoleSpacesIdRoute
+    }
+    '/api/console/pages/$id/share/shorten': {
+      id: '/api/console/pages/$id/share/shorten'
+      path: '/shorten'
+      fullPath: '/api/console/pages/$id/share/shorten'
+      preLoaderRoute: typeof ApiConsolePagesIdShareShortenRouteImport
+      parentRoute: typeof ApiConsolePagesIdShareRoute
     }
     '/api/console/pages/$id/history/$historyId': {
       id: '/api/console/pages/$id/history/$historyId'
@@ -2032,6 +2111,20 @@ const ApiConsolePagesIdHistoryRouteWithChildren =
     ApiConsolePagesIdHistoryRouteChildren,
   )
 
+interface ApiConsolePagesIdShareRouteChildren {
+  ApiConsolePagesIdShareShortenRoute: typeof ApiConsolePagesIdShareShortenRoute
+}
+
+const ApiConsolePagesIdShareRouteChildren: ApiConsolePagesIdShareRouteChildren =
+  {
+    ApiConsolePagesIdShareShortenRoute: ApiConsolePagesIdShareShortenRoute,
+  }
+
+const ApiConsolePagesIdShareRouteWithChildren =
+  ApiConsolePagesIdShareRoute._addFileChildren(
+    ApiConsolePagesIdShareRouteChildren,
+  )
+
 interface ApiConsolePagesIdRouteChildren {
   ApiConsolePagesIdChildrenRoute: typeof ApiConsolePagesIdChildrenRoute
   ApiConsolePagesIdFavoriteRoute: typeof ApiConsolePagesIdFavoriteRoute
@@ -2040,6 +2133,7 @@ interface ApiConsolePagesIdRouteChildren {
   ApiConsolePagesIdMoveRoute: typeof ApiConsolePagesIdMoveRoute
   ApiConsolePagesIdPublishRoute: typeof ApiConsolePagesIdPublishRoute
   ApiConsolePagesIdRestoreRoute: typeof ApiConsolePagesIdRestoreRoute
+  ApiConsolePagesIdShareRoute: typeof ApiConsolePagesIdShareRouteWithChildren
   ApiConsolePagesIdUnpublishRoute: typeof ApiConsolePagesIdUnpublishRoute
   ApiConsolePagesIdWatchRoute: typeof ApiConsolePagesIdWatchRoute
   ApiConsolePagesIdWatchingRoute: typeof ApiConsolePagesIdWatchingRoute
@@ -2053,6 +2147,7 @@ const ApiConsolePagesIdRouteChildren: ApiConsolePagesIdRouteChildren = {
   ApiConsolePagesIdMoveRoute: ApiConsolePagesIdMoveRoute,
   ApiConsolePagesIdPublishRoute: ApiConsolePagesIdPublishRoute,
   ApiConsolePagesIdRestoreRoute: ApiConsolePagesIdRestoreRoute,
+  ApiConsolePagesIdShareRoute: ApiConsolePagesIdShareRouteWithChildren,
   ApiConsolePagesIdUnpublishRoute: ApiConsolePagesIdUnpublishRoute,
   ApiConsolePagesIdWatchRoute: ApiConsolePagesIdWatchRoute,
   ApiConsolePagesIdWatchingRoute: ApiConsolePagesIdWatchingRoute,
@@ -2286,6 +2381,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiConsoleUsersRoute: ApiConsoleUsersRouteWithChildren,
   ApiConsoleWorkspacesRoute: ApiConsoleWorkspacesRouteWithChildren,
   ApiGithubStatsRoute: ApiGithubStatsRoute,
+  ApiSharesTokenRoute: ApiSharesTokenRoute,
+  ApiShortShortcodeRoute: ApiShortShortcodeRoute,
   ApiAuthMfaVerifyRoute: ApiAuthMfaVerifyRoute,
   ApiConsoleDebugTablesRoute: ApiConsoleDebugTablesRouteWithChildren,
   ApiConsoleGroupsIdRoute: ApiConsoleGroupsIdRouteWithChildren,
