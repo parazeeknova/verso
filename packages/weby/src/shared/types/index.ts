@@ -118,6 +118,7 @@ export interface ConsolePageDetail {
   createdAt: string;
   updatedAt: string;
   editable: boolean;
+  isLocked: boolean;
 }
 
 export interface PageWatchStatus {
@@ -165,6 +166,7 @@ export interface UpdatePageInput {
   coverPhoto?: string;
   contentJson?: string;
   textContent?: string;
+  isLocked?: boolean;
 }
 
 export interface MovePageInput {

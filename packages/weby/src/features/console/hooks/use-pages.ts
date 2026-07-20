@@ -106,13 +106,49 @@ export const useCreatePage = () => {
 };
 export const useUpdatePage = () => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<
+    ConsolePageDetail,
+    Error,
+    { id: string; input: UpdatePageInput },
+    { previousPage?: ConsolePageDetail }
+  >({
     mutationFn: ({ id, input }: { id: string; input: UpdatePageInput }) =>
       fetchProtected<ConsolePageDetail>(`/api/console/pages/${id}`, {
         body: JSON.stringify(input),
         headers: { "Content-Type": "application/json" },
         method: "PUT",
       }),
+    onError: (_err, variables, context) => {
+      if (context?.previousPage) {
+        queryClient.setQueryData(["consolePage", variables.id], context.previousPage);
+        if (context.previousPage.spaceId && context.previousPage.slugId) {
+          queryClient.setQueryData(
+            ["consolePage", context.previousPage.spaceId, context.previousPage.slugId],
+            context.previousPage,
+          );
+        }
+      }
+    },
+    onMutate: async ({ id, input }) => {
+      await queryClient.cancelQueries({ queryKey: ["consolePage"] });
+      const previousPage = queryClient.getQueryData<ConsolePageDetail>(["consolePage", id]);
+      if (previousPage) {
+        queryClient.setQueryData<ConsolePageDetail>(["consolePage", id], {
+          ...previousPage,
+          ...input,
+        });
+        if (previousPage.spaceId && previousPage.slugId) {
+          queryClient.setQueryData<ConsolePageDetail>(
+            ["consolePage", previousPage.spaceId, previousPage.slugId],
+            {
+              ...previousPage,
+              ...input,
+            },
+          );
+        }
+      }
+      return { previousPage };
+    },
     onSuccess: (_data, _variables) => {
       queryClient.invalidateQueries({
         queryKey: ["consolePage"],

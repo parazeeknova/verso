@@ -16,6 +16,7 @@ import {
 } from "#/features/console/hooks/use-page-favorites";
 import { setFlashToast } from "#/features/console/components/flash-toast";
 import { useIsPageWatching, useWatchPage } from "#/features/console/hooks/use-page-watches";
+import { useUpdatePage } from "#/features/console/hooks/use-pages";
 import { TableMenu } from "./table/table-menu";
 import { ColumnsMenu } from "./columns/columns-menu";
 import { CalloutMenu } from "./callout/callout-menu";
@@ -743,10 +744,12 @@ const useContentClickHandler = (
     [editor, editable, contentRef],
   );
 
+// eslint-disable-next-line complexity
 export const PageEditor = ({
   pageId,
   contentJson,
   editable,
+  isLocked,
   title,
   spaceName,
   spaceSlug,
@@ -772,7 +775,24 @@ export const PageEditor = ({
 
   const markDirtyRef = useRef<(() => void) | null>(null);
 
-  const editor = usePageEditorInstance(content, editable, setHeadings, markDirtyRef);
+  const editor = usePageEditorInstance(content, editable && !isLocked, setHeadings, markDirtyRef);
+
+  const updatePage = useUpdatePage();
+  const handleToggleEditMode = useCallback(
+    (lockValue: boolean) => {
+      updatePage.mutate({
+        id: pageId,
+        input: { isLocked: lockValue },
+      });
+    },
+    [pageId, updatePage],
+  );
+
+  useEffect(() => {
+    if (editor && !editor.isDestroyed) {
+      editor.setEditable(editable && !isLocked);
+    }
+  }, [editor, editable, isLocked]);
 
   useEffect(() => {
     if (editor && !editor.isDestroyed) {
@@ -815,7 +835,9 @@ export const PageEditor = ({
 
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const handleContentClick = useContentClickHandler(editor, editable, contentRef);
+  const effectiveEditable = editable && !isLocked && !isDeleting;
+
+  const handleContentClick = useContentClickHandler(editor, effectiveEditable, contentRef);
 
   const [now, setNow] = useState(new Date());
 
@@ -875,8 +897,6 @@ export const PageEditor = ({
     setTocOpen(false);
   }, []);
 
-  const effectiveEditable = editable && !isDeleting;
-
   if (!editor) {
     return null;
   }
@@ -917,6 +937,46 @@ export const PageEditor = ({
             >
               {getSaveStatusText(isSaving, dirty, lastSaved, now)}
             </span>
+          )}
+          {editable && (
+            <div
+              className={`flex items-center gap-0.5 p-0.5 rounded border ${t("bg-neutral-800/10 border-border-dark", "bg-neutral-100 border-border-light")}`}
+            >
+              <button
+                type="button"
+                onClick={() => handleToggleEditMode(false)}
+                className={`px-2 py-0.5 rounded-[3px] text-[10px] lowercase font-medium transition-all cursor-pointer ${
+                  isLocked
+                    ? t(
+                        "text-text-dark/40 hover:text-text-dark/80",
+                        "text-text-light/40 hover:text-text-light/80",
+                      )
+                    : t(
+                        "bg-white/10 text-text-dark shadow-sm",
+                        "bg-white text-text-light shadow-sm",
+                      )
+                }`}
+              >
+                edit
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleEditMode(true)}
+                className={`px-2 py-0.5 rounded-[3px] text-[10px] lowercase font-medium transition-all cursor-pointer ${
+                  isLocked
+                    ? t(
+                        "bg-white/10 text-text-dark shadow-sm",
+                        "bg-white text-text-light shadow-sm",
+                      )
+                    : t(
+                        "text-text-dark/40 hover:text-text-dark/80",
+                        "text-text-light/40 hover:text-text-light/80",
+                      )
+                }`}
+              >
+                view
+              </button>
+            </div>
           )}
           <button
             aria-label={isFaved ? "Unfavorite page" : "Favorite page"}
@@ -995,11 +1055,11 @@ export const PageEditor = ({
           onChange={(e) => handleTitleChange(e.target.value)}
           onBlur={handleTitleBlur}
           onKeyDown={handleTitleKeyDown}
-          disabled={!editable}
+          disabled={!effectiveEditable}
         />
         <CreatorByline creator={creator} t={t} />
         <EditorContent editor={editor} />
-        {editor && editable && (
+        {editor && effectiveEditable && (
           <>
             <TableMenu editor={editor} />
             <ColumnsMenu editor={editor} />

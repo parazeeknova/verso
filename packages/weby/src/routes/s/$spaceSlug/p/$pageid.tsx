@@ -75,6 +75,7 @@ const PageView = () => {
       <PageEditor
         contentJson={page.contentJson}
         editable={page.editable}
+        isLocked={page.isLocked}
         pageId={page.id}
         title={page.title}
         spaceName={space.name}

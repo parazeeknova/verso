@@ -271,6 +271,7 @@ func (h *Handlers) GetConsolePage(c *gin.Context) {
 		"textContent":  page.TextContent,
 		"position":     page.Position,
 		"isPublished":  page.IsPublished,
+		"isLocked":     page.IsLocked,
 		"parentPageId": page.ParentPageID,
 		"spaceId":      page.SpaceID,
 		"creatorId":    page.CreatorID,
@@ -380,6 +381,7 @@ func (h *Handlers) GetConsolePageBySlug(c *gin.Context) {
 		"textContent":  page.TextContent,
 		"position":     page.Position,
 		"isPublished":  page.IsPublished,
+		"isLocked":     page.IsLocked,
 		"parentPageId": page.ParentPageID,
 		"spaceId":      page.SpaceID,
 		"creatorId":    page.CreatorID,
@@ -497,6 +499,7 @@ func (h *Handlers) CreateConsolePage(c *gin.Context) {
 		"textContent":  page.TextContent,
 		"position":     page.Position,
 		"isPublished":  page.IsPublished,
+		"isLocked":     page.IsLocked,
 		"parentPageId": page.ParentPageID,
 		"createdAt":    page.CreatedAt.Format(time.RFC3339),
 		"updatedAt":    page.UpdatedAt.Format(time.RFC3339),
@@ -510,6 +513,7 @@ type UpdateConsolePageRequest struct {
 	CoverPhoto  *string          `json:"coverPhoto"`
 	ContentJSON *json.RawMessage `json:"contentJson"`
 	TextContent *string          `json:"textContent"`
+	IsLocked    *bool            `json:"isLocked"`
 }
 
 // UpdateConsolePage handles PUT /api/console/pages/:id.
@@ -534,6 +538,7 @@ func (h *Handlers) UpdateConsolePage(c *gin.Context) {
 		CoverPhoto:  req.CoverPhoto,
 		ContentJSON: req.ContentJSON,
 		TextContent: req.TextContent,
+		IsLocked:    req.IsLocked,
 	}
 
 	page, err := h.pageService.UpdatePage(c.Request.Context(), id, userID, input)
@@ -561,6 +566,7 @@ func (h *Handlers) UpdateConsolePage(c *gin.Context) {
 		"textContent":  page.TextContent,
 		"position":     page.Position,
 		"isPublished":  page.IsPublished,
+		"isLocked":     page.IsLocked,
 		"parentPageId": page.ParentPageID,
 		"createdAt":    page.CreatedAt.Format(time.RFC3339),
 		"updatedAt":    page.UpdatedAt.Format(time.RFC3339),

@@ -1501,3 +1501,64 @@ func TestFavorites_Toggle(t *testing.T) {
 		t.Fatal("expected space to be unfavorited")
 	}
 }
+
+func TestPageService_UpdatePageLocked(t *testing.T) {
+	ctx := context.Background()
+	db := setupTestDB(t)
+
+	ownerID := createTestUser(t, ctx, db, "owner", "owner@example.com")
+	w := createTestWorkspace(t, ctx, db, "Test Workspace", "test-workspace", ownerID)
+	s := createTestSpace(t, ctx, db, "Test Space", "test-space", w.ID, ownerID)
+	p := createTestPage(t, ctx, db, s.ID, ownerID)
+
+	// Verify page starts unlocked
+	fetched, err := db.pageRepo.GetByID(ctx, p.ID)
+	if err != nil {
+		t.Fatalf("getting page: %v", err)
+	}
+	if fetched.IsLocked {
+		t.Fatal("expected page to start unlocked")
+	}
+
+	// Update page to be locked
+	isLocked := true
+	updated, err := db.pageSvc.UpdatePage(ctx, p.ID, ownerID, pagefeat.UpdatePageInput{
+		IsLocked: &isLocked,
+	})
+	if err != nil {
+		t.Fatalf("locking page: %v", err)
+	}
+	if !updated.IsLocked {
+		t.Fatal("expected returned page to be locked")
+	}
+
+	// Verify locked status is persistent in DB
+	fetched, err = db.pageRepo.GetByID(ctx, p.ID)
+	if err != nil {
+		t.Fatalf("getting page after locking: %v", err)
+	}
+	if !fetched.IsLocked {
+		t.Fatal("expected fetched page to be locked")
+	}
+
+	// Unlock page
+	isLocked = false
+	updated, err = db.pageSvc.UpdatePage(ctx, p.ID, ownerID, pagefeat.UpdatePageInput{
+		IsLocked: &isLocked,
+	})
+	if err != nil {
+		t.Fatalf("unlocking page: %v", err)
+	}
+	if updated.IsLocked {
+		t.Fatal("expected returned page to be unlocked")
+	}
+
+	// Verify unlocked status is persistent in DB
+	fetched, err = db.pageRepo.GetByID(ctx, p.ID)
+	if err != nil {
+		t.Fatalf("getting page after unlocking: %v", err)
+	}
+	if fetched.IsLocked {
+		t.Fatal("expected fetched page to be unlocked")
+	}
+}

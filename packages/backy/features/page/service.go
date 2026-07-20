@@ -52,6 +52,7 @@ type UpdatePageInput struct {
 	CoverPhoto  *string          `json:"coverPhoto"`
 	ContentJSON *json.RawMessage `json:"contentJson"`
 	TextContent *string          `json:"textContent"`
+	IsLocked    *bool            `json:"isLocked"`
 }
 
 // GetBlogPost retrieves a published page by slug and converts it to a BlogPost response
@@ -185,12 +186,12 @@ func (s *PageService) UpdatePage(ctx context.Context, pageID string, userID stri
 	err = tx.QueryRow(
 		ctx,
 		`SELECT id, slug_id, title, icon, cover_photo, content_json, ydoc,
-		        text_content, position, is_published, parent_page_id, space_id, workspace_id, creator_id,
+		        text_content, position, is_published, is_locked, parent_page_id, space_id, workspace_id, creator_id,
 		        last_updated_by_id, created_at, updated_at
 		 FROM pages WHERE id = $1 FOR UPDATE`, pageID,
 	).Scan(
 		&current.ID, &current.SlugID, &current.Title, &current.Icon, &current.CoverPhoto,
-		&contentJSONBytes, &current.YDoc, &current.TextContent, &current.Position, &current.IsPublished,
+		&contentJSONBytes, &current.YDoc, &current.TextContent, &current.Position, &current.IsPublished, &current.IsLocked,
 		&current.ParentPageID, &current.SpaceID, &current.WorkspaceID, &current.CreatorID, &current.LastUpdatedByID,
 		&current.CreatedAt, &current.UpdatedAt,
 	)
@@ -223,6 +224,9 @@ func (s *PageService) UpdatePage(ctx context.Context, pageID string, userID stri
 	if input.TextContent != nil {
 		current.TextContent = *input.TextContent
 	}
+	if input.IsLocked != nil {
+		current.IsLocked = *input.IsLocked
+	}
 	current.UpdatedAt = time.Now().UTC()
 	current.LastUpdatedByID = &userID
 
@@ -236,11 +240,11 @@ func (s *PageService) UpdatePage(ctx context.Context, pageID string, userID stri
 		ctx,
 		`UPDATE pages
 		 SET title = $1, icon = $2, cover_photo = $3, content_json = $4,
-		     text_content = $5, position = $6, is_published = $7, parent_page_id = $8,
-		     last_updated_by_id = $9, updated_at = $10
-		 WHERE id = $11`,
+		     text_content = $5, position = $6, is_published = $7, is_locked = $8, parent_page_id = $9,
+		     last_updated_by_id = $10, updated_at = $11
+		 WHERE id = $12`,
 		current.Title, current.Icon, current.CoverPhoto, newContentJSONBytes,
-		current.TextContent, current.Position, current.IsPublished, current.ParentPageID,
+		current.TextContent, current.Position, current.IsPublished, current.IsLocked, current.ParentPageID,
 		current.LastUpdatedByID, current.UpdatedAt, current.ID,
 	)
 	if err != nil {
