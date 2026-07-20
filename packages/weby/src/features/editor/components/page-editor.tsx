@@ -513,14 +513,14 @@ const PageDetailsPanel = ({
       />
       <div
         ref={panelRef}
-        className={`absolute top-0 right-0 h-full w-full sm:w-64 border-l p-4 flex flex-col shadow-xl pointer-events-auto ${t(
+        className={`absolute top-0 right-0 h-full w-full sm:w-52 border-l p-3 flex flex-col shadow-xl pointer-events-auto ${t(
           "bg-neutral-900 border-neutral-800 text-neutral-200",
           "bg-white border-neutral-200 text-neutral-800",
         )}`}
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2.5">
           <h3
-            className={`text-[10px] font-bold tracking-wider uppercase ${t("text-neutral-500", "text-neutral-400")}`}
+            className={`text-[9px] font-bold tracking-wider uppercase ${t("text-neutral-500", "text-neutral-400")}`}
           >
             page info
           </h3>
@@ -537,51 +537,55 @@ const PageDetailsPanel = ({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-4 text-[11px]">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
+        <div className="flex-1 overflow-y-auto space-y-3 text-[10px]">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
               <span className={t("text-neutral-500", "text-neutral-400")}>author</span>
-              <div className="flex items-center gap-1 font-medium">
+              <div className="flex items-center gap-1 font-medium min-w-0">
                 <AvatarBadge
                   icon={creator?.avatar_url}
                   name={displayName}
-                  className="w-4.5 h-4.5 bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center rounded-full"
-                  initialsClass="text-[9px] text-neutral-600 dark:text-neutral-300 font-semibold"
+                  className="w-3.5 h-3.5 shrink-0 bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center rounded-full"
+                  initialsClass="text-[7px] text-neutral-600 dark:text-neutral-300 font-semibold"
                 />
-                <span>{displayName}</span>
+                <span className="truncate">{displayName}</span>
               </div>
             </div>
 
             {spaceName && (
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <span className={t("text-neutral-500", "text-neutral-400")}>space</span>
-                <span className="font-medium">{spaceName}</span>
+                <span className="font-medium truncate">{spaceName}</span>
               </div>
             )}
           </div>
 
-          <hr className={`border-t ${t("border-neutral-800", "border-neutral-200")}`} />
+          <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
 
-          <div className="space-y-2.5">
+          <div className="space-y-1.5">
             {createdAt && (
-              <div className="flex flex-col gap-0.5">
+              <div className="flex items-center justify-between gap-2">
                 <span className={t("text-neutral-500", "text-neutral-400")}>created</span>
-                <span className="font-medium text-[10.5px]">{formatDateTime(createdAt)}</span>
+                <span className="font-medium text-[9.5px] font-mono text-right">
+                  {formatDateTime(createdAt)}
+                </span>
               </div>
             )}
             {updatedAt && (
-              <div className="flex flex-col gap-0.5">
-                <span className={t("text-neutral-500", "text-neutral-400")}>last modified</span>
-                <span className="font-medium text-[10.5px]">{formatDateTime(updatedAt)}</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className={t("text-neutral-500", "text-neutral-400")}>modified</span>
+                <span className="font-medium text-[9.5px] font-mono text-right">
+                  {formatDateTime(updatedAt)}
+                </span>
               </div>
             )}
           </div>
 
-          <hr className={`border-t ${t("border-neutral-800", "border-neutral-200")}`} />
+          <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <h4
-              className={`text-[10px] font-bold uppercase tracking-wider ${t("text-neutral-500", "text-neutral-400")}`}
+              className={`text-[9px] font-bold uppercase tracking-wider ${t("text-neutral-500", "text-neutral-400")}`}
             >
               metrics
             </h4>
