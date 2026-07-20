@@ -13,3 +13,4 @@ dist/
 .devenv.lock
 .direnv/
 slop.md
+packages/native/artifacts

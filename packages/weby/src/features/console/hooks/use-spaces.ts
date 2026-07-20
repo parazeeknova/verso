@@ -1,6 +1,7 @@
 import type { Space, SpaceMemberMixed } from "#/shared/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
+import { useConsoleStore } from "#/features/console/stores/console-store";
 
 export const useSpaces = (workspaceId: string) =>
   useQuery<Space[]>({
@@ -15,15 +16,25 @@ export const useSpaces = (workspaceId: string) =>
     staleTime: 60 * 1000,
   });
 
-export const useSpaceBySlug = (slug: string) =>
-  useQuery<Space>({
+export const useSpaceBySlug = (slug: string) => {
+  const queryClient = useQueryClient();
+  const { selectedWorkspaceId } = useConsoleStore();
+  return useQuery<Space>({
     enabled: slug !== "",
+    initialData: () => {
+      if (!selectedWorkspaceId) {
+        return;
+      }
+      const spaces = queryClient.getQueryData<Space[]>(["spaces", selectedWorkspaceId]);
+      return spaces?.find((s) => s.slug === slug);
+    },
     queryFn: ({ signal }) =>
       fetchProtected<Space>(`/api/console/spaces/by-slug/${encodeURIComponent(slug)}`, { signal }),
     queryKey: ["spaceBySlug", slug],
     refetchOnMount: true,
     staleTime: 60 * 1000,
   });
+};
 
 export const useSpaceById = (id: string, options?: { enabled?: boolean }) =>
   useQuery<Space>({
