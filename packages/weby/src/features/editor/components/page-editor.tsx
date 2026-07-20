@@ -2,7 +2,14 @@ import type { Editor } from "@tiptap/react";
 import type { JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { useEffect, useCallback, useMemo, useRef, useState } from "react";
-import { BookmarkSimpleIcon, InfoIcon, ListBulletsIcon, XIcon } from "@phosphor-icons/react";
+import {
+  BookmarkSimpleIcon,
+  InfoIcon,
+  ListBulletsIcon,
+  XIcon,
+  PencilSimpleIcon,
+  EyeIcon,
+} from "@phosphor-icons/react";
 import { gsap } from "gsap";
 import { useTheme } from "#/shared/hooks/use-theme";
 import { getEditorExtensions } from "#/features/editor/extensions";
@@ -945,7 +952,7 @@ export const PageEditor = ({
               <button
                 type="button"
                 onClick={() => handleToggleEditMode(false)}
-                className={`px-2 py-0 rounded-none text-[10px] lowercase font-medium leading-none transition-all cursor-pointer ${
+                className={`flex items-center gap-1 px-1.5 py-0 rounded-none text-[10px] lowercase font-medium leading-none transition-all cursor-pointer ${
                   isLocked
                     ? t(
                         "text-text-dark/40 hover:text-text-dark/80",
@@ -957,12 +964,13 @@ export const PageEditor = ({
                       )
                 }`}
               >
-                edit
+                <PencilSimpleIcon size={10} />
+                <span>edit</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleToggleEditMode(true)}
-                className={`px-2 py-0 rounded-none text-[10px] lowercase font-medium leading-none transition-all cursor-pointer ${
+                className={`flex items-center gap-1 px-1.5 py-0 rounded-none text-[10px] lowercase font-medium leading-none transition-all cursor-pointer ${
                   isLocked
                     ? t(
                         "bg-white/10 text-text-dark shadow-sm",
@@ -974,7 +982,8 @@ export const PageEditor = ({
                       )
                 }`}
               >
-                view
+                <EyeIcon size={10} />
+                <span>view</span>
               </button>
             </div>
           )}
