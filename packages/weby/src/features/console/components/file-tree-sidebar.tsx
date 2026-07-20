@@ -388,7 +388,7 @@ const PageNode = ({ node, depth, treeItems, spaceSlug }: PageNodeProps) => {
         )}
 
         {node.item.isShared && !isRenaming && !isHovered && (
-          <GlobeIcon className="shrink-0 text-green-500 mr-1" size={10} />
+          <GlobeIcon className="shrink-0 text-accent mr-1" size={10} />
         )}
 
         {isHovered && !isRenaming && (
@@ -638,7 +638,7 @@ const FavoritedPagesList = ({ favPageIds, favSpaces }: FavoritedPagesListProps) 
                 </span>
                 <FileTextIcon size={10} />
                 <span className="flex-1 truncate">{page.title}</span>
-                {page.isShared && <GlobeIcon className="shrink-0 text-green-500 mr-1" size={10} />}
+                {page.isShared && <GlobeIcon className="shrink-0 text-accent mr-1" size={10} />}
                 <span
                   className={`shrink-0 text-[8px] px-1 py-0.5 lowercase ${t("text-text-dark/25", "text-text-light/25")}`}
                 >
@@ -672,7 +672,7 @@ const FavoritedPagesList = ({ favPageIds, favSpaces }: FavoritedPagesListProps) 
         >
           <FileTextIcon size={10} />
           <span className="flex-1 truncate">{page.title}</span>
-          {page.isShared && <GlobeIcon className="shrink-0 text-green-500 mr-1" size={10} />}
+          {page.isShared && <GlobeIcon className="shrink-0 text-accent mr-1" size={10} />}
           <span
             className={`shrink-0 text-[8px] px-1 py-0.5 lowercase ${t("text-text-dark/25", "text-text-light/25")}`}
           >

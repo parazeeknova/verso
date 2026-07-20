@@ -310,7 +310,7 @@ const PageNode = ({ node, depth, spaceId, spaceSlug, treeItems }: PageNodeProps)
         )}
 
         {node.item.isShared && !isRenaming && !isHovered && (
-          <GlobeIcon className="shrink-0 text-green-500 mr-1" size={10} />
+          <GlobeIcon className="shrink-0 text-accent mr-1" size={10} />
         )}
 
         {isHovered && !isRenaming && (
