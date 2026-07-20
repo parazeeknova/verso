@@ -21,6 +21,7 @@ import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
 import { useQueryClient } from "@tanstack/react-query";
 import { EditorMoreMenu } from "#/features/editor/components/editor-more-menu";
 import { SharePopover } from "./share-popover";
+import { PageHistoryModal } from "./page-history-modal";
 import {
   useIsPageFavorited,
   useTogglePageFavorite,
@@ -912,6 +913,7 @@ export const PageEditor = ({
   const content = useMemo(() => parseContent(contentJson), [contentJson]);
   const [tocOpen, setTocOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
   const [headings, setHeadings] = useState<BlogHeading[]>(() => extractEditorHeadings(content));
@@ -1182,6 +1184,7 @@ export const PageEditor = ({
               })
             }
             watchPending={watchPage.isPending}
+            onOpenHistory={() => setHistoryOpen(true)}
           />
         </div>
       </div>
@@ -1240,6 +1243,12 @@ export const PageEditor = ({
         t={t}
         onClose={() => setDetailsOpen(false)}
         isOpen={detailsOpen}
+      />
+
+      <PageHistoryModal
+        isOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        pageId={pageId}
       />
 
       <TableOfContentsModal

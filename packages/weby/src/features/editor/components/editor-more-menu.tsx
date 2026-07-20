@@ -46,6 +46,7 @@ interface EditorMoreMenuProps {
   isWatching: boolean;
   watchPending?: boolean;
   onToggleWatch: () => void;
+  onOpenHistory?: () => void;
   onDeleteStart?: () => void;
   onDeleteSettled?: () => void;
 }
@@ -260,6 +261,7 @@ export const EditorMoreMenu = ({
   isWatching,
   watchPending,
   onToggleWatch,
+  onOpenHistory,
   onDeleteStart,
   onDeleteSettled,
 }: EditorMoreMenuProps) => {
@@ -537,7 +539,7 @@ export const EditorMoreMenu = ({
                   className={`mx-3 my-0.5 border-t ${t("border-border-dark", "border-border-light")}`}
                 />
                 <div className="py-0.5">
-                  {menuItem(<ClockCounterClockwiseIcon size={12} />, "page history")}
+                  {menuItem(<ClockCounterClockwiseIcon size={12} />, "page history", onOpenHistory)}
                   {menuItem(<ArrowSquareOutIcon size={12} />, "move")}
                   {menuItem(<FileArrowDownIcon size={12} />, "export")}
                   {menuItem(<PrinterIcon size={12} />, "print pdf")}
