@@ -1,4 +1,10 @@
-import { GlobeIcon, CopyIcon, CheckIcon, ArrowSquareOutIcon } from "@phosphor-icons/react";
+import {
+  GlobeIcon,
+  GlobeXIcon,
+  CopyIcon,
+  CheckIcon,
+  ArrowSquareOutIcon,
+} from "@phosphor-icons/react";
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "#/shared/hooks/use-theme";
 import {
@@ -20,6 +26,34 @@ const handleCopy = async (text: string, setCopyState: (v: boolean) => void) => {
   } catch (error) {
     console.error("failed to copy:", error);
   }
+};
+
+interface SquareSwitchProps {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: () => void;
+  isDarkMode: boolean;
+}
+
+const SquareSwitch = ({ checked, disabled, onChange, isDarkMode }: SquareSwitchProps) => {
+  const inactiveBg = isDarkMode ? "bg-neutral-700" : "bg-neutral-300";
+  const thumbBg = isDarkMode ? "bg-neutral-200" : "bg-white";
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      disabled={disabled}
+      className={`relative inline-flex h-3.5 w-6 shrink-0 cursor-pointer items-center transition-colors duration-150 focus:outline-none ${
+        checked ? "bg-accent" : inactiveBg
+      }`}
+    >
+      <span
+        className={`pointer-events-none inline-block h-2.5 w-2.5 transform shadow-sm transition duration-150 ${thumbBg} ${
+          checked ? "translate-x-3" : "translate-x-0.5"
+        }`}
+      />
+    </button>
+  );
 };
 
 export const SharePopover = ({ pageId }: SharePopoverProps) => {
@@ -106,61 +140,51 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
         onClick={() => setOpen((v) => !v)}
         type="button"
       >
-        <GlobeIcon size={14} />
+        {isSharedActive ? <GlobeIcon size={14} /> : <GlobeXIcon size={14} />}
       </button>
 
       {open && (
         <div
-          className={`absolute top-full right-0 mt-1 border text-[11px] p-3 w-72 flex flex-col gap-3.5 z-50 shadow-lg rounded-none ${t(
+          className={`absolute top-full right-0 mt-1 border text-[11px] p-2 w-64 flex flex-col gap-2 z-50 shadow-lg ${t(
             "border-border-dark bg-bg-dark text-text-dark/70",
             "border-border-light bg-bg-light text-text-light/70",
           )}`}
         >
           {isPending ? (
-            <div className="text-[10px] lowercase opacity-40">loading settings...</div>
+            <div className="text-[10px] lowercase opacity-40">loading...</div>
           ) : (
             <>
               {/* Share to web toggle */}
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center justify-between gap-2">
                 <div>
-                  <div className="font-semibold lowercase text-text-light dark:text-text-dark">
+                  <div className="font-semibold lowercase text-text-light dark:text-text-dark text-[11px]">
                     share to web
                   </div>
-                  <div className="text-[10px] opacity-40 lowercase mt-0.5">
-                    make this page publicly accessible
+                  <div className="text-[9px] opacity-40 lowercase">
+                    make page publicly accessible
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleToggleShare}
+                <SquareSwitch
+                  checked={!!isSharedActive}
                   disabled={updateShare.isPending}
-                  className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    isSharedActive ? "bg-green-500" : t("bg-neutral-800", "bg-neutral-200")
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
-                      isSharedActive ? "translate-x-3" : "translate-x-0"
-                    }`}
-                  />
-                </button>
+                  isDarkMode={isDarkMode}
+                  onChange={handleToggleShare}
+                />
               </div>
 
               {isSharedActive && (
                 <>
-                  {/* Public Link display */}
-                  <div className="flex flex-col gap-1 border-t pt-2.5 border-neutral-800/10 dark:border-neutral-100/10">
-                    <div className="text-[10px] font-medium lowercase opacity-55 mb-0.5">
-                      public link
-                    </div>
+                  {/* Public link */}
+                  <div className="flex flex-col gap-0.5">
+                    <div className="text-[9px] font-medium lowercase opacity-45">public link</div>
                     <div
-                      className={`flex items-center gap-1 border px-2 py-1 rounded-none text-[10px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
+                      className={`flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
                         "border-border-dark bg-black/20",
                         "border-border-light bg-white",
                       )}`}
                     >
                       <span className="flex-1 overflow-hidden text-ellipsis">{publicUrl}</span>
-                      <div className="flex items-center gap-1.5 shrink-0 pl-1 border-l border-neutral-800/10 dark:border-neutral-100/10">
+                      <div className="flex items-center gap-1 shrink-0 pl-1">
                         <button
                           type="button"
                           onClick={() => handleCopy(publicUrl, setCopied)}
@@ -168,9 +192,9 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                           title="copy link"
                         >
                           {copied ? (
-                            <CheckIcon className="size-3 text-green-500" />
+                            <CheckIcon className="size-2.5 text-accent" />
                           ) : (
-                            <CopyIcon className="size-3" />
+                            <CopyIcon className="size-2.5" />
                           )}
                         </button>
                         <a
@@ -180,27 +204,27 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                           className="hover:opacity-100 opacity-60 transition-opacity"
                           title="open in new tab"
                         >
-                          <ArrowSquareOutIcon className="size-3" />
+                          <ArrowSquareOutIcon className="size-2.5" />
                         </a>
                       </div>
                     </div>
                   </div>
 
-                  {/* Short URL / Shorten Link option */}
-                  <div className="flex flex-col gap-1 border-t pt-2.5 border-neutral-800/10 dark:border-neutral-100/10">
+                  {/* Short link */}
+                  <div className="flex flex-col gap-0.5">
                     {share.shortCode ? (
                       <>
-                        <div className="text-[10px] font-medium lowercase opacity-55 mb-0.5">
+                        <div className="text-[9px] font-medium lowercase opacity-45">
                           short link
                         </div>
                         <div
-                          className={`flex items-center gap-1 border px-2 py-1 rounded-none text-[10px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
+                          className={`flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
                             "border-border-dark bg-black/20",
                             "border-border-light bg-white",
                           )}`}
                         >
                           <span className="flex-1 overflow-hidden text-ellipsis">{shortUrl}</span>
-                          <div className="flex items-center gap-1.5 shrink-0 pl-1 border-l border-neutral-800/10 dark:border-neutral-100/10">
+                          <div className="flex items-center gap-1 shrink-0 pl-1">
                             <button
                               type="button"
                               onClick={() => handleCopy(shortUrl, setShortCopied)}
@@ -208,9 +232,9 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                               title="copy link"
                             >
                               {shortCopied ? (
-                                <CheckIcon className="size-3 text-green-500" />
+                                <CheckIcon className="size-2.5 text-accent" />
                               ) : (
-                                <CopyIcon className="size-3" />
+                                <CopyIcon className="size-2.5" />
                               )}
                             </button>
                             <a
@@ -220,7 +244,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                               className="hover:opacity-100 opacity-60 transition-opacity"
                               title="open in new tab"
                             >
-                              <ArrowSquareOutIcon className="size-3" />
+                              <ArrowSquareOutIcon className="size-2.5" />
                             </a>
                           </div>
                         </div>
@@ -230,7 +254,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                         type="button"
                         onClick={handleShorten}
                         disabled={shortenShare.isPending}
-                        className={`w-full py-1 text-center border lowercase font-medium cursor-pointer transition-colors ${t(
+                        className={`w-full py-0.5 text-center text-[10px] border lowercase font-medium cursor-pointer transition-colors ${t(
                           "border-border-dark hover:bg-white/5 text-text-dark/80",
                           "border-border-light hover:bg-black/5 text-text-light/80",
                         )}`}
@@ -240,32 +264,22 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                     )}
                   </div>
 
-                  {/* Search engine indexing toggle */}
-                  <div className="flex items-center justify-between gap-4 border-t pt-2.5 border-neutral-800/10 dark:border-neutral-100/10">
+                  {/* Search engine indexing */}
+                  <div className="flex items-center justify-between gap-2">
                     <div>
-                      <div className="font-semibold lowercase text-text-light dark:text-text-dark">
-                        search engine indexing
+                      <div className="font-semibold lowercase text-text-light dark:text-text-dark text-[11px]">
+                        search indexing
                       </div>
-                      <div className="text-[10px] opacity-40 lowercase mt-0.5">
-                        allow search engines to index page
+                      <div className="text-[9px] opacity-40 lowercase">
+                        allow engines to index page
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleToggleIndexing}
+                    <SquareSwitch
+                      checked={share.searchIndexing}
                       disabled={updateShare.isPending}
-                      className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        share.searchIndexing
-                          ? "bg-green-500"
-                          : t("bg-neutral-800", "bg-neutral-200")
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
-                          share.searchIndexing ? "translate-x-3" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
+                      isDarkMode={isDarkMode}
+                      onChange={handleToggleIndexing}
+                    />
                   </div>
                 </>
               )}
