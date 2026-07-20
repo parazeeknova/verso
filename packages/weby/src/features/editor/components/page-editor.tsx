@@ -1162,6 +1162,10 @@ export const PageEditor = ({
             createdAt={createdAt}
             updatedAt={updatedAt}
             textContent={textContent}
+            editor={editor}
+            isFaved={isFaved}
+            onToggleFav={() => toggleFav.mutate(pageId)}
+            favPending={toggleFav.isPending}
             fullWidth={fullWidth}
             onDeleteStart={() => {
               setIsDeleting(true);

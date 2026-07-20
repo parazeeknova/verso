@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
 import { gsap } from "gsap";
 
+import type { Editor } from "@tiptap/react";
 import {
   DotsThreeVerticalIcon,
   EyeIcon,
@@ -19,11 +20,13 @@ import {
   CalendarIcon,
   ClockIcon,
   ArrowsHorizontalIcon,
+  BookmarkSimpleIcon,
 } from "@phosphor-icons/react";
 import { useTheme } from "#/shared/hooks/use-theme";
 import { useUserById } from "#/features/console/hooks/use-users";
 import { useDeletePage } from "#/features/console/hooks/use-pages";
 import { setFlashToast } from "#/features/console/components/flash-toast";
+import { tiptapToMarkdown } from "../lib/tiptap-to-markdown";
 
 interface EditorMoreMenuProps {
   pageId: string;
@@ -34,6 +37,10 @@ interface EditorMoreMenuProps {
   createdAt?: string;
   updatedAt?: string;
   textContent?: string;
+  editor?: Editor | null;
+  isFaved?: boolean;
+  onToggleFav?: () => void;
+  favPending?: boolean;
   fullWidth: boolean;
   onToggleFullWidth: () => void;
   isWatching: boolean;
@@ -244,6 +251,10 @@ export const EditorMoreMenu = ({
   createdAt,
   updatedAt,
   textContent,
+  editor,
+  isFaved,
+  onToggleFav,
+  favPending,
   fullWidth,
   onToggleFullWidth,
   isWatching,
@@ -295,6 +306,18 @@ export const EditorMoreMenu = ({
       showToast("failed to copy link");
     }
   }, [title, spaceName, showToast]);
+
+  const copyAsMarkdown = useCallback(async () => {
+    try {
+      const json = editor ? editor.getJSON() : null;
+      const markdown = json ? tiptapToMarkdown(json, title) : `# ${title}\n\n${textContent || ""}`;
+      await navigator.clipboard.writeText(markdown);
+      showToast(`copied markdown for ${title}`);
+    } catch (error) {
+      console.error("failed to copy as markdown:", error);
+      showToast("failed to copy markdown");
+    }
+  }, [editor, title, textContent, showToast]);
 
   const handleDelete = useCallback(() => {
     if (showDeleteConfirm) {
@@ -467,7 +490,16 @@ export const EditorMoreMenu = ({
               >
                 <div className="py-0.5">
                   {menuItem(<LinkSimpleIcon size={12} />, "copy link", copyLink)}
-                  {menuItem(<ArticleIcon size={12} />, "copy as markdown", undefined, false, true)}
+                  {menuItem(<ArticleIcon size={12} />, "copy as markdown", copyAsMarkdown)}
+                  {onToggleFav &&
+                    menuItem(
+                      <BookmarkSimpleIcon size={12} weight={isFaved ? "fill" : "regular"} />,
+                      isFaved ? "remove bookmark" : "add bookmark",
+                      onToggleFav,
+                      false,
+                      false,
+                      favPending,
+                    )}
                 </div>
                 <div
                   className={`mx-3 my-0.5 border-t ${t("border-border-dark", "border-border-light")}`}
