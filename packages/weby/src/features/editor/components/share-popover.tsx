@@ -97,7 +97,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
         aria-label="Share page settings"
         className={`p-0.5 transition-colors cursor-pointer ${
           isSharedActive
-            ? "text-green-500 hover:text-green-600"
+            ? "text-accent hover:text-accent/80"
             : t(
                 "text-text-dark/40 hover:text-text-dark",
                 "text-text-light/40 hover:text-text-light",
