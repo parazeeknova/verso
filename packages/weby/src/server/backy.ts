@@ -336,6 +336,25 @@ export const restorePage = (id: string, input: RestorePageInput, cookieHeader?: 
     method: "POST",
   });
 
+export const deletePageHistory = (id: string, cookieHeader?: string | null) =>
+  fetchBacky<{ success: boolean }>(`console/pages/${encodeURIComponent(id)}/history`, {
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+    method: "DELETE",
+  });
+
+export const deletePageHistoryEntry = (
+  id: string,
+  historyId: string,
+  cookieHeader?: string | null,
+) =>
+  fetchBacky<{ success: boolean }>(
+    `console/pages/${encodeURIComponent(id)}/history/${encodeURIComponent(historyId)}`,
+    {
+      headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+      method: "DELETE",
+    },
+  );
+
 export const watchConsolePage = (id: string, cookieHeader?: string | null) =>
   fetchBacky<{ watching: boolean }>(`console/pages/${encodeURIComponent(id)}/watch`, {
     headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
