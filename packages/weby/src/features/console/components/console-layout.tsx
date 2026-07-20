@@ -48,7 +48,7 @@ export const ConsoleLayout = () => {
   const sidebarContentRef = useRef<HTMLDivElement>(null);
   const routerState = useRouterState();
   const [debugSearch, setDebugSearch] = useState("");
-  const { sidebarOpen, toggleSidebar: toggleSidebarStore } = useConsoleStore();
+  const { sidebarOpen, toggleSidebar: toggleSidebarStore, setSidebarOpen } = useConsoleStore();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const animatingRef = useRef(false);
   const { data: user } = useAuth();
@@ -198,6 +198,18 @@ export const ConsoleLayout = () => {
       });
     }
   }, [sidebarOpen]);
+
+  // Auto-collapse sidebar on narrow viewports
+  useEffect(() => {
+    const BREAKPOINT = 768;
+    const handleResize = () => {
+      if (window.innerWidth < BREAKPOINT && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [sidebarOpen, setSidebarOpen]);
 
   const handleDebugBack = useCallback(() => {
     if (mainRef.current) {
@@ -383,7 +395,7 @@ export const ConsoleLayout = () => {
           )}
 
           <main
-            className={`min-h-0 flex-1 relative flex flex-col ${isSpaceRoute ? "overflow-hidden" : "overflow-y-auto"}`}
+            className={`min-h-0 min-w-0 flex-1 relative flex flex-col ${isSpaceRoute ? "overflow-hidden" : "overflow-y-auto"}`}
             ref={mainRef}
           >
             <Outlet />

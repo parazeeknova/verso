@@ -919,11 +919,11 @@ export const PageEditor = ({
   return (
     <div ref={wrapperRef} className="relative h-full flex flex-col overflow-hidden">
       <div
-        className={`sticky top-0 z-30 flex items-center justify-between pt-1.5 pb-1 pl-4 pr-4 shrink-0 transition-colors duration-500 ease-out ${t("bg-bg-dark", "bg-bg-light")}`}
+        className={`sticky top-0 z-30 flex items-center justify-between gap-2 pt-1.5 pb-1 pl-4 pr-4 shrink-0 transition-colors duration-500 ease-out ${t("bg-bg-dark", "bg-bg-light")}`}
       >
-        <div className="group relative">
+        <div className="group relative min-w-0 flex-1">
           <span
-            className={`text-[11px] lowercase font-medium ${t("text-text-dark/30", "text-text-light/30")}`}
+            className={`text-[11px] lowercase font-medium truncate block ${t("text-text-dark/30", "text-text-light/30")}`}
           >
             {localTitle}
           </span>
@@ -941,14 +941,14 @@ export const PageEditor = ({
         <div className="flex items-center gap-2 shrink-0">
           {effectiveEditable && (
             <span
-              className={`text-[11px] lowercase ${t("text-text-dark/40", "text-text-light/40")}`}
+              className={`text-[11px] lowercase hidden sm:inline ${t("text-text-dark/40", "text-text-light/40")}`}
             >
               {getSaveStatusText(isSaving, dirty, lastSaved, now)}
             </span>
           )}
           {editable && (
             <div
-              className={`flex items-center gap-0.5 p-0 rounded-none border ${t("bg-neutral-800/10 border-border-dark", "bg-neutral-100 border-border-light")}`}
+              className={`hidden sm:flex items-center gap-0.5 p-0 rounded-none border ${t("bg-neutral-800/10 border-border-dark", "bg-neutral-100 border-border-light")}`}
             >
               <button
                 type="button"
