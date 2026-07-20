@@ -1,6 +1,7 @@
 package page
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/json"
@@ -664,11 +665,37 @@ func (s *PageService) CanWrite(ctx context.Context, spaceID, userID string) (boo
 
 // insertHistoryTx inserts a page_history row within an existing transaction.
 func (s *PageService) insertHistoryTx(ctx context.Context, tx pgx.Tx, page models.Page, operation string, userID string) error {
-	historyID := uuid.New().String()
 	historyContentJSON := []byte(page.ContentJSON)
 	if len(historyContentJSON) == 0 {
 		historyContentJSON = []byte("{}")
 	}
+
+	// For update operations, skip recording duplicate history if page content and title haven't changed.
+	if operation == "update" {
+		var lastTitle string
+		var lastContentJSON []byte
+		var lastTextContent string
+
+		err := tx.QueryRow(
+			ctx,
+			`SELECT title, content_json, text_content
+			 FROM page_history
+			 WHERE page_id = $1
+			 ORDER BY created_at DESC
+			 LIMIT 1`,
+			page.ID,
+		).Scan(&lastTitle, &lastContentJSON, &lastTextContent)
+
+		if err == nil &&
+			lastTitle == page.Title &&
+			bytes.Equal(bytes.TrimSpace(lastContentJSON), bytes.TrimSpace(historyContentJSON)) &&
+			lastTextContent == page.TextContent {
+			// No changes detected since the last history entry, skip inserting duplicate history.
+			return nil
+		}
+	}
+
+	historyID := uuid.New().String()
 
 	_, err := tx.Exec(
 		ctx,
