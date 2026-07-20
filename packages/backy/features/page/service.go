@@ -548,6 +548,43 @@ func (s *PageService) RestorePage(ctx context.Context, pageID string, historyID 
 	return page, nil
 }
 
+// DeleteHistoryEntry deletes a single history entry after verifying write permissions.
+func (s *PageService) DeleteHistoryEntry(ctx context.Context, pageID string, historyID string, userID string) error {
+	page, err := s.pageRepo.GetByID(ctx, pageID)
+	if err != nil {
+		if errors.Is(err, repositories.ErrPageNotFound) {
+			return ErrPageNotFound
+		}
+		return err
+	}
+	if err := s.requireWrite(ctx, page.SpaceID, userID); err != nil {
+		return err
+	}
+	history, err := s.pageHistoryRepo.GetByID(ctx, historyID)
+	if err != nil {
+		return err
+	}
+	if history.PageID != pageID {
+		return fmt.Errorf("history entry %q does not belong to page %q", historyID, pageID)
+	}
+	return s.pageHistoryRepo.DeleteByID(ctx, historyID)
+}
+
+// DeleteAllPageHistory deletes all history entries for a page after verifying write permissions.
+func (s *PageService) DeleteAllPageHistory(ctx context.Context, pageID string, userID string) error {
+	page, err := s.pageRepo.GetByID(ctx, pageID)
+	if err != nil {
+		if errors.Is(err, repositories.ErrPageNotFound) {
+			return ErrPageNotFound
+		}
+		return err
+	}
+	if err := s.requireWrite(ctx, page.SpaceID, userID); err != nil {
+		return err
+	}
+	return s.pageHistoryRepo.DeleteAllByPageID(ctx, pageID)
+}
+
 // ErrBlogPostNotFound is returned when a blog post is not found
 var ErrBlogPostNotFound = errors.New("blog post not found")
 
@@ -765,11 +802,13 @@ func (s *PageService) softDeletePageAndDescendantsTx(ctx context.Context, tx pgx
 	}
 	*deletedPages = append(*deletedPages, page)
 
-	// Soft-delete the page.
+	// Soft-delete the page and clear its history.
 	_, err = tx.Exec(ctx, `UPDATE pages SET deleted_at = now(), deleted_by_id = $1 WHERE id = $2`, userID, pageID)
 	if err != nil {
 		return fmt.Errorf("soft-deleting page %q: %w", pageID, err)
 	}
+
+	_, _ = tx.Exec(ctx, `DELETE FROM page_history WHERE page_id = $1`, pageID)
 
 	return nil
 }

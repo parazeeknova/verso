@@ -962,6 +962,67 @@ func (h *Handlers) RestoreConsolePage(c *gin.Context) {
 	})
 }
 
+// DeleteConsolePageHistory handles DELETE /api/console/pages/:id/history.
+func (h *Handlers) DeleteConsolePageHistory(c *gin.Context) {
+	if h.pageService == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "page service unavailable"})
+		return
+	}
+
+	pageID := c.Param("id")
+	userID := middleware.GetCurrentUserID(c)
+
+	err := h.pageService.DeleteAllPageHistory(c.Request.Context(), pageID, userID)
+	if err != nil {
+		if errors.Is(err, pagefeat.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
+			return
+		}
+		if errors.Is(err, pagefeat.ErrPagePermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
+			return
+		}
+		logger.Log.Error().Str("id", pageID).Err(err).Msg("delete page history error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete page history"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// DeleteConsolePageHistoryEntry handles DELETE /api/console/pages/:id/history/:historyId.
+func (h *Handlers) DeleteConsolePageHistoryEntry(c *gin.Context) {
+	if h.pageService == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "page service unavailable"})
+		return
+	}
+
+	pageID := c.Param("id")
+	historyID := c.Param("historyId")
+	userID := middleware.GetCurrentUserID(c)
+
+	err := h.pageService.DeleteHistoryEntry(c.Request.Context(), pageID, historyID, userID)
+	if err != nil {
+		if errors.Is(err, pagefeat.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
+			return
+		}
+		if errors.Is(err, pagefeat.ErrPagePermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
+			return
+		}
+		if errors.Is(err, repositories.ErrPageHistoryNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "history entry not found"})
+			return
+		}
+		logger.Log.Error().Str("id", historyID).Err(err).Msg("delete history entry error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete history entry"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
 // GetStats returns aggregate counts (public, no auth required).
 func (h *Handlers) GetStats(c *gin.Context) {
 	pages := 0

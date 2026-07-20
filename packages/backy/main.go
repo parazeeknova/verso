@@ -355,6 +355,8 @@ func main() {
 			console.GET("/pages/:id/history", h.GetConsolePageHistory)
 			console.GET("/pages/:id/history/:historyId", h.GetConsolePageHistoryEntry)
 			console.POST("/pages/:id/restore", h.RestoreConsolePage)
+			console.DELETE("/pages/:id/history", h.DeleteConsolePageHistory)
+			console.DELETE("/pages/:id/history/:historyId", h.DeleteConsolePageHistoryEntry)
 
 			// Page favorites
 			console.POST("/pages/:id/favorite", h.TogglePageFavorite)

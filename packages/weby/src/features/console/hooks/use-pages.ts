@@ -260,6 +260,32 @@ export const useRestorePage = () => {
   });
 };
 
+export const useDeleteHistoryEntry = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ pageId, historyId }: { pageId: string; historyId: string }) =>
+      fetchProtected<{ success: boolean }>(`/api/console/pages/${pageId}/history/${historyId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["pageHistory", variables.pageId] });
+    },
+  });
+};
+
+export const useDeleteAllPageHistory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (pageId: string) =>
+      fetchProtected<{ success: boolean }>(`/api/console/pages/${pageId}/history`, {
+        method: "DELETE",
+      }),
+    onSuccess: (_data, pageId) => {
+      queryClient.invalidateQueries({ queryKey: ["pageHistory", pageId] });
+    },
+  });
+};
+
 export const usePageShare = (pageId: string, options?: { enabled?: boolean }) =>
   useQuery<PageShare>({
     enabled: (options?.enabled ?? true) && pageId !== "",
