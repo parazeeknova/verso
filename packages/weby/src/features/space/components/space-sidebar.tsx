@@ -309,8 +309,18 @@ const PageNode = ({ node, depth, spaceId, spaceSlug, treeItems }: PageNodeProps)
           </button>
         )}
 
-        {node.item.isShared && !isRenaming && !isHovered && (
-          <GlobeIcon className="shrink-0 text-accent mr-1" size={10} />
+        {!isRenaming && !isHovered && (
+          <div className="flex items-center gap-1 shrink-0 mr-0.5">
+            {node.item.isShared && <GlobeIcon className="shrink-0 text-accent" size={9} />}
+            <span
+              className={`text-[8px] font-mono ${t("text-text-dark/20", "text-text-light/20")}`}
+            >
+              {new Date(node.item.createdAt).toLocaleDateString("en-US", {
+                day: "numeric",
+                month: "short",
+              })}
+            </span>
+          </div>
         )}
 
         {isHovered && !isRenaming && (
