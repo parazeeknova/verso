@@ -176,22 +176,22 @@ const PageNodeActionsMenu = ({
       </button>
       {menuOpen && menuPos && (
         <div
-          className={`fixed z-9999 py-1 w-32 text-[11px] lowercase shadow-lg ${t(
+          className={`fixed z-9999 py-0.5 w-24 text-[10px] lowercase shadow-lg ${t(
             "bg-neutral-800 border border-white/10 text-text-dark",
             "bg-white border border-black/10 text-text-light",
           )}`}
-          style={{ left: `${menuPos.x - 128}px`, top: `${menuPos.y}px` }}
+          style={{ left: `${menuPos.x - 96}px`, top: `${menuPos.y}px` }}
         >
           <button
-            className={`flex w-full items-center gap-1.5 px-2 py-1 cursor-pointer ${t("hover:bg-white/10", "hover:bg-black/5")}`}
+            className={`flex w-full items-center gap-1 px-1.5 py-0.5 cursor-pointer ${t("hover:bg-white/10", "hover:bg-black/5")}`}
             onClick={startRename}
             type="button"
           >
-            <PencilSimpleIcon size={10} />
+            <PencilSimpleIcon size={9} />
             rename
           </button>
           <button
-            className={`flex w-full items-center gap-1.5 px-2 py-1 cursor-pointer ${showDeleteConfirm ? "text-red-400" : t("hover:bg-white/10", "hover:bg-black/5")}`}
+            className={`flex w-full items-center gap-1 px-1.5 py-0.5 cursor-pointer ${showDeleteConfirm ? "text-red-400" : t("hover:bg-white/10", "hover:bg-black/5")}`}
             onClick={() => {
               if (showDeleteConfirm) {
                 submitDelete();
@@ -201,7 +201,7 @@ const PageNodeActionsMenu = ({
             }}
             type="button"
           >
-            <TrashIcon size={10} />
+            <TrashIcon size={9} />
             {showDeleteConfirm ? "confirm?" : "delete"}
           </button>
         </div>
