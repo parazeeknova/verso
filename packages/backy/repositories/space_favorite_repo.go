@@ -69,10 +69,12 @@ func (r *SpaceFavoriteRepo) Toggle(ctx context.Context, userID, spaceID string) 
 	err := r.pool.QueryRow(ctx, `
 		WITH toggled AS (
 			DELETE FROM space_favorites WHERE user_id = $1 AND space_id = $2 RETURNING 1
+		), inserted AS (
+			INSERT INTO space_favorites (user_id, space_id)
+			SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM toggled)
+			RETURNING 1
 		)
-		INSERT INTO space_favorites (user_id, space_id)
-		SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM toggled)
-		RETURNING (NOT EXISTS (SELECT 1 FROM toggled))::boolean AS inserted
+		SELECT EXISTS(SELECT 1 FROM inserted)
 	`, userID, spaceID).Scan(&favorited)
 	if err != nil {
 		return false, fmt.Errorf("toggling space favorite: %w", err)

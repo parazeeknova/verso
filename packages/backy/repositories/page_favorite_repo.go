@@ -67,10 +67,12 @@ func (r *PageFavoriteRepo) Toggle(ctx context.Context, userID, pageID string) (b
 	err := r.pool.QueryRow(ctx, `
 		WITH toggled AS (
 			DELETE FROM page_favorites WHERE user_id = $1 AND page_id = $2 RETURNING 1
+		), inserted AS (
+			INSERT INTO page_favorites (user_id, page_id)
+			SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM toggled)
+			RETURNING 1
 		)
-		INSERT INTO page_favorites (user_id, page_id)
-		SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM toggled)
-		RETURNING (NOT EXISTS (SELECT 1 FROM toggled))::boolean AS inserted
+		SELECT EXISTS(SELECT 1 FROM inserted)
 	`, userID, pageID).Scan(&favorited)
 	if err != nil {
 		return false, fmt.Errorf("toggling page favorite: %w", err)

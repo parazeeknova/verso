@@ -1443,3 +1443,61 @@ func TestAuthService_LoginAfterBootstrap_NormalFlow(t *testing.T) {
 		t.Fatalf("expected authfeat.ErrUserInactive, got %v", err)
 	}
 }
+
+func TestFavorites_Toggle(t *testing.T) {
+	db := setupTestDB(t)
+	ctx := context.Background()
+
+	ownerID := createTestUser(t, ctx, db, "owner", "owner@example.com")
+	w := createTestWorkspace(t, ctx, db, "WS", "ws", ownerID, "notes")
+
+	spaces, err := db.spaceRepo.ListAll(ctx, w.ID)
+	if err != nil {
+		t.Fatalf("list spaces: %v", err)
+	}
+	if len(spaces) == 0 {
+		t.Fatal("expected at least one space")
+	}
+	spaceID := spaces[0].ID
+
+	p := createTestPage(t, ctx, db, spaceID, ownerID)
+
+	pageFavRepo := repositories.NewPageFavoriteRepo()
+	spaceFavRepo := repositories.NewSpaceFavoriteRepo()
+
+	// Test page favorite toggle on
+	favorited, err := pageFavRepo.Toggle(ctx, ownerID, p.ID)
+	if err != nil {
+		t.Fatalf("toggle page favorite on: %v", err)
+	}
+	if !favorited {
+		t.Fatal("expected page to be favorited")
+	}
+
+	// Test page favorite toggle off
+	favorited, err = pageFavRepo.Toggle(ctx, ownerID, p.ID)
+	if err != nil {
+		t.Fatalf("toggle page favorite off: %v", err)
+	}
+	if favorited {
+		t.Fatal("expected page to be unfavorited")
+	}
+
+	// Test space favorite toggle on
+	favorited, err = spaceFavRepo.Toggle(ctx, ownerID, spaceID)
+	if err != nil {
+		t.Fatalf("toggle space favorite on: %v", err)
+	}
+	if !favorited {
+		t.Fatal("expected space to be favorited")
+	}
+
+	// Test space favorite toggle off
+	favorited, err = spaceFavRepo.Toggle(ctx, ownerID, spaceID)
+	if err != nil {
+		t.Fatalf("toggle space favorite off: %v", err)
+	}
+	if favorited {
+		t.Fatal("expected space to be unfavorited")
+	}
+}
