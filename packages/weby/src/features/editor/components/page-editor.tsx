@@ -9,6 +9,9 @@ import {
   XIcon,
   PencilSimpleIcon,
   EyeIcon,
+  CheckIcon,
+  CopyIcon,
+  ArrowSquareOutIcon,
 } from "@phosphor-icons/react";
 import { gsap } from "gsap";
 import { useTheme } from "#/shared/hooks/use-theme";
@@ -24,7 +27,7 @@ import {
 } from "#/features/console/hooks/use-page-favorites";
 import { setFlashToast } from "#/features/console/components/flash-toast";
 import { useIsPageWatching, useWatchPage } from "#/features/console/hooks/use-page-watches";
-import { useUpdatePage } from "#/features/console/hooks/use-pages";
+import { useUpdatePage, usePageShare } from "#/features/console/hooks/use-pages";
 import { TableMenu } from "./table/table-menu";
 import { ColumnsMenu } from "./columns/columns-menu";
 import { CalloutMenu } from "./callout/callout-menu";
@@ -438,7 +441,134 @@ const CreatorByline = ({
   );
 };
 
+const handleCopy = async (text: string, setCopyState: (v: boolean) => void) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    setCopyState(true);
+    setTimeout(() => setCopyState(false), 2000);
+  } catch (error) {
+    console.error("failed to copy:", error);
+  }
+};
+
+const ShareInfoSection = ({
+  pageId,
+  t,
+}: {
+  pageId?: string;
+  t: (dark: string, light: string) => string;
+}) => {
+  const [copied, setCopied] = useState(false);
+  const [shortCopied, setShortCopied] = useState(false);
+
+  const { data: share } = usePageShare(pageId ?? "");
+
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const publicUrl = share?.shareToken ? `${origin}/share/${share.shareToken}` : "";
+  const shortUrl = share?.shortCode ? `${origin}/sh/${share.shortCode}` : "";
+
+  return (
+    <div className="space-y-1.5">
+      <h4
+        className={`text-[9px] font-bold uppercase tracking-wider ${t("text-neutral-500", "text-neutral-400")}`}
+      >
+        share & web
+      </h4>
+      <div className="flex items-center justify-between gap-2">
+        <span className={t("text-neutral-500", "text-neutral-400")}>web access</span>
+        <span
+          className={`font-semibold text-[9.5px] ${share?.isEnabled ? "text-accent" : t("text-neutral-400", "text-neutral-500")}`}
+        >
+          {share?.isEnabled ? "shared to web" : "private"}
+        </span>
+      </div>
+
+      {share?.isEnabled && (
+        <>
+          <div className="flex items-center justify-between gap-2">
+            <span className={t("text-neutral-500", "text-neutral-400")}>search indexing</span>
+            <span className="font-semibold text-[9.5px]">
+              {share.searchIndexing ? "allow" : "disallow"}
+            </span>
+          </div>
+
+          {publicUrl && (
+            <div className="flex flex-col gap-0.5 pt-0.5">
+              <span className={t("text-neutral-500", "text-neutral-400")}>public link</span>
+              <div
+                className={`flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
+                  "border-neutral-800 bg-black/30 text-neutral-300",
+                  "border-neutral-200 bg-neutral-100 text-neutral-700",
+                )}`}
+              >
+                <span className="flex-1 overflow-hidden text-ellipsis">{publicUrl}</span>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(publicUrl, setCopied)}
+                  className="hover:opacity-100 opacity-60 cursor-pointer transition-opacity"
+                  title="copy link"
+                >
+                  {copied ? (
+                    <CheckIcon className="size-2.5 text-accent" />
+                  ) : (
+                    <CopyIcon className="size-2.5" />
+                  )}
+                </button>
+                <a
+                  href={publicUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:opacity-100 opacity-60 transition-opacity"
+                  title="open in new tab"
+                >
+                  <ArrowSquareOutIcon className="size-2.5" />
+                </a>
+              </div>
+            </div>
+          )}
+
+          {shortUrl && (
+            <div className="flex flex-col gap-0.5 pt-0.5">
+              <span className={t("text-neutral-500", "text-neutral-400")}>short link</span>
+              <div
+                className={`flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
+                  "border-neutral-800 bg-black/30 text-neutral-300",
+                  "border-neutral-200 bg-neutral-100 text-neutral-700",
+                )}`}
+              >
+                <span className="flex-1 overflow-hidden text-ellipsis">{shortUrl}</span>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(shortUrl, setShortCopied)}
+                  className="hover:opacity-100 opacity-60 cursor-pointer transition-opacity"
+                  title="copy link"
+                >
+                  {shortCopied ? (
+                    <CheckIcon className="size-2.5 text-accent" />
+                  ) : (
+                    <CopyIcon className="size-2.5" />
+                  )}
+                </button>
+                <a
+                  href={shortUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:opacity-100 opacity-60 transition-opacity"
+                  title="open in new tab"
+                >
+                  <ArrowSquareOutIcon className="size-2.5" />
+                </a>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
 const PageDetailsPanel = ({
+  pageId,
   creator,
   spaceName,
   createdAt,
@@ -450,6 +580,7 @@ const PageDetailsPanel = ({
   onClose,
   isOpen,
 }: {
+  pageId?: string;
   creator: CreatorInfo | null | undefined;
   spaceName?: string;
   createdAt?: string;
@@ -580,6 +711,10 @@ const PageDetailsPanel = ({
               </div>
             )}
           </div>
+
+          <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
+
+          <ShareInfoSection pageId={pageId} t={t} />
 
           <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
 
@@ -1090,6 +1225,7 @@ export const PageEditor = ({
       </div>
 
       <PageDetailsPanel
+        pageId={pageId}
         creator={creator}
         spaceName={spaceName}
         createdAt={createdAt}
