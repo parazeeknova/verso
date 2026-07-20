@@ -270,6 +270,10 @@ func main() {
 		api.GET("/blogs", h.GetBlogManifest)
 		api.GET("/blogs/:slug", h.GetBlogPost)
 
+		// Public Shared Pages
+		api.GET("/shares/:token", h.GetPublicShare)
+		api.GET("/short/:shortCode", h.GetPublicShort)
+
 		// Auth routes (public)
 		authHandlers.RegisterRoutes(api)
 		// Login is rate-limited separately
@@ -336,6 +340,11 @@ func main() {
 			// Publish / Unpublish
 			console.POST("/pages/:id/publish", h.PublishConsolePage)
 			console.POST("/pages/:id/unpublish", h.UnpublishConsolePage)
+
+			// Page Sharing
+			console.GET("/pages/:id/share", h.GetConsolePageShare)
+			console.PUT("/pages/:id/share", h.UpdateConsolePageShare)
+			console.POST("/pages/:id/share/shorten", h.ShortenConsolePageShare)
 
 			// Page Tree
 			console.GET("/pages/tree", h.GetConsolePageTree)

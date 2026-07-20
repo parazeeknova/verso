@@ -8,6 +8,7 @@ import {
   PencilSimpleIcon,
   PlusIcon,
   TrashIcon,
+  GlobeIcon,
 } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import type { PageTreeItem, Space } from "#/shared/types";
@@ -95,6 +96,16 @@ const PageNode = ({ node, depth, treeItems, spaceSlug }: PageNodeProps) => {
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
   const hasChildren = node.children.length > 0 || node.item.icon === "folder";
   const isSelected = selectedPageId === node.item.id;
+
+  const renderNodeIcon = (() => {
+    if (node.item.isShared) {
+      return <GlobeIcon className="shrink-0 text-green-500" size={10} />;
+    }
+    if (hasChildren) {
+      return <FolderIcon className="shrink-0" size={10} />;
+    }
+    return <FileTextIcon className="shrink-0" size={10} />;
+  })();
 
   useEffect(() => {
     if (!menuOpen) {
@@ -199,20 +210,16 @@ const PageNode = ({ node, depth, treeItems, spaceSlug }: PageNodeProps) => {
         onDrop={handleDrop}
         style={{ paddingLeft: `${depth * 12 + 12}px` }}
       >
-        {hasChildren ? (
-          <>
-            <button
-              className="shrink-0 cursor-pointer"
-              onClick={() => setExpanded((prev) => !prev)}
-              type="button"
-            >
-              {expanded ? <CaretDownIcon size={10} /> : <CaretRightIcon size={10} />}
-            </button>
-            <FolderIcon className="shrink-0" size={10} />
-          </>
-        ) : (
-          <FileTextIcon className="shrink-0" size={10} />
+        {hasChildren && (
+          <button
+            className="shrink-0 cursor-pointer"
+            onClick={() => setExpanded((prev) => !prev)}
+            type="button"
+          >
+            {expanded ? <CaretDownIcon size={10} /> : <CaretRightIcon size={10} />}
+          </button>
         )}
+        {renderNodeIcon}
 
         {isRenaming ? (
           <div className="flex-1 flex items-center gap-1">
@@ -467,6 +474,7 @@ interface FavPageDetail {
   title: string;
   slugId: string;
   spaceId: string;
+  isShared: boolean;
 }
 
 const FavoritedPagesList = ({ favPageIds, favSpaces }: FavoritedPagesListProps) => {
@@ -548,7 +556,11 @@ const FavoritedPagesList = ({ favPageIds, favSpaces }: FavoritedPagesListProps) 
                 <span className={`shrink-0 ${t("text-text-dark/20", "text-text-light/20")}`}>
                   {i === arr.length - 1 ? "\u2514" : "\u251C"}
                 </span>
-                <FileTextIcon size={10} />
+                {page.isShared ? (
+                  <GlobeIcon className="text-green-500 shrink-0" size={10} />
+                ) : (
+                  <FileTextIcon size={10} />
+                )}
                 <span className="flex-1 truncate">{page.title}</span>
                 <span
                   className={`shrink-0 text-[8px] px-1 py-0.5 lowercase ${t("text-text-dark/25", "text-text-light/25")}`}
@@ -581,7 +593,11 @@ const FavoritedPagesList = ({ favPageIds, favSpaces }: FavoritedPagesListProps) 
           }}
           type="button"
         >
-          <FileTextIcon size={10} />
+          {page.isShared ? (
+            <GlobeIcon className="text-green-500 shrink-0" size={10} />
+          ) : (
+            <FileTextIcon size={10} />
+          )}
           <span className="flex-1 truncate">{page.title}</span>
           <span
             className={`shrink-0 text-[8px] px-1 py-0.5 lowercase ${t("text-text-dark/25", "text-text-light/25")}`}

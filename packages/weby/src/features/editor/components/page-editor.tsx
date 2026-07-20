@@ -17,6 +17,7 @@ import { useEditorContent } from "#/features/editor/hooks/use-editor-content";
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
 import { useQueryClient } from "@tanstack/react-query";
 import { EditorMoreMenu } from "#/features/editor/components/editor-more-menu";
+import { SharePopover } from "./share-popover";
 import {
   useIsPageFavorited,
   useTogglePageFavorite,
@@ -987,6 +988,7 @@ export const PageEditor = ({
               </button>
             </div>
           )}
+          {editable && <SharePopover pageId={pageId} />}
           <button
             aria-label={isFaved ? "Unfavorite page" : "Favorite page"}
             aria-pressed={isFaved}

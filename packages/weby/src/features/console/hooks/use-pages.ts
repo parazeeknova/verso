@@ -7,6 +7,7 @@ import type {
   PageTreeItem,
   RestorePageInput,
   UpdatePageInput,
+  PageShare,
 } from "#/shared/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
@@ -255,6 +256,47 @@ export const useRestorePage = () => {
       queryClient.invalidateQueries({ queryKey: ["pageHistory"] });
       queryClient.invalidateQueries({ queryKey: ["consolePages"] });
       queryClient.invalidateQueries({ queryKey: ["pageTree"] });
+    },
+  });
+};
+
+export const usePageShare = (pageId: string, options?: { enabled?: boolean }) =>
+  useQuery<PageShare>({
+    enabled: (options?.enabled ?? true) && pageId !== "",
+    queryFn: ({ signal }) =>
+      fetchProtected<PageShare>(`/api/console/pages/${pageId}/share`, { signal }),
+    queryKey: ["pageShare", pageId],
+  });
+
+export const useUpdatePageShare = () => {
+  const queryClient = useQueryClient();
+  return useMutation<
+    PageShare,
+    Error,
+    { pageId: string; isEnabled: boolean; searchIndexing: boolean }
+  >({
+    mutationFn: ({ pageId, isEnabled, searchIndexing }) =>
+      fetchProtected<PageShare>(`/api/console/pages/${pageId}/share`, {
+        body: JSON.stringify({ isEnabled, searchIndexing }),
+        headers: { "Content-Type": "application/json" },
+        method: "PUT",
+      }),
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(["pageShare", variables.pageId], data);
+      queryClient.invalidateQueries({ queryKey: ["pageTree"] });
+    },
+  });
+};
+
+export const useShortenPageShare = () => {
+  const queryClient = useQueryClient();
+  return useMutation<PageShare, Error, string>({
+    mutationFn: (pageId) =>
+      fetchProtected<PageShare>(`/api/console/pages/${pageId}/share/shorten`, {
+        method: "POST",
+      }),
+    onSuccess: (data, pageId) => {
+      queryClient.setQueryData(["pageShare", pageId], data);
     },
   });
 };

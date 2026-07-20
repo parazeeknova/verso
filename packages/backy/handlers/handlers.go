@@ -189,6 +189,7 @@ type ConsolePageSummary struct {
 	Title        string  `json:"title"`
 	Icon         string  `json:"icon"`
 	IsPublished  bool    `json:"isPublished"`
+	IsShared     bool    `json:"isShared"`
 	SpaceID      string  `json:"spaceId"`
 	ParentPageID *string `json:"parentPageId"`
 	CreatedAt    string  `json:"createdAt"`
@@ -218,6 +219,7 @@ func (h *Handlers) GetConsolePages(c *gin.Context) {
 			Title:        p.Title,
 			Icon:         p.Icon,
 			IsPublished:  p.IsPublished,
+			IsShared:     h.pageService.IsPageShared(c.Request.Context(), p.ID),
 			SpaceID:      p.SpaceID,
 			ParentPageID: p.ParentPageID,
 			CreatedAt:    p.CreatedAt.Format(time.RFC3339),
@@ -278,6 +280,7 @@ func (h *Handlers) GetConsolePage(c *gin.Context) {
 		"createdAt":    page.CreatedAt.Format(time.RFC3339),
 		"updatedAt":    page.UpdatedAt.Format(time.RFC3339),
 		"editable":     editable,
+		"isShared":     h.pageService.IsPageShared(c.Request.Context(), page.ID),
 	})
 }
 
@@ -388,6 +391,7 @@ func (h *Handlers) GetConsolePageBySlug(c *gin.Context) {
 		"createdAt":    page.CreatedAt.Format(time.RFC3339),
 		"updatedAt":    page.UpdatedAt.Format(time.RFC3339),
 		"editable":     editable,
+		"isShared":     h.pageService.IsPageShared(c.Request.Context(), page.ID),
 	})
 }
 
@@ -1107,4 +1111,160 @@ func (h *Handlers) GetFavoritedPages(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, readable)
+}
+
+// GetConsolePageShare handles GET /api/console/pages/:id/share.
+func (h *Handlers) GetConsolePageShare(c *gin.Context) {
+	if h.pageService == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "page service unavailable"})
+		return
+	}
+
+	pageID := c.Param("id")
+	userID := middleware.GetCurrentUserID(c)
+
+	share, err := h.pageService.GetPageShare(c.Request.Context(), pageID, userID)
+	if err != nil {
+		if errors.Is(err, pagefeat.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
+			return
+		}
+		if errors.Is(err, pagefeat.ErrPagePermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
+			return
+		}
+		logger.Log.Error().Str("pageId", pageID).Err(err).Msg("get page share error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get page share settings"})
+		return
+	}
+
+	c.JSON(http.StatusOK, share)
+}
+
+type UpdateConsolePageShareRequest struct {
+	IsEnabled      bool `json:"isEnabled"`
+	SearchIndexing bool `json:"searchIndexing"`
+}
+
+// UpdateConsolePageShare handles PUT /api/console/pages/:id/share.
+func (h *Handlers) UpdateConsolePageShare(c *gin.Context) {
+	if h.pageService == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "page service unavailable"})
+		return
+	}
+
+	pageID := c.Param("id")
+	userID := middleware.GetCurrentUserID(c)
+
+	var req UpdateConsolePageShareRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	share, err := h.pageService.UpdatePageShare(c.Request.Context(), pageID, userID, req.IsEnabled, req.SearchIndexing)
+	if err != nil {
+		if errors.Is(err, pagefeat.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
+			return
+		}
+		if errors.Is(err, pagefeat.ErrPagePermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
+			return
+		}
+		logger.Log.Error().Str("pageId", pageID).Err(err).Msg("update page share error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update page share settings"})
+		return
+	}
+
+	c.JSON(http.StatusOK, share)
+}
+
+// ShortenConsolePageShare handles POST /api/console/pages/:id/share/shorten.
+func (h *Handlers) ShortenConsolePageShare(c *gin.Context) {
+	if h.pageService == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "page service unavailable"})
+		return
+	}
+
+	pageID := c.Param("id")
+	userID := middleware.GetCurrentUserID(c)
+
+	share, err := h.pageService.ShortenPageShare(c.Request.Context(), pageID, userID)
+	if err != nil {
+		if errors.Is(err, pagefeat.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
+			return
+		}
+		if errors.Is(err, pagefeat.ErrPagePermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
+			return
+		}
+		logger.Log.Error().Str("pageId", pageID).Err(err).Msg("shorten page share error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to shorten page share link"})
+		return
+	}
+
+	c.JSON(http.StatusOK, share)
+}
+
+// GetPublicShare handles GET /api/shares/:token.
+func (h *Handlers) GetPublicShare(c *gin.Context) {
+	if h.pageService == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "page service unavailable"})
+		return
+	}
+
+	token := c.Param("token")
+	page, share, err := h.pageService.GetPageByShareToken(c.Request.Context(), token)
+	if err != nil {
+		if errors.Is(err, repositories.ErrShareNotFound) || errors.Is(err, pagefeat.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "page or share not found"})
+			return
+		}
+		logger.Log.Error().Str("token", token).Err(err).Msg("get public share error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get public shared page"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"page": gin.H{
+			"id":          page.ID,
+			"title":       page.Title,
+			"icon":        page.Icon,
+			"coverPhoto":  page.CoverPhoto,
+			"contentJson": page.ContentJSON,
+			"updatedAt":   page.UpdatedAt.Format(time.RFC3339),
+		},
+		"share": gin.H{
+			"id":             share.ID,
+			"shareToken":     share.ShareToken,
+			"shortCode":      share.ShortCode,
+			"searchIndexing": share.SearchIndexing,
+		},
+	})
+}
+
+// GetPublicShort handles GET /api/short/:shortCode.
+func (h *Handlers) GetPublicShort(c *gin.Context) {
+	if h.pageService == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "page service unavailable"})
+		return
+	}
+
+	shortCode := c.Param("shortCode")
+	_, share, err := h.pageService.GetPageByShortCode(c.Request.Context(), shortCode)
+	if err != nil {
+		if errors.Is(err, repositories.ErrShareNotFound) || errors.Is(err, pagefeat.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "page or share not found"})
+			return
+		}
+		logger.Log.Error().Str("shortCode", shortCode).Err(err).Msg("get public short link error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to resolve short link"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"shareToken": share.ShareToken,
+	})
 }

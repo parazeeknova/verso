@@ -2,9 +2,11 @@ package page
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"strings"
 	"time"
 
@@ -25,6 +27,7 @@ type PageService struct {
 	pageHistoryRepo *repositories.PageHistoryRepo
 	spaceRepo       *repositories.SpaceRepo
 	groupRepo       *repositories.GroupRepo
+	pageShareRepo   *repositories.PageShareRepo
 	notifier        notifeat.Notifier
 }
 
@@ -36,6 +39,7 @@ func NewPageService(pageRepo *repositories.PageRepo, pageWatcherRepo *repositori
 		pageHistoryRepo: pageHistoryRepo,
 		spaceRepo:       spaceRepo,
 		groupRepo:       groupRepo,
+		pageShareRepo:   repositories.NewPageShareRepo(),
 		notifier:        notifeat.NoopNotifier(),
 	}
 }
@@ -946,4 +950,145 @@ func estimateReadTime(text string) int {
 // newUUID generates a RFC 4122 v4 UUID string.
 func newUUID() string {
 	return uuid.New().String()
+}
+
+func generateRandomString(n int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	ret := make([]byte, n)
+	for i := 0; i < n; i++ {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
+		if err != nil {
+			return ""
+		}
+		ret[i] = letters[num.Int64()]
+	}
+	return string(ret)
+}
+
+func (s *PageService) GetPageShare(ctx context.Context, pageID string, userID string) (models.PageShare, error) {
+	page, err := s.pageRepo.GetByID(ctx, pageID)
+	if err != nil {
+		return models.PageShare{}, err
+	}
+	if err := s.requireWrite(ctx, page.SpaceID, userID); err != nil {
+		return models.PageShare{}, err
+	}
+
+	share, err := s.pageShareRepo.GetByPageID(ctx, pageID)
+	if err != nil {
+		if errors.Is(err, repositories.ErrShareNotFound) {
+			return models.PageShare{
+				PageID:    pageID,
+				IsEnabled: false,
+			}, nil
+		}
+		return models.PageShare{}, err
+	}
+	return share, nil
+}
+
+func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID string, isEnabled bool, searchIndexing bool) (models.PageShare, error) {
+	page, err := s.pageRepo.GetByID(ctx, pageID)
+	if err != nil {
+		return models.PageShare{}, err
+	}
+	if err := s.requireWrite(ctx, page.SpaceID, userID); err != nil {
+		return models.PageShare{}, err
+	}
+
+	share, err := s.pageShareRepo.GetByPageID(ctx, pageID)
+	if err != nil {
+		if errors.Is(err, repositories.ErrShareNotFound) {
+			share = models.PageShare{
+				ID:             newUUID(),
+				PageID:         pageID,
+				ShareToken:     generateRandomString(32),
+				SearchIndexing: searchIndexing,
+				IsEnabled:      isEnabled,
+			}
+		} else {
+			return models.PageShare{}, err
+		}
+	} else {
+		share.IsEnabled = isEnabled
+		share.SearchIndexing = searchIndexing
+		if share.ShareToken == "" {
+			share.ShareToken = generateRandomString(32)
+		}
+	}
+
+	if err := s.pageShareRepo.Upsert(ctx, share); err != nil {
+		return models.PageShare{}, err
+	}
+
+	return share, nil
+}
+
+func (s *PageService) ShortenPageShare(ctx context.Context, pageID string, userID string) (models.PageShare, error) {
+	page, err := s.pageRepo.GetByID(ctx, pageID)
+	if err != nil {
+		return models.PageShare{}, err
+	}
+	if err := s.requireWrite(ctx, page.SpaceID, userID); err != nil {
+		return models.PageShare{}, err
+	}
+
+	share, err := s.pageShareRepo.GetByPageID(ctx, pageID)
+	if err != nil {
+		return models.PageShare{}, err
+	}
+
+	if share.ShortCode == nil || *share.ShortCode == "" {
+		code := generateRandomString(8)
+		share.ShortCode = &code
+		if err := s.pageShareRepo.Upsert(ctx, share); err != nil {
+			return models.PageShare{}, err
+		}
+	}
+
+	return share, nil
+}
+
+func (s *PageService) GetPageByShareToken(ctx context.Context, token string) (models.Page, models.PageShare, error) {
+	share, err := s.pageShareRepo.GetByShareToken(ctx, token)
+	if err != nil {
+		return models.Page{}, models.PageShare{}, err
+	}
+
+	if !share.IsEnabled {
+		return models.Page{}, models.PageShare{}, repositories.ErrShareNotFound
+	}
+
+	page, err := s.pageRepo.GetByID(ctx, share.PageID)
+	if err != nil {
+		return models.Page{}, models.PageShare{}, err
+	}
+
+	return page, share, nil
+}
+
+func (s *PageService) GetPageByShortCode(ctx context.Context, shortCode string) (models.Page, models.PageShare, error) {
+	share, err := s.pageShareRepo.GetByShortCode(ctx, shortCode)
+	if err != nil {
+		return models.Page{}, models.PageShare{}, err
+	}
+
+	if !share.IsEnabled {
+		return models.Page{}, models.PageShare{}, repositories.ErrShareNotFound
+	}
+
+	page, err := s.pageRepo.GetByID(ctx, share.PageID)
+	if err != nil {
+		return models.Page{}, models.PageShare{}, err
+	}
+
+	return page, share, nil
+}
+
+func (s *PageService) IsPageShared(ctx context.Context, pageID string) bool {
+	share, err := s.pageShareRepo.GetByPageID(ctx, pageID)
+	if err != nil {
+		return false
+	}
+	return share.IsEnabled
 }

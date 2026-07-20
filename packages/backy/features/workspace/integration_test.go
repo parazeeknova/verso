@@ -1562,3 +1562,90 @@ func TestPageService_UpdatePageLocked(t *testing.T) {
 		t.Fatal("expected fetched page to be unlocked")
 	}
 }
+
+func TestPageService_PageSharing(t *testing.T) {
+	ctx := context.Background()
+	db := setupTestDB(t)
+
+	ownerID := createTestUser(t, ctx, db, "owner", "owner@example.com")
+	w := createTestWorkspace(t, ctx, db, "Test Workspace", "test-workspace", ownerID)
+	s := createTestSpace(t, ctx, db, "Test Space", "test-space", w.ID, ownerID)
+	p := createTestPage(t, ctx, db, s.ID, ownerID)
+
+	// Fetch share for page when it doesn't exist
+	share, err := db.pageSvc.GetPageShare(ctx, p.ID, ownerID)
+	if err != nil {
+		t.Fatalf("getting page share: %v", err)
+	}
+	if share.IsEnabled {
+		t.Fatal("expected share to be disabled by default")
+	}
+
+	// Update share settings to enable sharing
+	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, true, true)
+	if err != nil {
+		t.Fatalf("enabling page share: %v", err)
+	}
+	if !share.IsEnabled {
+		t.Fatal("expected share to be enabled")
+	}
+	if !share.SearchIndexing {
+		t.Fatal("expected search indexing to be true")
+	}
+	if share.ShareToken == "" {
+		t.Fatal("expected share token to be generated")
+	}
+
+	// Fetch page by share token
+	fetchedPage, fetchedShare, err := db.pageSvc.GetPageByShareToken(ctx, share.ShareToken)
+	if err != nil {
+		t.Fatalf("fetching page by share token: %v", err)
+	}
+	if fetchedPage.ID != p.ID {
+		t.Fatalf("expected page ID %q, got %q", p.ID, fetchedPage.ID)
+	}
+	if fetchedShare.ID != share.ID {
+		t.Fatalf("expected share ID %q, got %q", share.ID, fetchedShare.ID)
+	}
+
+	// Shorten link
+	share, err = db.pageSvc.ShortenPageShare(ctx, p.ID, ownerID)
+	if err != nil {
+		t.Fatalf("shortening page share: %v", err)
+	}
+	if share.ShortCode == nil || *share.ShortCode == "" {
+		t.Fatal("expected short code to be generated")
+	}
+
+	// Fetch page by short code
+	fetchedPage2, fetchedShare2, err := db.pageSvc.GetPageByShortCode(ctx, *share.ShortCode)
+	if err != nil {
+		t.Fatalf("fetching page by short code: %v", err)
+	}
+	if fetchedPage2.ID != p.ID {
+		t.Fatalf("expected page ID %q, got %q", p.ID, fetchedPage2.ID)
+	}
+	if fetchedShare2.ID != share.ID {
+		t.Fatalf("expected share ID %q, got %q", share.ID, fetchedShare2.ID)
+	}
+
+	// Disable page sharing
+	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, false, false)
+	if err != nil {
+		t.Fatalf("disabling page share: %v", err)
+	}
+	if share.IsEnabled {
+		t.Fatal("expected share to be disabled")
+	}
+
+	// Verify public access is denied when sharing is disabled
+	_, _, err = db.pageSvc.GetPageByShareToken(ctx, share.ShareToken)
+	if err == nil {
+		t.Fatal("expected error fetching disabled share by token, got nil")
+	}
+
+	_, _, err = db.pageSvc.GetPageByShortCode(ctx, *share.ShortCode)
+	if err == nil {
+		t.Fatal("expected error fetching disabled share by short code, got nil")
+	}
+}

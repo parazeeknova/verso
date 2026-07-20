@@ -315,9 +315,11 @@ func (r *PageRepo) SoftDelete(ctx context.Context, id, deletedByID string) error
 func (r *PageRepo) ListRoots(ctx context.Context, spaceID string) ([]models.PageTreeItem, error) {
 	query := `
 		SELECT p.id, p.slug_id, p.title, p.icon, p.position, p.is_published,
+		       COALESCE(ps.is_enabled, false) AS is_shared,
 		       p.parent_page_id, p.space_id, p.workspace_id, p.creator_id, p.created_at, p.updated_at,
 		       EXISTS(SELECT 1 FROM pages c WHERE c.parent_page_id = p.id AND c.deleted_at IS NULL) AS has_children
 		FROM pages p
+		LEFT JOIN page_shares ps ON ps.page_id = p.id
 		WHERE p.parent_page_id IS NULL AND p.space_id = $1 AND p.deleted_at IS NULL
 		ORDER BY p.position COLLATE "C"`
 
@@ -334,9 +336,11 @@ func (r *PageRepo) ListRoots(ctx context.Context, spaceID string) ([]models.Page
 func (r *PageRepo) ListChildren(ctx context.Context, parentID string) ([]models.PageTreeItem, error) {
 	query := `
 		SELECT p.id, p.slug_id, p.title, p.icon, p.position, p.is_published,
+		       COALESCE(ps.is_enabled, false) AS is_shared,
 		       p.parent_page_id, p.space_id, p.workspace_id, p.creator_id, p.created_at, p.updated_at,
 		       EXISTS(SELECT 1 FROM pages c WHERE c.parent_page_id = p.id AND c.deleted_at IS NULL) AS has_children
 		FROM pages p
+		LEFT JOIN page_shares ps ON ps.page_id = p.id
 		WHERE p.parent_page_id = $1 AND p.deleted_at IS NULL
 		ORDER BY p.position COLLATE "C"`
 
@@ -353,9 +357,11 @@ func (r *PageRepo) ListChildren(ctx context.Context, parentID string) ([]models.
 func (r *PageRepo) ListTree(ctx context.Context, spaceID string) ([]models.PageTreeItem, error) {
 	query := `
 		SELECT p.id, p.slug_id, p.title, p.icon, p.position, p.is_published,
+		       COALESCE(ps.is_enabled, false) AS is_shared,
 		       p.parent_page_id, p.space_id, p.workspace_id, p.creator_id, p.created_at, p.updated_at,
 		       EXISTS(SELECT 1 FROM pages c WHERE c.parent_page_id = p.id AND c.deleted_at IS NULL) AS has_children
 		FROM pages p
+		LEFT JOIN page_shares ps ON ps.page_id = p.id
 		WHERE p.space_id = $1 AND p.deleted_at IS NULL
 		ORDER BY
 			CASE WHEN p.parent_page_id IS NULL THEN p.position ELSE (SELECT pp.position FROM pages pp WHERE pp.id = p.parent_page_id AND pp.deleted_at IS NULL) END COLLATE "C",
@@ -420,7 +426,7 @@ func scanPageTreeItems(rows pgx.Rows) ([]models.PageTreeItem, error) {
 		var createdAt, updatedAt any
 		if err := rows.Scan(
 			&item.ID, &item.SlugID, &item.Title, &item.Icon, &item.Position,
-			&item.IsPublished, &item.ParentPageID, &item.SpaceID, &item.WorkspaceID, &item.CreatorID,
+			&item.IsPublished, &item.IsShared, &item.ParentPageID, &item.SpaceID, &item.WorkspaceID, &item.CreatorID,
 			&createdAt, &updatedAt, &item.HasChildren,
 		); err != nil {
 			return nil, fmt.Errorf("scanning page tree row: %w", err)

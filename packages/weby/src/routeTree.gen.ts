@@ -16,6 +16,8 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HomeIndexRouteImport } from './routes/home/index'
+import { Route as ShareTokenRouteImport } from './routes/share/$token'
+import { Route as ShShortcodeRouteImport } from './routes/sh/$shortcode'
 import { Route as SettingsWorkspaceRouteImport } from './routes/settings/workspace'
 import { Route as SettingsSpacesRouteImport } from './routes/settings/spaces'
 import { Route as SettingsMembersRouteImport } from './routes/settings/members'
@@ -137,6 +139,16 @@ const HomeIndexRoute = HomeIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => HomeRoute,
+} as any)
+const ShareTokenRoute = ShareTokenRouteImport.update({
+  id: '/share/$token',
+  path: '/share/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShShortcodeRoute = ShShortcodeRouteImport.update({
+  id: '/sh/$shortcode',
+  path: '/sh/$shortcode',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsWorkspaceRoute = SettingsWorkspaceRouteImport.update({
   id: '/workspace',
@@ -625,6 +637,8 @@ export interface FileRoutesByFullPath {
   '/settings/members': typeof SettingsMembersRoute
   '/settings/spaces': typeof SettingsSpacesRoute
   '/settings/workspace': typeof SettingsWorkspaceRoute
+  '/sh/$shortcode': typeof ShShortcodeRoute
+  '/share/$token': typeof ShareTokenRoute
   '/home/': typeof HomeIndexRoute
   '/api/auth/bootstrap-state': typeof ApiAuthBootstrapStateRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
@@ -718,6 +732,8 @@ export interface FileRoutesByTo {
   '/settings/members': typeof SettingsMembersRoute
   '/settings/spaces': typeof SettingsSpacesRoute
   '/settings/workspace': typeof SettingsWorkspaceRoute
+  '/sh/$shortcode': typeof ShShortcodeRoute
+  '/share/$token': typeof ShareTokenRoute
   '/home': typeof HomeIndexRoute
   '/api/auth/bootstrap-state': typeof ApiAuthBootstrapStateRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
@@ -814,6 +830,8 @@ export interface FileRoutesById {
   '/settings/members': typeof SettingsMembersRoute
   '/settings/spaces': typeof SettingsSpacesRoute
   '/settings/workspace': typeof SettingsWorkspaceRoute
+  '/sh/$shortcode': typeof ShShortcodeRoute
+  '/share/$token': typeof ShareTokenRoute
   '/home/': typeof HomeIndexRoute
   '/api/auth/bootstrap-state': typeof ApiAuthBootstrapStateRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
@@ -911,6 +929,8 @@ export interface FileRouteTypes {
     | '/settings/members'
     | '/settings/spaces'
     | '/settings/workspace'
+    | '/sh/$shortcode'
+    | '/share/$token'
     | '/home/'
     | '/api/auth/bootstrap-state'
     | '/api/auth/login'
@@ -1004,6 +1024,8 @@ export interface FileRouteTypes {
     | '/settings/members'
     | '/settings/spaces'
     | '/settings/workspace'
+    | '/sh/$shortcode'
+    | '/share/$token'
     | '/home'
     | '/api/auth/bootstrap-state'
     | '/api/auth/login'
@@ -1099,6 +1121,8 @@ export interface FileRouteTypes {
     | '/settings/members'
     | '/settings/spaces'
     | '/settings/workspace'
+    | '/sh/$shortcode'
+    | '/share/$token'
     | '/home/'
     | '/api/auth/bootstrap-state'
     | '/api/auth/login'
@@ -1190,6 +1214,8 @@ export interface RootRouteChildren {
   ApiProjectsRoute: typeof ApiProjectsRoute
   ApiStatsRoute: typeof ApiStatsRoute
   SSpaceSlugRoute: typeof SSpaceSlugRouteWithChildren
+  ShShortcodeRoute: typeof ShShortcodeRoute
+  ShareTokenRoute: typeof ShareTokenRoute
   ApiAuthBootstrapStateRoute: typeof ApiAuthBootstrapStateRoute
   ApiAuthLoginRoute: typeof ApiAuthLoginRoute
   ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
@@ -1269,6 +1295,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/home/'
       preLoaderRoute: typeof HomeIndexRouteImport
       parentRoute: typeof HomeRoute
+    }
+    '/share/$token': {
+      id: '/share/$token'
+      path: '/share/$token'
+      fullPath: '/share/$token'
+      preLoaderRoute: typeof ShareTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sh/$shortcode': {
+      id: '/sh/$shortcode'
+      path: '/sh/$shortcode'
+      fullPath: '/sh/$shortcode'
+      preLoaderRoute: typeof ShShortcodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/settings/workspace': {
       id: '/settings/workspace'
@@ -2230,6 +2270,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiProjectsRoute: ApiProjectsRoute,
   ApiStatsRoute: ApiStatsRoute,
   SSpaceSlugRoute: SSpaceSlugRouteWithChildren,
+  ShShortcodeRoute: ShShortcodeRoute,
+  ShareTokenRoute: ShareTokenRoute,
   ApiAuthBootstrapStateRoute: ApiAuthBootstrapStateRoute,
   ApiAuthLoginRoute: ApiAuthLoginRoute,
   ApiAuthLogoutRoute: ApiAuthLogoutRoute,
