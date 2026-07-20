@@ -940,12 +940,12 @@ export const PageEditor = ({
           )}
           {editable && (
             <div
-              className={`flex items-center gap-0.5 p-[1.5px] rounded-none border ${t("bg-neutral-800/10 border-border-dark", "bg-neutral-100 border-border-light")}`}
+              className={`flex items-center gap-0.5 p-0 rounded-none border ${t("bg-neutral-800/10 border-border-dark", "bg-neutral-100 border-border-light")}`}
             >
               <button
                 type="button"
                 onClick={() => handleToggleEditMode(false)}
-                className={`px-2 py-[1.5px] rounded-none text-[10px] lowercase font-medium leading-none transition-all cursor-pointer ${
+                className={`px-2 py-0 rounded-none text-[10px] lowercase font-medium leading-none transition-all cursor-pointer ${
                   isLocked
                     ? t(
                         "text-text-dark/40 hover:text-text-dark/80",
@@ -962,7 +962,7 @@ export const PageEditor = ({
               <button
                 type="button"
                 onClick={() => handleToggleEditMode(true)}
-                className={`px-2 py-[1.5px] rounded-none text-[10px] lowercase font-medium leading-none transition-all cursor-pointer ${
+                className={`px-2 py-0 rounded-none text-[10px] lowercase font-medium leading-none transition-all cursor-pointer ${
                   isLocked
                     ? t(
                         "bg-white/10 text-text-dark shadow-sm",
