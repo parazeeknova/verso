@@ -7,6 +7,7 @@ export const useEditorContent = (editor: Editor | null, pageId: string) => {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingFlushRef = useRef(false);
   const dirtyRef = useRef(false);
+  const lastSavedJsonRef = useRef<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
@@ -14,23 +15,30 @@ export const useEditorContent = (editor: Editor | null, pageId: string) => {
     if (!editor || !dirtyRef.current) {
       return;
     }
+    const json = editor.getJSON();
+    const jsonStr = JSON.stringify(json);
+    if (lastSavedJsonRef.current === jsonStr) {
+      dirtyRef.current = false;
+      setDirty(false);
+      return;
+    }
     if (updatePage.isPending) {
       pendingFlushRef.current = true;
       return;
     }
     pendingFlushRef.current = false;
-    const json = editor.getJSON();
     const text = editor.getText();
     updatePage.mutate(
       {
         id: pageId,
         input: {
-          contentJson: JSON.stringify(json),
+          contentJson: jsonStr,
           textContent: text,
         },
       },
       {
         onSuccess: () => {
+          lastSavedJsonRef.current = jsonStr;
           dirtyRef.current = false;
           setDirty(false);
           setLastSaved(new Date());

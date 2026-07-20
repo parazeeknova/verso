@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -841,6 +842,15 @@ func (h *Handlers) GetConsolePageHistory(c *gin.Context) {
 
 	result := make([]historyItem, 0, len(history))
 	for _, h := range history {
+		if len(result) > 0 {
+			prev := result[len(result)-1]
+			if prev.Title == h.Title &&
+				prev.Operation == h.Operation &&
+				bytes.Equal(bytes.TrimSpace(prev.ContentJSON), bytes.TrimSpace(h.ContentJSON)) &&
+				prev.TextContent == h.TextContent {
+				continue
+			}
+		}
 		result = append(result, historyItem{
 			ID:          h.ID,
 			PageID:      h.PageID,
