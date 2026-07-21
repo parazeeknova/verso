@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as MfaChallengeRouteImport } from './routes/mfa-challenge'
 import { Route as HomeRouteImport } from './routes/home'
+import { Route as DesktopRouteImport } from './routes/desktop'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
@@ -122,6 +123,11 @@ const MfaChallengeRoute = MfaChallengeRouteImport.update({
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DesktopRoute = DesktopRouteImport.update({
+  id: '/desktop',
+  path: '/desktop',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -648,6 +654,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/about': typeof AboutRoute
+  '/desktop': typeof DesktopRoute
   '/home': typeof HomeRouteWithChildren
   '/mfa-challenge': typeof MfaChallengeRoute
   '/settings': typeof SettingsRouteWithChildren
@@ -749,6 +756,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/about': typeof AboutRoute
+  '/desktop': typeof DesktopRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/settings': typeof SettingsRouteWithChildren
   '/api/blogs': typeof ApiBlogsRouteWithChildren
@@ -849,6 +857,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/about': typeof AboutRoute
+  '/desktop': typeof DesktopRoute
   '/home': typeof HomeRouteWithChildren
   '/mfa-challenge': typeof MfaChallengeRoute
   '/settings': typeof SettingsRouteWithChildren
@@ -952,6 +961,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/about'
+    | '/desktop'
     | '/home'
     | '/mfa-challenge'
     | '/settings'
@@ -1053,6 +1063,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/about'
+    | '/desktop'
     | '/mfa-challenge'
     | '/settings'
     | '/api/blogs'
@@ -1152,6 +1163,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/about'
+    | '/desktop'
     | '/home'
     | '/mfa-challenge'
     | '/settings'
@@ -1254,6 +1266,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
   AboutRoute: typeof AboutRoute
+  DesktopRoute: typeof DesktopRoute
   HomeRoute: typeof HomeRouteWithChildren
   MfaChallengeRoute: typeof MfaChallengeRoute
   SettingsRoute: typeof SettingsRouteWithChildren
@@ -1317,6 +1330,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/desktop': {
+      id: '/desktop'
+      path: '/desktop'
+      fullPath: '/desktop'
+      preLoaderRoute: typeof DesktopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -2356,6 +2376,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
   AboutRoute: AboutRoute,
+  DesktopRoute: DesktopRoute,
   HomeRoute: HomeRouteWithChildren,
   MfaChallengeRoute: MfaChallengeRoute,
   SettingsRoute: SettingsRouteWithChildren,

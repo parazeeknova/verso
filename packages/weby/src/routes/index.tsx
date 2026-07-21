@@ -12,6 +12,8 @@ import { ReadmeViewer } from "#/features/landing/components/readme-viewer";
 import { ProjectList } from "#/features/landing/components/projects";
 import { BlogReaderPanel } from "#/features/blog/components/blog-reader-panel";
 import { LoginPopup } from "#/features/auth/components/login-popup";
+import { isDesktopApp } from "#/shared/lib/desktop";
+import { DesktopFrontPage } from "#/features/auth/components/desktop-front-page";
 import {
   useBlogManifest,
   useExperience,
@@ -93,6 +95,10 @@ const useThemeButtonHover = (): ThemeButtonRefs => {
 };
 
 const Home = function Home() {
+  if (isDesktopApp()) {
+    return <DesktopFrontPage />;
+  }
+
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [viewMode, setViewMode] = useState<"portfolio" | "blogs">("portfolio");
   const [selectedBlogSlug, setSelectedBlogSlug] = useState<string | null>(null);

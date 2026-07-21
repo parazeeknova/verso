@@ -63,7 +63,7 @@ const mainWindow = new BrowserWindow({
     y: 100,
   },
   title: "Verso",
-  url,
+  url: `${url}/desktop`,
 });
 
 // System theme awareness: detect the OS theme and forward it into the webview
