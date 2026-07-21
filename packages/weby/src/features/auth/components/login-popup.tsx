@@ -497,11 +497,7 @@ export const LoginPopup = ({ isDarkMode }: LoginPopupProps) => {
   return (
     <>
       <button
-        className={`text-[13px] lowercase focus:outline-none lg:fixed lg:right-6 lg:bottom-6 lg:z-40 ${
-          isDarkMode
-            ? "text-text-dark/60 hover:text-text-dark"
-            : "text-text-light/60 hover:text-text-light"
-        }`}
+        className="text-[10px] lowercase select-none border px-2.5 py-1 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-neutral-800/10 dark:border-neutral-100/10 text-neutral-800/50 dark:text-neutral-100/50 hover:border-neutral-800/20 dark:hover:border-neutral-100/20 cursor-pointer"
         onClick={() => {
           if (isAuthenticated) {
             setMode("account");
@@ -512,7 +508,21 @@ export const LoginPopup = ({ isDarkMode }: LoginPopupProps) => {
         }}
         type="button"
       >
-        {isAuthenticated ? `@${user.username}` : "login"}
+        {isAuthenticated ? (
+          <>
+            by{" "}
+            <span className="font-semibold hover:underline text-neutral-800 dark:text-neutral-100">
+              @{user.username}
+            </span>
+          </>
+        ) : (
+          <>
+            by{" "}
+            <span className="font-semibold hover:underline text-neutral-800 dark:text-neutral-100">
+              verso
+            </span>
+          </>
+        )}
       </button>
 
       {open && (
