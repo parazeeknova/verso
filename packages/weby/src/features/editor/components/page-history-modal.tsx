@@ -93,10 +93,10 @@ const buildDiffHtml = (oldText: string, newText: string): { html: string; change
 
   for (const part of parts) {
     const escaped = part.value
-      .replaceAll('&', "&amp;")
-      .replaceAll('<', "&lt;")
-      .replaceAll('>', "&gt;")
-      .replaceAll('\n', "<br/>");
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\n", "<br/>");
 
     if (part.added) {
       changeIndex += 1;
@@ -673,7 +673,7 @@ export const PageHistoryModal = ({
                     type="button"
                     onClick={handleRestore}
                     disabled={restorePage.isPending}
-                    className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium lowercase transition-colors cursor-pointer border border-accent text-accent hover:bg-accent hover:text-white"
+                    className="flex items-center gap-1 px-1 py-0.5 text-[10px] font-medium lowercase transition-colors cursor-pointer text-accent hover:underline"
                   >
                     <ArrowClockwiseIcon
                       size={10}
