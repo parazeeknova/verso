@@ -194,7 +194,7 @@ export const PageHistoryModal = ({
 
   useEffect(() => {
     gsap.set(backdropRef.current, { opacity: 0 });
-    gsap.set(modalRef.current, { opacity: 0, scale: 0.97, y: 8 });
+    gsap.set(modalRef.current, { opacity: 0, y: -30 });
     gsap.set(containerRef.current, { display: "none" });
   }, []);
 
@@ -207,10 +207,9 @@ export const PageHistoryModal = ({
         opacity: 1,
       });
       gsap.to(modalRef.current, {
-        duration: 0.22,
-        ease: "power2.out",
+        duration: 0.25,
+        ease: "power3.out",
         opacity: 1,
-        scale: 1,
         y: 0,
       });
     } else {
@@ -220,14 +219,13 @@ export const PageHistoryModal = ({
         opacity: 0,
       });
       gsap.to(modalRef.current, {
-        duration: 0.12,
+        duration: 0.15,
         ease: "power2.in",
         onComplete: () => {
           gsap.set(containerRef.current, { display: "none" });
         },
         opacity: 0,
-        scale: 0.97,
-        y: 8,
+        y: -30,
       });
     }
   }, [isOpen]);
@@ -334,7 +332,7 @@ export const PageHistoryModal = ({
   }
 
   return createPortal(
-    <div ref={containerRef} className="fixed inset-0 z-9999 items-center justify-center p-4">
+    <div ref={containerRef} className="fixed inset-0 z-9999 items-start justify-center pt-6 px-4">
       <button
         type="button"
         ref={backdropRef}
