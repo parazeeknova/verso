@@ -2,7 +2,19 @@ import type { Editor } from "@tiptap/react";
 import type { JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { useEffect, useCallback, useMemo, useRef, useState } from "react";
-import { BookmarkSimpleIcon, InfoIcon, ListBulletsIcon, XIcon } from "@phosphor-icons/react";
+import {
+  BookmarkSimpleIcon,
+  InfoIcon,
+  ListBulletsIcon,
+  XIcon,
+  PencilSimpleIcon,
+  EyeIcon,
+  CheckIcon,
+  CopyIcon,
+  ArrowSquareOutIcon,
+  WifiHighIcon,
+  WifiSlashIcon,
+} from "@phosphor-icons/react";
 import { gsap } from "gsap";
 import { useTheme } from "#/shared/hooks/use-theme";
 import { getEditorExtensions } from "#/features/editor/extensions";
@@ -10,16 +22,20 @@ import { useEditorContent } from "#/features/editor/hooks/use-editor-content";
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
 import { useQueryClient } from "@tanstack/react-query";
 import { EditorMoreMenu } from "#/features/editor/components/editor-more-menu";
+import { SharePopover } from "./share-popover";
+import { PageHistoryModal } from "./page-history-modal";
 import {
   useIsPageFavorited,
   useTogglePageFavorite,
 } from "#/features/console/hooks/use-page-favorites";
 import { setFlashToast } from "#/features/console/components/flash-toast";
 import { useIsPageWatching, useWatchPage } from "#/features/console/hooks/use-page-watches";
+import { useUpdatePage, usePageShare } from "#/features/console/hooks/use-pages";
 import { TableMenu } from "./table/table-menu";
 import { ColumnsMenu } from "./columns/columns-menu";
 import { CalloutMenu } from "./callout/callout-menu";
 import { ImageMenu } from "./image/image-menu";
+import { handleCopy } from "../lib/clipboard";
 import { VideoMenu } from "./video/video-menu";
 import { AudioMenu } from "./audio/audio-menu";
 import { PdfMenu } from "./pdf/pdf-menu";
@@ -429,7 +445,176 @@ const CreatorByline = ({
   );
 };
 
+const InternetIndicator = ({ t }: { t: (dark: string, light: string) => string }) => {
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator === "undefined" ? true : navigator.onLine,
+  );
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  return (
+    <div
+      className="relative flex items-center justify-center cursor-default"
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
+      <div
+        className={`p-0.5 transition-colors ${
+          isOnline
+            ? t(
+                "text-text-dark/40 hover:text-text-dark",
+                "text-text-light/40 hover:text-text-light",
+              )
+            : "text-red-500 animate-pulse"
+        }`}
+        aria-label={isOnline ? "Online" : "Offline"}
+      >
+        {isOnline ? <WifiHighIcon size={14} /> : <WifiSlashIcon size={14} />}
+      </div>
+      {showTooltip && (
+        <div
+          className={`pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 whitespace-nowrap px-2 py-0.5 text-[9px] font-mono lowercase shadow-lg border ${t(
+            "border-border-dark bg-bg-dark text-text-dark",
+            "border-border-light bg-bg-light text-text-light",
+          )}`}
+        >
+          {isOnline ? "online" : "offline (no connection)"}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ShareInfoSection = ({
+  pageId,
+  t,
+}: {
+  pageId?: string;
+  t: (dark: string, light: string) => string;
+}) => {
+  const [copied, setCopied] = useState(false);
+  const [shortCopied, setShortCopied] = useState(false);
+
+  const { data: share } = usePageShare(pageId ?? "");
+
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const publicUrl = share?.shareToken ? `${origin}/share/${share.shareToken}` : "";
+  const shortUrl = share?.shortCode ? `${origin}/sh/${share.shortCode}` : "";
+
+  return (
+    <div className="space-y-1.5">
+      <h4
+        className={`text-[9px] font-bold uppercase tracking-wider ${t("text-neutral-500", "text-neutral-400")}`}
+      >
+        share & web
+      </h4>
+      <div className="flex items-center justify-between gap-2">
+        <span className={t("text-neutral-500", "text-neutral-400")}>web access</span>
+        <span
+          className={`font-semibold text-[9.5px] ${share?.isEnabled ? "text-accent" : t("text-neutral-400", "text-neutral-500")}`}
+        >
+          {share?.isEnabled ? "shared to web" : "private"}
+        </span>
+      </div>
+
+      {share?.isEnabled && (
+        <>
+          <div className="flex items-center justify-between gap-2">
+            <span className={t("text-neutral-500", "text-neutral-400")}>search indexing</span>
+            <span className="font-semibold text-[9.5px]">
+              {share.searchIndexing ? "allow" : "disallow"}
+            </span>
+          </div>
+
+          {publicUrl && (
+            <div className="flex flex-col gap-0.5 pt-0.5">
+              <span className={t("text-neutral-500", "text-neutral-400")}>public link</span>
+              <div
+                className={`flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
+                  "border-neutral-800 bg-black/30 text-neutral-300",
+                  "border-neutral-200 bg-neutral-100 text-neutral-700",
+                )}`}
+              >
+                <span className="flex-1 overflow-hidden text-ellipsis">{publicUrl}</span>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(publicUrl, setCopied)}
+                  className="hover:opacity-100 opacity-60 cursor-pointer transition-opacity"
+                  title="copy link"
+                >
+                  {copied ? (
+                    <CheckIcon className="size-2.5 text-accent" />
+                  ) : (
+                    <CopyIcon className="size-2.5" />
+                  )}
+                </button>
+                <a
+                  href={publicUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:opacity-100 opacity-60 transition-opacity"
+                  title="open in new tab"
+                >
+                  <ArrowSquareOutIcon className="size-2.5" />
+                </a>
+              </div>
+            </div>
+          )}
+
+          {shortUrl && (
+            <div className="flex flex-col gap-0.5 pt-0.5">
+              <span className={t("text-neutral-500", "text-neutral-400")}>short link</span>
+              <div
+                className={`flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
+                  "border-neutral-800 bg-black/30 text-neutral-300",
+                  "border-neutral-200 bg-neutral-100 text-neutral-700",
+                )}`}
+              >
+                <span className="flex-1 overflow-hidden text-ellipsis">{shortUrl}</span>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(shortUrl, setShortCopied)}
+                  className="hover:opacity-100 opacity-60 cursor-pointer transition-opacity"
+                  title="copy link"
+                >
+                  {shortCopied ? (
+                    <CheckIcon className="size-2.5 text-accent" />
+                  ) : (
+                    <CopyIcon className="size-2.5" />
+                  )}
+                </button>
+                <a
+                  href={shortUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:opacity-100 opacity-60 transition-opacity"
+                  title="open in new tab"
+                >
+                  <ArrowSquareOutIcon className="size-2.5" />
+                </a>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
 const PageDetailsPanel = ({
+  pageId,
   creator,
   spaceName,
   createdAt,
@@ -441,6 +626,7 @@ const PageDetailsPanel = ({
   onClose,
   isOpen,
 }: {
+  pageId?: string;
   creator: CreatorInfo | null | undefined;
   spaceName?: string;
   createdAt?: string;
@@ -504,14 +690,14 @@ const PageDetailsPanel = ({
       />
       <div
         ref={panelRef}
-        className={`absolute top-0 right-0 h-full w-full sm:w-64 border-l p-4 flex flex-col shadow-xl pointer-events-auto ${t(
+        className={`absolute top-0 right-0 h-full w-full sm:w-52 border-l p-3 flex flex-col shadow-xl pointer-events-auto ${t(
           "bg-neutral-900 border-neutral-800 text-neutral-200",
           "bg-white border-neutral-200 text-neutral-800",
         )}`}
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2.5">
           <h3
-            className={`text-[10px] font-bold tracking-wider uppercase ${t("text-neutral-500", "text-neutral-400")}`}
+            className={`text-[9px] font-bold tracking-wider uppercase ${t("text-neutral-500", "text-neutral-400")}`}
           >
             page info
           </h3>
@@ -528,51 +714,59 @@ const PageDetailsPanel = ({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-4 text-[11px]">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
+        <div className="flex-1 overflow-y-auto space-y-3 text-[10px]">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
               <span className={t("text-neutral-500", "text-neutral-400")}>author</span>
-              <div className="flex items-center gap-1 font-medium">
+              <div className="flex items-center gap-1 font-medium min-w-0">
                 <AvatarBadge
                   icon={creator?.avatar_url}
                   name={displayName}
-                  className="w-4.5 h-4.5 bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center rounded-full"
-                  initialsClass="text-[9px] text-neutral-600 dark:text-neutral-300 font-semibold"
+                  className="w-3.5 h-3.5 shrink-0 bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center rounded-full"
+                  initialsClass="text-[7px] text-neutral-600 dark:text-neutral-300 font-semibold"
                 />
-                <span>{displayName}</span>
+                <span className="truncate">{displayName}</span>
               </div>
             </div>
 
             {spaceName && (
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <span className={t("text-neutral-500", "text-neutral-400")}>space</span>
-                <span className="font-medium">{spaceName}</span>
+                <span className="font-medium truncate">{spaceName}</span>
               </div>
             )}
           </div>
 
-          <hr className={`border-t ${t("border-neutral-800", "border-neutral-200")}`} />
+          <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
 
-          <div className="space-y-2.5">
+          <div className="space-y-1.5">
             {createdAt && (
-              <div className="flex flex-col gap-0.5">
+              <div className="flex items-center justify-between gap-2">
                 <span className={t("text-neutral-500", "text-neutral-400")}>created</span>
-                <span className="font-medium text-[10.5px]">{formatDateTime(createdAt)}</span>
+                <span className="font-medium text-[9.5px] font-mono text-right">
+                  {formatDateTime(createdAt)}
+                </span>
               </div>
             )}
             {updatedAt && (
-              <div className="flex flex-col gap-0.5">
-                <span className={t("text-neutral-500", "text-neutral-400")}>last modified</span>
-                <span className="font-medium text-[10.5px]">{formatDateTime(updatedAt)}</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className={t("text-neutral-500", "text-neutral-400")}>modified</span>
+                <span className="font-medium text-[9.5px] font-mono text-right">
+                  {formatDateTime(updatedAt)}
+                </span>
               </div>
             )}
           </div>
 
-          <hr className={`border-t ${t("border-neutral-800", "border-neutral-200")}`} />
+          <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
 
-          <div className="space-y-2">
+          <ShareInfoSection pageId={pageId} t={t} />
+
+          <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
+
+          <div className="space-y-1.5">
             <h4
-              className={`text-[10px] font-bold uppercase tracking-wider ${t("text-neutral-500", "text-neutral-400")}`}
+              className={`text-[9px] font-bold uppercase tracking-wider ${t("text-neutral-500", "text-neutral-400")}`}
             >
               metrics
             </h4>
@@ -743,10 +937,12 @@ const useContentClickHandler = (
     [editor, editable, contentRef],
   );
 
+// eslint-disable-next-line complexity
 export const PageEditor = ({
   pageId,
   contentJson,
   editable,
+  isLocked,
   title,
   spaceName,
   spaceSlug,
@@ -762,6 +958,7 @@ export const PageEditor = ({
   const content = useMemo(() => parseContent(contentJson), [contentJson]);
   const [tocOpen, setTocOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
   const [headings, setHeadings] = useState<BlogHeading[]>(() => extractEditorHeadings(content));
@@ -772,7 +969,24 @@ export const PageEditor = ({
 
   const markDirtyRef = useRef<(() => void) | null>(null);
 
-  const editor = usePageEditorInstance(content, editable, setHeadings, markDirtyRef);
+  const editor = usePageEditorInstance(content, editable && !isLocked, setHeadings, markDirtyRef);
+
+  const updatePage = useUpdatePage();
+  const handleToggleEditMode = useCallback(
+    (lockValue: boolean) => {
+      updatePage.mutate({
+        id: pageId,
+        input: { isLocked: lockValue },
+      });
+    },
+    [pageId, updatePage],
+  );
+
+  useEffect(() => {
+    if (editor && !editor.isDestroyed) {
+      editor.setEditable(editable && !isLocked);
+    }
+  }, [editor, editable, isLocked]);
 
   useEffect(() => {
     if (editor && !editor.isDestroyed) {
@@ -787,7 +1001,10 @@ export const PageEditor = ({
     }
   }, [editor, pageId, spaceName, localTitle]);
 
-  const { dirty, cleanup, isSaving, lastSaved, markDirty } = useEditorContent(editor, pageId);
+  const { dirty, cleanup, isSaving, lastSaved, markDirty, resetDirty } = useEditorContent(
+    editor,
+    pageId,
+  );
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!editor || !editable) {
@@ -815,7 +1032,9 @@ export const PageEditor = ({
 
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const handleContentClick = useContentClickHandler(editor, editable, contentRef);
+  const effectiveEditable = editable && !isLocked && !isDeleting;
+
+  const handleContentClick = useContentClickHandler(editor, effectiveEditable, contentRef);
 
   const [now, setNow] = useState(new Date());
 
@@ -875,8 +1094,6 @@ export const PageEditor = ({
     setTocOpen(false);
   }, []);
 
-  const effectiveEditable = editable && !isDeleting;
-
   if (!editor) {
     return null;
   }
@@ -891,11 +1108,11 @@ export const PageEditor = ({
   return (
     <div ref={wrapperRef} className="relative h-full flex flex-col overflow-hidden">
       <div
-        className={`sticky top-0 z-30 flex items-center justify-between pt-1.5 pb-1 pl-4 pr-4 shrink-0 transition-colors duration-500 ease-out ${t("bg-bg-dark", "bg-bg-light")}`}
+        className={`sticky top-0 z-30 flex items-center justify-between gap-2 pt-1.5 pb-1 pl-4 pr-4 shrink-0 transition-colors duration-500 ease-out ${t("bg-bg-dark", "bg-bg-light")}`}
       >
-        <div className="group relative">
+        <div className="group relative min-w-0 flex-1">
           <span
-            className={`text-[11px] lowercase font-medium ${t("text-text-dark/30", "text-text-light/30")}`}
+            className={`text-[11px] lowercase font-medium truncate block ${t("text-text-dark/30", "text-text-light/30")}`}
           >
             {localTitle}
           </span>
@@ -913,11 +1130,55 @@ export const PageEditor = ({
         <div className="flex items-center gap-2 shrink-0">
           {effectiveEditable && (
             <span
-              className={`text-[11px] lowercase ${t("text-text-dark/40", "text-text-light/40")}`}
+              className={`text-[11px] lowercase hidden sm:inline ${t("text-text-dark/40", "text-text-light/40")}`}
             >
               {getSaveStatusText(isSaving, dirty, lastSaved, now)}
             </span>
           )}
+          {editable && (
+            <div
+              className={`hidden sm:flex items-center gap-0.5 p-0 rounded-none border ${t("bg-neutral-800/10 border-border-dark", "bg-neutral-100 border-border-light")}`}
+            >
+              <button
+                type="button"
+                onClick={() => handleToggleEditMode(false)}
+                className={`flex items-center gap-1 px-1.5 py-0 rounded-none text-[10px] lowercase font-medium leading-none transition-all cursor-pointer ${
+                  isLocked
+                    ? t(
+                        "text-text-dark/40 hover:text-text-dark/80",
+                        "text-text-light/40 hover:text-text-light/80",
+                      )
+                    : t(
+                        "bg-white/10 text-text-dark shadow-sm",
+                        "bg-white text-text-light shadow-sm",
+                      )
+                }`}
+              >
+                <PencilSimpleIcon size={10} />
+                <span>edit</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleEditMode(true)}
+                className={`flex items-center gap-1 px-1.5 py-0 rounded-none text-[10px] lowercase font-medium leading-none transition-all cursor-pointer ${
+                  isLocked
+                    ? t(
+                        "bg-white/10 text-text-dark shadow-sm",
+                        "bg-white text-text-light shadow-sm",
+                      )
+                    : t(
+                        "text-text-dark/40 hover:text-text-dark/80",
+                        "text-text-light/40 hover:text-text-light/80",
+                      )
+                }`}
+              >
+                <EyeIcon size={10} />
+                <span>view</span>
+              </button>
+            </div>
+          )}
+          <InternetIndicator t={t} />
+          {editable && <SharePopover pageId={pageId} />}
           <button
             aria-label={isFaved ? "Unfavorite page" : "Favorite page"}
             aria-pressed={isFaved}
@@ -952,6 +1213,10 @@ export const PageEditor = ({
             createdAt={createdAt}
             updatedAt={updatedAt}
             textContent={textContent}
+            editor={editor}
+            isFaved={isFaved}
+            onToggleFav={() => toggleFav.mutate(pageId)}
+            favPending={toggleFav.isPending}
             fullWidth={fullWidth}
             onDeleteStart={() => {
               setIsDeleting(true);
@@ -968,6 +1233,7 @@ export const PageEditor = ({
               })
             }
             watchPending={watchPage.isPending}
+            onOpenHistory={() => setHistoryOpen(true)}
           />
         </div>
       </div>
@@ -995,11 +1261,11 @@ export const PageEditor = ({
           onChange={(e) => handleTitleChange(e.target.value)}
           onBlur={handleTitleBlur}
           onKeyDown={handleTitleKeyDown}
-          disabled={!editable}
+          disabled={!effectiveEditable}
         />
         <CreatorByline creator={creator} t={t} />
         <EditorContent editor={editor} />
-        {editor && editable && (
+        {editor && effectiveEditable && (
           <>
             <TableMenu editor={editor} />
             <ColumnsMenu editor={editor} />
@@ -1015,6 +1281,7 @@ export const PageEditor = ({
       </div>
 
       <PageDetailsPanel
+        pageId={pageId}
         creator={creator}
         spaceName={spaceName}
         createdAt={createdAt}
@@ -1025,6 +1292,13 @@ export const PageEditor = ({
         t={t}
         onClose={() => setDetailsOpen(false)}
         isOpen={detailsOpen}
+      />
+
+      <PageHistoryModal
+        isOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        pageId={pageId}
+        onRestoreSuccess={resetDirty}
       />
 
       <TableOfContentsModal

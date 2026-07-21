@@ -7,6 +7,7 @@ import type {
   PageTreeItem,
   RestorePageInput,
   UpdatePageInput,
+  PageShare,
 } from "#/shared/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
@@ -106,13 +107,71 @@ export const useCreatePage = () => {
 };
 export const useUpdatePage = () => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<
+    ConsolePageDetail,
+    Error,
+    { id: string; input: UpdatePageInput },
+    { previousPage?: ConsolePageDetail }
+  >({
     mutationFn: ({ id, input }: { id: string; input: UpdatePageInput }) =>
       fetchProtected<ConsolePageDetail>(`/api/console/pages/${id}`, {
         body: JSON.stringify(input),
         headers: { "Content-Type": "application/json" },
         method: "PUT",
       }),
+    onError: (_err, variables, context) => {
+      const ctx = context as
+        | { previousPage?: ConsolePageDetail; touchedKeys?: (keyof ConsolePageDetail)[] }
+        | undefined;
+      const prev = ctx?.previousPage;
+      const touched = ctx?.touchedKeys;
+      if (prev && touched) {
+        const rollbackEntry = (
+          current: ConsolePageDetail | undefined,
+        ): ConsolePageDetail | undefined => {
+          if (!current) {
+            return prev;
+          }
+          const restored = { ...current };
+          for (const key of touched) {
+            if (key in prev) {
+              (restored as Record<string, unknown>)[key as string] = (
+                prev as unknown as Record<string, unknown>
+              )[key as string];
+            }
+          }
+          return restored;
+        };
+        queryClient.setQueryData<ConsolePageDetail>(["consolePage", variables.id], rollbackEntry);
+        if (prev.spaceId && prev.slugId) {
+          queryClient.setQueryData<ConsolePageDetail>(
+            ["consolePage", prev.spaceId, prev.slugId],
+            rollbackEntry,
+          );
+        }
+      }
+    },
+    onMutate: async ({ id, input }) => {
+      await queryClient.cancelQueries({ queryKey: ["consolePage"] });
+      const previousPage = queryClient.getQueryData<ConsolePageDetail>(["consolePage", id]);
+      const touchedKeys = Object.keys(input) as (keyof ConsolePageDetail)[];
+      if (previousPage) {
+        queryClient.setQueryData<ConsolePageDetail>(["consolePage", id], {
+          ...previousPage,
+          ...input,
+        });
+        if (previousPage.spaceId && previousPage.slugId) {
+          queryClient.setQueryData<ConsolePageDetail>(
+            ["consolePage", previousPage.spaceId, previousPage.slugId],
+            {
+              ...previousPage,
+              ...input,
+            },
+          );
+        }
+      }
+      return { previousPage, touchedKeys };
+    },
     onSuccess: (_data, _variables) => {
       queryClient.invalidateQueries({
         queryKey: ["consolePage"],
@@ -219,6 +278,73 @@ export const useRestorePage = () => {
       queryClient.invalidateQueries({ queryKey: ["pageHistory"] });
       queryClient.invalidateQueries({ queryKey: ["consolePages"] });
       queryClient.invalidateQueries({ queryKey: ["pageTree"] });
+    },
+  });
+};
+
+export const useDeleteHistoryEntry = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ pageId, historyId }: { pageId: string; historyId: string }) =>
+      fetchProtected<{ success: boolean }>(`/api/console/pages/${pageId}/history/${historyId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["pageHistory", variables.pageId] });
+    },
+  });
+};
+
+export const useDeleteAllPageHistory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (pageId: string) =>
+      fetchProtected<{ success: boolean }>(`/api/console/pages/${pageId}/history`, {
+        method: "DELETE",
+      }),
+    onSuccess: (_data, pageId) => {
+      queryClient.invalidateQueries({ queryKey: ["pageHistory", pageId] });
+    },
+  });
+};
+
+export const usePageShare = (pageId: string, options?: { enabled?: boolean }) =>
+  useQuery<PageShare>({
+    enabled: (options?.enabled ?? true) && pageId !== "",
+    queryFn: ({ signal }) =>
+      fetchProtected<PageShare>(`/api/console/pages/${pageId}/share`, { signal }),
+    queryKey: ["pageShare", pageId],
+  });
+
+export const useUpdatePageShare = () => {
+  const queryClient = useQueryClient();
+  return useMutation<
+    PageShare,
+    Error,
+    { pageId: string; isEnabled: boolean; searchIndexing: boolean }
+  >({
+    mutationFn: ({ pageId, isEnabled, searchIndexing }) =>
+      fetchProtected<PageShare>(`/api/console/pages/${pageId}/share`, {
+        body: JSON.stringify({ isEnabled, searchIndexing }),
+        headers: { "Content-Type": "application/json" },
+        method: "PUT",
+      }),
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(["pageShare", variables.pageId], data);
+      queryClient.invalidateQueries({ queryKey: ["pageTree"] });
+    },
+  });
+};
+
+export const useShortenPageShare = () => {
+  const queryClient = useQueryClient();
+  return useMutation<PageShare, Error, string>({
+    mutationFn: (pageId) =>
+      fetchProtected<PageShare>(`/api/console/pages/${pageId}/share/shorten`, {
+        method: "POST",
+      }),
+    onSuccess: (data, pageId) => {
+      queryClient.setQueryData(["pageShare", pageId], data);
     },
   });
 };

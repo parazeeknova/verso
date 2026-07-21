@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -189,6 +190,7 @@ type ConsolePageSummary struct {
 	Title        string  `json:"title"`
 	Icon         string  `json:"icon"`
 	IsPublished  bool    `json:"isPublished"`
+	IsShared     bool    `json:"isShared"`
 	SpaceID      string  `json:"spaceId"`
 	ParentPageID *string `json:"parentPageId"`
 	CreatedAt    string  `json:"createdAt"`
@@ -210,6 +212,12 @@ func (h *Handlers) GetConsolePages(c *gin.Context) {
 		return
 	}
 
+	pageIDs := make([]string, len(pages))
+	for i, p := range pages {
+		pageIDs[i] = p.ID
+	}
+	sharedMap := h.pageService.GetSharedMapForPages(c.Request.Context(), pageIDs)
+
 	summaries := make([]ConsolePageSummary, 0, len(pages))
 	for _, p := range pages {
 		summaries = append(summaries, ConsolePageSummary{
@@ -218,6 +226,7 @@ func (h *Handlers) GetConsolePages(c *gin.Context) {
 			Title:        p.Title,
 			Icon:         p.Icon,
 			IsPublished:  p.IsPublished,
+			IsShared:     sharedMap[p.ID],
 			SpaceID:      p.SpaceID,
 			ParentPageID: p.ParentPageID,
 			CreatedAt:    p.CreatedAt.Format(time.RFC3339),
@@ -271,12 +280,14 @@ func (h *Handlers) GetConsolePage(c *gin.Context) {
 		"textContent":  page.TextContent,
 		"position":     page.Position,
 		"isPublished":  page.IsPublished,
+		"isLocked":     page.IsLocked,
 		"parentPageId": page.ParentPageID,
 		"spaceId":      page.SpaceID,
 		"creatorId":    page.CreatorID,
 		"createdAt":    page.CreatedAt.Format(time.RFC3339),
 		"updatedAt":    page.UpdatedAt.Format(time.RFC3339),
 		"editable":     editable,
+		"isShared":     h.pageService.IsPageShared(c.Request.Context(), page.ID),
 	})
 }
 
@@ -380,12 +391,14 @@ func (h *Handlers) GetConsolePageBySlug(c *gin.Context) {
 		"textContent":  page.TextContent,
 		"position":     page.Position,
 		"isPublished":  page.IsPublished,
+		"isLocked":     page.IsLocked,
 		"parentPageId": page.ParentPageID,
 		"spaceId":      page.SpaceID,
 		"creatorId":    page.CreatorID,
 		"createdAt":    page.CreatedAt.Format(time.RFC3339),
 		"updatedAt":    page.UpdatedAt.Format(time.RFC3339),
 		"editable":     editable,
+		"isShared":     h.pageService.IsPageShared(c.Request.Context(), page.ID),
 	})
 }
 
@@ -497,6 +510,7 @@ func (h *Handlers) CreateConsolePage(c *gin.Context) {
 		"textContent":  page.TextContent,
 		"position":     page.Position,
 		"isPublished":  page.IsPublished,
+		"isLocked":     page.IsLocked,
 		"parentPageId": page.ParentPageID,
 		"createdAt":    page.CreatedAt.Format(time.RFC3339),
 		"updatedAt":    page.UpdatedAt.Format(time.RFC3339),
@@ -510,6 +524,7 @@ type UpdateConsolePageRequest struct {
 	CoverPhoto  *string          `json:"coverPhoto"`
 	ContentJSON *json.RawMessage `json:"contentJson"`
 	TextContent *string          `json:"textContent"`
+	IsLocked    *bool            `json:"isLocked"`
 }
 
 // UpdateConsolePage handles PUT /api/console/pages/:id.
@@ -534,6 +549,7 @@ func (h *Handlers) UpdateConsolePage(c *gin.Context) {
 		CoverPhoto:  req.CoverPhoto,
 		ContentJSON: req.ContentJSON,
 		TextContent: req.TextContent,
+		IsLocked:    req.IsLocked,
 	}
 
 	page, err := h.pageService.UpdatePage(c.Request.Context(), id, userID, input)
@@ -561,6 +577,7 @@ func (h *Handlers) UpdateConsolePage(c *gin.Context) {
 		"textContent":  page.TextContent,
 		"position":     page.Position,
 		"isPublished":  page.IsPublished,
+		"isLocked":     page.IsLocked,
 		"parentPageId": page.ParentPageID,
 		"createdAt":    page.CreatedAt.Format(time.RFC3339),
 		"updatedAt":    page.UpdatedAt.Format(time.RFC3339),
@@ -831,6 +848,15 @@ func (h *Handlers) GetConsolePageHistory(c *gin.Context) {
 
 	result := make([]historyItem, 0, len(history))
 	for _, h := range history {
+		if len(result) > 0 {
+			prev := result[len(result)-1]
+			if prev.Title == h.Title &&
+				prev.Operation == h.Operation &&
+				bytes.Equal(bytes.TrimSpace(prev.ContentJSON), bytes.TrimSpace(h.ContentJSON)) &&
+				prev.TextContent == h.TextContent {
+				continue
+			}
+		}
 		result = append(result, historyItem{
 			ID:          h.ID,
 			PageID:      h.PageID,
@@ -940,6 +966,67 @@ func (h *Handlers) RestoreConsolePage(c *gin.Context) {
 		"textContent": page.TextContent,
 		"updatedAt":   page.UpdatedAt.Format(time.RFC3339),
 	})
+}
+
+// DeleteConsolePageHistory handles DELETE /api/console/pages/:id/history.
+func (h *Handlers) DeleteConsolePageHistory(c *gin.Context) {
+	if h.pageService == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "page service unavailable"})
+		return
+	}
+
+	pageID := c.Param("id")
+	userID := middleware.GetCurrentUserID(c)
+
+	err := h.pageService.DeleteAllPageHistory(c.Request.Context(), pageID, userID)
+	if err != nil {
+		if errors.Is(err, pagefeat.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
+			return
+		}
+		if errors.Is(err, pagefeat.ErrPagePermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
+			return
+		}
+		logger.Log.Error().Str("id", pageID).Err(err).Msg("delete page history error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete page history"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// DeleteConsolePageHistoryEntry handles DELETE /api/console/pages/:id/history/:historyId.
+func (h *Handlers) DeleteConsolePageHistoryEntry(c *gin.Context) {
+	if h.pageService == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "page service unavailable"})
+		return
+	}
+
+	pageID := c.Param("id")
+	historyID := c.Param("historyId")
+	userID := middleware.GetCurrentUserID(c)
+
+	err := h.pageService.DeleteHistoryEntry(c.Request.Context(), pageID, historyID, userID)
+	if err != nil {
+		if errors.Is(err, pagefeat.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
+			return
+		}
+		if errors.Is(err, pagefeat.ErrPagePermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
+			return
+		}
+		if errors.Is(err, repositories.ErrPageHistoryNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "history entry not found"})
+			return
+		}
+		logger.Log.Error().Str("id", historyID).Err(err).Msg("delete history entry error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete history entry"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
 // GetStats returns aggregate counts (public, no auth required).
@@ -1101,4 +1188,160 @@ func (h *Handlers) GetFavoritedPages(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, readable)
+}
+
+// GetConsolePageShare handles GET /api/console/pages/:id/share.
+func (h *Handlers) GetConsolePageShare(c *gin.Context) {
+	if h.pageService == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "page service unavailable"})
+		return
+	}
+
+	pageID := c.Param("id")
+	userID := middleware.GetCurrentUserID(c)
+
+	share, err := h.pageService.GetPageShare(c.Request.Context(), pageID, userID)
+	if err != nil {
+		if errors.Is(err, pagefeat.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
+			return
+		}
+		if errors.Is(err, pagefeat.ErrPagePermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
+			return
+		}
+		logger.Log.Error().Str("pageId", pageID).Err(err).Msg("get page share error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get page share settings"})
+		return
+	}
+
+	c.JSON(http.StatusOK, share)
+}
+
+type UpdateConsolePageShareRequest struct {
+	IsEnabled      bool `json:"isEnabled"`
+	SearchIndexing bool `json:"searchIndexing"`
+}
+
+// UpdateConsolePageShare handles PUT /api/console/pages/:id/share.
+func (h *Handlers) UpdateConsolePageShare(c *gin.Context) {
+	if h.pageService == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "page service unavailable"})
+		return
+	}
+
+	pageID := c.Param("id")
+	userID := middleware.GetCurrentUserID(c)
+
+	var req UpdateConsolePageShareRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	share, err := h.pageService.UpdatePageShare(c.Request.Context(), pageID, userID, req.IsEnabled, req.SearchIndexing)
+	if err != nil {
+		if errors.Is(err, pagefeat.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
+			return
+		}
+		if errors.Is(err, pagefeat.ErrPagePermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
+			return
+		}
+		logger.Log.Error().Str("pageId", pageID).Err(err).Msg("update page share error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update page share settings"})
+		return
+	}
+
+	c.JSON(http.StatusOK, share)
+}
+
+// ShortenConsolePageShare handles POST /api/console/pages/:id/share/shorten.
+func (h *Handlers) ShortenConsolePageShare(c *gin.Context) {
+	if h.pageService == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "page service unavailable"})
+		return
+	}
+
+	pageID := c.Param("id")
+	userID := middleware.GetCurrentUserID(c)
+
+	share, err := h.pageService.ShortenPageShare(c.Request.Context(), pageID, userID)
+	if err != nil {
+		if errors.Is(err, pagefeat.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
+			return
+		}
+		if errors.Is(err, pagefeat.ErrPagePermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
+			return
+		}
+		logger.Log.Error().Str("pageId", pageID).Err(err).Msg("shorten page share error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to shorten page share link"})
+		return
+	}
+
+	c.JSON(http.StatusOK, share)
+}
+
+// GetPublicShare handles GET /api/shares/:token.
+func (h *Handlers) GetPublicShare(c *gin.Context) {
+	if h.pageService == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "page service unavailable"})
+		return
+	}
+
+	token := c.Param("token")
+	page, share, err := h.pageService.GetPageByShareToken(c.Request.Context(), token)
+	if err != nil {
+		if errors.Is(err, repositories.ErrShareNotFound) || errors.Is(err, pagefeat.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "page or share not found"})
+			return
+		}
+		logger.Log.Error().Str("token", token).Err(err).Msg("get public share error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get public shared page"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"page": gin.H{
+			"id":          page.ID,
+			"title":       page.Title,
+			"icon":        page.Icon,
+			"coverPhoto":  page.CoverPhoto,
+			"contentJson": page.ContentJSON,
+			"updatedAt":   page.UpdatedAt.Format(time.RFC3339),
+		},
+		"share": gin.H{
+			"id":             share.ID,
+			"shareToken":     share.ShareToken,
+			"shortCode":      share.ShortCode,
+			"searchIndexing": share.SearchIndexing,
+		},
+	})
+}
+
+// GetPublicShort handles GET /api/short/:shortCode.
+func (h *Handlers) GetPublicShort(c *gin.Context) {
+	if h.pageService == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "page service unavailable"})
+		return
+	}
+
+	shortCode := c.Param("shortCode")
+	_, share, err := h.pageService.GetPageByShortCode(c.Request.Context(), shortCode)
+	if err != nil {
+		if errors.Is(err, repositories.ErrShareNotFound) || errors.Is(err, pagefeat.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "page or share not found"})
+			return
+		}
+		logger.Log.Error().Str("shortCode", shortCode).Err(err).Msg("get public short link error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to resolve short link"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"shareToken": share.ShareToken,
+	})
 }

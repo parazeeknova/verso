@@ -1,4 +1,4 @@
-import { FileTextIcon, PlusIcon } from "@phosphor-icons/react";
+import { FileTextIcon, PlusIcon, GlobeIcon } from "@phosphor-icons/react";
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "#/features/auth/hooks/use-auth";
@@ -394,11 +394,18 @@ export const ConsoleHome = () => {
                       {page.title}
                     </span>
                   </div>
-                  <span
-                    className={`shrink-0 text-[10px] lowercase truncate max-w-32 text-center ${t("text-text-dark/20", "text-text-light/20")}`}
-                  >
-                    {parentTitle ? `${parentTitle} / ${space?.name || "—"}` : space?.name || "—"}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {page.isShared && (
+                      <span title="shared">
+                        <GlobeIcon className="text-accent shrink-0" size={12} />
+                      </span>
+                    )}
+                    <span
+                      className={`text-[10px] lowercase truncate max-w-32 text-center ${t("text-text-dark/20", "text-text-light/20")}`}
+                    >
+                      {parentTitle ? `${parentTitle} / ${space?.name || "—"}` : space?.name || "—"}
+                    </span>
+                  </div>
                   <span
                     className={`shrink-0 text-[10px] font-mono text-right ${t("text-text-dark/25", "text-text-light/25")}`}
                   >

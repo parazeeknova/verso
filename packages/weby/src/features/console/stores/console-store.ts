@@ -35,6 +35,7 @@ interface ConsoleState {
 
 interface ConsoleActions {
   toggleSidebar: () => void;
+  setSidebarOpen: (v: boolean) => void;
   setSelectedWorkspaceId: (id: string) => void;
   setSelectedSpaceId: (id: string) => void;
   setSelectedPageId: (id: string | null) => void;
@@ -84,6 +85,7 @@ export const useConsoleStore = create<ConsoleState & ConsoleActions>()(
       setSelectedPageId: (id: string | null) => set({ selectedPageId: id }),
       setSelectedSpaceId: (id: string) => set({ selectedSpaceId: id }),
       setSelectedWorkspaceId: (id: string) => set({ selectedWorkspaceId: id }),
+      setSidebarOpen: (v: boolean) => set({ sidebarOpen: v }),
       sidebarOpen: getInitialSidebarOpen(),
       toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
     }),

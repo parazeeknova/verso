@@ -113,3 +113,23 @@ func (r *PageHistoryRepo) ListByPageID(ctx context.Context, pageID string) ([]mo
 
 	return histories, nil
 }
+
+// DeleteByID removes a single page history entry by ID.
+func (r *PageHistoryRepo) DeleteByID(ctx context.Context, id string) error {
+	query := `DELETE FROM page_history WHERE id = $1`
+	_, err := r.pool.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("deleting history entry %q: %w", id, err)
+	}
+	return nil
+}
+
+// DeleteAllByPageID removes all history entries for a page.
+func (r *PageHistoryRepo) DeleteAllByPageID(ctx context.Context, pageID string) error {
+	query := `DELETE FROM page_history WHERE page_id = $1`
+	_, err := r.pool.Exec(ctx, query, pageID)
+	if err != nil {
+		return fmt.Errorf("deleting all history for page %q: %w", pageID, err)
+	}
+	return nil
+}

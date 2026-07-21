@@ -1186,3 +1186,29 @@ div[data-type="columns"][data-layout="three_with_sidebars"] > div[data-type="col
     border-left: none;
   }
 }
+
+/* History diff highlight styles */
+.history-diff-preview .history-diff-added {
+  background: rgba(0, 180, 120, 0.15);
+  color: #00b478;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0 1px;
+}
+
+.history-diff-preview .history-diff-deleted {
+  background: rgba(255, 60, 60, 0.1);
+  color: rgba(255, 80, 80, 0.7);
+  text-decoration: line-through;
+  padding: 0 1px;
+}
+
+[data-theme="light"] .history-diff-preview .history-diff-added {
+  background: rgba(0, 140, 90, 0.12);
+  color: #007b55;
+}
+
+[data-theme="light"] .history-diff-preview .history-diff-deleted {
+  background: rgba(220, 40, 40, 0.08);
+  color: rgba(200, 50, 50, 0.6);
+}

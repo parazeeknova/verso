@@ -270,6 +270,10 @@ func main() {
 		api.GET("/blogs", h.GetBlogManifest)
 		api.GET("/blogs/:slug", h.GetBlogPost)
 
+		// Public Shared Pages
+		api.GET("/shares/:token", h.GetPublicShare)
+		api.GET("/short/:shortCode", h.GetPublicShort)
+
 		// Auth routes (public)
 		authHandlers.RegisterRoutes(api)
 		// Login is rate-limited separately
@@ -337,6 +341,11 @@ func main() {
 			console.POST("/pages/:id/publish", h.PublishConsolePage)
 			console.POST("/pages/:id/unpublish", h.UnpublishConsolePage)
 
+			// Page Sharing
+			console.GET("/pages/:id/share", h.GetConsolePageShare)
+			console.PUT("/pages/:id/share", h.UpdateConsolePageShare)
+			console.POST("/pages/:id/share/shorten", h.ShortenConsolePageShare)
+
 			// Page Tree
 			console.GET("/pages/tree", h.GetConsolePageTree)
 			console.GET("/pages/:id/children", h.GetConsolePageChildren)
@@ -346,6 +355,8 @@ func main() {
 			console.GET("/pages/:id/history", h.GetConsolePageHistory)
 			console.GET("/pages/:id/history/:historyId", h.GetConsolePageHistoryEntry)
 			console.POST("/pages/:id/restore", h.RestoreConsolePage)
+			console.DELETE("/pages/:id/history", h.DeleteConsolePageHistory)
+			console.DELETE("/pages/:id/history/:historyId", h.DeleteConsolePageHistoryEntry)
 
 			// Page favorites
 			console.POST("/pages/:id/favorite", h.TogglePageFavorite)

@@ -1,10 +1,13 @@
 package page
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"strings"
 	"time"
 
@@ -25,6 +28,7 @@ type PageService struct {
 	pageHistoryRepo *repositories.PageHistoryRepo
 	spaceRepo       *repositories.SpaceRepo
 	groupRepo       *repositories.GroupRepo
+	pageShareRepo   *repositories.PageShareRepo
 	notifier        notifeat.Notifier
 }
 
@@ -36,6 +40,7 @@ func NewPageService(pageRepo *repositories.PageRepo, pageWatcherRepo *repositori
 		pageHistoryRepo: pageHistoryRepo,
 		spaceRepo:       spaceRepo,
 		groupRepo:       groupRepo,
+		pageShareRepo:   repositories.NewPageShareRepo(),
 		notifier:        notifeat.NoopNotifier(),
 	}
 }
@@ -52,6 +57,7 @@ type UpdatePageInput struct {
 	CoverPhoto  *string          `json:"coverPhoto"`
 	ContentJSON *json.RawMessage `json:"contentJson"`
 	TextContent *string          `json:"textContent"`
+	IsLocked    *bool            `json:"isLocked"`
 }
 
 // GetBlogPost retrieves a published page by slug and converts it to a BlogPost response
@@ -185,12 +191,12 @@ func (s *PageService) UpdatePage(ctx context.Context, pageID string, userID stri
 	err = tx.QueryRow(
 		ctx,
 		`SELECT id, slug_id, title, icon, cover_photo, content_json, ydoc,
-		        text_content, position, is_published, parent_page_id, space_id, workspace_id, creator_id,
+		        text_content, position, is_published, is_locked, parent_page_id, space_id, workspace_id, creator_id,
 		        last_updated_by_id, created_at, updated_at
 		 FROM pages WHERE id = $1 FOR UPDATE`, pageID,
 	).Scan(
 		&current.ID, &current.SlugID, &current.Title, &current.Icon, &current.CoverPhoto,
-		&contentJSONBytes, &current.YDoc, &current.TextContent, &current.Position, &current.IsPublished,
+		&contentJSONBytes, &current.YDoc, &current.TextContent, &current.Position, &current.IsPublished, &current.IsLocked,
 		&current.ParentPageID, &current.SpaceID, &current.WorkspaceID, &current.CreatorID, &current.LastUpdatedByID,
 		&current.CreatedAt, &current.UpdatedAt,
 	)
@@ -223,6 +229,9 @@ func (s *PageService) UpdatePage(ctx context.Context, pageID string, userID stri
 	if input.TextContent != nil {
 		current.TextContent = *input.TextContent
 	}
+	if input.IsLocked != nil {
+		current.IsLocked = *input.IsLocked
+	}
 	current.UpdatedAt = time.Now().UTC()
 	current.LastUpdatedByID = &userID
 
@@ -236,11 +245,11 @@ func (s *PageService) UpdatePage(ctx context.Context, pageID string, userID stri
 		ctx,
 		`UPDATE pages
 		 SET title = $1, icon = $2, cover_photo = $3, content_json = $4,
-		     text_content = $5, position = $6, is_published = $7, parent_page_id = $8,
-		     last_updated_by_id = $9, updated_at = $10
-		 WHERE id = $11`,
+		     text_content = $5, position = $6, is_published = $7, is_locked = $8, parent_page_id = $9,
+		     last_updated_by_id = $10, updated_at = $11
+		 WHERE id = $12`,
 		current.Title, current.Icon, current.CoverPhoto, newContentJSONBytes,
-		current.TextContent, current.Position, current.IsPublished, current.ParentPageID,
+		current.TextContent, current.Position, current.IsPublished, current.IsLocked, current.ParentPageID,
 		current.LastUpdatedByID, current.UpdatedAt, current.ID,
 	)
 	if err != nil {
@@ -539,6 +548,43 @@ func (s *PageService) RestorePage(ctx context.Context, pageID string, historyID 
 	return page, nil
 }
 
+// DeleteHistoryEntry deletes a single history entry after verifying write permissions.
+func (s *PageService) DeleteHistoryEntry(ctx context.Context, pageID string, historyID string, userID string) error {
+	page, err := s.pageRepo.GetByID(ctx, pageID)
+	if err != nil {
+		if errors.Is(err, repositories.ErrPageNotFound) {
+			return ErrPageNotFound
+		}
+		return err
+	}
+	if err := s.requireWrite(ctx, page.SpaceID, userID); err != nil {
+		return err
+	}
+	history, err := s.pageHistoryRepo.GetByID(ctx, historyID)
+	if err != nil {
+		return err
+	}
+	if history.PageID != pageID {
+		return fmt.Errorf("history entry %q does not belong to page %q", historyID, pageID)
+	}
+	return s.pageHistoryRepo.DeleteByID(ctx, historyID)
+}
+
+// DeleteAllPageHistory deletes all history entries for a page after verifying write permissions.
+func (s *PageService) DeleteAllPageHistory(ctx context.Context, pageID string, userID string) error {
+	page, err := s.pageRepo.GetByID(ctx, pageID)
+	if err != nil {
+		if errors.Is(err, repositories.ErrPageNotFound) {
+			return ErrPageNotFound
+		}
+		return err
+	}
+	if err := s.requireWrite(ctx, page.SpaceID, userID); err != nil {
+		return err
+	}
+	return s.pageHistoryRepo.DeleteAllByPageID(ctx, pageID)
+}
+
 // ErrBlogPostNotFound is returned when a blog post is not found
 var ErrBlogPostNotFound = errors.New("blog post not found")
 
@@ -656,11 +702,37 @@ func (s *PageService) CanWrite(ctx context.Context, spaceID, userID string) (boo
 
 // insertHistoryTx inserts a page_history row within an existing transaction.
 func (s *PageService) insertHistoryTx(ctx context.Context, tx pgx.Tx, page models.Page, operation string, userID string) error {
-	historyID := uuid.New().String()
 	historyContentJSON := []byte(page.ContentJSON)
 	if len(historyContentJSON) == 0 {
 		historyContentJSON = []byte("{}")
 	}
+
+	// For update operations, skip recording duplicate history if page content and title haven't changed.
+	if operation == "update" {
+		var lastTitle string
+		var lastContentJSON []byte
+		var lastTextContent string
+
+		err := tx.QueryRow(
+			ctx,
+			`SELECT title, content_json, text_content
+			 FROM page_history
+			 WHERE page_id = $1
+			 ORDER BY created_at DESC
+			 LIMIT 1`,
+			page.ID,
+		).Scan(&lastTitle, &lastContentJSON, &lastTextContent)
+
+		if err == nil &&
+			lastTitle == page.Title &&
+			bytes.Equal(bytes.TrimSpace(lastContentJSON), bytes.TrimSpace(historyContentJSON)) &&
+			lastTextContent == page.TextContent {
+			// No changes detected since the last history entry, skip inserting duplicate history.
+			return nil
+		}
+	}
+
+	historyID := uuid.New().String()
 
 	_, err := tx.Exec(
 		ctx,
@@ -725,15 +797,16 @@ func (s *PageService) softDeletePageAndDescendantsTx(ctx context.Context, tx pgx
 	}
 	page.ContentJSON = json.RawMessage(contentJSONBytes)
 
-	if err := s.insertHistoryTx(ctx, tx, page, "delete", userID); err != nil {
-		return err
-	}
 	*deletedPages = append(*deletedPages, page)
 
-	// Soft-delete the page.
+	// Soft-delete the page and clear its history.
 	_, err = tx.Exec(ctx, `UPDATE pages SET deleted_at = now(), deleted_by_id = $1 WHERE id = $2`, userID, pageID)
 	if err != nil {
 		return fmt.Errorf("soft-deleting page %q: %w", pageID, err)
+	}
+
+	if _, err := tx.Exec(ctx, `DELETE FROM page_history WHERE page_id = $1`, pageID); err != nil {
+		return fmt.Errorf("deleting page history for page %q: %w", pageID, err)
 	}
 
 	return nil
@@ -942,4 +1015,174 @@ func estimateReadTime(text string) int {
 // newUUID generates a RFC 4122 v4 UUID string.
 func newUUID() string {
 	return uuid.New().String()
+}
+
+func generateRandomString(n int) (string, error) {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	ret := make([]byte, n)
+	for i := 0; i < n; i++ {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
+		if err != nil {
+			return "", fmt.Errorf("generating random string: %w", err)
+		}
+		ret[i] = letters[num.Int64()]
+	}
+	return string(ret), nil
+}
+
+func (s *PageService) GetPageShare(ctx context.Context, pageID string, userID string) (models.PageShare, error) {
+	page, err := s.pageRepo.GetByID(ctx, pageID)
+	if err != nil {
+		return models.PageShare{}, err
+	}
+	if err := s.requireWrite(ctx, page.SpaceID, userID); err != nil {
+		return models.PageShare{}, err
+	}
+
+	share, err := s.pageShareRepo.GetByPageID(ctx, pageID)
+	if err != nil {
+		if errors.Is(err, repositories.ErrShareNotFound) {
+			return models.PageShare{
+				PageID:    pageID,
+				IsEnabled: false,
+			}, nil
+		}
+		return models.PageShare{}, err
+	}
+	return share, nil
+}
+
+func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID string, isEnabled bool, searchIndexing bool) (models.PageShare, error) {
+	page, err := s.pageRepo.GetByID(ctx, pageID)
+	if err != nil {
+		return models.PageShare{}, err
+	}
+	if err := s.requireWrite(ctx, page.SpaceID, userID); err != nil {
+		return models.PageShare{}, err
+	}
+
+	share, err := s.pageShareRepo.GetByPageID(ctx, pageID)
+	if err != nil {
+		if errors.Is(err, repositories.ErrShareNotFound) {
+			token, err := generateRandomString(32)
+			if err != nil {
+				return models.PageShare{}, err
+			}
+			share = models.PageShare{
+				ID:             newUUID(),
+				PageID:         pageID,
+				ShareToken:     token,
+				SearchIndexing: searchIndexing,
+				IsEnabled:      isEnabled,
+			}
+		} else {
+			return models.PageShare{}, err
+		}
+	} else {
+		share.IsEnabled = isEnabled
+		share.SearchIndexing = searchIndexing
+		if share.ShareToken == "" {
+			token, err := generateRandomString(32)
+			if err != nil {
+				return models.PageShare{}, err
+			}
+			share.ShareToken = token
+		}
+	}
+
+	updatedShare, err := s.pageShareRepo.Upsert(ctx, share)
+	if err != nil {
+		return models.PageShare{}, err
+	}
+
+	return updatedShare, nil
+}
+
+func (s *PageService) ShortenPageShare(ctx context.Context, pageID string, userID string) (models.PageShare, error) {
+	page, err := s.pageRepo.GetByID(ctx, pageID)
+	if err != nil {
+		return models.PageShare{}, err
+	}
+	if err := s.requireWrite(ctx, page.SpaceID, userID); err != nil {
+		return models.PageShare{}, err
+	}
+
+	share, err := s.pageShareRepo.GetByPageID(ctx, pageID)
+	if err != nil {
+		return models.PageShare{}, err
+	}
+
+	if share.ShortCode == nil || *share.ShortCode == "" {
+		for i := 0; i < 5; i++ {
+			code, err := generateRandomString(8)
+			if err != nil {
+				return models.PageShare{}, err
+			}
+			share.ShortCode = &code
+			updatedShare, err := s.pageShareRepo.Upsert(ctx, share)
+			if err == nil {
+				return updatedShare, nil
+			}
+			if i == 4 {
+				return models.PageShare{}, err
+			}
+		}
+	}
+
+	return share, nil
+}
+
+func (s *PageService) GetPageByShareToken(ctx context.Context, token string) (models.Page, models.PageShare, error) {
+	share, err := s.pageShareRepo.GetByShareToken(ctx, token)
+	if err != nil {
+		return models.Page{}, models.PageShare{}, err
+	}
+
+	if !share.IsEnabled {
+		return models.Page{}, models.PageShare{}, repositories.ErrShareNotFound
+	}
+
+	page, err := s.pageRepo.GetByID(ctx, share.PageID)
+	if err != nil {
+		return models.Page{}, models.PageShare{}, err
+	}
+
+	return page, share, nil
+}
+
+func (s *PageService) GetPageByShortCode(ctx context.Context, shortCode string) (models.Page, models.PageShare, error) {
+	share, err := s.pageShareRepo.GetByShortCode(ctx, shortCode)
+	if err != nil {
+		return models.Page{}, models.PageShare{}, err
+	}
+
+	if !share.IsEnabled {
+		return models.Page{}, models.PageShare{}, repositories.ErrShareNotFound
+	}
+
+	page, err := s.pageRepo.GetByID(ctx, share.PageID)
+	if err != nil {
+		return models.Page{}, models.PageShare{}, err
+	}
+
+	return page, share, nil
+}
+
+func (s *PageService) IsPageShared(ctx context.Context, pageID string) bool {
+	share, err := s.pageShareRepo.GetByPageID(ctx, pageID)
+	if err != nil {
+		return false
+	}
+	return share.IsEnabled
+}
+
+func (s *PageService) GetSharedMapForPages(ctx context.Context, pageIDs []string) map[string]bool {
+	if s.pageShareRepo == nil || len(pageIDs) == 0 {
+		return map[string]bool{}
+	}
+	res, err := s.pageShareRepo.GetSharedMapByPageIDs(ctx, pageIDs)
+	if err != nil {
+		return map[string]bool{}
+	}
+	return res
 }

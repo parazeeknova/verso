@@ -10,6 +10,7 @@ import {
   FolderIcon,
   FolderPlusIcon,
   GearSixIcon,
+  GlobeIcon,
   MagnifyingGlassIcon,
   PencilSimpleIcon,
   PlusIcon,
@@ -308,6 +309,24 @@ const PageNode = ({ node, depth, spaceId, spaceSlug, treeItems }: PageNodeProps)
           </button>
         )}
 
+        {!isRenaming && !isHovered && (
+          <div className="flex items-center gap-1 shrink-0 mr-0.5">
+            {node.item.isShared && (
+              <span title="shared">
+                <GlobeIcon className="shrink-0 text-accent" size={9} />
+              </span>
+            )}
+            <span
+              className={`text-[8px] font-mono ${t("text-text-dark/20", "text-text-light/20")}`}
+            >
+              {new Date(node.item.createdAt).toLocaleDateString("en-US", {
+                day: "numeric",
+                month: "short",
+              })}
+            </span>
+          </div>
+        )}
+
         {isHovered && !isRenaming && (
           <div className="flex items-center gap-0.5 shrink-0 pr-0.5">
             {hasChildren ? (
@@ -342,22 +361,22 @@ const PageNode = ({ node, depth, spaceId, spaceSlug, treeItems }: PageNodeProps)
               </button>
               {contextMenu && contextMenu.pageId === node.item.id && (
                 <div
-                  className={`fixed z-50 py-1 w-32 text-[11px] lowercase shadow-lg ${t(
+                  className={`fixed z-50 py-0.5 w-24 text-[10px] lowercase shadow-lg ${t(
                     "bg-neutral-800 border border-white/10 text-text-dark",
                     "bg-white border border-black/10 text-text-light",
                   )}`}
-                  style={{ left: `${contextMenu.x - 64}px`, top: `${contextMenu.y}px` }}
+                  style={{ left: `${contextMenu.x - 48}px`, top: `${contextMenu.y}px` }}
                 >
                   <button
-                    className={`flex w-full items-center gap-1.5 px-2 py-1 cursor-pointer ${t("hover:bg-white/10", "hover:bg-black/5")}`}
+                    className={`flex w-full items-center gap-1 px-1.5 py-0.5 cursor-pointer ${t("hover:bg-white/10", "hover:bg-black/5")}`}
                     onClick={startRename}
                     type="button"
                   >
-                    <PencilSimpleIcon size={10} />
+                    <PencilSimpleIcon size={9} />
                     rename
                   </button>
                   <button
-                    className={`flex w-full items-center gap-1.5 px-2 py-1 cursor-pointer ${showDeleteConfirm ? "text-red-400" : t("hover:bg-white/10", "hover:bg-black/5")}`}
+                    className={`flex w-full items-center gap-1 px-1.5 py-0.5 cursor-pointer ${showDeleteConfirm ? "text-red-400" : t("hover:bg-white/10", "hover:bg-black/5")}`}
                     onClick={() => {
                       if (showDeleteConfirm) {
                         submitDelete();
@@ -367,7 +386,7 @@ const PageNode = ({ node, depth, spaceId, spaceSlug, treeItems }: PageNodeProps)
                     }}
                     type="button"
                   >
-                    <TrashIcon size={10} />
+                    <TrashIcon size={9} />
                     {showDeleteConfirm ? "confirm?" : "delete"}
                   </button>
                 </div>

@@ -1,6 +1,43 @@
 import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 
+// Polyfill vi.stubGlobal / vi.unstubAllGlobals for bun's native test runner
+// which provides a limited vi object without these methods.
+const originalGlobals = new Map<string, unknown>();
+
+if (typeof vi.stubGlobal !== "function") {
+  vi.stubGlobal = (key: string | number | symbol, value: unknown) => {
+    const k = String(key);
+    if (!originalGlobals.has(k)) {
+      originalGlobals.set(k, (globalThis as Record<string, unknown>)[k]);
+    }
+    Object.defineProperty(globalThis, key, {
+      configurable: true,
+      value,
+      writable: true,
+    });
+    return vi;
+  };
+}
+
+if (typeof vi.unstubAllGlobals !== "function") {
+  vi.unstubAllGlobals = () => {
+    for (const [key, original] of originalGlobals) {
+      if (original === undefined) {
+        Reflect.deleteProperty(globalThis, key);
+      } else {
+        Object.defineProperty(globalThis, key, {
+          configurable: true,
+          value: original,
+          writable: true,
+        });
+      }
+    }
+    originalGlobals.clear();
+    return vi;
+  };
+}
+
 // Cleanup after each test
 afterEach(() => {
   cleanup();

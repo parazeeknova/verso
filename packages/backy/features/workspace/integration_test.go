@@ -1443,3 +1443,209 @@ func TestAuthService_LoginAfterBootstrap_NormalFlow(t *testing.T) {
 		t.Fatalf("expected authfeat.ErrUserInactive, got %v", err)
 	}
 }
+
+func TestFavorites_Toggle(t *testing.T) {
+	db := setupTestDB(t)
+	ctx := context.Background()
+
+	ownerID := createTestUser(t, ctx, db, "owner", "owner@example.com")
+	w := createTestWorkspace(t, ctx, db, "WS", "ws", ownerID, "notes")
+
+	spaces, err := db.spaceRepo.ListAll(ctx, w.ID)
+	if err != nil {
+		t.Fatalf("list spaces: %v", err)
+	}
+	if len(spaces) == 0 {
+		t.Fatal("expected at least one space")
+	}
+	spaceID := spaces[0].ID
+
+	p := createTestPage(t, ctx, db, spaceID, ownerID)
+
+	pageFavRepo := repositories.NewPageFavoriteRepo()
+	spaceFavRepo := repositories.NewSpaceFavoriteRepo()
+
+	// Test page favorite toggle on
+	favorited, err := pageFavRepo.Toggle(ctx, ownerID, p.ID)
+	if err != nil {
+		t.Fatalf("toggle page favorite on: %v", err)
+	}
+	if !favorited {
+		t.Fatal("expected page to be favorited")
+	}
+
+	// Test page favorite toggle off
+	favorited, err = pageFavRepo.Toggle(ctx, ownerID, p.ID)
+	if err != nil {
+		t.Fatalf("toggle page favorite off: %v", err)
+	}
+	if favorited {
+		t.Fatal("expected page to be unfavorited")
+	}
+
+	// Test space favorite toggle on
+	favorited, err = spaceFavRepo.Toggle(ctx, ownerID, spaceID)
+	if err != nil {
+		t.Fatalf("toggle space favorite on: %v", err)
+	}
+	if !favorited {
+		t.Fatal("expected space to be favorited")
+	}
+
+	// Test space favorite toggle off
+	favorited, err = spaceFavRepo.Toggle(ctx, ownerID, spaceID)
+	if err != nil {
+		t.Fatalf("toggle space favorite off: %v", err)
+	}
+	if favorited {
+		t.Fatal("expected space to be unfavorited")
+	}
+}
+
+func TestPageService_UpdatePageLocked(t *testing.T) {
+	ctx := context.Background()
+	db := setupTestDB(t)
+
+	ownerID := createTestUser(t, ctx, db, "owner", "owner@example.com")
+	w := createTestWorkspace(t, ctx, db, "Test Workspace", "test-workspace", ownerID)
+	s := createTestSpace(t, ctx, db, "Test Space", "test-space", w.ID, ownerID)
+	p := createTestPage(t, ctx, db, s.ID, ownerID)
+
+	// Verify page starts unlocked
+	fetched, err := db.pageRepo.GetByID(ctx, p.ID)
+	if err != nil {
+		t.Fatalf("getting page: %v", err)
+	}
+	if fetched.IsLocked {
+		t.Fatal("expected page to start unlocked")
+	}
+
+	// Update page to be locked
+	isLocked := true
+	updated, err := db.pageSvc.UpdatePage(ctx, p.ID, ownerID, pagefeat.UpdatePageInput{
+		IsLocked: &isLocked,
+	})
+	if err != nil {
+		t.Fatalf("locking page: %v", err)
+	}
+	if !updated.IsLocked {
+		t.Fatal("expected returned page to be locked")
+	}
+
+	// Verify locked status is persistent in DB
+	fetched, err = db.pageRepo.GetByID(ctx, p.ID)
+	if err != nil {
+		t.Fatalf("getting page after locking: %v", err)
+	}
+	if !fetched.IsLocked {
+		t.Fatal("expected fetched page to be locked")
+	}
+
+	// Unlock page
+	isLocked = false
+	updated, err = db.pageSvc.UpdatePage(ctx, p.ID, ownerID, pagefeat.UpdatePageInput{
+		IsLocked: &isLocked,
+	})
+	if err != nil {
+		t.Fatalf("unlocking page: %v", err)
+	}
+	if updated.IsLocked {
+		t.Fatal("expected returned page to be unlocked")
+	}
+
+	// Verify unlocked status is persistent in DB
+	fetched, err = db.pageRepo.GetByID(ctx, p.ID)
+	if err != nil {
+		t.Fatalf("getting page after unlocking: %v", err)
+	}
+	if fetched.IsLocked {
+		t.Fatal("expected fetched page to be unlocked")
+	}
+}
+
+func TestPageService_PageSharing(t *testing.T) {
+	ctx := context.Background()
+	db := setupTestDB(t)
+
+	ownerID := createTestUser(t, ctx, db, "owner", "owner@example.com")
+	w := createTestWorkspace(t, ctx, db, "Test Workspace", "test-workspace", ownerID)
+	s := createTestSpace(t, ctx, db, "Test Space", "test-space", w.ID, ownerID)
+	p := createTestPage(t, ctx, db, s.ID, ownerID)
+
+	// Fetch share for page when it doesn't exist
+	share, err := db.pageSvc.GetPageShare(ctx, p.ID, ownerID)
+	if err != nil {
+		t.Fatalf("getting page share: %v", err)
+	}
+	if share.IsEnabled {
+		t.Fatal("expected share to be disabled by default")
+	}
+
+	// Update share settings to enable sharing
+	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, true, true)
+	if err != nil {
+		t.Fatalf("enabling page share: %v", err)
+	}
+	if !share.IsEnabled {
+		t.Fatal("expected share to be enabled")
+	}
+	if !share.SearchIndexing {
+		t.Fatal("expected search indexing to be true")
+	}
+	if share.ShareToken == "" {
+		t.Fatal("expected share token to be generated")
+	}
+
+	// Fetch page by share token
+	fetchedPage, fetchedShare, err := db.pageSvc.GetPageByShareToken(ctx, share.ShareToken)
+	if err != nil {
+		t.Fatalf("fetching page by share token: %v", err)
+	}
+	if fetchedPage.ID != p.ID {
+		t.Fatalf("expected page ID %q, got %q", p.ID, fetchedPage.ID)
+	}
+	if fetchedShare.ID != share.ID {
+		t.Fatalf("expected share ID %q, got %q", share.ID, fetchedShare.ID)
+	}
+
+	// Shorten link
+	share, err = db.pageSvc.ShortenPageShare(ctx, p.ID, ownerID)
+	if err != nil {
+		t.Fatalf("shortening page share: %v", err)
+	}
+	if share.ShortCode == nil || *share.ShortCode == "" {
+		t.Fatal("expected short code to be generated")
+	}
+
+	// Fetch page by short code
+	fetchedPage2, fetchedShare2, err := db.pageSvc.GetPageByShortCode(ctx, *share.ShortCode)
+	if err != nil {
+		t.Fatalf("fetching page by short code: %v", err)
+	}
+	if fetchedPage2.ID != p.ID {
+		t.Fatalf("expected page ID %q, got %q", p.ID, fetchedPage2.ID)
+	}
+	if fetchedShare2.ID != share.ID {
+		t.Fatalf("expected share ID %q, got %q", share.ID, fetchedShare2.ID)
+	}
+
+	// Disable page sharing
+	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, false, false)
+	if err != nil {
+		t.Fatalf("disabling page share: %v", err)
+	}
+	if share.IsEnabled {
+		t.Fatal("expected share to be disabled")
+	}
+
+	// Verify public access is denied when sharing is disabled
+	_, _, err = db.pageSvc.GetPageByShareToken(ctx, share.ShareToken)
+	if err == nil {
+		t.Fatal("expected error fetching disabled share by token, got nil")
+	}
+
+	_, _, err = db.pageSvc.GetPageByShortCode(ctx, *share.ShortCode)
+	if err == nil {
+		t.Fatal("expected error fetching disabled share by short code, got nil")
+	}
+}

@@ -1,0 +1,704 @@
+import {
+  ArrowClockwiseIcon,
+  CaretDownIcon,
+  CaretUpIcon,
+  ClockCounterClockwiseIcon,
+  TrashIcon,
+  XIcon,
+} from "@phosphor-icons/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { gsap } from "gsap";
+import { diffWordsWithSpace } from "diff";
+import { useTheme } from "#/shared/hooks/use-theme";
+import {
+  useDeleteAllPageHistory,
+  useDeleteHistoryEntry,
+  usePageHistory,
+  useRestorePage,
+} from "#/features/console/hooks/use-pages";
+import { useUserById } from "#/features/console/hooks/use-users";
+import { AvatarBadge } from "#/shared/components/avatar-badge";
+import { setFlashToast } from "#/features/console/components/flash-toast";
+import { markdownToHtml } from "#/features/blog/lib/markdown-to-html";
+import { tiptapToMarkdown } from "#/features/editor/lib/tiptap-to-markdown";
+import type { JSONContent } from "@tiptap/core";
+import type { PageHistoryItem } from "#/shared/types";
+
+interface PageHistoryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  pageId: string;
+  onRestoreSuccess?: () => void;
+}
+
+const formatHistoryDate = (iso: string) => {
+  if (!iso) {
+    return "—";
+  }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) {
+    return "—";
+  }
+  return d.toLocaleString("en-US", {
+    day: "numeric",
+    hour: "numeric",
+    hour12: true,
+    minute: "2-digit",
+    month: "short",
+  });
+};
+
+const parseJsonContent = (raw?: string): JSONContent | null => {
+  if (!raw) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && parsed.type === "doc") {
+      return parsed as JSONContent;
+    }
+  } catch {
+    // fallback
+  }
+  return null;
+};
+
+const opLabel = (op: string) => {
+  if (op === "create") {
+    return "c";
+  }
+  if (op === "restore") {
+    return "r";
+  }
+  return "u";
+};
+
+const opColor = (op: string, isDark: boolean) => {
+  if (op === "create") {
+    return isDark ? "text-accent" : "text-accent";
+  }
+  if (op === "restore") {
+    return isDark ? "text-purple-400" : "text-purple-600";
+  }
+  return isDark ? "text-text-dark/30" : "text-text-light/30";
+};
+
+// Build diff HTML between two text strings
+// Returns { html, changeCount }
+const buildDiffHtml = (oldText: string, newText: string): { html: string; changeCount: number } => {
+  const parts = diffWordsWithSpace(oldText, newText);
+  let changeIndex = 0;
+  const segments: string[] = [];
+
+  for (const part of parts) {
+    const escaped = part.value
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\n", "<br/>");
+
+    if (part.added) {
+      changeIndex += 1;
+      segments.push(
+        `<span class="history-diff-added" data-diff-index="${changeIndex}">${escaped}</span>`,
+      );
+    } else if (part.removed) {
+      changeIndex += 1;
+      segments.push(
+        `<span class="history-diff-deleted" data-diff-index="${changeIndex}">${escaped}</span>`,
+      );
+    } else {
+      segments.push(escaped);
+    }
+  }
+
+  return { changeCount: changeIndex, html: segments.join("") };
+};
+
+const sanitizeHtml = (html: string): string =>
+  html
+    .replaceAll(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replaceAll(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
+    .replaceAll(/\s*on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replaceAll(/javascript:/gi, "");
+
+// Extract plain text from a history item for diffing
+const extractText = (item: PageHistoryItem): string => {
+  const json = parseJsonContent(item.contentJson);
+  if (json) {
+    return tiptapToMarkdown(json, item.title);
+  }
+  if (item.textContent) {
+    return `# ${item.title}\n\n${item.textContent}`;
+  }
+  return `# ${item.title}`;
+};
+
+const HistoryAuthor = ({
+  createdById,
+  t,
+}: {
+  createdById: string;
+  t: (dark: string, light: string) => string;
+}) => {
+  const { data: user } = useUserById(createdById);
+  const displayName = user?.name || user?.username || "author";
+
+  return (
+    <div className="flex items-center gap-1 min-w-0">
+      <AvatarBadge
+        icon={user?.avatar_url}
+        name={displayName}
+        className={`w-3 h-3 shrink-0 flex items-center justify-center ${t("bg-white/10", "bg-black/10")}`}
+        initialsClass={`text-[6px] font-semibold ${t("text-text-dark/50", "text-text-light/50")}`}
+      />
+      <span className={`text-[9px] truncate ${t("text-text-dark/40", "text-text-light/40")}`}>
+        {displayName}
+      </span>
+    </div>
+  );
+};
+
+const HistoryItemRow = ({
+  item,
+  isSelected,
+  onSelect,
+  onDelete,
+  t,
+  isDarkMode,
+}: {
+  item: PageHistoryItem;
+  isSelected: boolean;
+  onSelect: () => void;
+  onDelete: (e: React.MouseEvent) => void;
+  t: (dark: string, light: string) => string;
+  isDarkMode: boolean;
+}) => {
+  const activeClass = isSelected
+    ? t("bg-accent/8 border-l-2 border-l-accent", "bg-accent/8 border-l-2 border-l-accent")
+    : t(
+        "hover:bg-white/4 border-l-2 border-l-transparent",
+        "hover:bg-black/4 border-l-2 border-l-transparent",
+      );
+
+  return (
+    <div
+      className={`group w-full px-2 py-1.5 transition-colors flex items-center justify-between gap-1 ${activeClass}`}
+    >
+      <button
+        type="button"
+        className="flex-1 text-left min-w-0 flex flex-col gap-0.5 cursor-pointer"
+        onClick={onSelect}
+      >
+        <div className="flex items-center gap-1 min-w-0">
+          <span
+            className={`text-[8px] font-mono uppercase leading-none ${opColor(item.operation, isDarkMode)}`}
+            title={item.operation}
+          >
+            {opLabel(item.operation)}
+          </span>
+          <span
+            className={`text-[10px] font-semibold truncate flex-1 ${isSelected ? t("text-text-dark", "text-text-light") : t("text-text-dark/60", "text-text-light/60")}`}
+          >
+            {item.title || "untitled"}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-1 w-full">
+          <HistoryAuthor createdById={item.createdById} t={t} />
+          <span
+            className={`font-mono text-[8px] shrink-0 ${t("text-text-dark/20", "text-text-light/20")}`}
+          >
+            {formatHistoryDate(item.createdAt)}
+          </span>
+        </div>
+      </button>
+      <button
+        type="button"
+        onClick={onDelete}
+        className="opacity-0 group-hover:opacity-100 p-0.5 text-red-400/50 hover:text-red-400 transition-opacity cursor-pointer shrink-0"
+        title="delete revision"
+      >
+        <TrashIcon size={9} />
+      </button>
+    </div>
+  );
+};
+
+export const PageHistoryModal = ({
+  isOpen,
+  onClose,
+  pageId,
+  onRestoreSuccess,
+}: PageHistoryModalProps) => {
+  const { isDarkMode } = useTheme();
+  const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLButtonElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  const { data: history = [], isPending } = usePageHistory(pageId);
+  const restorePage = useRestorePage();
+  const deleteEntry = useDeleteHistoryEntry();
+  const deleteAllHistory = useDeleteAllPageHistory();
+
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [highlightChanges, setHighlightChanges] = useState(true);
+  const [currentChangeIndex, setCurrentChangeIndex] = useState(0);
+
+  useEffect(() => {
+    if (history.length > 0 && !selectedId) {
+      setSelectedId(history[0].id);
+    }
+  }, [history, selectedId]);
+
+  useEffect(() => {
+    gsap.set(backdropRef.current, { opacity: 0 });
+    gsap.set(modalRef.current, { opacity: 0, y: -30 });
+    gsap.set(containerRef.current, { display: "none" });
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      gsap.set(containerRef.current, { display: "flex" });
+      gsap.to(backdropRef.current, {
+        duration: 0.18,
+        ease: "power2.out",
+        opacity: 1,
+      });
+      gsap.to(modalRef.current, {
+        duration: 0.25,
+        ease: "power3.out",
+        opacity: 1,
+        y: 0,
+      });
+    } else {
+      gsap.to(backdropRef.current, {
+        duration: 0.12,
+        ease: "power2.in",
+        opacity: 0,
+      });
+      gsap.to(modalRef.current, {
+        duration: 0.15,
+        ease: "power2.in",
+        onComplete: () => {
+          gsap.set(containerRef.current, { display: "none" });
+        },
+        opacity: 0,
+        y: -30,
+      });
+    }
+  }, [isOpen]);
+
+  const selectedItem = useMemo(() => {
+    if (!selectedId) {
+      return history[0] ?? null;
+    }
+    return history.find((h) => h.id === selectedId) ?? history[0] ?? null;
+  }, [history, selectedId]);
+
+  // Find the previous revision (the one right after selectedItem in the sorted list)
+  const previousItem = useMemo(() => {
+    if (!selectedItem || history.length < 2) {
+      return null;
+    }
+    const idx = history.findIndex((h) => h.id === selectedItem.id);
+    if (idx === -1 || idx >= history.length - 1) {
+      return null;
+    }
+    return history[idx + 1];
+  }, [history, selectedItem]);
+
+  // Compute diff HTML and change count
+  const diffResult = useMemo(() => {
+    if (!selectedItem) {
+      return { changeCount: 0, html: "" };
+    }
+    const currentText = extractText(selectedItem);
+    if (!previousItem) {
+      // No previous revision — just show as plain html (no diff)
+      return { changeCount: 0, html: markdownToHtml(currentText) };
+    }
+    const prevText = extractText(previousItem);
+    return buildDiffHtml(prevText, currentText);
+  }, [selectedItem, previousItem]);
+
+  // Plain preview HTML (no diff highlighting)
+  const plainHtml = useMemo(() => {
+    if (!selectedItem) {
+      return "";
+    }
+    const json = parseJsonContent(selectedItem.contentJson);
+    if (json) {
+      const markdown = tiptapToMarkdown(json, selectedItem.title);
+      return markdownToHtml(markdown);
+    }
+    if (selectedItem.textContent) {
+      return markdownToHtml(`# ${selectedItem.title}\n\n${selectedItem.textContent}`);
+    }
+    return markdownToHtml(`# ${selectedItem.title}`);
+  }, [selectedItem]);
+
+  const displayHtml = sanitizeHtml(highlightChanges && previousItem ? diffResult.html : plainHtml);
+  const changeCount = highlightChanges && previousItem ? diffResult.changeCount : 0;
+
+  // Reset change index when selected item or highlight state changes
+  useEffect(() => {
+    if (changeCount > 0) {
+      setCurrentChangeIndex(1);
+      // Auto-scroll to first change
+      requestAnimationFrame(() => {
+        const viewport = previewRef.current;
+        if (!viewport) {
+          return;
+        }
+        const el = viewport.querySelector('[data-diff-index="1"]');
+        if (el instanceof HTMLElement) {
+          const scrollTarget = el.offsetTop - viewport.clientHeight / 2 + el.offsetHeight / 2;
+          viewport.scrollTo({ behavior: "smooth", top: scrollTarget });
+        }
+      });
+    } else {
+      setCurrentChangeIndex(0);
+    }
+  }, [changeCount, selectedId]);
+
+  const scrollToChange = useCallback((index: number) => {
+    const viewport = previewRef.current;
+    if (!viewport || index < 1) {
+      return;
+    }
+    const el = viewport.querySelector(`[data-diff-index="${index}"]`);
+    if (el instanceof HTMLElement) {
+      const scrollTarget = el.offsetTop - viewport.clientHeight / 2 + el.offsetHeight / 2;
+      viewport.scrollTo({ behavior: "smooth", top: scrollTarget });
+    }
+  }, []);
+
+  const handlePrevChange = useCallback(() => {
+    if (changeCount === 0) {
+      return;
+    }
+    const newIndex = currentChangeIndex <= 1 ? changeCount : currentChangeIndex - 1;
+    setCurrentChangeIndex(newIndex);
+    scrollToChange(newIndex);
+  }, [changeCount, currentChangeIndex, scrollToChange]);
+
+  const handleNextChange = useCallback(() => {
+    if (changeCount === 0) {
+      return;
+    }
+    const newIndex = currentChangeIndex >= changeCount ? 1 : currentChangeIndex + 1;
+    setCurrentChangeIndex(newIndex);
+    scrollToChange(newIndex);
+  }, [changeCount, currentChangeIndex, scrollToChange]);
+
+  const handleRestore = () => {
+    if (!selectedItem) {
+      return;
+    }
+    restorePage.mutate(
+      { id: pageId, input: { historyId: selectedItem.id } },
+      {
+        onError: (err) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          setFlashToast(`failed to restore: ${msg}`);
+        },
+        onSuccess: () => {
+          setFlashToast(`restored to ${formatHistoryDate(selectedItem.createdAt)}`);
+          onRestoreSuccess?.();
+          onClose();
+        },
+      },
+    );
+  };
+
+  const handleDeleteEntry = (e: React.MouseEvent, historyId: string) => {
+    e.stopPropagation();
+    deleteEntry.mutate(
+      { historyId, pageId },
+      {
+        onSuccess: () => {
+          setFlashToast("revision deleted");
+          if (selectedId === historyId) {
+            setSelectedId(null);
+          }
+        },
+      },
+    );
+  };
+
+  const handleClearAllHistory = () => {
+    if (history.length === 0) {
+      return;
+    }
+    deleteAllHistory.mutate(pageId, {
+      onSuccess: () => {
+        setFlashToast("history cleared");
+        setSelectedId(null);
+      },
+    });
+  };
+
+  const renderHistoryList = () => {
+    if (isPending) {
+      return (
+        <div className={`p-3 text-[9px] lowercase ${t("text-text-dark/30", "text-text-light/30")}`}>
+          loading...
+        </div>
+      );
+    }
+    if (history.length === 0) {
+      return (
+        <div className={`p-3 text-[9px] lowercase ${t("text-text-dark/30", "text-text-light/30")}`}>
+          no revisions
+        </div>
+      );
+    }
+    return history.map((item) => (
+      <HistoryItemRow
+        key={item.id}
+        item={item}
+        isSelected={selectedItem?.id === item.id}
+        onSelect={() => setSelectedId(item.id)}
+        onDelete={(e) => handleDeleteEntry(e, item.id)}
+        t={t}
+        isDarkMode={isDarkMode}
+      />
+    ));
+  };
+
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
+    <div ref={containerRef} className="fixed inset-0 z-9999 items-start justify-center pt-6 px-4">
+      <button
+        type="button"
+        ref={backdropRef}
+        className="absolute inset-0 bg-black/60 backdrop-blur-xs cursor-pointer border-none"
+        onClick={onClose}
+        aria-label="Close history modal backdrop"
+      />
+
+      <div
+        ref={modalRef}
+        className={`relative z-10 w-full max-w-2xl h-[460px] border flex flex-col overflow-hidden ${t(
+          "bg-bg-dark border-border-dark text-text-dark",
+          "bg-bg-light border-border-light text-text-light",
+        )}`}
+      >
+        {/* Top Header */}
+        <div className={`flex border-b shrink-0 ${t("border-border-dark", "border-border-light")}`}>
+          {/* Sidebar Top Header */}
+          <div
+            className={`w-48 shrink-0 border-r px-2.5 py-1.5 flex items-center justify-between ${t(
+              "border-border-dark",
+              "border-border-light",
+            )}`}
+          >
+            <div className="flex items-center gap-1.5">
+              <ClockCounterClockwiseIcon className="text-accent" size={12} />
+              <span className="font-semibold text-[11px] lowercase">history</span>
+              <span
+                className={`text-[9px] font-mono ${t("text-text-dark/30", "text-text-light/30")}`}
+              >
+                ({history.length})
+              </span>
+            </div>
+            {history.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAllHistory}
+                disabled={deleteAllHistory.isPending}
+                className="text-red-400/40 hover:text-red-400 text-[8px] transition-colors cursor-pointer flex items-center gap-0.5 lowercase"
+                title="clear all history"
+              >
+                <TrashIcon size={8} />
+                <span>clear</span>
+              </button>
+            )}
+          </div>
+
+          {/* Preview Top Header */}
+          <div className="flex-1 px-2.5 py-1.5 flex items-center justify-between min-w-0">
+            <div className="min-w-0 flex-1 mr-2">
+              {selectedItem && (
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`font-semibold text-[10px] truncate lowercase ${t("text-text-dark/80", "text-text-light/80")}`}
+                  >
+                    {selectedItem.title}
+                  </span>
+                  <span
+                    className={`text-[8px] font-mono ${t("text-text-dark/25", "text-text-light/25")}`}
+                  >
+                    {formatHistoryDate(selectedItem.createdAt)}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {selectedItem && (
+                <button
+                  type="button"
+                  onClick={(e) => handleDeleteEntry(e, selectedItem.id)}
+                  disabled={deleteEntry.isPending}
+                  className="flex items-center gap-0.5 text-[9px] lowercase transition-colors cursor-pointer text-red-400/50 hover:text-red-400 hover:underline"
+                  title="delete revision"
+                >
+                  <TrashIcon size={9} />
+                  <span>delete</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onClose}
+                className={`flex items-center gap-0.5 text-[9px] lowercase transition-colors cursor-pointer ${t(
+                  "text-text-dark/30 hover:text-text-dark hover:underline",
+                  "text-text-light/30 hover:text-text-light hover:underline",
+                )}`}
+                aria-label="Close history modal"
+              >
+                <XIcon size={9} />
+                <span>close</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 flex min-h-0 overflow-hidden">
+          {/* Revisions sidebar */}
+          <div
+            className={`w-48 shrink-0 border-r flex flex-col overflow-hidden ${t(
+              "border-border-dark bg-white/2",
+              "border-border-light bg-black/2",
+            )}`}
+          >
+            {/* Revisions list */}
+            <div
+              className={`flex-1 overflow-y-auto divide-y ${t(
+                "divide-border-dark",
+                "divide-border-light",
+              )}`}
+            >
+              {renderHistoryList()}
+            </div>
+          </div>
+
+          {/* Preview panel */}
+          <div className="flex-1 flex flex-col min-w-0">
+            {selectedItem ? (
+              <>
+                {/* Preview content */}
+                <div
+                  ref={previewRef}
+                  className="flex-1 overflow-y-auto p-3 history-diff-preview blog-reader-prose text-xs"
+                >
+                  <div
+                    // eslint-disable-next-line react/no-danger
+                    dangerouslySetInnerHTML={{ __html: displayHtml }}
+                  />
+                </div>
+
+                {/* Footer — highlight toggle + nav + restore */}
+                <div
+                  className={`flex items-center justify-between px-2.5 py-1.5 border-t shrink-0 ${t(
+                    "border-border-dark",
+                    "border-border-light",
+                  )}`}
+                >
+                  <div className="flex items-center gap-2">
+                    {/* Highlight changes toggle */}
+                    {previousItem && (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setHighlightChanges((v) => !v)}
+                          className={`relative inline-flex h-3.5 w-6 shrink-0 cursor-pointer items-center transition-colors duration-150 ${
+                            highlightChanges ? "bg-accent" : t("bg-neutral-700", "bg-neutral-300")
+                          }`}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-2.5 w-2.5 transform shadow-sm transition duration-150 ${
+                              isDarkMode ? "bg-neutral-200" : "bg-white"
+                            } ${highlightChanges ? "translate-x-3" : "translate-x-0.5"}`}
+                          />
+                        </button>
+                        <span
+                          className={`text-[9px] lowercase ${t("text-text-dark/40", "text-text-light/40")}`}
+                        >
+                          changes
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Change navigation arrows */}
+                    {highlightChanges && changeCount > 0 && (
+                      <div className="flex items-center gap-0.5">
+                        <span
+                          className={`text-[8px] font-mono ${t("text-text-dark/30", "text-text-light/30")}`}
+                        >
+                          {currentChangeIndex}/{changeCount}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handlePrevChange}
+                          className={`p-0.5 transition-colors cursor-pointer ${t(
+                            "text-text-dark/30 hover:text-text-dark",
+                            "text-text-light/30 hover:text-text-light",
+                          )}`}
+                          title="previous change"
+                        >
+                          <CaretUpIcon size={10} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleNextChange}
+                          className={`p-0.5 transition-colors cursor-pointer ${t(
+                            "text-text-dark/30 hover:text-text-dark",
+                            "text-text-light/30 hover:text-text-light",
+                          )}`}
+                          title="next change"
+                        >
+                          <CaretDownIcon size={10} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Restore button */}
+                  <button
+                    type="button"
+                    onClick={handleRestore}
+                    disabled={restorePage.isPending}
+                    className="flex items-center gap-1 px-1 py-0.5 text-[10px] font-medium lowercase transition-colors cursor-pointer text-accent hover:underline"
+                  >
+                    <ArrowClockwiseIcon
+                      size={10}
+                      className={restorePage.isPending ? "animate-spin" : ""}
+                    />
+                    <span>{restorePage.isPending ? "restoring..." : "restore this version"}</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <span
+                  className={`text-[10px] lowercase ${t("text-text-dark/20", "text-text-light/20")}`}
+                >
+                  select a revision
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+};

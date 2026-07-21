@@ -23,6 +23,7 @@ import type {
   Stats,
   UpdatePageInput,
   Workspace,
+  PageShare,
 } from "#/shared/types";
 import { logger } from "#/shared/lib/logger";
 
@@ -243,6 +244,37 @@ export const unpublishConsolePage = (id: string, cookieHeader?: string | null) =
     },
   );
 
+export const getConsolePageShare = (id: string, cookieHeader?: string | null) =>
+  fetchBacky<PageShare>(`console/pages/${encodeURIComponent(id)}/share`, {
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+  });
+
+export const updateConsolePageShare = (
+  id: string,
+  input: { isEnabled: boolean; searchIndexing: boolean },
+  cookieHeader?: string | null,
+) =>
+  fetchBacky<PageShare>(`console/pages/${encodeURIComponent(id)}/share`, {
+    body: JSON.stringify(input),
+    headers: {
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      "Content-Type": "application/json",
+    },
+    method: "PUT",
+  });
+
+export const shortenConsolePageShare = (id: string, cookieHeader?: string | null) =>
+  fetchBacky<PageShare>(`console/pages/${encodeURIComponent(id)}/share/shorten`, {
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+    method: "POST",
+  });
+
+export const getPublicShare = (token: string) =>
+  fetchBacky<unknown>(`shares/${encodeURIComponent(token)}`);
+
+export const getPublicShort = (shortCode: string) =>
+  fetchBacky<unknown>(`short/${encodeURIComponent(shortCode)}`);
+
 export const getPageBySpaceAndSlug = (
   spaceId: string,
   slugId: string,
@@ -303,6 +335,25 @@ export const restorePage = (id: string, input: RestorePageInput, cookieHeader?: 
     },
     method: "POST",
   });
+
+export const deletePageHistory = (id: string, cookieHeader?: string | null) =>
+  fetchBacky<{ success: boolean }>(`console/pages/${encodeURIComponent(id)}/history`, {
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+    method: "DELETE",
+  });
+
+export const deletePageHistoryEntry = (
+  id: string,
+  historyId: string,
+  cookieHeader?: string | null,
+) =>
+  fetchBacky<{ success: boolean }>(
+    `console/pages/${encodeURIComponent(id)}/history/${encodeURIComponent(historyId)}`,
+    {
+      headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+      method: "DELETE",
+    },
+  );
 
 export const watchConsolePage = (id: string, cookieHeader?: string | null) =>
   fetchBacky<{ watching: boolean }>(`console/pages/${encodeURIComponent(id)}/watch`, {

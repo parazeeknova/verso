@@ -121,6 +121,7 @@ type PageTreeItem struct {
 	Icon         string  `json:"icon"`
 	Position     string  `json:"position"`
 	IsPublished  bool    `json:"isPublished"`
+	IsShared     bool    `json:"isShared"`
 	ParentPageID *string `json:"parentPageId,omitempty"`
 	SpaceID      string  `json:"spaceId"`
 	WorkspaceID  string  `json:"workspaceId"`
@@ -387,4 +388,16 @@ type PushSubscription struct {
 	UserAgent string    `json:"userAgent"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// PageShare represents a public share setting for a page.
+type PageShare struct {
+	ID             string    `json:"id"`
+	PageID         string    `json:"pageId"`
+	ShareToken     string    `json:"shareToken"`
+	ShortCode      *string   `json:"shortCode,omitempty"`
+	SearchIndexing bool      `json:"searchIndexing"`
+	IsEnabled      bool      `json:"isEnabled"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
 }

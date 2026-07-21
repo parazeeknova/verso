@@ -6,11 +6,20 @@ export const useEditorContent = (editor: Editor | null, pageId: string) => {
   const updatePage = useUpdatePage();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingFlushRef = useRef(false);
+  const dirtyRef = useRef(false);
+  const lastSavedJsonRef = useRef<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const flush = useCallback(() => {
-    if (!editor) {
+    if (!editor || !dirtyRef.current) {
+      return;
+    }
+    const json = editor.getJSON();
+    const jsonStr = JSON.stringify(json);
+    if (lastSavedJsonRef.current === jsonStr) {
+      dirtyRef.current = false;
+      setDirty(false);
       return;
     }
     if (updatePage.isPending) {
@@ -18,18 +27,19 @@ export const useEditorContent = (editor: Editor | null, pageId: string) => {
       return;
     }
     pendingFlushRef.current = false;
-    const json = editor.getJSON();
     const text = editor.getText();
     updatePage.mutate(
       {
         id: pageId,
         input: {
-          contentJson: JSON.stringify(json),
+          contentJson: jsonStr,
           textContent: text,
         },
       },
       {
         onSuccess: () => {
+          lastSavedJsonRef.current = jsonStr;
+          dirtyRef.current = false;
           setDirty(false);
           setLastSaved(new Date());
         },
@@ -44,6 +54,7 @@ export const useEditorContent = (editor: Editor | null, pageId: string) => {
   }, [updatePage.isPending, flush]);
 
   const markDirty = useCallback(() => {
+    dirtyRef.current = true;
     setDirty(true);
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
@@ -61,5 +72,24 @@ export const useEditorContent = (editor: Editor | null, pageId: string) => {
     }
   }, []);
 
-  return { cleanup, dirty, flush, isSaving: updatePage.isPending, lastSaved, markDirty };
+  const resetDirty = useCallback(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    pendingFlushRef.current = false;
+    dirtyRef.current = false;
+    lastSavedJsonRef.current = null;
+    setDirty(false);
+  }, []);
+
+  return {
+    cleanup,
+    dirty,
+    flush,
+    isSaving: updatePage.isPending,
+    lastSaved,
+    markDirty,
+    resetDirty,
+  };
 };

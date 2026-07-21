@@ -4,6 +4,7 @@ export interface PageEditorProps {
   pageId: string;
   contentJson: string;
   editable: boolean;
+  isLocked: boolean;
   title: string;
   spaceName?: string;
   spaceSlug?: string;

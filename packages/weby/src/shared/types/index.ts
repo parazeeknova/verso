@@ -96,6 +96,7 @@ export interface ConsolePage {
   title: string;
   icon: string;
   isPublished: boolean;
+  isShared: boolean;
   spaceId: string;
   parentPageId: string | null;
   createdAt: string;
@@ -112,12 +113,14 @@ export interface ConsolePageDetail {
   textContent: string;
   position: string;
   isPublished: boolean;
+  isShared: boolean;
   parentPageId: string | null;
   spaceId: string;
   creatorId: string;
   createdAt: string;
   updatedAt: string;
   editable: boolean;
+  isLocked: boolean;
 }
 
 export interface PageWatchStatus {
@@ -131,12 +134,24 @@ export interface PageTreeItem {
   icon: string;
   position: string;
   isPublished: boolean;
+  isShared: boolean;
   parentPageId: string | null;
   spaceId: string;
   hasChildren: boolean;
   creatorId?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PageShare {
+  id?: string;
+  pageId: string;
+  shareToken: string;
+  shortCode?: string | null;
+  searchIndexing: boolean;
+  isEnabled: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface PageHistoryItem {
@@ -165,6 +180,7 @@ export interface UpdatePageInput {
   coverPhoto?: string;
   contentJson?: string;
   textContent?: string;
+  isLocked?: boolean;
 }
 
 export interface MovePageInput {
