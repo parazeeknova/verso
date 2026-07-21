@@ -268,7 +268,7 @@ const Home = function Home() {
             onClick={() => setViewMode("blogs")}
             type="button"
           >
-            blogs / projects
+            blogs
           </button>
           <button
             aria-label="Toggle theme"
