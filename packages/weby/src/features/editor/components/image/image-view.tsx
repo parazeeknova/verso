@@ -15,7 +15,7 @@ const ImageContent = ({ src, previewSrc, placeholder, alt }: ImageContentProps) 
     return (
       <img
         alt={alt || "uploaded image"}
-        className="w-full h-full object-contain rounded-none block transition-transform duration-300"
+        className="w-full h-auto block object-contain rounded-none transition-transform duration-300"
         src={src}
       />
     );
@@ -63,15 +63,15 @@ export const ImageView = (props: NodeViewProps) => {
     return null;
   }, [placeholder?.id, editor?.storage]);
 
+  let displayHeight = "auto";
+  if (!src && !aspectRatio && height) {
+    displayHeight = typeof height === "number" ? `${height}px` : height;
+  }
+
   // Support responsive percentage widths or raw pixels
   let displayWidth = "100%";
   if (width) {
     displayWidth = typeof width === "number" ? `${width}px` : width;
-  }
-
-  let displayHeight = "auto";
-  if (height) {
-    displayHeight = typeof height === "number" ? `${height}px` : height;
   }
 
   // Flex alignment classes on the wrapping block
