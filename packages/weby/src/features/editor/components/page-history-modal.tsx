@@ -429,7 +429,7 @@ export const PageHistoryModal = ({
           <div className="flex-1 flex flex-col min-w-0">
             {selectedItem ? (
               <>
-                {/* Preview action bar */}
+                {/* Preview header — title + date + delete */}
                 <div
                   className={`flex items-center justify-between px-2.5 py-1.5 border-b shrink-0 ${t(
                     "border-border-dark",
@@ -448,32 +448,18 @@ export const PageHistoryModal = ({
                       {formatHistoryDate(selectedItem.createdAt)}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={(e) => handleDeleteEntry(e, selectedItem.id)}
-                      disabled={deleteEntry.isPending}
-                      className={`p-1 transition-colors cursor-pointer border ${t(
-                        "text-red-400/50 hover:text-red-400 border-border-dark hover:bg-red-400/10",
-                        "text-red-400/50 hover:text-red-400 border-border-light hover:bg-red-400/10",
-                      )}`}
-                      title="delete revision"
-                    >
-                      <TrashIcon size={10} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleRestore}
-                      disabled={restorePage.isPending}
-                      className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium lowercase transition-colors cursor-pointer border border-accent bg-accent/8 text-accent hover:bg-accent/15"
-                    >
-                      <ArrowClockwiseIcon
-                        size={10}
-                        className={restorePage.isPending ? "animate-spin" : ""}
-                      />
-                      <span>{restorePage.isPending ? "restoring..." : "restore"}</span>
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteEntry(e, selectedItem.id)}
+                    disabled={deleteEntry.isPending}
+                    className={`p-1 transition-colors cursor-pointer border ${t(
+                      "text-red-400/50 hover:text-red-400 border-border-dark hover:bg-red-400/10",
+                      "text-red-400/50 hover:text-red-400 border-border-light hover:bg-red-400/10",
+                    )}`}
+                    title="delete revision"
+                  >
+                    <TrashIcon size={10} />
+                  </button>
                 </div>
 
                 {/* Preview content */}
@@ -482,6 +468,32 @@ export const PageHistoryModal = ({
                     // eslint-disable-next-line react/no-danger
                     dangerouslySetInnerHTML={{ __html: previewHtml }}
                   />
+                </div>
+
+                {/* Restore footer */}
+                <div
+                  className={`flex items-center justify-between px-2.5 py-1.5 border-t shrink-0 ${t(
+                    "border-border-dark",
+                    "border-border-light",
+                  )}`}
+                >
+                  <span
+                    className={`text-[8px] font-mono lowercase ${t("text-text-dark/20", "text-text-light/20")}`}
+                  >
+                    {selectedItem.operation} · {formatHistoryDate(selectedItem.createdAt)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleRestore}
+                    disabled={restorePage.isPending}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium lowercase transition-colors cursor-pointer border border-accent text-accent hover:bg-accent hover:text-white"
+                  >
+                    <ArrowClockwiseIcon
+                      size={10}
+                      className={restorePage.isPending ? "animate-spin" : ""}
+                    />
+                    <span>{restorePage.isPending ? "restoring..." : "restore this version"}</span>
+                  </button>
                 </div>
               </>
             ) : (
