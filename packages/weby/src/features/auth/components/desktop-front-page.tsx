@@ -1,3 +1,4 @@
+// oxlint-disable no-shadow: fak this shi
 import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
@@ -394,15 +395,8 @@ export const DesktopFrontPage = () => {
               verso
             </GradientText>
           </div>
-          <p
-            className={`mt-2 text-xs sm:text-sm lowercase tracking-wider ${
-              isDarkMode ? "text-text-dark/40" : "text-text-light/40"
-            }`}
-          >
-            open source &middot; self-hosted &middot; yours
-          </p>
           <a
-            className={`mt-1.5 text-xs sm:text-sm lowercase tracking-wider transition-opacity opacity-40 hover:opacity-90 ${
+            className={`mt-2 text-xs sm:text-sm lowercase tracking-wider transition-opacity opacity-40 hover:opacity-90 ${
               isDarkMode ? "text-text-dark" : "text-text-light"
             }`}
             href="https://amemorymachine.cc"
