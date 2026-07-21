@@ -8,9 +8,8 @@ import {
   ProfileSection,
   SocialLinks,
 } from "#/features/landing/components/sections";
-import { ScrollContainer } from "#/features/landing/components/scroll-container";
 import { ReadmeViewer } from "#/features/landing/components/readme-viewer";
-import { MobileProjectList, ProjectList } from "#/features/landing/components/projects";
+import { ProjectList } from "#/features/landing/components/projects";
 import { BlogReaderPanel } from "#/features/blog/components/blog-reader-panel";
 import { LoginPopup } from "#/features/auth/components/login-popup";
 import {
@@ -95,7 +94,7 @@ const useThemeButtonHover = (): ThemeButtonRefs => {
 
 const Home = function Home() {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [mobileView, setMobileView] = useState<"about" | "blogs">("about");
+  const [viewMode, setViewMode] = useState<"portfolio" | "blogs">("portfolio");
   const [selectedProject, setSelectedProject] = useState<{
     productUrl?: string;
     readmeUrl: string;
@@ -107,41 +106,11 @@ const Home = function Home() {
   const themeRefs = useThemeButtonHover();
   const themeRefsRight = useThemeButtonHover();
 
-  const leftPanelRef = useRef<HTMLDivElement>(null);
-  const rightPanelRef = useRef<HTMLDivElement>(null);
-  const mainContainerRef = useRef<HTMLDivElement>(null);
-
   const { data: profile } = useProfile();
   const { data: experience } = useExperience();
   const { data: projects } = useProjects();
   const { data: manifest = [] } = useBlogManifest();
   const isPending = useIsFetchingData();
-
-  // Auto-select first project readme when no blog posts exist
-  useEffect(() => {
-    if (!projects || projects.length === 0) {
-      return;
-    }
-    if (selectedProject) {
-      return;
-    }
-    const hasPosts = manifest.some((s) => s.children.length > 0);
-    if (hasPosts) {
-      return;
-    }
-    const firstWithReadme = projects.find((p) => p.readmeUrl);
-    if (firstWithReadme?.readmeUrl) {
-      setSelectedProject({
-        productUrl: firstWithReadme.productUrl,
-        readmeUrl: firstWithReadme.readmeUrl,
-        repoUrl: firstWithReadme.repoUrl,
-        title: firstWithReadme.title,
-      });
-      if (!isMobile) {
-        setMobileView("blogs");
-      }
-    }
-  }, [projects, manifest, selectedProject, isMobile]);
 
   // Read initial theme from localStorage on mount
   useEffect(() => {
@@ -173,11 +142,9 @@ const Home = function Home() {
         repoUrl: project.repoUrl,
         title: project.title,
       });
-      if (isMobile) {
-        setMobileView("blogs");
-      }
+      setViewMode("blogs");
     },
-    [isMobile],
+    [],
   );
 
   // Extract GitHub username from profile or env
@@ -192,90 +159,13 @@ const Home = function Home() {
     return "parazeeknova";
   })();
 
-  let rightPanelVisibility: string;
-  if (isMobile) {
-    rightPanelVisibility = mobileView === "blogs" ? "h-screen overflow-hidden" : "hidden";
-  } else {
-    rightPanelVisibility = "min-h-0 overflow-hidden lg:border-l";
-  }
-
-  return (
-    <div
-      className="relative grid min-h-screen grid-cols-1 lg:overflow-hidden lg:h-screen lg:grid-cols-2"
-      ref={mainContainerRef}
-    >
+  if (viewMode === "blogs") {
+    return (
       <div
         data-theme={isDarkMode ? "dark" : "light"}
-        className={`relative z-10 flex select-none flex-col gap-4 overflow-y-auto p-4 sm:gap-6 sm:p-6 lg:gap-8 lg:overflow-hidden lg:p-8 ${
+        className={`min-h-screen w-full select-none overflow-y-auto ${
           isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
-        } ${isMobile && mobileView !== "about" ? "hidden" : ""}`}
-        ref={leftPanelRef}
-      >
-        <div className="absolute top-4 right-4 flex items-center gap-3 sm:top-6 sm:right-6 lg:top-8 lg:right-8">
-          {isMobile && (
-            <button
-              className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${
-                isDarkMode ? "text-text-dark/60" : "text-text-light/60"
-              }`}
-              onClick={() => setMobileView("blogs")}
-            >
-              blogs
-            </button>
-          )}
-          <button
-            aria-label="Toggle theme"
-            className="rounded-full p-2 focus:outline-none focus-visible:ring-1 focus-visible:ring-current/40"
-            onClick={toggleTheme}
-            ref={themeRefs.buttonRef}
-          >
-            <span className="sr-only">Toggle theme</span>
-            <span
-              className="block h-3 w-3 rounded-full border border-current"
-              ref={themeRefs.indicatorRef}
-              style={{ backgroundColor: "transparent" }}
-            />
-          </button>
-        </div>
-
-        <ProfileSection isMobile={isMobile} isPending={isPending} profile={profile} />
-
-        <div className="shrink-0 space-y-2">
-          <h3 className="font-medium text-base">work i did</h3>
-          <ExperienceSection experience={experience} isPending={isPending} />
-        </div>
-
-        {isMobile ? (
-          <div className="shrink-0 space-y-2">
-            <h3 className="font-medium text-base">voo look what i made</h3>
-            <MobileProjectList onDetail={handleProjectDetail} />
-          </div>
-        ) : (
-          <div className="flex min-h-0 flex-1 flex-col">
-            <h3 className="mb-2 shrink-0 font-medium text-base">voo look what i made</h3>
-            <ScrollContainer className="min-h-0 flex-1">
-              <ProjectList onDetail={handleProjectDetail} />
-            </ScrollContainer>
-          </div>
-        )}
-
-        <GitHubActivity isDarkMode={isDarkMode} username={githubUsername}>
-          <GitHubStats />
-        </GitHubActivity>
-
-        <div className="shrink-0 flex items-center justify-between">
-          <SocialLinks profile={profile} />
-          <LoginPopup isDarkMode={isDarkMode} />
-        </div>
-      </div>
-
-      <div
-        data-theme={isDarkMode ? "dark" : "light"}
-        className={`relative ${rightPanelVisibility} ${
-          isDarkMode
-            ? "border-border-dark bg-bg-dark text-text-dark"
-            : "border-border-light bg-bg-light text-text-light"
         }`}
-        ref={rightPanelRef}
       >
         {selectedProject ? (
           <ReadmeViewer
@@ -285,7 +175,7 @@ const Home = function Home() {
             onBack={() => setSelectedProject(null)}
             onSelectPost={() => setSelectedProject(null)}
             onSelectProject={handleProjectDetail}
-            onSwitchToAbout={() => setMobileView("about")}
+            onSwitchToAbout={() => setViewMode("portfolio")}
             onToggleTheme={toggleTheme}
             productUrl={selectedProject.productUrl}
             projectTitle={selectedProject.title}
@@ -303,7 +193,7 @@ const Home = function Home() {
             isMobile={isMobile}
             manifest={manifest}
             onSelectProject={handleProjectDetail}
-            onSwitchToAbout={() => setMobileView("about")}
+            onSwitchToAbout={() => setViewMode("portfolio")}
             onToggleTheme={toggleTheme}
             projects={projects}
             slug=""
@@ -313,6 +203,66 @@ const Home = function Home() {
             }
           />
         )}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      data-theme={isDarkMode ? "dark" : "light"}
+      className={`min-h-screen w-full select-none overflow-y-auto p-4 sm:p-6 lg:p-8 ${
+        isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
+      }`}
+    >
+      <div className="mx-auto flex max-w-3xl flex-col gap-6 sm:gap-8">
+        <div className="flex items-center justify-end gap-3 w-full">
+          <button
+            className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${
+              isDarkMode
+                ? "text-text-dark/60 hover:text-text-dark"
+                : "text-text-light/60 hover:text-text-light"
+            }`}
+            onClick={() => setViewMode("blogs")}
+            type="button"
+          >
+            blogs / projects
+          </button>
+          <button
+            aria-label="Toggle theme"
+            className="rounded-full p-2 focus:outline-none focus-visible:ring-1 focus-visible:ring-current/40"
+            onClick={toggleTheme}
+            ref={themeRefs.buttonRef}
+            type="button"
+          >
+            <span className="sr-only">Toggle theme</span>
+            <span
+              className="block h-3 w-3 rounded-full border border-current"
+              ref={themeRefs.indicatorRef}
+              style={{ backgroundColor: "transparent" }}
+            />
+          </button>
+        </div>
+
+        <ProfileSection isMobile={isMobile} isPending={isPending} profile={profile} />
+
+        <div className="shrink-0 space-y-2">
+          <h3 className="font-medium text-base">work i did</h3>
+          <ExperienceSection experience={experience} isPending={isPending} />
+        </div>
+
+        <div className="shrink-0 space-y-2">
+          <h3 className="font-medium text-base">voo look what i made</h3>
+          <ProjectList onDetail={handleProjectDetail} />
+        </div>
+
+        <GitHubActivity isDarkMode={isDarkMode} username={githubUsername}>
+          <GitHubStats />
+        </GitHubActivity>
+
+        <div className="shrink-0 flex items-center justify-between pt-2">
+          <SocialLinks profile={profile} />
+          <LoginPopup isDarkMode={isDarkMode} />
+        </div>
       </div>
     </div>
   );
