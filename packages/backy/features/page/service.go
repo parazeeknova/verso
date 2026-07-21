@@ -797,9 +797,6 @@ func (s *PageService) softDeletePageAndDescendantsTx(ctx context.Context, tx pgx
 	}
 	page.ContentJSON = json.RawMessage(contentJSONBytes)
 
-	if err := s.insertHistoryTx(ctx, tx, page, "delete", userID); err != nil {
-		return err
-	}
 	*deletedPages = append(*deletedPages, page)
 
 	// Soft-delete the page and clear its history.
@@ -808,7 +805,9 @@ func (s *PageService) softDeletePageAndDescendantsTx(ctx context.Context, tx pgx
 		return fmt.Errorf("soft-deleting page %q: %w", pageID, err)
 	}
 
-	_, _ = tx.Exec(ctx, `DELETE FROM page_history WHERE page_id = $1`, pageID)
+	if _, err := tx.Exec(ctx, `DELETE FROM page_history WHERE page_id = $1`, pageID); err != nil {
+		return fmt.Errorf("deleting page history for page %q: %w", pageID, err)
+	}
 
 	return nil
 }
@@ -1018,17 +1017,17 @@ func newUUID() string {
 	return uuid.New().String()
 }
 
-func generateRandomString(n int) string {
+func generateRandomString(n int) (string, error) {
 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	ret := make([]byte, n)
 	for i := 0; i < n; i++ {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
 		if err != nil {
-			return ""
+			return "", fmt.Errorf("generating random string: %w", err)
 		}
 		ret[i] = letters[num.Int64()]
 	}
-	return string(ret)
+	return string(ret), nil
 }
 
 func (s *PageService) GetPageShare(ctx context.Context, pageID string, userID string) (models.PageShare, error) {
@@ -1065,10 +1064,14 @@ func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID
 	share, err := s.pageShareRepo.GetByPageID(ctx, pageID)
 	if err != nil {
 		if errors.Is(err, repositories.ErrShareNotFound) {
+			token, err := generateRandomString(32)
+			if err != nil {
+				return models.PageShare{}, err
+			}
 			share = models.PageShare{
 				ID:             newUUID(),
 				PageID:         pageID,
-				ShareToken:     generateRandomString(32),
+				ShareToken:     token,
 				SearchIndexing: searchIndexing,
 				IsEnabled:      isEnabled,
 			}
@@ -1079,7 +1082,11 @@ func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID
 		share.IsEnabled = isEnabled
 		share.SearchIndexing = searchIndexing
 		if share.ShareToken == "" {
-			share.ShareToken = generateRandomString(32)
+			token, err := generateRandomString(32)
+			if err != nil {
+				return models.PageShare{}, err
+			}
+			share.ShareToken = token
 		}
 	}
 
@@ -1107,7 +1114,10 @@ func (s *PageService) ShortenPageShare(ctx context.Context, pageID string, userI
 
 	if share.ShortCode == nil || *share.ShortCode == "" {
 		for i := 0; i < 5; i++ {
-			code := generateRandomString(8)
+			code, err := generateRandomString(8)
+			if err != nil {
+				return models.PageShare{}, err
+			}
 			share.ShortCode = &code
 			updatedShare, err := s.pageShareRepo.Upsert(ctx, share)
 			if err == nil {
@@ -1164,4 +1174,15 @@ func (s *PageService) IsPageShared(ctx context.Context, pageID string) bool {
 		return false
 	}
 	return share.IsEnabled
+}
+
+func (s *PageService) GetSharedMapForPages(ctx context.Context, pageIDs []string) map[string]bool {
+	if s.pageShareRepo == nil || len(pageIDs) == 0 {
+		return map[string]bool{}
+	}
+	res, err := s.pageShareRepo.GetSharedMapByPageIDs(ctx, pageIDs)
+	if err != nil {
+		return map[string]bool{}
+	}
+	return res
 }

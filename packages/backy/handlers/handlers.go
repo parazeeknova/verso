@@ -212,6 +212,12 @@ func (h *Handlers) GetConsolePages(c *gin.Context) {
 		return
 	}
 
+	pageIDs := make([]string, len(pages))
+	for i, p := range pages {
+		pageIDs[i] = p.ID
+	}
+	sharedMap := h.pageService.GetSharedMapForPages(c.Request.Context(), pageIDs)
+
 	summaries := make([]ConsolePageSummary, 0, len(pages))
 	for _, p := range pages {
 		summaries = append(summaries, ConsolePageSummary{
@@ -220,7 +226,7 @@ func (h *Handlers) GetConsolePages(c *gin.Context) {
 			Title:        p.Title,
 			Icon:         p.Icon,
 			IsPublished:  p.IsPublished,
-			IsShared:     h.pageService.IsPageShared(c.Request.Context(), p.ID),
+			IsShared:     sharedMap[p.ID],
 			SpaceID:      p.SpaceID,
 			ParentPageID: p.ParentPageID,
 			CreatedAt:    p.CreatedAt.Format(time.RFC3339),

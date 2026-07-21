@@ -395,7 +395,11 @@ export const ConsoleHome = () => {
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    {page.isShared && <GlobeIcon className="text-accent shrink-0" size={12} />}
+                    {page.isShared && (
+                      <span title="shared">
+                        <GlobeIcon className="text-accent shrink-0" size={12} />
+                      </span>
+                    )}
                     <span
                       className={`text-[10px] lowercase truncate max-w-32 text-center ${t("text-text-dark/20", "text-text-light/20")}`}
                     >

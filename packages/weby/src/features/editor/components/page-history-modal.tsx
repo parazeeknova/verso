@@ -116,6 +116,13 @@ const buildDiffHtml = (oldText: string, newText: string): { html: string; change
   return { changeCount: changeIndex, html: segments.join("") };
 };
 
+const sanitizeHtml = (html: string): string =>
+  html
+    .replaceAll(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replaceAll(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
+    .replaceAll(/\s*on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replaceAll(/javascript:/gi, "");
+
 // Extract plain text from a history item for diffing
 const extractText = (item: PageHistoryItem): string => {
   const json = parseJsonContent(item.contentJson);
@@ -334,7 +341,7 @@ export const PageHistoryModal = ({
     return markdownToHtml(`# ${selectedItem.title}`);
   }, [selectedItem]);
 
-  const displayHtml = highlightChanges && previousItem ? diffResult.html : plainHtml;
+  const displayHtml = sanitizeHtml(highlightChanges && previousItem ? diffResult.html : plainHtml);
   const changeCount = highlightChanges && previousItem ? diffResult.changeCount : 0;
 
   // Reset change index when selected item or highlight state changes

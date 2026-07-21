@@ -311,7 +311,11 @@ const PageNode = ({ node, depth, spaceId, spaceSlug, treeItems }: PageNodeProps)
 
         {!isRenaming && !isHovered && (
           <div className="flex items-center gap-1 shrink-0 mr-0.5">
-            {node.item.isShared && <GlobeIcon className="shrink-0 text-accent" size={9} />}
+            {node.item.isShared && (
+              <span title="shared">
+                <GlobeIcon className="shrink-0 text-accent" size={9} />
+              </span>
+            )}
             <span
               className={`text-[8px] font-mono ${t("text-text-dark/20", "text-text-light/20")}`}
             >

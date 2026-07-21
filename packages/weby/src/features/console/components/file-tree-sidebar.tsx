@@ -106,6 +106,10 @@ const RenameInput = ({
     </button>
     <button
       className={`shrink-0 text-[10px] lowercase px-1 cursor-pointer ${t("text-text-dark/25 hover:text-text-dark/60", "text-text-light/25 hover:text-text-light/60")}`}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        setIsRenaming(false);
+      }}
       onClick={() => setIsRenaming(false)}
       type="button"
     >
@@ -176,7 +180,7 @@ const PageNodeActionsMenu = ({
       </button>
       {menuOpen && menuPos && (
         <div
-          className={`fixed z-9999 py-0.5 w-24 text-[10px] lowercase shadow-lg ${t(
+          className={`fixed z-[9999] py-0.5 w-24 text-[10px] lowercase shadow-lg ${t(
             "bg-neutral-800 border border-white/10 text-text-dark",
             "bg-white border border-black/10 text-text-light",
           )}`}
@@ -389,7 +393,11 @@ const PageNode = ({ node, depth, treeItems, spaceSlug }: PageNodeProps) => {
 
         {!isRenaming && !isHovered && (
           <div className="flex items-center gap-1 shrink-0 mr-0.5">
-            {node.item.isShared && <GlobeIcon className="shrink-0 text-accent" size={9} />}
+            {node.item.isShared && (
+              <span title="shared">
+                <GlobeIcon className="shrink-0 text-accent" size={9} />
+              </span>
+            )}
             <span
               className={`text-[8px] font-mono ${t("text-text-dark/20", "text-text-light/20")}`}
             >
@@ -648,7 +656,11 @@ const FavoritedPagesList = ({ favPageIds, favSpaces }: FavoritedPagesListProps) 
                 </span>
                 <FileTextIcon size={10} />
                 <span className="flex-1 truncate">{page.title}</span>
-                {page.isShared && <GlobeIcon className="shrink-0 text-accent mr-1" size={10} />}
+                {page.isShared && (
+                  <span title="shared">
+                    <GlobeIcon className="shrink-0 text-accent mr-1" size={10} />
+                  </span>
+                )}
                 <span
                   className={`shrink-0 text-[8px] px-1 py-0.5 lowercase ${t("text-text-dark/25", "text-text-light/25")}`}
                 >
@@ -682,7 +694,11 @@ const FavoritedPagesList = ({ favPageIds, favSpaces }: FavoritedPagesListProps) 
         >
           <FileTextIcon size={10} />
           <span className="flex-1 truncate">{page.title}</span>
-          {page.isShared && <GlobeIcon className="shrink-0 text-accent mr-1" size={10} />}
+          {page.isShared && (
+            <span title="shared">
+              <GlobeIcon className="shrink-0 text-accent mr-1" size={10} />
+            </span>
+          )}
           <span
             className={`shrink-0 text-[8px] px-1 py-0.5 lowercase ${t("text-text-dark/25", "text-text-light/25")}`}
           >

@@ -8,6 +8,3 @@ CREATE TABLE IF NOT EXISTS page_shares (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
-
-CREATE INDEX IF NOT EXISTS idx_page_shares_token ON page_shares (share_token);
-CREATE INDEX IF NOT EXISTS idx_page_shares_short_code ON page_shares (short_code);

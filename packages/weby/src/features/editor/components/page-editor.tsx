@@ -35,6 +35,7 @@ import { TableMenu } from "./table/table-menu";
 import { ColumnsMenu } from "./columns/columns-menu";
 import { CalloutMenu } from "./callout/callout-menu";
 import { ImageMenu } from "./image/image-menu";
+import { handleCopy } from "../lib/clipboard";
 import { VideoMenu } from "./video/video-menu";
 import { AudioMenu } from "./audio/audio-menu";
 import { PdfMenu } from "./pdf/pdf-menu";
@@ -483,22 +484,17 @@ const InternetIndicator = ({ t }: { t: (dark: string, light: string) => string }
         {isOnline ? <WifiHighIcon size={14} /> : <WifiSlashIcon size={14} />}
       </div>
       {showTooltip && (
-        <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 whitespace-nowrap px-2 py-0.5 text-[9px] font-mono lowercase shadow-lg border border-border-dark bg-bg-dark text-text-dark dark:border-border-dark dark:bg-bg-dark dark:text-text-dark">
+        <div
+          className={`pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 whitespace-nowrap px-2 py-0.5 text-[9px] font-mono lowercase shadow-lg border ${t(
+            "border-border-dark bg-bg-dark text-text-dark",
+            "border-border-light bg-bg-light text-text-light",
+          )}`}
+        >
           {isOnline ? "online" : "offline (no connection)"}
         </div>
       )}
     </div>
   );
-};
-
-const handleCopy = async (text: string, setCopyState: (v: boolean) => void) => {
-  try {
-    await navigator.clipboard.writeText(text);
-    setCopyState(true);
-    setTimeout(() => setCopyState(false), 2000);
-  } catch (error) {
-    console.error("failed to copy:", error);
-  }
 };
 
 const ShareInfoSection = ({

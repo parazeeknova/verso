@@ -120,12 +120,33 @@ export const useUpdatePage = () => {
         method: "PUT",
       }),
     onError: (_err, variables, context) => {
-      if (context?.previousPage) {
-        queryClient.setQueryData(["consolePage", variables.id], context.previousPage);
-        if (context.previousPage.spaceId && context.previousPage.slugId) {
-          queryClient.setQueryData(
-            ["consolePage", context.previousPage.spaceId, context.previousPage.slugId],
-            context.previousPage,
+      const ctx = context as
+        | { previousPage?: ConsolePageDetail; touchedKeys?: (keyof ConsolePageDetail)[] }
+        | undefined;
+      const prev = ctx?.previousPage;
+      const touched = ctx?.touchedKeys;
+      if (prev && touched) {
+        const rollbackEntry = (
+          current: ConsolePageDetail | undefined,
+        ): ConsolePageDetail | undefined => {
+          if (!current) {
+            return prev;
+          }
+          const restored = { ...current };
+          for (const key of touched) {
+            if (key in prev) {
+              (restored as Record<string, unknown>)[key as string] = (
+                prev as unknown as Record<string, unknown>
+              )[key as string];
+            }
+          }
+          return restored;
+        };
+        queryClient.setQueryData<ConsolePageDetail>(["consolePage", variables.id], rollbackEntry);
+        if (prev.spaceId && prev.slugId) {
+          queryClient.setQueryData<ConsolePageDetail>(
+            ["consolePage", prev.spaceId, prev.slugId],
+            rollbackEntry,
           );
         }
       }
@@ -133,6 +154,7 @@ export const useUpdatePage = () => {
     onMutate: async ({ id, input }) => {
       await queryClient.cancelQueries({ queryKey: ["consolePage"] });
       const previousPage = queryClient.getQueryData<ConsolePageDetail>(["consolePage", id]);
+      const touchedKeys = Object.keys(input) as (keyof ConsolePageDetail)[];
       if (previousPage) {
         queryClient.setQueryData<ConsolePageDetail>(["consolePage", id], {
           ...previousPage,
@@ -148,7 +170,7 @@ export const useUpdatePage = () => {
           );
         }
       }
-      return { previousPage };
+      return { previousPage, touchedKeys };
     },
     onSuccess: (_data, _variables) => {
       queryClient.invalidateQueries({

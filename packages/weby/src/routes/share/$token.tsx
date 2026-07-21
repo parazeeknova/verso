@@ -46,23 +46,16 @@ const SharedPageComponent = () => {
     }
 
     // Handle SEO search engine indexing
-    let meta = document.querySelector('meta[name="robots"]');
-    if (data.share.searchIndexing) {
-      if (meta) {
-        meta.remove();
-      }
-    } else if (!meta) {
-      meta = document.createElement("meta");
-      meta.setAttribute("name", "robots");
-      meta.setAttribute("content", "noindex");
-      document.head.append(meta);
+    let createdMeta: HTMLMetaElement | null = null;
+    if (!data.share.searchIndexing) {
+      createdMeta = document.createElement("meta");
+      createdMeta.setAttribute("name", "robots");
+      createdMeta.setAttribute("content", "noindex");
+      document.head.append(createdMeta);
     }
 
     return () => {
-      const cleanupMeta = document.querySelector('meta[name="robots"]');
-      if (cleanupMeta) {
-        cleanupMeta.remove();
-      }
+      createdMeta?.remove();
     };
   }, [data]);
 

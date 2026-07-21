@@ -110,3 +110,24 @@ func (r *PageShareRepo) Upsert(ctx context.Context, s models.PageShare) (models.
 	}
 	return res, nil
 }
+
+func (r *PageShareRepo) GetSharedMapByPageIDs(ctx context.Context, pageIDs []string) (map[string]bool, error) {
+	if len(pageIDs) == 0 {
+		return map[string]bool{}, nil
+	}
+	query := `SELECT page_id FROM page_shares WHERE is_enabled = true AND page_id = ANY($1)`
+	rows, err := r.pool.Query(ctx, query, pageIDs)
+	if err != nil {
+		return nil, fmt.Errorf("getting shared page ids map: %w", err)
+	}
+	defer rows.Close()
+
+	res := make(map[string]bool, len(pageIDs))
+	for rows.Next() {
+		var pid string
+		if err := rows.Scan(&pid); err == nil {
+			res[pid] = true
+		}
+	}
+	return res, nil
+}
