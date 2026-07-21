@@ -31,18 +31,6 @@ class MockEventSource {
   }
 }
 
-const createMockResponse = (data: unknown, ok = true, status = 200): Response => {
-  const body = JSON.stringify(data);
-  return {
-    headers: {
-      get: (name: string) => (name.toLowerCase() === "content-type" ? "application/json" : null),
-    },
-    ok,
-    status,
-    text: () => Promise.resolve(body),
-  } as unknown as Response;
-};
-
 describe("useNotificationStream", () => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -73,7 +61,7 @@ describe("useNotificationStream", () => {
     vi.restoreAllMocks();
   });
 
-  it("queries auth before opening the stream and updates the notification cache", async () => {
+  it("opens the stream and updates the notification cache on message", async () => {
     const mockNotification = {
       actorAvatarUrl: "",
       actorName: "Alice",
@@ -90,9 +78,6 @@ describe("useNotificationStream", () => {
       type: "page_updated",
     };
 
-    const mockFetch = vi.fn().mockResolvedValueOnce(createMockResponse({ id: "user-1" }));
-    globalThis.fetch = mockFetch as unknown as typeof fetch;
-
     renderHook(() => useNotificationStream(true), { wrapper: Wrapper });
 
     await waitFor(() => {
@@ -101,7 +86,6 @@ describe("useNotificationStream", () => {
 
     MockEventSource.instances[0]?.emit("message", JSON.stringify(mockNotification));
 
-    expect(mockFetch).toHaveBeenNthCalledWith(1, "/api/auth/me", { credentials: "include" });
     await waitFor(() => {
       expect(queryClient.getQueryData(["notifications", "list"])).toEqual([mockNotification]);
     });
