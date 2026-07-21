@@ -111,7 +111,7 @@ export const useUpdatePage = () => {
     ConsolePageDetail,
     Error,
     { id: string; input: UpdatePageInput },
-    { previousPage?: ConsolePageDetail }
+    { previousPage?: ConsolePageDetail; touchedKeys?: (keyof ConsolePageDetail)[] }
   >({
     mutationFn: ({ id, input }: { id: string; input: UpdatePageInput }) =>
       fetchProtected<ConsolePageDetail>(`/api/console/pages/${id}`, {
@@ -120,56 +120,49 @@ export const useUpdatePage = () => {
         method: "PUT",
       }),
     onError: (_err, variables, context) => {
-      const ctx = context as
-        | { previousPage?: ConsolePageDetail; touchedKeys?: (keyof ConsolePageDetail)[] }
-        | undefined;
-      const prev = ctx?.previousPage;
-      const touched = ctx?.touchedKeys;
+      const prev = context?.previousPage;
+      const touched = context?.touchedKeys;
       if (prev && touched) {
-        const rollbackEntry = (
-          current: ConsolePageDetail | undefined,
-        ): ConsolePageDetail | undefined => {
-          if (!current) {
-            return prev;
-          }
-          const restored = { ...current };
-          for (const key of touched) {
-            if (key in prev) {
-              (restored as Record<string, unknown>)[key as string] = (
-                prev as unknown as Record<string, unknown>
-              )[key as string];
+        queryClient.setQueriesData<ConsolePageDetail>(
+          { exact: false, queryKey: ["consolePage"] },
+          (current) => {
+            if (!current || current.id !== variables.id) {
+              return current;
             }
-          }
-          return restored;
-        };
-        queryClient.setQueryData<ConsolePageDetail>(["consolePage", variables.id], rollbackEntry);
-        if (prev.spaceId && prev.slugId) {
-          queryClient.setQueryData<ConsolePageDetail>(
-            ["consolePage", prev.spaceId, prev.slugId],
-            rollbackEntry,
-          );
-        }
+            const restored = { ...current };
+            for (const key of touched) {
+              if (key in prev) {
+                (restored as Record<string, unknown>)[key as string] = (
+                  prev as unknown as Record<string, unknown>
+                )[key as string];
+              }
+            }
+            return restored;
+          },
+        );
       }
     },
     onMutate: async ({ id, input }) => {
       await queryClient.cancelQueries({ queryKey: ["consolePage"] });
-      const previousPage = queryClient.getQueryData<ConsolePageDetail>(["consolePage", id]);
-      const touchedKeys = Object.keys(input) as (keyof ConsolePageDetail)[];
-      if (previousPage) {
-        queryClient.setQueryData<ConsolePageDetail>(["consolePage", id], {
-          ...previousPage,
-          ...input,
-        });
-        if (previousPage.spaceId && previousPage.slugId) {
-          queryClient.setQueryData<ConsolePageDetail>(
-            ["consolePage", previousPage.spaceId, previousPage.slugId],
-            {
-              ...previousPage,
-              ...input,
-            },
-          );
+      const queries = queryClient.getQueriesData<ConsolePageDetail>({
+        exact: false,
+        queryKey: ["consolePage"],
+      });
+      let previousPage: ConsolePageDetail | undefined;
+
+      for (const [queryKey, pageData] of queries) {
+        if (pageData && pageData.id === id) {
+          if (!previousPage) {
+            previousPage = pageData;
+          }
+          queryClient.setQueryData<ConsolePageDetail>(queryKey, {
+            ...pageData,
+            ...input,
+          });
         }
       }
+
+      const touchedKeys = Object.keys(input) as (keyof ConsolePageDetail)[];
       return { previousPage, touchedKeys };
     },
     onSuccess: (_data, _variables) => {
