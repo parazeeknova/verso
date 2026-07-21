@@ -419,6 +419,11 @@ export const EditorMoreMenu = ({
     if (!open) {
       return;
     }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeMenu();
+      }
+    };
     const onMouseDown = (e: MouseEvent) => {
       const { target } = e;
       if (!(target instanceof Node)) {
@@ -433,8 +438,12 @@ export const EditorMoreMenu = ({
         closeMenu();
       }
     };
+    document.addEventListener("keydown", onKeyDown);
     document.addEventListener("mousedown", onMouseDown);
-    return () => document.removeEventListener("mousedown", onMouseDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("mousedown", onMouseDown);
+    };
   }, [open, closeMenu]);
 
   const menuItem = (

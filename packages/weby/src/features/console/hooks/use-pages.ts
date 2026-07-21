@@ -10,6 +10,8 @@ import type {
   PageShare,
 } from "#/shared/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { QueryKey } from "@tanstack/react-query";
+
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
 
 type PageTreeItemResponse = Omit<PageTreeItem, "parentPageId"> & {
@@ -111,7 +113,10 @@ export const useUpdatePage = () => {
     ConsolePageDetail,
     Error,
     { id: string; input: UpdatePageInput },
-    { previousPage?: ConsolePageDetail }
+    {
+      previousPages?: [QueryKey, ConsolePageDetail | undefined][];
+      touchedKeys?: (keyof ConsolePageDetail)[];
+    }
   >({
     mutationFn: ({ id, input }: { id: string; input: UpdatePageInput }) =>
       fetchProtected<ConsolePageDetail>(`/api/console/pages/${id}`, {
@@ -119,58 +124,51 @@ export const useUpdatePage = () => {
         headers: { "Content-Type": "application/json" },
         method: "PUT",
       }),
-    onError: (_err, variables, context) => {
-      const ctx = context as
-        | { previousPage?: ConsolePageDetail; touchedKeys?: (keyof ConsolePageDetail)[] }
-        | undefined;
-      const prev = ctx?.previousPage;
-      const touched = ctx?.touchedKeys;
-      if (prev && touched) {
-        const rollbackEntry = (
-          current: ConsolePageDetail | undefined,
-        ): ConsolePageDetail | undefined => {
-          if (!current) {
-            return prev;
+    onError: (_err, _variables, context) => {
+      const previousPages = context?.previousPages;
+      const touched = context?.touchedKeys;
+      if (previousPages && touched) {
+        for (const [queryKey, prev] of previousPages) {
+          if (!prev) {
+            continue;
           }
-          const restored = { ...current };
-          for (const key of touched) {
-            if (key in prev) {
-              (restored as Record<string, unknown>)[key as string] = (
-                prev as unknown as Record<string, unknown>
-              )[key as string];
+          queryClient.setQueryData<ConsolePageDetail>(queryKey, (current) => {
+            if (!current) {
+              return current;
             }
-          }
-          return restored;
-        };
-        queryClient.setQueryData<ConsolePageDetail>(["consolePage", variables.id], rollbackEntry);
-        if (prev.spaceId && prev.slugId) {
-          queryClient.setQueryData<ConsolePageDetail>(
-            ["consolePage", prev.spaceId, prev.slugId],
-            rollbackEntry,
-          );
+            const restored = { ...current };
+            for (const key of touched) {
+              if (key in prev) {
+                (restored as Record<string, unknown>)[key as string] = (
+                  prev as unknown as Record<string, unknown>
+                )[key as string];
+              }
+            }
+            return restored;
+          });
         }
       }
     },
     onMutate: async ({ id, input }) => {
       await queryClient.cancelQueries({ queryKey: ["consolePage"] });
-      const previousPage = queryClient.getQueryData<ConsolePageDetail>(["consolePage", id]);
-      const touchedKeys = Object.keys(input) as (keyof ConsolePageDetail)[];
-      if (previousPage) {
-        queryClient.setQueryData<ConsolePageDetail>(["consolePage", id], {
-          ...previousPage,
-          ...input,
-        });
-        if (previousPage.spaceId && previousPage.slugId) {
-          queryClient.setQueryData<ConsolePageDetail>(
-            ["consolePage", previousPage.spaceId, previousPage.slugId],
-            {
-              ...previousPage,
-              ...input,
-            },
-          );
+      const queries = queryClient.getQueriesData<ConsolePageDetail>({
+        exact: false,
+        queryKey: ["consolePage"],
+      });
+      const previousPages: [QueryKey, ConsolePageDetail | undefined][] = [];
+
+      for (const [queryKey, pageData] of queries) {
+        if (pageData && pageData.id === id) {
+          previousPages.push([queryKey, pageData]);
+          queryClient.setQueryData<ConsolePageDetail>(queryKey, {
+            ...pageData,
+            ...input,
+          });
         }
       }
-      return { previousPage, touchedKeys };
+
+      const touchedKeys = Object.keys(input) as (keyof ConsolePageDetail)[];
+      return { previousPages, touchedKeys };
     },
     onSuccess: (_data, _variables) => {
       queryClient.invalidateQueries({

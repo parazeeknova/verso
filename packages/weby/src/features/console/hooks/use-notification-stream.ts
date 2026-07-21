@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { NotificationItem } from "#/shared/types";
-import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
 
 const audio = typeof Audio === "undefined" ? null : new Audio("/notification.mp3");
 
@@ -23,14 +22,14 @@ export const useNotificationStream = (enabled: boolean) => {
       }
     };
 
-    const connect = async () => {
+    const connect = () => {
       try {
-        await fetchProtected("/api/auth/me");
         if (stopped) {
           return;
         }
 
         clearReconnectTimer();
+
         const es = new EventSource("/api/console/notifications/stream");
         esRef.current = es;
 

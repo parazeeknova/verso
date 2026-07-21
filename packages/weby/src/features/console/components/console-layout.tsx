@@ -376,7 +376,7 @@ export const ConsoleLayout = () => {
             style={{ visibility: "hidden" }}
           >
             <div className="min-h-0 flex-1 flex flex-col" ref={sidebarContentRef}>
-              {sidebarContent}
+              {sidebarOpen && sidebarContent}
             </div>
 
             <div className="w-full px-4">
