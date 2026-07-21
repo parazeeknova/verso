@@ -559,12 +559,7 @@ export const PageHistoryModal = ({
             {selectedItem ? (
               <>
                 {/* Preview header — title + date + delete */}
-                <div
-                  className={`flex items-center justify-between px-2.5 py-1.5 border-b shrink-0 ${t(
-                    "border-border-dark",
-                    "border-border-light",
-                  )}`}
-                >
+                <div className="flex items-center justify-between px-2.5 py-1.5 shrink-0">
                   <div className="min-w-0 flex-1 mr-2">
                     <div
                       className={`font-semibold text-[10px] truncate lowercase ${t("text-text-dark/80", "text-text-light/80")}`}
