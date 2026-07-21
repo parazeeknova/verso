@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { gsap } from "gsap";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { GitHubActivity } from "#/features/github/components/calendar";
 import { GitHubStats } from "#/features/github/components/stats";
 import {
@@ -95,6 +95,7 @@ const useThemeButtonHover = (): ThemeButtonRefs => {
 const Home = function Home() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [viewMode, setViewMode] = useState<"portfolio" | "blogs">("portfolio");
+  const [selectedBlogSlug, setSelectedBlogSlug] = useState<string | null>(null);
   const [selectedProject, setSelectedProject] = useState<{
     productUrl?: string;
     readmeUrl: string;
@@ -111,6 +112,34 @@ const Home = function Home() {
   const { data: projects } = useProjects();
   const { data: manifest = [] } = useBlogManifest();
   const isPending = useIsFetchingData();
+
+  const firstPostSlug = useMemo(() => {
+    for (const section of manifest) {
+      if (section.children && section.children.length > 0) {
+        return section.children[0].slug;
+      }
+    }
+    return null;
+  }, [manifest]);
+
+  const firstProject = useMemo(() => projects?.find((p) => p.readmeUrl) ?? null, [projects]);
+
+  // Auto-select first blog or first project with readme
+  useEffect(() => {
+    if (selectedBlogSlug || selectedProject) {
+      return;
+    }
+    if (firstPostSlug) {
+      setSelectedBlogSlug(firstPostSlug);
+    } else if (firstProject?.readmeUrl) {
+      setSelectedProject({
+        productUrl: firstProject.productUrl,
+        readmeUrl: firstProject.readmeUrl,
+        repoUrl: firstProject.repoUrl,
+        title: firstProject.title,
+      });
+    }
+  }, [firstPostSlug, firstProject, selectedBlogSlug, selectedProject]);
 
   // Read initial theme from localStorage on mount
   useEffect(() => {
@@ -136,6 +165,7 @@ const Home = function Home() {
       if (!project.readmeUrl) {
         return;
       }
+      setSelectedBlogSlug(null);
       setSelectedProject({
         productUrl: project.productUrl,
         readmeUrl: project.readmeUrl,
@@ -146,6 +176,12 @@ const Home = function Home() {
     },
     [],
   );
+
+  const handleSelectPost = useCallback((slug: string) => {
+    setSelectedProject(null);
+    setSelectedBlogSlug(slug);
+    setViewMode("blogs");
+  }, []);
 
   // Extract GitHub username from profile or env
   const githubUsername = (() => {
@@ -160,10 +196,11 @@ const Home = function Home() {
   })();
 
   if (viewMode === "blogs") {
+    const activeSlug = selectedBlogSlug ?? firstPostSlug ?? "";
     return (
       <div
         data-theme={isDarkMode ? "dark" : "light"}
-        className={`min-h-screen w-full select-none overflow-y-auto ${
+        className={`h-screen w-full select-none overflow-hidden ${
           isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
         }`}
       >
@@ -172,8 +209,13 @@ const Home = function Home() {
             isDarkMode={isDarkMode}
             isMobile={isMobile}
             manifest={manifest}
-            onBack={() => setSelectedProject(null)}
-            onSelectPost={() => setSelectedProject(null)}
+            onBack={() => {
+              setSelectedProject(null);
+              if (firstPostSlug) {
+                setSelectedBlogSlug(firstPostSlug);
+              }
+            }}
+            onSelectPost={handleSelectPost}
             onSelectProject={handleProjectDetail}
             onSwitchToAbout={() => setViewMode("portfolio")}
             onToggleTheme={toggleTheme}
@@ -192,11 +234,12 @@ const Home = function Home() {
             isDarkMode={isDarkMode}
             isMobile={isMobile}
             manifest={manifest}
+            onSelectPost={handleSelectPost}
             onSelectProject={handleProjectDetail}
             onSwitchToAbout={() => setViewMode("portfolio")}
             onToggleTheme={toggleTheme}
             projects={projects}
-            slug=""
+            slug={activeSlug}
             themeButtonRef={themeRefsRight.buttonRef as React.RefObject<HTMLButtonElement | null>}
             themeIndicatorRef={
               themeRefsRight.indicatorRef as React.RefObject<HTMLSpanElement | null>
