@@ -462,14 +462,16 @@ export const LoginPopup = ({ isDarkMode }: LoginPopupProps) => {
     },
   });
 
-  const handleOpen = useCallback(() => {
-    if (bootstrapState === undefined) {
+  const handleOpenPopup = useCallback(() => {
+    if (isAuthenticated) {
+      setMode("account");
+      setOpen(true);
       return;
     }
     setServerError(null);
-    setMode(bootstrapState.bootstrapped ? "login" : "bootstrap");
+    setMode(bootstrapState?.bootstrapped ? "login" : "bootstrap");
     setOpen(true);
-  }, [bootstrapState]);
+  }, [isAuthenticated, bootstrapState]);
 
   useEffect(() => {
     if (open && cardRef.current) {
@@ -500,11 +502,14 @@ export const LoginPopup = ({ isDarkMode }: LoginPopupProps) => {
         className="fixed bottom-4 right-4 z-40 sm:bottom-6 sm:right-6 flex items-center gap-1.5 text-[10px] lowercase select-none border px-2.5 py-1 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-neutral-800/10 dark:border-neutral-100/10 text-neutral-800/50 dark:text-neutral-100/50 hover:border-neutral-800/20 dark:hover:border-neutral-100/20 cursor-pointer shadow-sm"
         onClick={() => {
           if (isAuthenticated) {
-            setMode("account");
-            setOpen(true);
+            handleOpenPopup();
           } else {
-            handleOpen();
+            void navigate({ to: "/about" });
           }
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          handleOpenPopup();
         }}
         type="button"
       >
@@ -519,9 +524,17 @@ export const LoginPopup = ({ isDarkMode }: LoginPopupProps) => {
         ) : (
           <span>
             by{" "}
-            <span className="font-semibold hover:underline text-neutral-800 dark:text-neutral-100">
+            <a
+              href="/about"
+              className="font-semibold hover:underline text-neutral-800 dark:text-neutral-100"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                void navigate({ to: "/about" });
+              }}
+            >
               verso
-            </span>
+            </a>
           </span>
         )}
       </button>
