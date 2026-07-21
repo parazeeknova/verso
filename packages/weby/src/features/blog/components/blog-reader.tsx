@@ -131,55 +131,61 @@ export const BlogReader = ({
     }
   }, [asideMounted]);
 
-  const headerRight = isMobile ? (
-    <>
-      <button
-        className={`text-[13px] lowercase focus:outline-none ${
-          isDarkMode
-            ? "text-text-dark/60 hover:text-text-dark"
-            : "text-text-light/60 hover:text-text-light"
-        }`}
-        onClick={() => setTocOpen(!tocOpen)}
-        type="button"
-      >
-        {tocOpen ? "close" : "toc"}
-      </button>
-      <button
-        className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${
-          isDarkMode ? "text-text-dark/60" : "text-text-light/60"
-        }`}
-        onClick={onSwitchToAbout}
-        type="button"
-      >
-        about
-      </button>
-      <button
-        aria-label="Toggle theme"
-        className="rounded-full p-2 focus:outline-none focus-visible:ring-1 focus-visible:ring-current/40"
-        onClick={onToggleTheme}
-        ref={themeButtonRef}
-        type="button"
-      >
-        <span className="sr-only">Toggle theme</span>
-        <span
-          className="block h-3 w-3 rounded-full border border-current"
-          ref={themeIndicatorRef}
-          style={{ backgroundColor: "transparent" }}
-        />
-      </button>
-    </>
-  ) : (
-    <button
-      className={`text-[13px] lowercase focus:outline-none ${
-        isDarkMode
-          ? "text-text-dark/60 hover:text-text-dark"
-          : "text-text-light/60 hover:text-text-light"
-      }`}
-      onClick={toggleAside}
-      type="button"
-    >
-      {asideMounted ? "hide toc" : "show toc"}
-    </button>
+  const headerRight = (
+    <div className="flex items-center gap-3">
+      {isMobile ? (
+        <button
+          className={`text-[13px] lowercase focus:outline-none ${
+            isDarkMode
+              ? "text-text-dark/60 hover:text-text-dark"
+              : "text-text-light/60 hover:text-text-light"
+          }`}
+          onClick={() => setTocOpen(!tocOpen)}
+          type="button"
+        >
+          {tocOpen ? "close" : "toc"}
+        </button>
+      ) : (
+        <button
+          className={`text-[13px] lowercase focus:outline-none ${
+            isDarkMode
+              ? "text-text-dark/60 hover:text-text-dark"
+              : "text-text-light/60 hover:text-text-light"
+          }`}
+          onClick={toggleAside}
+          type="button"
+        >
+          {asideMounted ? "hide toc" : "show toc"}
+        </button>
+      )}
+      {onSwitchToAbout && (
+        <button
+          className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${
+            isDarkMode ? "text-text-dark/60" : "text-text-light/60"
+          }`}
+          onClick={onSwitchToAbout}
+          type="button"
+        >
+          portfolio
+        </button>
+      )}
+      {onToggleTheme && (
+        <button
+          aria-label="Toggle theme"
+          className="rounded-full p-2 focus:outline-none focus-visible:ring-1 focus-visible:ring-current/40"
+          onClick={onToggleTheme}
+          ref={themeButtonRef}
+          type="button"
+        >
+          <span className="sr-only">Toggle theme</span>
+          <span
+            className="block h-3 w-3 rounded-full border border-current"
+            ref={themeIndicatorRef}
+            style={{ backgroundColor: "transparent" }}
+          />
+        </button>
+      )}
+    </div>
   );
 
   return (
