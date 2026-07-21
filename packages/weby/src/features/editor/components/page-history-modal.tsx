@@ -1,12 +1,15 @@
 import {
   ArrowClockwiseIcon,
+  CaretDownIcon,
+  CaretUpIcon,
   ClockCounterClockwiseIcon,
   TrashIcon,
   XIcon,
 } from "@phosphor-icons/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { gsap } from "gsap";
+import { diffWordsWithSpace } from "diff";
 import { useTheme } from "#/shared/hooks/use-theme";
 import {
   useDeleteAllPageHistory,
@@ -79,6 +82,50 @@ const opColor = (op: string, isDark: boolean) => {
     return isDark ? "text-purple-400" : "text-purple-600";
   }
   return isDark ? "text-text-dark/30" : "text-text-light/30";
+};
+
+// Build diff HTML between two text strings
+// Returns { html, changeCount }
+const buildDiffHtml = (oldText: string, newText: string): { html: string; changeCount: number } => {
+  const parts = diffWordsWithSpace(oldText, newText);
+  let changeIndex = 0;
+  const segments: string[] = [];
+
+  for (const part of parts) {
+    const escaped = part.value
+      .replaceAll('&', "&amp;")
+      .replaceAll('<', "&lt;")
+      .replaceAll('>', "&gt;")
+      .replaceAll('\n', "<br/>");
+
+    if (part.added) {
+      changeIndex += 1;
+      segments.push(
+        `<span class="history-diff-added" data-diff-index="${changeIndex}">${escaped}</span>`,
+      );
+    } else if (part.removed) {
+      changeIndex += 1;
+      segments.push(
+        `<span class="history-diff-deleted" data-diff-index="${changeIndex}">${escaped}</span>`,
+      );
+    } else {
+      segments.push(escaped);
+    }
+  }
+
+  return { changeCount: changeIndex, html: segments.join("") };
+};
+
+// Extract plain text from a history item for diffing
+const extractText = (item: PageHistoryItem): string => {
+  const json = parseJsonContent(item.contentJson);
+  if (json) {
+    return tiptapToMarkdown(json, item.title);
+  }
+  if (item.textContent) {
+    return `# ${item.title}\n\n${item.textContent}`;
+  }
+  return `# ${item.title}`;
 };
 
 const HistoryAuthor = ({
@@ -178,6 +225,7 @@ export const PageHistoryModal = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLButtonElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   const { data: history = [], isPending } = usePageHistory(pageId);
   const restorePage = useRestorePage();
@@ -185,6 +233,8 @@ export const PageHistoryModal = ({
   const deleteAllHistory = useDeleteAllPageHistory();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [highlightChanges, setHighlightChanges] = useState(true);
+  const [currentChangeIndex, setCurrentChangeIndex] = useState(0);
 
   useEffect(() => {
     if (history.length > 0 && !selectedId) {
@@ -237,7 +287,34 @@ export const PageHistoryModal = ({
     return history.find((h) => h.id === selectedId) ?? history[0] ?? null;
   }, [history, selectedId]);
 
-  const previewHtml = useMemo(() => {
+  // Find the previous revision (the one right after selectedItem in the sorted list)
+  const previousItem = useMemo(() => {
+    if (!selectedItem || history.length < 2) {
+      return null;
+    }
+    const idx = history.findIndex((h) => h.id === selectedItem.id);
+    if (idx === -1 || idx >= history.length - 1) {
+      return null;
+    }
+    return history[idx + 1];
+  }, [history, selectedItem]);
+
+  // Compute diff HTML and change count
+  const diffResult = useMemo(() => {
+    if (!selectedItem) {
+      return { changeCount: 0, html: "" };
+    }
+    const currentText = extractText(selectedItem);
+    if (!previousItem) {
+      // No previous revision — just show as plain html (no diff)
+      return { changeCount: 0, html: markdownToHtml(currentText) };
+    }
+    const prevText = extractText(previousItem);
+    return buildDiffHtml(prevText, currentText);
+  }, [selectedItem, previousItem]);
+
+  // Plain preview HTML (no diff highlighting)
+  const plainHtml = useMemo(() => {
     if (!selectedItem) {
       return "";
     }
@@ -251,6 +328,60 @@ export const PageHistoryModal = ({
     }
     return markdownToHtml(`# ${selectedItem.title}`);
   }, [selectedItem]);
+
+  const displayHtml = highlightChanges && previousItem ? diffResult.html : plainHtml;
+  const changeCount = highlightChanges && previousItem ? diffResult.changeCount : 0;
+
+  // Reset change index when selected item or highlight state changes
+  useEffect(() => {
+    if (changeCount > 0) {
+      setCurrentChangeIndex(1);
+      // Auto-scroll to first change
+      requestAnimationFrame(() => {
+        const viewport = previewRef.current;
+        if (!viewport) {
+          return;
+        }
+        const el = viewport.querySelector('[data-diff-index="1"]');
+        if (el instanceof HTMLElement) {
+          const scrollTarget = el.offsetTop - viewport.clientHeight / 2 + el.offsetHeight / 2;
+          viewport.scrollTo({ behavior: "smooth", top: scrollTarget });
+        }
+      });
+    } else {
+      setCurrentChangeIndex(0);
+    }
+  }, [changeCount, selectedId]);
+
+  const scrollToChange = useCallback((index: number) => {
+    const viewport = previewRef.current;
+    if (!viewport || index < 1) {
+      return;
+    }
+    const el = viewport.querySelector(`[data-diff-index="${index}"]`);
+    if (el instanceof HTMLElement) {
+      const scrollTarget = el.offsetTop - viewport.clientHeight / 2 + el.offsetHeight / 2;
+      viewport.scrollTo({ behavior: "smooth", top: scrollTarget });
+    }
+  }, []);
+
+  const handlePrevChange = useCallback(() => {
+    if (changeCount === 0) {
+      return;
+    }
+    const newIndex = currentChangeIndex <= 1 ? changeCount : currentChangeIndex - 1;
+    setCurrentChangeIndex(newIndex);
+    scrollToChange(newIndex);
+  }, [changeCount, currentChangeIndex, scrollToChange]);
+
+  const handleNextChange = useCallback(() => {
+    if (changeCount === 0) {
+      return;
+    }
+    const newIndex = currentChangeIndex >= changeCount ? 1 : currentChangeIndex + 1;
+    setCurrentChangeIndex(newIndex);
+    scrollToChange(newIndex);
+  }, [changeCount, currentChangeIndex, scrollToChange]);
 
   const handleRestore = () => {
     if (!selectedItem) {
@@ -461,25 +592,83 @@ export const PageHistoryModal = ({
                 </div>
 
                 {/* Preview content */}
-                <div className="flex-1 overflow-y-auto p-3 blog-reader-prose text-xs">
+                <div
+                  ref={previewRef}
+                  className="flex-1 overflow-y-auto p-3 history-diff-preview blog-reader-prose text-xs"
+                >
                   <div
                     // eslint-disable-next-line react/no-danger
-                    dangerouslySetInnerHTML={{ __html: previewHtml }}
+                    dangerouslySetInnerHTML={{ __html: displayHtml }}
                   />
                 </div>
 
-                {/* Restore footer */}
+                {/* Footer — highlight toggle + nav + restore */}
                 <div
                   className={`flex items-center justify-between px-2.5 py-1.5 border-t shrink-0 ${t(
                     "border-border-dark",
                     "border-border-light",
                   )}`}
                 >
-                  <span
-                    className={`text-[8px] font-mono lowercase ${t("text-text-dark/20", "text-text-light/20")}`}
-                  >
-                    {selectedItem.operation} · {formatHistoryDate(selectedItem.createdAt)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {/* Highlight changes toggle */}
+                    {previousItem && (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setHighlightChanges((v) => !v)}
+                          className={`relative inline-flex h-3.5 w-6 shrink-0 cursor-pointer items-center transition-colors duration-150 ${
+                            highlightChanges ? "bg-accent" : t("bg-neutral-700", "bg-neutral-300")
+                          }`}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-2.5 w-2.5 transform shadow-sm transition duration-150 ${
+                              isDarkMode ? "bg-neutral-200" : "bg-white"
+                            } ${highlightChanges ? "translate-x-3" : "translate-x-0.5"}`}
+                          />
+                        </button>
+                        <span
+                          className={`text-[9px] lowercase ${t("text-text-dark/40", "text-text-light/40")}`}
+                        >
+                          changes
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Change navigation arrows */}
+                    {highlightChanges && changeCount > 0 && (
+                      <div className="flex items-center gap-0.5">
+                        <span
+                          className={`text-[8px] font-mono ${t("text-text-dark/30", "text-text-light/30")}`}
+                        >
+                          {currentChangeIndex}/{changeCount}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handlePrevChange}
+                          className={`p-0.5 transition-colors cursor-pointer ${t(
+                            "text-text-dark/30 hover:text-text-dark",
+                            "text-text-light/30 hover:text-text-light",
+                          )}`}
+                          title="previous change"
+                        >
+                          <CaretUpIcon size={10} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleNextChange}
+                          className={`p-0.5 transition-colors cursor-pointer ${t(
+                            "text-text-dark/30 hover:text-text-dark",
+                            "text-text-light/30 hover:text-text-light",
+                          )}`}
+                          title="next change"
+                        >
+                          <CaretDownIcon size={10} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Restore button */}
                   <button
                     type="button"
                     onClick={handleRestore}
