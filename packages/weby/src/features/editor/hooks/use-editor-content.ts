@@ -72,5 +72,24 @@ export const useEditorContent = (editor: Editor | null, pageId: string) => {
     }
   }, []);
 
-  return { cleanup, dirty, flush, isSaving: updatePage.isPending, lastSaved, markDirty };
+  const resetDirty = useCallback(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    pendingFlushRef.current = false;
+    dirtyRef.current = false;
+    lastSavedJsonRef.current = null;
+    setDirty(false);
+  }, []);
+
+  return {
+    cleanup,
+    dirty,
+    flush,
+    isSaving: updatePage.isPending,
+    lastSaved,
+    markDirty,
+    resetDirty,
+  };
 };

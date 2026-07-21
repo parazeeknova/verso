@@ -1083,11 +1083,12 @@ func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID
 		}
 	}
 
-	if err := s.pageShareRepo.Upsert(ctx, share); err != nil {
+	updatedShare, err := s.pageShareRepo.Upsert(ctx, share)
+	if err != nil {
 		return models.PageShare{}, err
 	}
 
-	return share, nil
+	return updatedShare, nil
 }
 
 func (s *PageService) ShortenPageShare(ctx context.Context, pageID string, userID string) (models.PageShare, error) {
@@ -1105,10 +1106,16 @@ func (s *PageService) ShortenPageShare(ctx context.Context, pageID string, userI
 	}
 
 	if share.ShortCode == nil || *share.ShortCode == "" {
-		code := generateRandomString(8)
-		share.ShortCode = &code
-		if err := s.pageShareRepo.Upsert(ctx, share); err != nil {
-			return models.PageShare{}, err
+		for i := 0; i < 5; i++ {
+			code := generateRandomString(8)
+			share.ShortCode = &code
+			updatedShare, err := s.pageShareRepo.Upsert(ctx, share)
+			if err == nil {
+				return updatedShare, nil
+			}
+			if i == 4 {
+				return models.PageShare{}, err
+			}
 		}
 	}
 

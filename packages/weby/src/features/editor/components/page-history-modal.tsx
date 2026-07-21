@@ -176,40 +176,45 @@ const HistoryItemRow = ({
       );
 
   return (
-    <button
-      type="button"
-      className={`group w-full text-left px-2 py-1.5 transition-colors cursor-pointer flex flex-col gap-0.5 ${activeClass}`}
-      onClick={onSelect}
+    <div
+      className={`group w-full px-2 py-1.5 transition-colors flex items-center justify-between gap-1 ${activeClass}`}
     >
-      <div className="flex items-center gap-1">
-        <span
-          className={`text-[8px] font-mono uppercase leading-none ${opColor(item.operation, isDarkMode)}`}
-          title={item.operation}
-        >
-          {opLabel(item.operation)}
-        </span>
-        <span
-          className={`text-[10px] font-semibold truncate flex-1 ${isSelected ? t("text-text-dark", "text-text-light") : t("text-text-dark/60", "text-text-light/60")}`}
-        >
-          {item.title || "untitled"}
-        </span>
-        <button
-          type="button"
-          onClick={onDelete}
-          className="opacity-0 group-hover:opacity-100 p-0.5 text-red-400/50 hover:text-red-400 transition-opacity cursor-pointer"
-        >
-          <TrashIcon size={9} />
-        </button>
-      </div>
-      <div className="flex items-center justify-between gap-1">
-        <HistoryAuthor createdById={item.createdById} t={t} />
-        <span
-          className={`font-mono text-[8px] shrink-0 ${t("text-text-dark/20", "text-text-light/20")}`}
-        >
-          {formatHistoryDate(item.createdAt)}
-        </span>
-      </div>
-    </button>
+      <button
+        type="button"
+        className="flex-1 text-left min-w-0 flex flex-col gap-0.5 cursor-pointer"
+        onClick={onSelect}
+      >
+        <div className="flex items-center gap-1 min-w-0">
+          <span
+            className={`text-[8px] font-mono uppercase leading-none ${opColor(item.operation, isDarkMode)}`}
+            title={item.operation}
+          >
+            {opLabel(item.operation)}
+          </span>
+          <span
+            className={`text-[10px] font-semibold truncate flex-1 ${isSelected ? t("text-text-dark", "text-text-light") : t("text-text-dark/60", "text-text-light/60")}`}
+          >
+            {item.title || "untitled"}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-1 w-full">
+          <HistoryAuthor createdById={item.createdById} t={t} />
+          <span
+            className={`font-mono text-[8px] shrink-0 ${t("text-text-dark/20", "text-text-light/20")}`}
+          >
+            {formatHistoryDate(item.createdAt)}
+          </span>
+        </div>
+      </button>
+      <button
+        type="button"
+        onClick={onDelete}
+        className="opacity-0 group-hover:opacity-100 p-0.5 text-red-400/50 hover:text-red-400 transition-opacity cursor-pointer shrink-0"
+        title="delete revision"
+      >
+        <TrashIcon size={9} />
+      </button>
+    </div>
   );
 };
 

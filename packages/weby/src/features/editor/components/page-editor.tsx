@@ -1005,7 +1005,10 @@ export const PageEditor = ({
     }
   }, [editor, pageId, spaceName, localTitle]);
 
-  const { dirty, cleanup, isSaving, lastSaved, markDirty } = useEditorContent(editor, pageId);
+  const { dirty, cleanup, isSaving, lastSaved, markDirty, resetDirty } = useEditorContent(
+    editor,
+    pageId,
+  );
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!editor || !editable) {
@@ -1299,6 +1302,7 @@ export const PageEditor = ({
         isOpen={historyOpen}
         onClose={() => setHistoryOpen(false)}
         pageId={pageId}
+        onRestoreSuccess={resetDirty}
       />
 
       <TableOfContentsModal

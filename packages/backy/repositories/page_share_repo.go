@@ -80,16 +80,17 @@ func (r *PageShareRepo) GetByShortCode(ctx context.Context, shortCode string) (m
 	return s, nil
 }
 
-func (r *PageShareRepo) Upsert(ctx context.Context, s models.PageShare) error {
+func (r *PageShareRepo) Upsert(ctx context.Context, s models.PageShare) (models.PageShare, error) {
 	query := `
 		INSERT INTO page_shares (id, page_id, share_token, short_code, search_indexing, is_enabled, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		ON CONFLICT (page_id) DO UPDATE
-		SET share_token = EXCLUDED.share_token,
-		    short_code = EXCLUDED.short_code,
+		SET share_token = COALESCE(NULLIF(page_shares.share_token, ''), EXCLUDED.share_token),
+		    short_code = COALESCE(EXCLUDED.short_code, page_shares.short_code),
 		    search_indexing = EXCLUDED.search_indexing,
 		    is_enabled = EXCLUDED.is_enabled,
-		    updated_at = EXCLUDED.updated_at`
+		    updated_at = EXCLUDED.updated_at
+		RETURNING id, page_id, share_token, short_code, search_indexing, is_enabled, created_at, updated_at`
 
 	now := time.Now().UTC()
 	if s.CreatedAt.IsZero() {
@@ -97,12 +98,15 @@ func (r *PageShareRepo) Upsert(ctx context.Context, s models.PageShare) error {
 	}
 	s.UpdatedAt = now
 
-	_, err := r.pool.Exec(
+	var res models.PageShare
+	err := r.pool.QueryRow(
 		ctx, query,
 		s.ID, s.PageID, s.ShareToken, s.ShortCode, s.SearchIndexing, s.IsEnabled, s.CreatedAt, s.UpdatedAt,
+	).Scan(
+		&res.ID, &res.PageID, &res.ShareToken, &res.ShortCode, &res.SearchIndexing, &res.IsEnabled, &res.CreatedAt, &res.UpdatedAt,
 	)
 	if err != nil {
-		return fmt.Errorf("upserting page share: %w", err)
+		return models.PageShare{}, fmt.Errorf("upserting page share: %w", err)
 	}
-	return nil
+	return res, nil
 }
