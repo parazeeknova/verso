@@ -479,33 +479,84 @@ export const PageHistoryModal = ({
           "bg-bg-light border-border-light text-text-light",
         )}`}
       >
-        {/* Header */}
-        <div
-          className={`flex items-center justify-between px-2.5 py-1.5 border-b shrink-0 ${t(
-            "border-border-dark",
-            "border-border-light",
-          )}`}
-        >
-          <div className="flex items-center gap-1.5">
-            <ClockCounterClockwiseIcon className="text-accent" size={12} />
-            <span className="font-semibold text-[11px] lowercase">history</span>
-            <span
-              className={`text-[9px] font-mono ${t("text-text-dark/30", "text-text-light/30")}`}
-            >
-              {history.length}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className={`p-0.5 transition-colors cursor-pointer ${t(
-              "text-text-dark/30 hover:text-text-dark",
-              "text-text-light/30 hover:text-text-light",
+        {/* Top Header */}
+        <div className={`flex border-b shrink-0 ${t("border-border-dark", "border-border-light")}`}>
+          {/* Sidebar Top Header */}
+          <div
+            className={`w-48 shrink-0 border-r px-2.5 py-1.5 flex items-center justify-between ${t(
+              "border-border-dark",
+              "border-border-light",
             )}`}
-            aria-label="Close history modal"
           >
-            <XIcon size={12} />
-          </button>
+            <div className="flex items-center gap-1.5">
+              <ClockCounterClockwiseIcon className="text-accent" size={12} />
+              <span className="font-semibold text-[11px] lowercase">history</span>
+              <span
+                className={`text-[9px] font-mono ${t("text-text-dark/30", "text-text-light/30")}`}
+              >
+                ({history.length})
+              </span>
+            </div>
+            {history.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAllHistory}
+                disabled={deleteAllHistory.isPending}
+                className="text-red-400/40 hover:text-red-400 text-[8px] transition-colors cursor-pointer flex items-center gap-0.5 lowercase"
+                title="clear all history"
+              >
+                <TrashIcon size={8} />
+                <span>clear</span>
+              </button>
+            )}
+          </div>
+
+          {/* Preview Top Header */}
+          <div className="flex-1 px-2.5 py-1.5 flex items-center justify-between min-w-0">
+            <div className="min-w-0 flex-1 mr-2">
+              {selectedItem && (
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`font-semibold text-[10px] truncate lowercase ${t("text-text-dark/80", "text-text-light/80")}`}
+                  >
+                    {selectedItem.title}
+                  </span>
+                  <span
+                    className={`text-[8px] font-mono ${t("text-text-dark/25", "text-text-light/25")}`}
+                  >
+                    {formatHistoryDate(selectedItem.createdAt)}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              {selectedItem && (
+                <button
+                  type="button"
+                  onClick={(e) => handleDeleteEntry(e, selectedItem.id)}
+                  disabled={deleteEntry.isPending}
+                  className={`p-1 transition-colors cursor-pointer border ${t(
+                    "text-red-400/50 hover:text-red-400 border-border-dark hover:bg-red-400/10",
+                    "text-red-400/50 hover:text-red-400 border-border-light hover:bg-red-400/10",
+                  )}`}
+                  title="delete revision"
+                >
+                  <TrashIcon size={10} />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onClose}
+                className={`p-0.5 transition-colors cursor-pointer ${t(
+                  "text-text-dark/30 hover:text-text-dark",
+                  "text-text-light/30 hover:text-text-light",
+                )}`}
+                aria-label="Close history modal"
+              >
+                <XIcon size={12} />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Body */}
@@ -517,32 +568,6 @@ export const PageHistoryModal = ({
               "border-border-light bg-black/2",
             )}`}
           >
-            {/* Sidebar header */}
-            <div
-              className={`px-2 py-1 border-b flex items-center justify-between ${t(
-                "border-border-dark",
-                "border-border-light",
-              )}`}
-            >
-              <span
-                className={`text-[8px] font-mono uppercase tracking-wider ${t("text-text-dark/25", "text-text-light/25")}`}
-              >
-                revisions
-              </span>
-              {history.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleClearAllHistory}
-                  disabled={deleteAllHistory.isPending}
-                  className="text-red-400/40 hover:text-red-400 text-[8px] transition-colors cursor-pointer flex items-center gap-0.5 lowercase"
-                  title="clear all"
-                >
-                  <TrashIcon size={8} />
-                  <span>clear</span>
-                </button>
-              )}
-            </div>
-
             {/* Revisions list */}
             <div
               className={`flex-1 overflow-y-auto divide-y ${t(
@@ -558,34 +583,6 @@ export const PageHistoryModal = ({
           <div className="flex-1 flex flex-col min-w-0">
             {selectedItem ? (
               <>
-                {/* Preview header — title + date + delete */}
-                <div className="flex items-center justify-between px-2.5 py-1.5 shrink-0">
-                  <div className="min-w-0 flex-1 mr-2">
-                    <div
-                      className={`font-semibold text-[10px] truncate lowercase ${t("text-text-dark/80", "text-text-light/80")}`}
-                    >
-                      {selectedItem.title}
-                    </div>
-                    <div
-                      className={`text-[8px] font-mono ${t("text-text-dark/25", "text-text-light/25")}`}
-                    >
-                      {formatHistoryDate(selectedItem.createdAt)}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => handleDeleteEntry(e, selectedItem.id)}
-                    disabled={deleteEntry.isPending}
-                    className={`p-1 transition-colors cursor-pointer border ${t(
-                      "text-red-400/50 hover:text-red-400 border-border-dark hover:bg-red-400/10",
-                      "text-red-400/50 hover:text-red-400 border-border-light hover:bg-red-400/10",
-                    )}`}
-                    title="delete revision"
-                  >
-                    <TrashIcon size={10} />
-                  </button>
-                </div>
-
                 {/* Preview content */}
                 <div
                   ref={previewRef}
