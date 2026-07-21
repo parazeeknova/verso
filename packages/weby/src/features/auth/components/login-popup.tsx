@@ -497,7 +497,7 @@ export const LoginPopup = ({ isDarkMode }: LoginPopupProps) => {
   return (
     <>
       <button
-        className="text-[10px] lowercase select-none border px-2.5 py-1 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-neutral-800/10 dark:border-neutral-100/10 text-neutral-800/50 dark:text-neutral-100/50 hover:border-neutral-800/20 dark:hover:border-neutral-100/20 cursor-pointer"
+        className="fixed bottom-4 right-4 z-40 sm:bottom-6 sm:right-6 flex items-center gap-1.5 text-[10px] lowercase select-none border px-2.5 py-1 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-neutral-800/10 dark:border-neutral-100/10 text-neutral-800/50 dark:text-neutral-100/50 hover:border-neutral-800/20 dark:hover:border-neutral-100/20 cursor-pointer shadow-sm"
         onClick={() => {
           if (isAuthenticated) {
             setMode("account");
@@ -508,20 +508,21 @@ export const LoginPopup = ({ isDarkMode }: LoginPopupProps) => {
         }}
         type="button"
       >
+        <img src="/verso.svg" alt="verso" className="h-3.5 w-3.5 shrink-0 rounded-sm" />
         {isAuthenticated ? (
-          <>
+          <span>
             by{" "}
             <span className="font-semibold hover:underline text-neutral-800 dark:text-neutral-100">
               @{user.username}
             </span>
-          </>
+          </span>
         ) : (
-          <>
+          <span>
             by{" "}
             <span className="font-semibold hover:underline text-neutral-800 dark:text-neutral-100">
               verso
             </span>
-          </>
+          </span>
         )}
       </button>
 
