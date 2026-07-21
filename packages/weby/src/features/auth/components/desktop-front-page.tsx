@@ -401,6 +401,16 @@ export const DesktopFrontPage = () => {
           >
             open source &middot; self-hosted &middot; yours
           </p>
+          <a
+            className={`mt-1.5 text-xs sm:text-sm lowercase tracking-wider transition-opacity opacity-40 hover:opacity-90 ${
+              isDarkMode ? "text-text-dark" : "text-text-light"
+            }`}
+            href="https://amemorymachine.cc"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            amemorymachine.cc
+          </a>
         </div>
 
         {/* Next Button / Unboxed Smooth Expand & Collapse Form Container */}
