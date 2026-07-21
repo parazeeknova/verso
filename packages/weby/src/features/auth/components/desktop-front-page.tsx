@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowRightIcon, EyeIcon, EyeSlashIcon, XIcon } from "@phosphor-icons/react";
+import {
+  ArrowRightIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  MoonIcon,
+  SunIcon,
+  XIcon,
+} from "@phosphor-icons/react";
 import { useAuth, useAuthActions } from "#/features/auth/hooks/use-auth";
 import { useIsBootstrapped, useBootstrapState } from "#/features/auth/hooks/use-bootstrap-state";
 import { useTheme } from "#/shared/hooks/use-theme";
@@ -356,17 +363,18 @@ export const DesktopFrontPage = () => {
         isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
       }`}
     >
-      {/* Top navbar with unboxed theme toggle */}
+      {/* Top navbar with unboxed theme toggle with icons */}
       <header className="p-4 sm:p-6 flex items-center justify-end w-full">
         <button
           aria-label="Toggle theme"
-          className={`text-xs lowercase transition-opacity opacity-50 hover:opacity-100 focus:outline-none ${
+          className={`flex items-center gap-1.5 text-xs lowercase transition-opacity opacity-50 hover:opacity-100 focus:outline-none ${
             isDarkMode ? "text-text-dark" : "text-text-light"
           }`}
           onClick={toggleTheme}
           type="button"
         >
-          {isDarkMode ? "light" : "dark"}
+          {isDarkMode ? <SunIcon size={14} /> : <MoonIcon size={14} />}
+          <span>{isDarkMode ? "light" : "dark"}</span>
         </button>
       </header>
 
@@ -395,47 +403,14 @@ export const DesktopFrontPage = () => {
           </p>
         </div>
 
-        {/* Next Button / Dismissable Expanded Form Container */}
+        {/* Next Button / Unboxed Smooth Expand & Collapse Form Container */}
         <div className="mt-8 sm:mt-10 w-full flex flex-col items-center">
-          {expanded ? (
-            <div
-              className={`relative w-full max-w-sm p-6 border transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4 ${
-                isDarkMode
-                  ? "border-border-dark bg-white/[0.03] shadow-lg shadow-black/20"
-                  : "border-border-light bg-black/[0.02] shadow-lg shadow-black/5"
-              }`}
-            >
-              {/* Dismiss close button */}
-              <button
-                aria-label="Dismiss login form"
-                className={`absolute right-3.5 top-3.5 p-1 transition-opacity opacity-40 hover:opacity-100 focus:outline-none ${
-                  isDarkMode ? "text-text-dark" : "text-text-light"
-                }`}
-                onClick={() => setExpanded(false)}
-                type="button"
-              >
-                <XIcon size={14} />
-              </button>
-
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-center mb-4 opacity-70">
-                {isSetupNeeded ? "initialize verso" : "welcome back"}
-              </h2>
-
-              {error && (
-                <div
-                  className={`mb-4 p-2.5 text-xs rounded border text-center ${
-                    isDarkMode
-                      ? "border-red-900/50 bg-red-950/30 text-red-300"
-                      : "border-red-200 bg-red-50 text-red-700"
-                  }`}
-                >
-                  {error}
-                </div>
-              )}
-
-              {renderActiveForm()}
-            </div>
-          ) : (
+          {/* Unboxed Next Button (fades out when expanded) */}
+          <div
+            className={`transition-all duration-300 ${
+              expanded ? "opacity-0 pointer-events-none h-0 overflow-hidden" : "opacity-100 h-auto"
+            }`}
+          >
             <button
               className={`group flex items-center gap-1.5 text-sm font-medium lowercase transition-opacity opacity-60 hover:opacity-100 focus:outline-none py-2 px-3 ${
                 isDarkMode ? "text-text-dark" : "text-text-light"
@@ -449,7 +424,50 @@ export const DesktopFrontPage = () => {
                 size={15}
               />
             </button>
-          )}
+          </div>
+
+          {/* Fluent Smooth Expand & Collapse Grid Animation */}
+          <div
+            className={`grid transition-all duration-500 ease-in-out w-full max-w-sm ${
+              expanded
+                ? "grid-rows-[1fr] opacity-100 mt-4"
+                : "grid-rows-[0fr] opacity-0 mt-0 pointer-events-none"
+            }`}
+          >
+            <div className="overflow-hidden">
+              <div className="relative w-full px-6 py-4">
+                {/* Dismiss close button */}
+                <button
+                  aria-label="Dismiss login form"
+                  className={`absolute right-2 top-0 p-1 transition-opacity opacity-40 hover:opacity-100 focus:outline-none ${
+                    isDarkMode ? "text-text-dark" : "text-text-light"
+                  }`}
+                  onClick={() => setExpanded(false)}
+                  type="button"
+                >
+                  <XIcon size={14} />
+                </button>
+
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-center mb-4 opacity-70">
+                  {isSetupNeeded ? "initialize verso" : "welcome back"}
+                </h2>
+
+                {error && (
+                  <div
+                    className={`mb-4 p-2.5 text-xs rounded border text-center ${
+                      isDarkMode
+                        ? "border-red-900/50 bg-red-950/30 text-red-300"
+                        : "border-red-200 bg-red-50 text-red-700"
+                    }`}
+                  >
+                    {error}
+                  </div>
+                )}
+
+                {renderActiveForm()}
+              </div>
+            </div>
+          </div>
         </div>
       </main>
 
