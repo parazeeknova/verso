@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowRightIcon, EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
+import { ArrowRightIcon, EyeIcon, EyeSlashIcon, XIcon } from "@phosphor-icons/react";
 import { useAuth, useAuthActions } from "#/features/auth/hooks/use-auth";
 import { useIsBootstrapped, useBootstrapState } from "#/features/auth/hooks/use-bootstrap-state";
 import { useTheme } from "#/shared/hooks/use-theme";
@@ -61,6 +61,20 @@ export const DesktopFrontPage = () => {
       void navigate({ replace: true, to: "/home" });
     }
   }, [user, navigate]);
+
+  // Dismiss login dialog on Escape key
+  useEffect(() => {
+    if (!expanded) {
+      return;
+    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setExpanded(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [expanded]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -342,14 +356,12 @@ export const DesktopFrontPage = () => {
         isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
       }`}
     >
-      {/* Top navbar with theme toggle */}
+      {/* Top navbar with unboxed theme toggle */}
       <header className="p-4 sm:p-6 flex items-center justify-end w-full">
         <button
           aria-label="Toggle theme"
-          className={`px-3 py-1.5 text-xs lowercase rounded border transition-colors ${
-            isDarkMode
-              ? "border-border-dark/40 text-text-dark/60 hover:text-text-dark hover:border-border-dark"
-              : "border-border-light/40 text-text-light/60 hover:text-text-light hover:border-border-light"
+          className={`text-xs lowercase transition-opacity opacity-50 hover:opacity-100 focus:outline-none ${
+            isDarkMode ? "text-text-dark" : "text-text-light"
           }`}
           onClick={toggleTheme}
           type="button"
@@ -383,16 +395,28 @@ export const DesktopFrontPage = () => {
           </p>
         </div>
 
-        {/* Next Button / Expanded Form Container */}
+        {/* Next Button / Dismissable Expanded Form Container */}
         <div className="mt-8 sm:mt-10 w-full flex flex-col items-center">
           {expanded ? (
             <div
-              className={`w-full max-w-sm p-6 border transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4 ${
+              className={`relative w-full max-w-sm p-6 border transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4 ${
                 isDarkMode
                   ? "border-border-dark bg-white/[0.03] shadow-lg shadow-black/20"
                   : "border-border-light bg-black/[0.02] shadow-lg shadow-black/5"
               }`}
             >
+              {/* Dismiss close button */}
+              <button
+                aria-label="Dismiss login form"
+                className={`absolute right-3.5 top-3.5 p-1 transition-opacity opacity-40 hover:opacity-100 focus:outline-none ${
+                  isDarkMode ? "text-text-dark" : "text-text-light"
+                }`}
+                onClick={() => setExpanded(false)}
+                type="button"
+              >
+                <XIcon size={14} />
+              </button>
+
               <h2 className="text-xs font-semibold uppercase tracking-widest text-center mb-4 opacity-70">
                 {isSetupNeeded ? "initialize verso" : "welcome back"}
               </h2>
@@ -413,10 +437,8 @@ export const DesktopFrontPage = () => {
             </div>
           ) : (
             <button
-              className={`group flex items-center gap-2 px-8 py-3 border text-sm font-medium lowercase transition-all duration-300 shadow-sm ${
-                isDarkMode
-                  ? "border-border-dark bg-white/5 text-text-dark hover:bg-white/10 hover:border-text-dark/40"
-                  : "border-border-light bg-black/5 text-text-light hover:bg-black/10 hover:border-text-light/40"
+              className={`group flex items-center gap-1.5 text-sm font-medium lowercase transition-opacity opacity-60 hover:opacity-100 focus:outline-none py-2 px-3 ${
+                isDarkMode ? "text-text-dark" : "text-text-light"
               }`}
               onClick={() => setExpanded(true)}
               type="button"
@@ -424,7 +446,7 @@ export const DesktopFrontPage = () => {
               <span>next</span>
               <ArrowRightIcon
                 className="transition-transform duration-300 group-hover:translate-x-1"
-                size={16}
+                size={15}
               />
             </button>
           )}
