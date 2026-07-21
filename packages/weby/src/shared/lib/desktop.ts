@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from "react";
+
 export const isDesktopApp = (): boolean => {
   if (typeof window === "undefined") {
     return false;
@@ -20,3 +22,12 @@ export const isDesktopApp = (): boolean => {
   }
   return false;
 };
+
+const emptySubscribe = () => () => {
+  // noop subscribe
+};
+
+const getServerSnapshot = () => false;
+
+export const useIsDesktop = (): boolean =>
+  useSyncExternalStore(emptySubscribe, isDesktopApp, getServerSnapshot);

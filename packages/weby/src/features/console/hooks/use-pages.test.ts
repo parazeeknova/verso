@@ -153,4 +153,57 @@ describe("useUpdatePage", () => {
       expect(pageQuery.current.data?.isLocked).toBe(true);
     });
   });
+
+  it("restores per-query snapshot on rollback when mutation fails", async () => {
+    const { useUpdatePage } = await import("./use-pages");
+    const { createTestQueryClient } = await import("#/shared/test/utils");
+    const { QueryClientProvider } = await import("@tanstack/react-query");
+
+    const queryByIdData = {
+      contentJson: "{}",
+      createdAt: "2026-05-01T00:00:00Z",
+      creatorId: "user-1",
+      editable: true,
+      id: "page-123",
+      isLocked: false,
+      isPublished: false,
+      slugId: "my-slug",
+      spaceId: "space-abc",
+      title: "Title By ID",
+      updatedAt: "2026-05-01T00:00:00Z",
+    };
+
+    const queryBySlugData = {
+      ...queryByIdData,
+      title: "Title By Slug Newer",
+    };
+
+    const testQueryClient = createTestQueryClient();
+    testQueryClient.setQueryDefaults(["consolePage"], { gcTime: 10_000 });
+    testQueryClient.setQueryData(["consolePage", "page-123"], queryByIdData);
+    testQueryClient.setQueryData(["consolePage", "space-abc", "my-slug"], queryBySlugData);
+
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network Error")));
+
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      createElement(QueryClientProvider, { client: testQueryClient }, children);
+
+    const { result: mutation } = renderHook(() => useUpdatePage(), { wrapper });
+
+    act(() => {
+      mutation.current.mutate({
+        id: "page-123",
+        input: { title: "Mutated Title" },
+      });
+    });
+
+    await waitFor(() => {
+      expect(mutation.current.isError).toBe(true);
+    });
+
+    expect(testQueryClient.getQueryData(["consolePage", "page-123"])).toEqual(queryByIdData);
+    expect(testQueryClient.getQueryData(["consolePage", "space-abc", "my-slug"])).toEqual(
+      queryBySlugData,
+    );
+  });
 });

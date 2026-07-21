@@ -10,6 +10,8 @@ import type {
   PageShare,
 } from "#/shared/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { QueryKey } from "@tanstack/react-query";
+
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
 
 type PageTreeItemResponse = Omit<PageTreeItem, "parentPageId"> & {
@@ -111,7 +113,10 @@ export const useUpdatePage = () => {
     ConsolePageDetail,
     Error,
     { id: string; input: UpdatePageInput },
-    { previousPage?: ConsolePageDetail; touchedKeys?: (keyof ConsolePageDetail)[] }
+    {
+      previousPages?: [QueryKey, ConsolePageDetail | undefined][];
+      touchedKeys?: (keyof ConsolePageDetail)[];
+    }
   >({
     mutationFn: ({ id, input }: { id: string; input: UpdatePageInput }) =>
       fetchProtected<ConsolePageDetail>(`/api/console/pages/${id}`, {
@@ -119,14 +124,16 @@ export const useUpdatePage = () => {
         headers: { "Content-Type": "application/json" },
         method: "PUT",
       }),
-    onError: (_err, variables, context) => {
-      const prev = context?.previousPage;
+    onError: (_err, _variables, context) => {
+      const previousPages = context?.previousPages;
       const touched = context?.touchedKeys;
-      if (prev && touched) {
-        queryClient.setQueriesData<ConsolePageDetail>(
-          { exact: false, queryKey: ["consolePage"] },
-          (current) => {
-            if (!current || current.id !== variables.id) {
+      if (previousPages && touched) {
+        for (const [queryKey, prev] of previousPages) {
+          if (!prev) {
+            continue;
+          }
+          queryClient.setQueryData<ConsolePageDetail>(queryKey, (current) => {
+            if (!current) {
               return current;
             }
             const restored = { ...current };
@@ -138,8 +145,8 @@ export const useUpdatePage = () => {
               }
             }
             return restored;
-          },
-        );
+          });
+        }
       }
     },
     onMutate: async ({ id, input }) => {
@@ -148,13 +155,11 @@ export const useUpdatePage = () => {
         exact: false,
         queryKey: ["consolePage"],
       });
-      let previousPage: ConsolePageDetail | undefined;
+      const previousPages: [QueryKey, ConsolePageDetail | undefined][] = [];
 
       for (const [queryKey, pageData] of queries) {
         if (pageData && pageData.id === id) {
-          if (!previousPage) {
-            previousPage = pageData;
-          }
+          previousPages.push([queryKey, pageData]);
           queryClient.setQueryData<ConsolePageDetail>(queryKey, {
             ...pageData,
             ...input,
@@ -163,7 +168,7 @@ export const useUpdatePage = () => {
       }
 
       const touchedKeys = Object.keys(input) as (keyof ConsolePageDetail)[];
-      return { previousPage, touchedKeys };
+      return { previousPages, touchedKeys };
     },
     onSuccess: (_data, _variables) => {
       queryClient.invalidateQueries({

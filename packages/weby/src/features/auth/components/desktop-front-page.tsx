@@ -10,7 +10,9 @@ import {
   XIcon,
 } from "@phosphor-icons/react";
 import { useAuth, useAuthActions } from "#/features/auth/hooks/use-auth";
+import { useMFAVerify } from "#/features/auth/hooks/use-mfa";
 import { useIsBootstrapped, useBootstrapState } from "#/features/auth/hooks/use-bootstrap-state";
+
 import { useTheme } from "#/shared/hooks/use-theme";
 
 interface GradientTextProps {
@@ -46,6 +48,7 @@ export const DesktopFrontPage = () => {
   const { bootstrapped, loading: isBootstrapLoading } = useIsBootstrapped();
   const { data: bootstrapData } = useBootstrapState();
   const { login } = useAuthActions();
+  const verifyMfa = useMFAVerify();
   const { isDarkMode, toggleTheme } = useTheme();
 
   const [expanded, setExpanded] = useState(false);
@@ -94,16 +97,7 @@ export const DesktopFrontPage = () => {
     setLoading(true);
     try {
       if (mfaRequired) {
-        const res = await fetch("/api/auth/mfa/verify", {
-          body: JSON.stringify({ code: mfaCode }),
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          method: "POST",
-        });
-        if (!res.ok) {
-          const errData = (await res.json().catch(() => ({}))) as { error?: string };
-          throw new Error(errData.error || "Invalid MFA code");
-        }
+        await verifyMfa.mutateAsync({ code: mfaCode });
         void navigate({ replace: true, to: "/home" });
         return;
       }

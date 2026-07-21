@@ -12,7 +12,7 @@ import { ReadmeViewer } from "#/features/landing/components/readme-viewer";
 import { ProjectList } from "#/features/landing/components/projects";
 import { BlogReaderPanel } from "#/features/blog/components/blog-reader-panel";
 import { LoginPopup } from "#/features/auth/components/login-popup";
-import { isDesktopApp } from "#/shared/lib/desktop";
+import { useIsDesktop } from "#/shared/lib/desktop";
 import { DesktopFrontPage } from "#/features/auth/components/desktop-front-page";
 import {
   useBlogManifest,
@@ -95,9 +95,7 @@ const useThemeButtonHover = (): ThemeButtonRefs => {
 };
 
 const Home = function Home() {
-  if (isDesktopApp()) {
-    return <DesktopFrontPage />;
-  }
+  const isDesktop = useIsDesktop();
 
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [viewMode, setViewMode] = useState<"portfolio" | "blogs">("portfolio");
@@ -118,6 +116,10 @@ const Home = function Home() {
   const { data: projects } = useProjects();
   const { data: manifest = [] } = useBlogManifest();
   const isPending = useIsFetchingData();
+
+  if (isDesktop) {
+    return <DesktopFrontPage />;
+  }
 
   const firstPostSlug = useMemo(() => {
     for (const section of manifest) {
