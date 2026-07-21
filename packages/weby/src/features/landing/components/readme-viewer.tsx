@@ -265,20 +265,24 @@ export const ReadmeViewer = ({
     >
       <div className="mb-6 flex items-center gap-3">
         <button
-          className={`text-[13px] ${isDarkMode ? "text-[#b58cff]" : "text-purple-600"}`}
+          className={`text-[13px] shrink-0 whitespace-nowrap ${
+            isDarkMode ? "text-[#b58cff]" : "text-purple-600"
+          }`}
           onClick={onBack}
           type="button"
         >
           back
         </button>
         <p
-          className={`text-[13px] truncate min-w-0 ${isDarkMode ? "text-text-dark/60" : "text-text-light/60"}`}
+          className={`text-[13px] leading-snug break-words flex-1 ${
+            isDarkMode ? "text-text-dark/60" : "text-text-light/60"
+          }`}
         >
           {projectTitle}
         </p>
         {repoUrl && (
           <AnimatedLink
-            className="text-[13px] lowercase"
+            className="text-[13px] lowercase shrink-0 whitespace-nowrap"
             href={repoUrl}
             rel="noopener noreferrer"
             target="_blank"
@@ -288,7 +292,7 @@ export const ReadmeViewer = ({
         )}
         {productUrl && (
           <AnimatedLink
-            className="text-[13px] lowercase"
+            className="text-[13px] lowercase shrink-0 whitespace-nowrap"
             href={productUrl}
             rel="noopener noreferrer"
             target="_blank"
@@ -296,10 +300,9 @@ export const ReadmeViewer = ({
             product
           </AnimatedLink>
         )}
-        <div className="flex-1" />
         {isMobile ? (
           <button
-            className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${
+            className={`text-[13px] lowercase shrink-0 whitespace-nowrap focus:outline-none hover:opacity-70 ${
               isDarkMode ? "text-text-dark/60" : "text-text-light/60"
             }`}
             onClick={() => setTocOpen(!tocOpen)}
@@ -309,7 +312,7 @@ export const ReadmeViewer = ({
           </button>
         ) : (
           <button
-            className={`text-[13px] lowercase focus:outline-none ${
+            className={`text-[13px] lowercase shrink-0 whitespace-nowrap focus:outline-none ${
               isDarkMode
                 ? "text-text-dark/60 hover:text-text-dark"
                 : "text-text-light/60 hover:text-text-light"
@@ -322,7 +325,7 @@ export const ReadmeViewer = ({
         )}
         {onSwitchToAbout && (
           <button
-            className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${
+            className={`text-[13px] lowercase shrink-0 whitespace-nowrap focus:outline-none hover:opacity-70 ${
               isDarkMode ? "text-text-dark/60" : "text-text-light/60"
             }`}
             onClick={onSwitchToAbout}
@@ -334,7 +337,7 @@ export const ReadmeViewer = ({
         {onToggleTheme && (
           <button
             aria-label="Toggle theme"
-            className="rounded-full p-2 focus:outline-none focus-visible:ring-1 focus-visible:ring-current/40"
+            className="shrink-0 rounded-full p-2 focus:outline-none focus-visible:ring-1 focus-visible:ring-current/40"
             onClick={onToggleTheme}
             ref={themeButtonRef}
             type="button"
