@@ -77,14 +77,16 @@ export const uploadImage = async (file: File, editor: Editor, pos: number) => {
     const pageName = storage.shared.pageName || "default";
     const pageId = storage.shared.pageId || "";
 
+    if (!pageId) {
+      throw new Error("page is initializing, please retry upload");
+    }
+
     // Perform upload request
     const formData = new FormData();
     formData.append("file", file);
     formData.append("spaceName", spaceName);
     formData.append("pageName", pageName);
-    if (pageId) {
-      formData.append("pageId", pageId);
-    }
+    formData.append("pageId", pageId);
 
     const controller = new AbortController();
     timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);

@@ -988,6 +988,14 @@ export const PageEditor = ({
     }
   }, [editor, editable, isLocked]);
 
+  if (editor && !editor.isDestroyed) {
+    const storage = editor.storage as unknown as Record<string, Record<string, string | undefined>>;
+    storage.shared = storage.shared || {};
+    storage.shared.pageId = pageId;
+    storage.shared.spaceName = spaceName;
+    storage.shared.pageName = localTitle;
+  }
+
   useEffect(() => {
     if (editor && !editor.isDestroyed) {
       const storage = editor.storage as unknown as Record<
