@@ -182,7 +182,7 @@ export const ReadmeViewer = ({
     content = (
       <div
         className={`grid min-h-0 flex-1 grid-cols-1 gap-4 sm:gap-6 lg:gap-8 ${
-          !isMobile && asideMounted ? "xl:grid-cols-[minmax(0,1fr)_240px]" : ""
+          !isMobile && asideMounted ? "lg:grid-cols-[minmax(0,1fr)_260px]" : ""
         }`}
       >
         <div className="min-h-0 overflow-y-auto pr-2" ref={scrollRef}>
@@ -233,7 +233,10 @@ export const ReadmeViewer = ({
               </div>
             )
           : asideMounted && (
-              <aside className="space-y-8 xl:sticky xl:top-8 xl:self-start" ref={asideRef}>
+              <aside
+                className="space-y-8 sticky top-0 self-start max-h-[calc(100vh-100px)] overflow-y-auto pr-1"
+                ref={asideRef}
+              >
                 <BlogTableOfContents
                   activeHeadingId={activeHeadingId}
                   headings={headings}
