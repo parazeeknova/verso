@@ -182,7 +182,7 @@ export const ReadmeViewer = ({
     content = (
       <div
         className={`grid min-h-0 flex-1 grid-cols-1 gap-4 sm:gap-6 lg:gap-8 ${
-          !isMobile && asideMounted ? "xl:grid-cols-[minmax(0,1fr)_240px]" : ""
+          !isMobile && asideMounted ? "lg:grid-cols-[minmax(0,1fr)_260px]" : ""
         }`}
       >
         <div className="min-h-0 overflow-y-auto pr-2" ref={scrollRef}>
@@ -233,7 +233,10 @@ export const ReadmeViewer = ({
               </div>
             )
           : asideMounted && (
-              <aside className="space-y-8 xl:sticky xl:top-8 xl:self-start" ref={asideRef}>
+              <aside
+                className="space-y-8 sticky top-0 self-start max-h-[calc(100vh-100px)] overflow-y-auto pr-1"
+                ref={asideRef}
+              >
                 <BlogTableOfContents
                   activeHeadingId={activeHeadingId}
                   headings={headings}
@@ -262,20 +265,24 @@ export const ReadmeViewer = ({
     >
       <div className="mb-6 flex items-center gap-3">
         <button
-          className={`text-[13px] ${isDarkMode ? "text-[#b58cff]" : "text-purple-600"}`}
+          className={`text-[13px] shrink-0 whitespace-nowrap ${
+            isDarkMode ? "text-[#b58cff]" : "text-purple-600"
+          }`}
           onClick={onBack}
           type="button"
         >
           back
         </button>
         <p
-          className={`text-[13px] truncate min-w-0 ${isDarkMode ? "text-text-dark/60" : "text-text-light/60"}`}
+          className={`text-[13px] leading-snug break-words flex-1 ${
+            isDarkMode ? "text-text-dark/60" : "text-text-light/60"
+          }`}
         >
           {projectTitle}
         </p>
         {repoUrl && (
           <AnimatedLink
-            className="text-[13px] lowercase"
+            className="text-[13px] lowercase shrink-0 whitespace-nowrap"
             href={repoUrl}
             rel="noopener noreferrer"
             target="_blank"
@@ -285,7 +292,7 @@ export const ReadmeViewer = ({
         )}
         {productUrl && (
           <AnimatedLink
-            className="text-[13px] lowercase"
+            className="text-[13px] lowercase shrink-0 whitespace-nowrap"
             href={productUrl}
             rel="noopener noreferrer"
             target="_blank"
@@ -293,10 +300,19 @@ export const ReadmeViewer = ({
             product
           </AnimatedLink>
         )}
-        <div className="flex-1" />
-        {!isMobile && (
+        {isMobile ? (
           <button
-            className={`text-[13px] lowercase focus:outline-none ${
+            className={`text-[13px] lowercase shrink-0 whitespace-nowrap focus:outline-none hover:opacity-70 ${
+              isDarkMode ? "text-text-dark/60" : "text-text-light/60"
+            }`}
+            onClick={() => setTocOpen(!tocOpen)}
+            type="button"
+          >
+            {tocOpen ? "close" : "toc"}
+          </button>
+        ) : (
+          <button
+            className={`text-[13px] lowercase shrink-0 whitespace-nowrap focus:outline-none ${
               isDarkMode
                 ? "text-text-dark/60 hover:text-text-dark"
                 : "text-text-light/60 hover:text-text-light"
@@ -307,41 +323,32 @@ export const ReadmeViewer = ({
             {asideMounted ? "hide toc" : "show toc"}
           </button>
         )}
-        {isMobile && (
-          <>
-            <button
-              className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${
-                isDarkMode ? "text-text-dark/60" : "text-text-light/60"
-              }`}
-              onClick={() => setTocOpen(!tocOpen)}
-              type="button"
-            >
-              {tocOpen ? "close" : "toc"}
-            </button>
-            <button
-              className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${
-                isDarkMode ? "text-text-dark/60" : "text-text-light/60"
-              }`}
-              onClick={onSwitchToAbout}
-              type="button"
-            >
-              about
-            </button>
-            <button
-              aria-label="Toggle theme"
-              className="rounded-full p-2 focus:outline-none focus-visible:ring-1 focus-visible:ring-current/40"
-              onClick={onToggleTheme}
-              ref={themeButtonRef}
-              type="button"
-            >
-              <span className="sr-only">Toggle theme</span>
-              <span
-                className="block h-3 w-3 rounded-full border border-current"
-                ref={themeIndicatorRef}
-                style={{ backgroundColor: "transparent" }}
-              />
-            </button>
-          </>
+        {onSwitchToAbout && (
+          <button
+            className={`text-[13px] lowercase shrink-0 whitespace-nowrap focus:outline-none hover:opacity-70 ${
+              isDarkMode ? "text-text-dark/60" : "text-text-light/60"
+            }`}
+            onClick={onSwitchToAbout}
+            type="button"
+          >
+            portfolio
+          </button>
+        )}
+        {onToggleTheme && (
+          <button
+            aria-label="Toggle theme"
+            className="shrink-0 rounded-full p-2 focus:outline-none focus-visible:ring-1 focus-visible:ring-current/40"
+            onClick={onToggleTheme}
+            ref={themeButtonRef}
+            type="button"
+          >
+            <span className="sr-only">Toggle theme</span>
+            <span
+              className="block h-3 w-3 rounded-full border border-current"
+              ref={themeIndicatorRef}
+              style={{ backgroundColor: "transparent" }}
+            />
+          </button>
         )}
       </div>
 

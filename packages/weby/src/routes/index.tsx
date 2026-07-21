@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { gsap } from "gsap";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { GitHubActivity } from "#/features/github/components/calendar";
 import { GitHubStats } from "#/features/github/components/stats";
 import {
@@ -8,9 +8,8 @@ import {
   ProfileSection,
   SocialLinks,
 } from "#/features/landing/components/sections";
-import { ScrollContainer } from "#/features/landing/components/scroll-container";
 import { ReadmeViewer } from "#/features/landing/components/readme-viewer";
-import { MobileProjectList, ProjectList } from "#/features/landing/components/projects";
+import { ProjectList } from "#/features/landing/components/projects";
 import { BlogReaderPanel } from "#/features/blog/components/blog-reader-panel";
 import { LoginPopup } from "#/features/auth/components/login-popup";
 import {
@@ -95,7 +94,8 @@ const useThemeButtonHover = (): ThemeButtonRefs => {
 
 const Home = function Home() {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [mobileView, setMobileView] = useState<"about" | "blogs">("about");
+  const [viewMode, setViewMode] = useState<"portfolio" | "blogs">("portfolio");
+  const [selectedBlogSlug, setSelectedBlogSlug] = useState<string | null>(null);
   const [selectedProject, setSelectedProject] = useState<{
     productUrl?: string;
     readmeUrl: string;
@@ -107,41 +107,39 @@ const Home = function Home() {
   const themeRefs = useThemeButtonHover();
   const themeRefsRight = useThemeButtonHover();
 
-  const leftPanelRef = useRef<HTMLDivElement>(null);
-  const rightPanelRef = useRef<HTMLDivElement>(null);
-  const mainContainerRef = useRef<HTMLDivElement>(null);
-
   const { data: profile } = useProfile();
   const { data: experience } = useExperience();
   const { data: projects } = useProjects();
   const { data: manifest = [] } = useBlogManifest();
   const isPending = useIsFetchingData();
 
-  // Auto-select first project readme when no blog posts exist
-  useEffect(() => {
-    if (!projects || projects.length === 0) {
-      return;
-    }
-    if (selectedProject) {
-      return;
-    }
-    const hasPosts = manifest.some((s) => s.children.length > 0);
-    if (hasPosts) {
-      return;
-    }
-    const firstWithReadme = projects.find((p) => p.readmeUrl);
-    if (firstWithReadme?.readmeUrl) {
-      setSelectedProject({
-        productUrl: firstWithReadme.productUrl,
-        readmeUrl: firstWithReadme.readmeUrl,
-        repoUrl: firstWithReadme.repoUrl,
-        title: firstWithReadme.title,
-      });
-      if (!isMobile) {
-        setMobileView("blogs");
+  const firstPostSlug = useMemo(() => {
+    for (const section of manifest) {
+      if (section.children && section.children.length > 0) {
+        return section.children[0].slug;
       }
     }
-  }, [projects, manifest, selectedProject, isMobile]);
+    return null;
+  }, [manifest]);
+
+  const firstProject = useMemo(() => projects?.find((p) => p.readmeUrl) ?? null, [projects]);
+
+  // Auto-select first blog or first project with readme
+  useEffect(() => {
+    if (selectedBlogSlug || selectedProject) {
+      return;
+    }
+    if (firstPostSlug) {
+      setSelectedBlogSlug(firstPostSlug);
+    } else if (firstProject?.readmeUrl) {
+      setSelectedProject({
+        productUrl: firstProject.productUrl,
+        readmeUrl: firstProject.readmeUrl,
+        repoUrl: firstProject.repoUrl,
+        title: firstProject.title,
+      });
+    }
+  }, [firstPostSlug, firstProject, selectedBlogSlug, selectedProject]);
 
   // Read initial theme from localStorage on mount
   useEffect(() => {
@@ -167,18 +165,23 @@ const Home = function Home() {
       if (!project.readmeUrl) {
         return;
       }
+      setSelectedBlogSlug(null);
       setSelectedProject({
         productUrl: project.productUrl,
         readmeUrl: project.readmeUrl,
         repoUrl: project.repoUrl,
         title: project.title,
       });
-      if (isMobile) {
-        setMobileView("blogs");
-      }
+      setViewMode("blogs");
     },
-    [isMobile],
+    [],
   );
+
+  const handleSelectPost = useCallback((slug: string) => {
+    setSelectedProject(null);
+    setSelectedBlogSlug(slug);
+    setViewMode("blogs");
+  }, []);
 
   // Extract GitHub username from profile or env
   const githubUsername = (() => {
@@ -192,41 +195,87 @@ const Home = function Home() {
     return "parazeeknova";
   })();
 
-  let rightPanelVisibility: string;
-  if (isMobile) {
-    rightPanelVisibility = mobileView === "blogs" ? "h-screen overflow-hidden" : "hidden";
-  } else {
-    rightPanelVisibility = "min-h-0 overflow-hidden lg:border-l";
+  if (viewMode === "blogs") {
+    const activeSlug = selectedBlogSlug ?? firstPostSlug ?? "";
+    return (
+      <div
+        data-theme={isDarkMode ? "dark" : "light"}
+        className={`h-screen w-full select-none overflow-hidden ${
+          isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
+        }`}
+      >
+        {selectedProject ? (
+          <ReadmeViewer
+            isDarkMode={isDarkMode}
+            isMobile={isMobile}
+            manifest={manifest}
+            onBack={() => {
+              setSelectedProject(null);
+              if (firstPostSlug) {
+                setSelectedBlogSlug(firstPostSlug);
+              }
+            }}
+            onSelectPost={handleSelectPost}
+            onSelectProject={handleProjectDetail}
+            onSwitchToAbout={() => setViewMode("portfolio")}
+            onToggleTheme={toggleTheme}
+            productUrl={selectedProject.productUrl}
+            projectTitle={selectedProject.title}
+            projects={projects}
+            readmeUrl={selectedProject.readmeUrl}
+            repoUrl={selectedProject.repoUrl}
+            themeButtonRef={themeRefsRight.buttonRef as React.RefObject<HTMLButtonElement | null>}
+            themeIndicatorRef={
+              themeRefsRight.indicatorRef as React.RefObject<HTMLSpanElement | null>
+            }
+          />
+        ) : (
+          <BlogReaderPanel
+            isDarkMode={isDarkMode}
+            isMobile={isMobile}
+            manifest={manifest}
+            onSelectPost={handleSelectPost}
+            onSelectProject={handleProjectDetail}
+            onSwitchToAbout={() => setViewMode("portfolio")}
+            onToggleTheme={toggleTheme}
+            projects={projects}
+            slug={activeSlug}
+            themeButtonRef={themeRefsRight.buttonRef as React.RefObject<HTMLButtonElement | null>}
+            themeIndicatorRef={
+              themeRefsRight.indicatorRef as React.RefObject<HTMLSpanElement | null>
+            }
+          />
+        )}
+      </div>
+    );
   }
 
   return (
     <div
-      className="relative grid min-h-screen grid-cols-1 lg:overflow-hidden lg:h-screen lg:grid-cols-2"
-      ref={mainContainerRef}
+      data-theme={isDarkMode ? "dark" : "light"}
+      className={`min-h-screen w-full select-none overflow-y-auto p-4 sm:p-6 lg:p-8 ${
+        isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
+      }`}
     >
-      <div
-        data-theme={isDarkMode ? "dark" : "light"}
-        className={`relative z-10 flex select-none flex-col gap-4 overflow-y-auto p-4 sm:gap-6 sm:p-6 lg:gap-8 lg:overflow-hidden lg:p-8 ${
-          isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
-        } ${isMobile && mobileView !== "about" ? "hidden" : ""}`}
-        ref={leftPanelRef}
-      >
-        <div className="absolute top-4 right-4 flex items-center gap-3 sm:top-6 sm:right-6 lg:top-8 lg:right-8">
-          {isMobile && (
-            <button
-              className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${
-                isDarkMode ? "text-text-dark/60" : "text-text-light/60"
-              }`}
-              onClick={() => setMobileView("blogs")}
-            >
-              blogs
-            </button>
-          )}
+      <div className="mx-auto flex max-w-3xl flex-col gap-6 sm:gap-8">
+        <div className="flex items-center justify-end gap-3 w-full">
+          <button
+            className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${
+              isDarkMode
+                ? "text-text-dark/60 hover:text-text-dark"
+                : "text-text-light/60 hover:text-text-light"
+            }`}
+            onClick={() => setViewMode("blogs")}
+            type="button"
+          >
+            blogs
+          </button>
           <button
             aria-label="Toggle theme"
             className="rounded-full p-2 focus:outline-none focus-visible:ring-1 focus-visible:ring-current/40"
             onClick={toggleTheme}
             ref={themeRefs.buttonRef}
+            type="button"
           >
             <span className="sr-only">Toggle theme</span>
             <span
@@ -244,75 +293,19 @@ const Home = function Home() {
           <ExperienceSection experience={experience} isPending={isPending} />
         </div>
 
-        {isMobile ? (
-          <div className="shrink-0 space-y-2">
-            <h3 className="font-medium text-base">voo look what i made</h3>
-            <MobileProjectList onDetail={handleProjectDetail} />
-          </div>
-        ) : (
-          <div className="flex min-h-0 flex-1 flex-col">
-            <h3 className="mb-2 shrink-0 font-medium text-base">voo look what i made</h3>
-            <ScrollContainer className="min-h-0 flex-1">
-              <ProjectList onDetail={handleProjectDetail} />
-            </ScrollContainer>
-          </div>
-        )}
+        <div className="shrink-0 space-y-2">
+          <h3 className="font-medium text-base">voo look what i made</h3>
+          <ProjectList onDetail={handleProjectDetail} />
+        </div>
 
         <GitHubActivity isDarkMode={isDarkMode} username={githubUsername}>
           <GitHubStats />
         </GitHubActivity>
 
-        <div className="shrink-0 flex items-center justify-between">
+        <div className="shrink-0 flex items-center justify-between pt-2">
           <SocialLinks profile={profile} />
           <LoginPopup isDarkMode={isDarkMode} />
         </div>
-      </div>
-
-      <div
-        data-theme={isDarkMode ? "dark" : "light"}
-        className={`relative ${rightPanelVisibility} ${
-          isDarkMode
-            ? "border-border-dark bg-bg-dark text-text-dark"
-            : "border-border-light bg-bg-light text-text-light"
-        }`}
-        ref={rightPanelRef}
-      >
-        {selectedProject ? (
-          <ReadmeViewer
-            isDarkMode={isDarkMode}
-            isMobile={isMobile}
-            manifest={manifest}
-            onBack={() => setSelectedProject(null)}
-            onSelectPost={() => setSelectedProject(null)}
-            onSelectProject={handleProjectDetail}
-            onSwitchToAbout={() => setMobileView("about")}
-            onToggleTheme={toggleTheme}
-            productUrl={selectedProject.productUrl}
-            projectTitle={selectedProject.title}
-            projects={projects}
-            readmeUrl={selectedProject.readmeUrl}
-            repoUrl={selectedProject.repoUrl}
-            themeButtonRef={themeRefsRight.buttonRef as React.RefObject<HTMLButtonElement | null>}
-            themeIndicatorRef={
-              themeRefsRight.indicatorRef as React.RefObject<HTMLSpanElement | null>
-            }
-          />
-        ) : (
-          <BlogReaderPanel
-            isDarkMode={isDarkMode}
-            isMobile={isMobile}
-            manifest={manifest}
-            onSelectProject={handleProjectDetail}
-            onSwitchToAbout={() => setMobileView("about")}
-            onToggleTheme={toggleTheme}
-            projects={projects}
-            slug=""
-            themeButtonRef={themeRefsRight.buttonRef as React.RefObject<HTMLButtonElement | null>}
-            themeIndicatorRef={
-              themeRefsRight.indicatorRef as React.RefObject<HTMLSpanElement | null>
-            }
-          />
-        )}
       </div>
     </div>
   );
