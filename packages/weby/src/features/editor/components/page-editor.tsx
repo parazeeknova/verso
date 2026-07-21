@@ -12,6 +12,8 @@ import {
   CheckIcon,
   CopyIcon,
   ArrowSquareOutIcon,
+  WifiHighIcon,
+  WifiSlashIcon,
 } from "@phosphor-icons/react";
 import { gsap } from "gsap";
 import { useTheme } from "#/shared/hooks/use-theme";
@@ -438,6 +440,53 @@ const CreatorByline = ({
         initialsClass="text-[10px] text-neutral-600 dark:text-neutral-300 font-semibold"
       />
       <span>by {displayName}</span>
+    </div>
+  );
+};
+
+const InternetIndicator = ({ t }: { t: (dark: string, light: string) => string }) => {
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator === "undefined" ? true : navigator.onLine,
+  );
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  return (
+    <div
+      className="relative flex items-center justify-center cursor-default"
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
+      <div
+        className={`p-0.5 transition-colors ${
+          isOnline
+            ? t(
+                "text-text-dark/40 hover:text-text-dark",
+                "text-text-light/40 hover:text-text-light",
+              )
+            : "text-red-500 animate-pulse"
+        }`}
+        aria-label={isOnline ? "Online" : "Offline"}
+      >
+        {isOnline ? <WifiHighIcon size={14} /> : <WifiSlashIcon size={14} />}
+      </div>
+      {showTooltip && (
+        <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 whitespace-nowrap px-2 py-0.5 text-[9px] font-mono lowercase shadow-lg border border-border-dark bg-bg-dark text-text-dark dark:border-border-dark dark:bg-bg-dark dark:text-text-dark">
+          {isOnline ? "online" : "offline (no connection)"}
+        </div>
+      )}
     </div>
   );
 };
@@ -1129,6 +1178,7 @@ export const PageEditor = ({
               </button>
             </div>
           )}
+          <InternetIndicator t={t} />
           {editable && <SharePopover pageId={pageId} />}
           <button
             aria-label={isFaved ? "Unfavorite page" : "Favorite page"}
