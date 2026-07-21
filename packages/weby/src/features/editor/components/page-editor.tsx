@@ -1068,6 +1068,8 @@ export const PageEditor = ({
   );
 
   useEscapeKeyListener(tocOpen, setTocOpen);
+  useEscapeKeyListener(detailsOpen, setDetailsOpen);
+  useEscapeKeyListener(historyOpen, setHistoryOpen);
 
   const hasCheckedInitialActiveIdRef = useRef(false);
 

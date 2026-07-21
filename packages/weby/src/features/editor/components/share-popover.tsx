@@ -62,15 +62,24 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
   const [shortCopied, setShortCopied] = useState(false);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+      }
+    };
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
     if (open) {
+      document.addEventListener("keydown", handleKeyDown);
       document.addEventListener("mousedown", handler);
     }
-    return () => document.removeEventListener("mousedown", handler);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handler);
+    };
   }, [open]);
 
   const handleToggleShare = () => {

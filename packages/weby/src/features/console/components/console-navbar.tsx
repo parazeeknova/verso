@@ -15,10 +15,12 @@ import {
   CaretDownIcon,
   GearSixIcon,
   MagnifyingGlassIcon,
+  MoonIcon,
   SidebarIcon,
   SidebarSimpleIcon,
   SignOutIcon,
   SlidersHorizontalIcon,
+  SunIcon,
   UserIcon,
   UsersIcon,
 } from "@phosphor-icons/react";
@@ -461,11 +463,12 @@ export const ConsoleNavbar = ({ onToggleSidebar, sidebarOpen }: ConsoleNavbarPro
         {/* Theme toggle — desktop only */}
         <button
           aria-label="Toggle theme"
-          className={`hidden md:block lowercase ${t("text-text-dark/30 hover:text-text-dark/60", "text-text-light/30 hover:text-text-light/60")}`}
+          className={`hidden md:flex items-center gap-1 lowercase ${t("text-text-dark/30 hover:text-text-dark/60", "text-text-light/30 hover:text-text-light/60")}`}
           onClick={toggleTheme}
           type="button"
         >
-          {isDarkMode ? "light" : "dark"}
+          {isDarkMode ? <SunIcon size={12} /> : <MoonIcon size={12} />}
+          <span>{isDarkMode ? "light" : "dark"}</span>
         </button>
 
         <NotificationBell isDarkMode={isDarkMode} />
