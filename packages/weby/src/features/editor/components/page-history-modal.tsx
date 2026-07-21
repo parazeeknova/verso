@@ -529,31 +529,30 @@ export const PageHistoryModal = ({
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               {selectedItem && (
                 <button
                   type="button"
                   onClick={(e) => handleDeleteEntry(e, selectedItem.id)}
                   disabled={deleteEntry.isPending}
-                  className={`p-1 transition-colors cursor-pointer border ${t(
-                    "text-red-400/50 hover:text-red-400 border-border-dark hover:bg-red-400/10",
-                    "text-red-400/50 hover:text-red-400 border-border-light hover:bg-red-400/10",
-                  )}`}
+                  className="flex items-center gap-0.5 text-[9px] lowercase transition-colors cursor-pointer text-red-400/50 hover:text-red-400 hover:underline"
                   title="delete revision"
                 >
-                  <TrashIcon size={10} />
+                  <TrashIcon size={9} />
+                  <span>delete</span>
                 </button>
               )}
               <button
                 type="button"
                 onClick={onClose}
-                className={`p-0.5 transition-colors cursor-pointer ${t(
-                  "text-text-dark/30 hover:text-text-dark",
-                  "text-text-light/30 hover:text-text-light",
+                className={`flex items-center gap-0.5 text-[9px] lowercase transition-colors cursor-pointer ${t(
+                  "text-text-dark/30 hover:text-text-dark hover:underline",
+                  "text-text-light/30 hover:text-text-light hover:underline",
                 )}`}
                 aria-label="Close history modal"
               >
-                <XIcon size={12} />
+                <XIcon size={9} />
+                <span>close</span>
               </button>
             </div>
           </div>
