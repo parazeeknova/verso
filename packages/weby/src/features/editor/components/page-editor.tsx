@@ -631,18 +631,21 @@ const ActiveCollaboratorsStack = ({
             className="group relative flex items-center justify-center shrink-0"
           >
             {user.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={user.name}
-                className={`h-5 w-5 rounded-full object-cover ring-2 transition-transform duration-150 group-hover:z-10 group-hover:scale-110 ${t(
-                  "ring-neutral-900 border border-neutral-700",
-                  "ring-white border border-neutral-300",
+              <div
+                className={`h-5 w-5 rounded-full flex items-center justify-center overflow-hidden ring-2 p-0.5 ${t(
+                  "ring-neutral-900 bg-neutral-800 border border-neutral-700",
+                  "ring-white bg-neutral-200 border border-neutral-300",
                 )}`}
-                style={{ borderColor: user.color || undefined }}
-              />
+              >
+                <img
+                  src={user.avatar_url}
+                  alt={user.name}
+                  className="h-full w-full object-contain grayscale opacity-90 dark:grayscale dark:brightness-90"
+                />
+              </div>
             ) : (
               <div
-                className={`h-5 w-5 rounded-full flex items-center justify-center text-[8.5px] font-bold text-white ring-2 transition-transform duration-150 group-hover:z-10 group-hover:scale-110 ${t(
+                className={`h-5 w-5 rounded-full flex items-center justify-center text-[8.5px] font-bold text-white ring-2 ${t(
                   "ring-neutral-900",
                   "ring-white",
                 )}`}
@@ -1196,8 +1199,8 @@ export const PageEditor = ({
       setProviderReady(true);
     } else {
       const documentName = `page.${pageId}`;
-      const tokenQuery = collabData?.token ? `?token=${encodeURIComponent(collabData.token)}` : "";
-      const socketUrl = `${collabUrl}${tokenQuery}`;
+      const tokenQuery = collabData?.token ? `&token=${encodeURIComponent(collabData.token)}` : "";
+      const socketUrl = `${collabUrl}?room=${encodeURIComponent(documentName)}${tokenQuery}`;
       const ydoc = new Y.Doc();
       const local = new IndexeddbPersistence(documentName, ydoc);
       const socket = new HocuspocusProviderWebsocket({
