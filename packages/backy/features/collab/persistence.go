@@ -25,12 +25,16 @@ func NewPagePersistence(pool *pgxpool.Pool) *PagePersistence {
 
 // extractPageID strips optional "page." prefix from room name and validates UUID syntax.
 func extractPageID(room string) string {
-	cleaned := strings.TrimPrefix(room, "page.")
-	cleaned = strings.TrimPrefix(cleaned, "/")
-	if _, err := uuid.Parse(cleaned); err != nil {
-		return ""
+	parts := strings.FieldsFunc(room, func(r rune) bool {
+		return r == '/' || r == '?' || r == '&' || r == '='
+	})
+	for _, part := range parts {
+		cleaned := strings.TrimPrefix(part, "page.")
+		if _, err := uuid.Parse(cleaned); err == nil {
+			return cleaned
+		}
 	}
-	return cleaned
+	return ""
 }
 
 // LoadDoc loads the stored ydoc binary update for the given room (page ID).

@@ -594,15 +594,17 @@ const MergedConnectionStatus = ({
 
 const ShareInfoSection = ({
   pageId,
+  isLoggedIn = true,
   t,
 }: {
   pageId?: string;
+  isLoggedIn?: boolean;
   t: (dark: string, light: string) => string;
 }) => {
   const [copied, setCopied] = useState(false);
   const [shortCopied, setShortCopied] = useState(false);
 
-  const { data: share } = usePageShare(pageId ?? "");
+  const { data: share } = usePageShare(pageId ?? "", { enabled: isLoggedIn });
 
   const origin = typeof window === "undefined" ? "" : window.location.origin;
   const publicUrl = share?.shareToken ? `${origin}/share/${share.shareToken}` : "";
@@ -717,6 +719,7 @@ const PageDetailsPanel = ({
   wordCount,
   characterCount,
   readingTime,
+  isLoggedIn = true,
   t,
   onClose,
   isOpen,
@@ -729,6 +732,7 @@ const PageDetailsPanel = ({
   wordCount: number;
   characterCount: number;
   readingTime: number;
+  isLoggedIn?: boolean;
   t: (dark: string, light: string) => string;
   onClose: () => void;
   isOpen: boolean;
@@ -853,9 +857,12 @@ const PageDetailsPanel = ({
             )}
           </div>
 
-          <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
-
-          <ShareInfoSection pageId={pageId} t={t} />
+          {isLoggedIn && (
+            <>
+              <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
+              <ShareInfoSection pageId={pageId} isLoggedIn={isLoggedIn} t={t} />
+            </>
+          )}
 
           <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
 
@@ -1108,17 +1115,19 @@ export const PageEditor = ({
       const remote = new HocuspocusProvider({
         document: ydoc,
         name: documentName,
-        onAuthenticationFailed: () => {
-          const handleRefresh = async () => {
-            const res = await refetchCollabToken();
-            if (res.data?.token && providersRef.current) {
-              providersRef.current.remote.configuration.token = res.data.token;
-              providersRef.current.socket.disconnect();
-              setTimeout(() => providersRef.current?.socket.connect(), 100);
+        onAuthenticationFailed: isLoggedIn
+          ? () => {
+              const handleRefresh = async () => {
+                const res = await refetchCollabToken();
+                if (res.data?.token && providersRef.current) {
+                  providersRef.current.remote.configuration.token = res.data.token;
+                  providersRef.current.socket.disconnect();
+                  setTimeout(() => providersRef.current?.socket.connect(), 100);
+                }
+              };
+              void handleRefresh();
             }
-          };
-          void handleRefresh();
-        },
+          : undefined,
         onStatus: ({ status }) => setCollabStatus(status),
         token: collabData?.token,
         websocketProvider: socket,
@@ -1135,7 +1144,7 @@ export const PageEditor = ({
       providersRef.current = null;
       setProviderReady(false);
     };
-  }, [pageId, collabUrl, collabData?.token, refetchCollabToken]);
+  }, [pageId, collabUrl, collabData?.token, isLoggedIn, refetchCollabToken]);
 
   useEffect(() => {
     if (providersRef.current && collabData?.token) {
@@ -1487,6 +1496,7 @@ export const PageEditor = ({
         wordCount={derivedWordCount}
         characterCount={derivedCharCount}
         readingTime={derivedReadingTime}
+        isLoggedIn={isLoggedIn}
         t={t}
         onClose={() => setDetailsOpen(false)}
         isOpen={detailsOpen}

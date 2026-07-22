@@ -87,7 +87,10 @@ func (cs *CollabService) Authorize(r *http.Request) (yws.ConnectionConfig, bool)
 
 	pageID := extractPageID(room)
 	if pageID == "" {
-		logger.Log.Warn().Str("room", room).Msg("collab auth: missing or invalid room/pageID")
+		pageID = extractPageID(r.URL.Path)
+	}
+	if pageID == "" {
+		logger.Log.Warn().Str("room", room).Str("path", r.URL.Path).Msg("collab auth: missing or invalid room/pageID")
 		return yws.ConnectionConfig{}, false
 	}
 
