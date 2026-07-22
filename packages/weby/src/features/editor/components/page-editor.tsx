@@ -18,13 +18,7 @@ import {
 } from "@phosphor-icons/react";
 import { gsap } from "gsap";
 import { useTheme } from "#/shared/hooks/use-theme";
-import * as Y from "yjs";
-import type { IndexeddbPersistence } from "y-indexeddb";
-import {
-  HocuspocusProvider,
-  HocuspocusProviderWebsocket,
-  WebSocketStatus,
-} from "@hocuspocus/provider";
+import type { WebsocketProvider } from "y-websocket";
 import {
   getEditorExtensions,
   getCollabEditorExtensions,
@@ -63,6 +57,7 @@ import { extractEditorHeadings } from "#/features/editor/lib/editor-headings";
 import type { PageEditorProps } from "#/features/editor/types/editor.types";
 import { useUserById } from "#/features/console/hooks/use-users";
 import { AvatarBadge } from "#/shared/components/avatar-badge";
+import { createCollaborationProvider } from "../lib/collaboration-provider";
 
 const parseContent = (raw: unknown): JSONContent => {
   if (!raw) {
@@ -339,7 +334,7 @@ const usePageEditorInstance = (
   editable: boolean,
   setHeadings: (headings: BlogHeading[]) => void,
   markDirtyRef: React.MutableRefObject<(() => void) | null>,
-  provider?: HocuspocusProvider | null,
+  provider?: WebsocketProvider | null,
   user?: { id?: string; name?: string; avatar_url?: string | null },
 ) => {
   const editableRef = useRef(editable);
@@ -481,7 +476,7 @@ const MergedConnectionStatus = ({
   collabStatus,
   t,
 }: {
-  collabStatus: WebSocketStatus | string;
+  collabStatus: CollaborationStatus;
   t: (dark: string, light: string) => string;
 }) => {
   const [isOnline, setIsOnline] = useState(
@@ -517,9 +512,8 @@ const MergedConnectionStatus = ({
     };
   }, [isOpen]);
 
-  const isWsConnected = collabStatus === WebSocketStatus.Connected || collabStatus === "connected";
-  const isWsConnecting =
-    collabStatus === WebSocketStatus.Connecting || collabStatus === "connecting";
+  const isWsConnected = collabStatus === "connected";
+  const isWsConnecting = collabStatus === "connecting";
 
   let badgeStyle = t(
     "border-neutral-700 text-neutral-400 hover:text-neutral-200",
@@ -604,6 +598,8 @@ interface ActiveCollaborator {
   avatar_url?: string | null;
   color?: string;
 }
+
+type CollaborationStatus = "connected" | "connecting" | "disconnected";
 
 const ActiveCollaboratorsStack = ({
   collaborators,
@@ -1163,15 +1159,11 @@ export const PageEditor = ({
     usePageTitle(title, pageId, { enabled: isLoggedIn });
 
   const collabUrl = useCollaborationUrl();
-  const { data: collabData, refetch: refetchCollabToken } = useCollabToken({ enabled: isLoggedIn });
-  const [collabStatus, setCollabStatus] = useState<WebSocketStatus | string>(
-    WebSocketStatus.Disconnected,
-  );
+  const { data: collabData } = useCollabToken({ enabled: isLoggedIn });
+  const [collabStatus, setCollabStatus] = useState<CollaborationStatus>("disconnected");
 
   const providersRef = useRef<{
-    local?: IndexeddbPersistence;
-    remote: HocuspocusProvider;
-    socket: HocuspocusProviderWebsocket;
+    remote: WebsocketProvider;
   } | null>(null);
 
   const [providerReady, setProviderReady] = useState(false);
@@ -1205,66 +1197,22 @@ export const PageEditor = ({
       setProviderReady(true);
     } else {
       const documentName = `page.${pageId}`;
-      const tokenQuery = collabData?.token ? `&token=${encodeURIComponent(collabData.token)}` : "";
-      const socketUrl = `${collabUrl}?room=${encodeURIComponent(documentName)}${tokenQuery}`;
-      const ydoc = new Y.Doc();
-      const socket = new HocuspocusProviderWebsocket({
-        url: socketUrl,
+      const remote = createCollaborationProvider(collabUrl, documentName, collabData?.token);
+
+      remote.on("status", ({ status }: { status: CollaborationStatus }) => {
+        setCollabStatus(status);
       });
 
-      const remote = new HocuspocusProvider({
-        document: ydoc,
-        name: documentName,
-        onAuthenticationFailed: isLoggedIn
-          ? () => {
-              const handleRefresh = async () => {
-                const res = await refetchCollabToken();
-                if (res.data?.token && providersRef.current) {
-                  providersRef.current.remote.configuration.token = res.data.token;
-                }
-              };
-              void handleRefresh();
-            }
-          : undefined,
-        onStatus: ({ status }) => setCollabStatus(status),
-        token: collabData?.token,
-        websocketProvider: socket,
-      });
-
-      const handleStatusUpdate = (s: WebSocketStatus | string) => {
-        setCollabStatus(s);
-      };
-
-      socket.on("status", ({ status }: { status: WebSocketStatus | string }) =>
-        handleStatusUpdate(status),
-      );
-      socket.on("open", () => handleStatusUpdate(WebSocketStatus.Connected));
-      socket.on("connect", () => handleStatusUpdate(WebSocketStatus.Connected));
-      socket.on("close", () => handleStatusUpdate(WebSocketStatus.Disconnected));
-      socket.on("disconnect", () => handleStatusUpdate(WebSocketStatus.Disconnected));
-
-      remote.on("status", ({ status }: { status: WebSocketStatus | string }) =>
-        handleStatusUpdate(status),
-      );
-      remote.on("synced", ({ state }: { state: boolean }) => {
-        if (state) {
-          handleStatusUpdate(WebSocketStatus.Connected);
-        }
-      });
-      remote.on("connect", () => handleStatusUpdate(WebSocketStatus.Connected));
-      remote.on("disconnect", () => handleStatusUpdate(WebSocketStatus.Disconnected));
-
-      providersRef.current = { remote, socket };
+      providersRef.current = { remote };
       setProviderReady(true);
     }
 
     return () => {
-      providersRef.current?.socket.destroy();
       providersRef.current?.remote.destroy();
       providersRef.current = null;
       setProviderReady(false);
     };
-  }, [pageId, collabUrl, collabData?.token, isLoggedIn, refetchCollabToken]);
+  }, [pageId, collabUrl, collabData?.token]);
 
   const [activeCollaborators, setActiveCollaborators] = useState<ActiveCollaborator[]>([]);
 
@@ -1307,20 +1255,18 @@ export const PageEditor = ({
     awareness.on("change", updateCollaborators);
     awareness.on("update", updateCollaborators);
 
-    provider.on("synced", updateCollaborators);
     provider.on("status", updateCollaborators);
 
     return () => {
       awareness.off("change", updateCollaborators);
       awareness.off("update", updateCollaborators);
-      provider.off("synced", updateCollaborators);
       provider.off("status", updateCollaborators);
     };
   }, [providerReady, collabUser]);
 
   useEffect(() => {
     if (providersRef.current && collabData?.token) {
-      providersRef.current.remote.configuration.token = collabData.token;
+      providersRef.current.remote.params.token = collabData.token;
     }
   }, [collabData?.token]);
 

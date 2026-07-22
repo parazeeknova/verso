@@ -40,6 +40,7 @@ func TestExtractPageID(t *testing.T) {
 	testUUID := uuid.New().String()
 	assert.Equal(t, testUUID, extractPageID("page."+testUUID))
 	assert.Equal(t, testUUID, extractPageID(testUUID))
+	assert.Equal(t, testUUID, extractPageID("/ws/collab/page."+testUUID))
 	assert.Equal(t, "", extractPageID(""))
 	assert.Equal(t, "", extractPageID("invalid-non-uuid"))
 	assert.Equal(t, "", extractPageID("collab"))

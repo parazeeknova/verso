@@ -1,6 +1,6 @@
 {
   "name": "@verso/weby",
-  "version": "0.4.48",
+  "version": "0.4.49",
   "private": true,
   "type": "module",
   "imports": {
@@ -20,7 +20,6 @@
     "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "^3.0.0",
     "@floating-ui/dom": "^1.7.6",
     "@floating-ui/react": "^0.27.19",
-    "@hocuspocus/provider": "^4.4.0",
     "@mantine/core": "^9.4.1",
     "@mantine/hooks": "^9.4.1",
     "@phosphor-icons/react": "^2.1.10",
@@ -78,6 +77,7 @@
     "tailwindcss": "^4.2.4",
     "theme-change": "^2.5.0",
     "y-indexeddb": "^9.0.12",
+    "y-websocket": "^3.0.0",
     "yjs": "^13.6.31",
     "zustand": "^5.0.13"
   },

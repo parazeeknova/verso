@@ -40,7 +40,7 @@ import { CustomYoutube } from "./youtube";
 
 import { Collaboration } from "@tiptap/extension-collaboration";
 import { CollaborationCaret } from "@tiptap/extension-collaboration-caret";
-import type { HocuspocusProvider } from "@hocuspocus/provider";
+import type { WebsocketProvider } from "y-websocket";
 
 import plaintext from "highlight.js/lib/languages/plaintext";
 
@@ -169,12 +169,12 @@ export const getRandomColor = (name?: string) => {
 };
 
 export const getCollabEditorExtensions = (
-  provider: HocuspocusProvider,
+  provider: WebsocketProvider,
   user?: { id?: string; name?: string; avatar_url?: string | null; color?: string },
 ) => [
   ...getEditorExtensions(),
   Collaboration.configure({
-    document: provider.document,
+    document: provider.doc,
   }),
   CollaborationCaret.configure({
     provider,
