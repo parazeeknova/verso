@@ -84,21 +84,21 @@ const SharedPageComponent = () => {
           "bg-bg-light text-text-light",
         )}`}
       >
-        <div className="flex flex-col items-center text-center max-w-sm w-full p-6 rounded-2xl border bg-white/40 dark:bg-neutral-900/40 backdrop-blur-md border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
-          <div className="h-10 w-10 rounded-full flex items-center justify-center mb-3 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700/60 text-neutral-500 dark:text-neutral-400">
-            <LockKeyIcon size={20} />
+        <div className="flex flex-col items-center text-center max-w-xs w-full p-5 rounded-none border bg-neutral-900/90 text-white dark:bg-neutral-900/90 dark:text-white border-neutral-800 shadow-2xl backdrop-blur-md">
+          <div className="h-8 w-8 rounded-none flex items-center justify-center mb-2.5 bg-neutral-800 border border-neutral-700 text-neutral-300">
+            <LockKeyIcon size={16} />
           </div>
-          <h2 className="text-sm font-semibold tracking-tight mb-1 text-neutral-900 dark:text-neutral-100">
+          <h2 className="text-xs font-bold uppercase tracking-wider mb-1 text-neutral-200">
             page unavailable
           </h2>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-            this page isn't available or public sharing has been disabled by the owner.
+          <p className="text-[11px] text-neutral-400 font-normal leading-relaxed">
+            this page is unavailable or sharing was disabled by the owner.
           </p>
         </div>
 
         {/* Watermark */}
-        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 text-[10px] lowercase select-none border px-2.5 py-1 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-neutral-800/10 dark:border-neutral-100/10 text-neutral-800/50 dark:text-neutral-100/50 shadow-sm pointer-events-none">
-          <img src="/verso.svg" alt="verso" className="h-3.5 w-3.5 shrink-0 rounded-sm" />
+        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 text-[10px] lowercase select-none border rounded-none px-2.5 py-1 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-neutral-800/10 dark:border-neutral-100/10 text-neutral-800/50 dark:text-neutral-100/50 shadow-sm pointer-events-none">
+          <img src="/verso.svg" alt="verso" className="h-3.5 w-3.5 shrink-0 rounded-none" />
           <span>
             shared via{" "}
             <a
