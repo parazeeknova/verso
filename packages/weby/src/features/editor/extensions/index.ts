@@ -155,7 +155,7 @@ const userColors = [
   "#e45649",
 ];
 
-const getRandomColor = (name?: string) => {
+export const getRandomColor = (name?: string) => {
   if (!name) {
     return userColors[0];
   }

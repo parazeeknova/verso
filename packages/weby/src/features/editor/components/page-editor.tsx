@@ -25,7 +25,11 @@ import {
   HocuspocusProviderWebsocket,
   WebSocketStatus,
 } from "@hocuspocus/provider";
-import { getEditorExtensions, getCollabEditorExtensions } from "#/features/editor/extensions";
+import {
+  getEditorExtensions,
+  getCollabEditorExtensions,
+  getRandomColor,
+} from "#/features/editor/extensions";
 import { useCollabToken } from "#/features/auth/hooks/use-collab-token";
 import { useCollaborationUrl } from "#/features/editor/hooks/use-collaboration-url";
 import { useEditorContent } from "#/features/editor/hooks/use-editor-content";
@@ -1173,22 +1177,23 @@ export const PageEditor = ({
 
   const guestPokemon = useMemo(() => getGuestPokemon(), []);
 
-  const collabUser = useMemo(
-    () =>
-      currentUser && isLoggedIn
-        ? {
-            avatar_url: currentUser.avatar_url,
-            id: currentUser.id,
-            name: currentUser.name || currentUser.username,
-          }
-        : {
-            avatar_url: guestPokemon.avatar,
-            color: guestPokemon.color,
-            id: `guest-${guestPokemon.name.toLowerCase()}`,
-            name: `${guestPokemon.name} (Guest)`,
-          },
-    [currentUser, isLoggedIn, guestPokemon],
-  );
+  const collabUser = useMemo(() => {
+    if (currentUser && isLoggedIn) {
+      const name = currentUser.name || currentUser.username || currentUser.email || "Member";
+      return {
+        avatar_url: currentUser.avatar_url || null,
+        color: getRandomColor(name),
+        id: currentUser.id,
+        name,
+      };
+    }
+    return {
+      avatar_url: guestPokemon.avatar,
+      color: guestPokemon.color,
+      id: `guest-${guestPokemon.name.toLowerCase()}`,
+      name: `${guestPokemon.name} (Guest)`,
+    };
+  }, [currentUser, isLoggedIn, guestPokemon]);
 
   useEffect(() => {
     if (!pageId) {
@@ -1240,6 +1245,17 @@ export const PageEditor = ({
       setProviderReady(false);
     };
   }, [pageId, collabUrl, collabData?.token, isLoggedIn, refetchCollabToken]);
+
+  useEffect(() => {
+    const provider = providersRef.current?.remote;
+    if (provider?.awareness && collabUser) {
+      provider.awareness.setLocalStateField("user", {
+        avatar_url: collabUser.avatar_url,
+        color: collabUser.color || getRandomColor(collabUser.name || collabUser.id),
+        name: collabUser.name,
+      });
+    }
+  }, [providerReady, collabUser]);
 
   const [activeCollaborators, setActiveCollaborators] = useState<ActiveCollaborator[]>([]);
 
