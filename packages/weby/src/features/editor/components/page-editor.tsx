@@ -717,12 +717,20 @@ const ActiveCollaboratorsStack = ({
             <CollaboratorAvatar initials={initials} t={t} user={user} />
             <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 hidden group-hover:flex flex-col items-center select-none animate-in fade-in zoom-in-95 duration-150">
               <div className="w-2 h-2 -mb-1 rotate-45 bg-neutral-900/95 border-l border-t border-neutral-700/60" />
-              <div className="flex flex-col gap-0.5 rounded-lg px-2.5 py-1.5 text-xs bg-neutral-900/95 text-white dark:bg-neutral-900/95 dark:text-white border border-neutral-700/60 shadow-xl backdrop-blur-md">
+              <div className="flex flex-col gap-1 rounded-none px-2.5 py-1.5 text-xs bg-neutral-900/95 text-white dark:bg-neutral-900/95 dark:text-white border border-neutral-700/60 shadow-xl backdrop-blur-md">
                 <div className="flex items-center gap-1.5 font-semibold text-[11px] leading-tight whitespace-nowrap">
-                  <span className="h-1.5 w-1.5 rounded-full bg-purple-400 shrink-0" />
+                  {user.avatar_url || pokemonInfo?.avatar ? (
+                    <img
+                      src={user.avatar_url || pokemonInfo?.avatar}
+                      alt=""
+                      className="h-4 w-4 object-contain shrink-0"
+                    />
+                  ) : (
+                    <span className="h-2 w-2 bg-purple-400 shrink-0" />
+                  )}
                   <span>{cleanName}</span>
                   {isGuest && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 leading-none">
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-1 py-0.5 rounded-none bg-purple-500/20 text-purple-300 border border-purple-500/30 leading-none">
                       Guest
                     </span>
                   )}
@@ -1319,13 +1327,13 @@ export const PageEditor = ({
       const list: ActiveCollaborator[] = [];
       for (const [clientId, state] of states.entries()) {
         const u = state.user as CollaboratorAwarenessUser | undefined;
-        if (u?.name && !isPageOwnerPresence(u, creatorId)) {
+        if (u?.name && clientId !== awareness.clientID && !isPageOwnerPresence(u, creatorId)) {
           list.push({
             avatar_url: u.avatar_url,
             clientId,
             color: u.color || "#3b82f6",
             id: u.id,
-            isGuest: u.isGuest,
+            isGuest: u.isGuest ?? u.id?.startsWith("guest-") ?? u.name?.includes("(Guest)"),
             name: u.name,
           });
         }
@@ -1380,6 +1388,26 @@ export const PageEditor = ({
       editor.setEditable(editable && !isLocked);
     }
   }, [editor, editable, isLocked]);
+
+  useEffect(() => {
+    if (!editor || editor.isDestroyed || !collabUser) {
+      return;
+    }
+    const userState = {
+      avatar_url: collabUser.avatar_url,
+      color: collabUser.color || getRandomColor(collabUser.name || collabUser.id),
+      id: collabUser.id,
+      isGuest: collabUser.isGuest,
+      isOwner: collabUser.isOwner,
+      name: collabUser.name,
+    };
+    const caretExt = editor.extensionManager.extensions.find(
+      (ext) => ext.name === "collaborationCaret" || ext.name === "collaborationCursor",
+    );
+    if (caretExt) {
+      caretExt.options.user = userState;
+    }
+  }, [editor, collabUser]);
 
   if (editor && !editor.isDestroyed) {
     const storage = editor.storage as unknown as Record<string, Record<string, string | undefined>>;

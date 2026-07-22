@@ -42,7 +42,8 @@
   }
 
   .collaboration-carets__caret {
-    border-left: 2px solid currentColor;
+    border-left-width: 2px;
+    border-left-style: solid;
     display: inline-block;
     height: 1.2em;
     margin-left: -1px;

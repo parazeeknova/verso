@@ -188,11 +188,13 @@ export const getCollabEditorExtensions = (
     render: (presenceUser) => {
       const cursor = document.createElement("span");
       cursor.classList.add("collaboration-carets__caret");
-      cursor.style.borderColor = presenceUser.color;
+      const userColor = presenceUser.color || "#3b82f6";
+      cursor.style.borderLeft = `2px solid ${userColor}`;
+      cursor.style.borderColor = userColor;
 
       const label = document.createElement("div");
       label.classList.add("collaboration-carets__label");
-      label.style.backgroundColor = presenceUser.color;
+      label.style.backgroundColor = userColor;
       label.textContent = getCompactCollaboratorName(presenceUser.name);
       cursor.append(label);
 
