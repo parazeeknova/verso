@@ -10,6 +10,7 @@ import { PageEditor } from "#/features/editor/components/page-editor";
 interface PublicShareResponse {
   page: {
     id: string;
+    creatorId: string;
     title: string;
     icon: string;
     coverPhoto: string;
@@ -106,6 +107,7 @@ const SharedPageComponent = () => {
           editable={canEdit}
           isLocked={false}
           title={data.page.title}
+          creatorId={data.page.creatorId}
           updatedAt={data.page.updatedAt}
           isStandaloneShare={true}
         />

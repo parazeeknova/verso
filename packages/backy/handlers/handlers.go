@@ -1308,6 +1308,7 @@ func (h *Handlers) GetPublicShare(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"page": gin.H{
 			"id":          page.ID,
+			"creatorId":   page.CreatorID,
 			"title":       page.Title,
 			"icon":        page.Icon,
 			"coverPhoto":  page.CoverPhoto,

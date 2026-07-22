@@ -155,6 +155,12 @@ const userColors = [
   "#e45649",
 ];
 
+export const getCompactCollaboratorName = (name: string) => {
+  const withoutGuestSuffix = name.replace(/\s*\(guest\)$/i, "").trim();
+  const firstName = withoutGuestSuffix.split(/\s+/)[0] || withoutGuestSuffix;
+  return firstName.length > 14 ? `${firstName.slice(0, 13)}…` : firstName;
+};
+
 export const getRandomColor = (name?: string) => {
   if (!name) {
     return userColors[0];
@@ -178,6 +184,19 @@ export const getCollabEditorExtensions = (
   }),
   CollaborationCaret.configure({
     provider,
+    render: (presenceUser) => {
+      const cursor = document.createElement("span");
+      cursor.classList.add("collaboration-carets__caret");
+      cursor.style.borderColor = presenceUser.color;
+
+      const label = document.createElement("div");
+      label.classList.add("collaboration-carets__label");
+      label.style.backgroundColor = presenceUser.color;
+      label.textContent = getCompactCollaboratorName(presenceUser.name);
+      cursor.append(label);
+
+      return cursor;
+    },
     user: {
       avatar_url: user?.avatar_url,
       color: user?.color || getRandomColor(user?.name || user?.id),

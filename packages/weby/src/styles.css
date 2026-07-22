@@ -41,29 +41,33 @@
       color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Collaboration Caret & Presence Cursors */
-  .collaboration-cursor__caret {
-    border-left: 2px solid #0d0d0d;
-    border-right: 2px solid #0d0d0d;
+  .collaboration-carets__caret {
+    border-left: 2px solid currentColor;
+    display: inline-block;
+    height: 1.2em;
     margin-left: -1px;
     margin-right: -1px;
     pointer-events: none;
     position: relative;
+    vertical-align: text-bottom;
     word-break: normal;
   }
 
-  .collaboration-cursor__label {
-    border-radius: 3px 3px 3px 0;
+  .collaboration-carets__label {
+    border-radius: 2px 2px 2px 0;
     color: #ffffff;
     font-family: var(--font-mono), monospace;
-    font-size: 10px;
+    font-size: 8px;
     font-style: normal;
     font-weight: 600;
     left: -1px;
-    line-height: normal;
-    padding: 1px 4px;
+    line-height: 1.1;
+    max-width: 86px;
+    overflow: hidden;
+    padding: 1px 3px;
     position: absolute;
-    top: -1.4em;
+    text-overflow: ellipsis;
+    top: -1.25em;
     user-select: none;
     white-space: nowrap;
     z-index: 10;

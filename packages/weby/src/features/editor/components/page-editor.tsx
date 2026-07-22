@@ -594,12 +594,55 @@ const MergedConnectionStatus = ({
 
 interface ActiveCollaborator {
   clientId: number;
+  isGuest?: boolean;
   name: string;
   avatar_url?: string | null;
   color?: string;
 }
 
 type CollaborationStatus = "connected" | "connecting" | "disconnected";
+
+const CollaboratorAvatar = ({
+  initials,
+  t,
+  user,
+}: {
+  initials: string;
+  t: (dark: string, light: string) => string;
+  user: ActiveCollaborator;
+}) => {
+  if (user.avatar_url && user.isGuest) {
+    return <img src={user.avatar_url} alt={user.name} className="h-5 w-5 object-contain" />;
+  }
+
+  if (user.avatar_url) {
+    return (
+      <div
+        className={`h-5 w-5 rounded-full flex items-center justify-center overflow-hidden ring-2 p-0.5 bg-neutral-500 ${t(
+          "ring-neutral-900 border border-neutral-600",
+          "ring-white border border-neutral-400",
+        )}`}
+      >
+        <img
+          src={user.avatar_url}
+          alt={user.name}
+          className="h-full w-full object-contain grayscale opacity-90 dark:grayscale dark:brightness-90"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`h-5 w-5 rounded-full flex items-center justify-center text-[8.5px] font-bold text-white ring-2 bg-neutral-500 ${t(
+        "ring-neutral-900",
+        "ring-white",
+      )}`}
+    >
+      {initials}
+    </div>
+  );
+};
 
 const ActiveCollaboratorsStack = ({
   collaborators,
@@ -631,30 +674,7 @@ const ActiveCollaboratorsStack = ({
             key={`${user.clientId}-${idx}`}
             className="group relative flex items-center justify-center shrink-0"
           >
-            {user.avatar_url ? (
-              <div
-                className={`h-5 w-5 rounded-full flex items-center justify-center overflow-hidden ring-2 p-0.5 ${t(
-                  "ring-neutral-900 bg-neutral-800 border border-neutral-700",
-                  "ring-white bg-neutral-200 border border-neutral-300",
-                )}`}
-              >
-                <img
-                  src={user.avatar_url}
-                  alt={user.name}
-                  className="h-full w-full object-contain grayscale opacity-90 dark:grayscale dark:brightness-90"
-                />
-              </div>
-            ) : (
-              <div
-                className={`h-5 w-5 rounded-full flex items-center justify-center text-[8.5px] font-bold text-white ring-2 ${t(
-                  "ring-neutral-900",
-                  "ring-white",
-                )}`}
-                style={{ backgroundColor: user.color || "#3b82f6" }}
-              >
-                {initials}
-              </div>
-            )}
+            <CollaboratorAvatar initials={initials} t={t} user={user} />
             <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-50 hidden group-hover:block whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-medium bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 shadow-md">
               {user.name}
             </div>
@@ -665,8 +685,8 @@ const ActiveCollaboratorsStack = ({
       {overflowCount > 0 && (
         <div
           className={`flex h-5 w-5 items-center justify-center rounded-full text-[8.5px] font-bold ring-2 ${t(
-            "ring-neutral-900 bg-neutral-800 text-neutral-300",
-            "ring-white bg-neutral-200 text-neutral-700",
+            "ring-neutral-900 bg-neutral-500 text-white",
+            "ring-white bg-neutral-500 text-white",
           )}`}
           title={`${overflowCount} more collaborator${overflowCount > 1 ? "s" : ""}`}
         >
@@ -1177,6 +1197,8 @@ export const PageEditor = ({
         avatar_url: currentUser.avatar_url || null,
         color: getRandomColor(name),
         id: currentUser.id,
+        isGuest: false,
+        isOwner: creatorId === currentUser.id,
         name,
       };
     }
@@ -1184,9 +1206,11 @@ export const PageEditor = ({
       avatar_url: guestPokemon.avatar,
       color: guestPokemon.color,
       id: `guest-${guestPokemon.name.toLowerCase()}`,
+      isGuest: true,
+      isOwner: false,
       name: `${guestPokemon.name} (Guest)`,
     };
-  }, [currentUser, isLoggedIn, guestPokemon]);
+  }, [creatorId, currentUser, isLoggedIn, guestPokemon]);
 
   useEffect(() => {
     if (!pageId) {
@@ -1230,6 +1254,9 @@ export const PageEditor = ({
     awareness.setLocalStateField("user", {
       avatar_url: collabUser.avatar_url,
       color: collabUser.color || getRandomColor(collabUser.name || collabUser.id),
+      id: collabUser.id,
+      isGuest: collabUser.isGuest,
+      isOwner: collabUser.isOwner,
       name: collabUser.name,
     });
 
@@ -1237,12 +1264,21 @@ export const PageEditor = ({
       const states = awareness.getStates();
       const list: ActiveCollaborator[] = [];
       for (const [clientId, state] of states.entries()) {
-        const u = state.user as { name?: string; avatar_url?: string; color?: string } | undefined;
-        if (u?.name) {
+        const u = state.user as
+          | {
+              avatar_url?: string;
+              color?: string;
+              isGuest?: boolean;
+              isOwner?: boolean;
+              name?: string;
+            }
+          | undefined;
+        if (u?.name && !u.isOwner) {
           list.push({
             avatar_url: u.avatar_url,
             clientId,
             color: u.color || "#3b82f6",
+            isGuest: u.isGuest,
             name: u.name,
           });
         }
