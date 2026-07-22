@@ -1092,10 +1092,12 @@ export const PageEditor = ({
       setProviderReady(true);
     } else {
       const documentName = `page.${pageId}`;
+      const tokenQuery = collabData?.token ? `&token=${encodeURIComponent(collabData.token)}` : "";
+      const socketUrl = `${collabUrl}?room=${encodeURIComponent(documentName)}${tokenQuery}`;
       const ydoc = new Y.Doc();
       const local = new IndexeddbPersistence(documentName, ydoc);
       const socket = new HocuspocusProviderWebsocket({
-        url: collabUrl,
+        url: socketUrl,
       });
 
       const remote = new HocuspocusProvider({
