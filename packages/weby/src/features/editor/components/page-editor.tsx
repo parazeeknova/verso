@@ -19,7 +19,7 @@ import {
 import { gsap } from "gsap";
 import { useTheme } from "#/shared/hooks/use-theme";
 import * as Y from "yjs";
-import { IndexeddbPersistence } from "y-indexeddb";
+import type { IndexeddbPersistence } from "y-indexeddb";
 import {
   HocuspocusProvider,
   HocuspocusProviderWebsocket,
@@ -1168,7 +1168,7 @@ export const PageEditor = ({
   );
 
   const providersRef = useRef<{
-    local: IndexeddbPersistence;
+    local?: IndexeddbPersistence;
     remote: HocuspocusProvider;
     socket: HocuspocusProviderWebsocket;
   } | null>(null);
@@ -1207,7 +1207,6 @@ export const PageEditor = ({
       const tokenQuery = collabData?.token ? `&token=${encodeURIComponent(collabData.token)}` : "";
       const socketUrl = `${collabUrl}?room=${encodeURIComponent(documentName)}${tokenQuery}`;
       const ydoc = new Y.Doc();
-      const local = new IndexeddbPersistence(documentName, ydoc);
       const socket = new HocuspocusProviderWebsocket({
         url: socketUrl,
       });
@@ -1254,14 +1253,13 @@ export const PageEditor = ({
       remote.on("connect", () => handleStatusUpdate(WebSocketStatus.Connected));
       remote.on("disconnect", () => handleStatusUpdate(WebSocketStatus.Disconnected));
 
-      providersRef.current = { local, remote, socket };
+      providersRef.current = { remote, socket };
       setProviderReady(true);
     }
 
     return () => {
       providersRef.current?.socket.destroy();
       providersRef.current?.remote.destroy();
-      providersRef.current?.local.destroy();
       providersRef.current = null;
       setProviderReady(false);
     };
@@ -1311,8 +1309,10 @@ export const PageEditor = ({
     updateCollaborators();
 
     awareness.on("change", updateCollaborators);
+    awareness.on("update", updateCollaborators);
     return () => {
       awareness.off("change", updateCollaborators);
+      awareness.off("update", updateCollaborators);
     };
   }, [providerReady]);
 
