@@ -14,7 +14,7 @@
         # Derivation that fetches the release tarball and wraps it
         verso = pkgs.stdenv.mkDerivation rec {
           pname = "verso";
-          version = "0.4.59"; # Dynamically updated by release scripts
+          version = "0.4.60"; # Dynamically updated by release scripts
 
           src = pkgs.fetchurl {
             url = "https://github.com/parazeeknova/verso/releases/download/v${version}/stable-linux-x64-Verso-Setup.tar.gz";

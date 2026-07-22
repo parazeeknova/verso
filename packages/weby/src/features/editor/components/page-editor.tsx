@@ -1394,6 +1394,8 @@ export const PageEditor = ({
     }
   }, [editor, editable, isLocked]);
 
+  const lastUserStateRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!editor || editor.isDestroyed || !collabUser) {
       return;
@@ -1406,11 +1408,13 @@ export const PageEditor = ({
       isOwner: collabUser.isOwner,
       name: collabUser.name,
     };
-    const caretExt = editor.extensionManager.extensions.find(
-      (ext) => ext.name === "collaborationCaret" || ext.name === "collaborationCursor",
-    );
-    if (caretExt) {
-      caretExt.options.user = userState;
+
+    const currentStateStr = JSON.stringify(userState);
+    if (lastUserStateRef.current !== currentStateStr) {
+      lastUserStateRef.current = currentStateStr;
+      if (typeof editor.commands.updateUser === "function") {
+        editor.commands.updateUser(userState);
+      }
     }
   }, [editor, collabUser]);
 

@@ -189,7 +189,7 @@ export const getCollabEditorExtensions = (
       const cursor = document.createElement("span");
       cursor.classList.add("collaboration-carets__caret");
       const userColor = presenceUser.color || "#3b82f6";
-      cursor.style.borderLeft = `2px solid ${userColor}`;
+      cursor.style.borderLeftColor = userColor;
       cursor.style.borderColor = userColor;
 
       const label = document.createElement("div");
