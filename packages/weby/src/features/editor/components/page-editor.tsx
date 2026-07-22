@@ -235,7 +235,7 @@ const handleTitleKeyPress = (
   }
 };
 
-const usePageTitle = (title: string, pageId: string) => {
+const usePageTitle = (title: string, pageId: string, options?: { enabled?: boolean }) => {
   const queryClient = useQueryClient();
   const [localTitle, setLocalTitle] = useState(title);
   const lastSavedTitleRef = useRef(title);
@@ -256,7 +256,7 @@ const usePageTitle = (title: string, pageId: string) => {
   const saveTitle = useCallback(
     async (value: string) => {
       const trimmed = value.trim();
-      if (trimmed === lastSavedTitleRef.current) {
+      if (trimmed === lastSavedTitleRef.current || options?.enabled === false) {
         return;
       }
       if (debounceSaveRef.current) {
@@ -277,7 +277,7 @@ const usePageTitle = (title: string, pageId: string) => {
         console.error("failed to save title:", error);
       }
     },
-    [pageId, queryClient],
+    [pageId, queryClient, options?.enabled],
   );
 
   const handleTitleChange = (newVal: string) => {
@@ -1064,7 +1064,7 @@ export const PageEditor = ({
 
   const { data: creator } = useUserById(creatorId ?? "", { enabled: isLoggedIn });
   const { handleTitleBlur, handleTitleChange, localTitle, saveTitle, setLocalTitle, titleRef } =
-    usePageTitle(title, pageId);
+    usePageTitle(title, pageId, { enabled: isLoggedIn });
 
   const collabUrl = useCollaborationUrl();
   const { data: collabData, refetch: refetchCollabToken } = useCollabToken({ enabled: isLoggedIn });
@@ -1195,6 +1195,7 @@ export const PageEditor = ({
   const { dirty, cleanup, isSaving, lastSaved, markDirty, resetDirty } = useEditorContent(
     editor,
     pageId,
+    { enabled: isLoggedIn },
   );
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -1491,12 +1492,14 @@ export const PageEditor = ({
         isOpen={detailsOpen}
       />
 
-      <PageHistoryModal
-        isOpen={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        pageId={pageId}
-        onRestoreSuccess={resetDirty}
-      />
+      {isLoggedIn && (
+        <PageHistoryModal
+          isOpen={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          pageId={pageId}
+          onRestoreSuccess={resetDirty}
+        />
+      )}
 
       <TableOfContentsModal
         tocOpen={tocOpen}

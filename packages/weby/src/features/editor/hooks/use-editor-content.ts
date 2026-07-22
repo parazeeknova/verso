@@ -2,7 +2,11 @@ import { useRef, useCallback, useState, useEffect } from "react";
 import type { Editor } from "@tiptap/react";
 import { useUpdatePage } from "#/features/console/hooks/use-pages";
 
-export const useEditorContent = (editor: Editor | null, pageId: string) => {
+export const useEditorContent = (
+  editor: Editor | null,
+  pageId: string,
+  options?: { enabled?: boolean },
+) => {
   const updatePage = useUpdatePage();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingFlushRef = useRef(false);
@@ -12,7 +16,7 @@ export const useEditorContent = (editor: Editor | null, pageId: string) => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const flush = useCallback(() => {
-    if (!editor || !dirtyRef.current) {
+    if (!editor || !dirtyRef.current || options?.enabled === false) {
       return;
     }
     const json = editor.getJSON();
@@ -45,7 +49,7 @@ export const useEditorContent = (editor: Editor | null, pageId: string) => {
         },
       },
     );
-  }, [editor, pageId, updatePage]);
+  }, [editor, pageId, updatePage, options?.enabled]);
 
   useEffect(() => {
     if (!updatePage.isPending && pendingFlushRef.current) {

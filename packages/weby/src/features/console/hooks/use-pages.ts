@@ -254,8 +254,9 @@ export const useMovePage = () => {
   });
 };
 
-export const usePageHistory = (pageId: string) =>
+export const usePageHistory = (pageId: string, options?: { enabled?: boolean }) =>
   useQuery<PageHistoryItem[]>({
+    enabled: (options?.enabled ?? true) && pageId !== "",
     queryFn: ({ signal }) =>
       fetchProtected<PageHistoryItem[]>(`/api/console/pages/${pageId}/history`, { signal }),
     queryKey: ["pageHistory", pageId],
