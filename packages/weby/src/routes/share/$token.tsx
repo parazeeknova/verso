@@ -5,6 +5,7 @@ import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
 import { useAuth } from "#/features/auth/hooks/use-auth";
 import { useTheme } from "#/shared/hooks/use-theme";
 import { useEffect } from "react";
+import { LockKeyIcon } from "@phosphor-icons/react";
 import { PageEditor } from "#/features/editor/components/page-editor";
 
 interface PublicShareResponse {
@@ -78,12 +79,38 @@ const SharedPageComponent = () => {
   if (isError || !data) {
     return (
       <div
-        className={`min-h-screen w-full flex items-center justify-center text-xs lowercase text-red-400 ${t(
-          "bg-bg-dark",
-          "bg-bg-light",
+        className={`min-h-screen w-full flex flex-col items-center justify-center p-4 font-sans select-none ${t(
+          "bg-bg-dark text-text-dark",
+          "bg-bg-light text-text-light",
         )}`}
       >
-        page not found or sharing has been disabled
+        <div className="flex flex-col items-center text-center max-w-sm w-full p-6 rounded-2xl border bg-white/40 dark:bg-neutral-900/40 backdrop-blur-md border-neutral-200/60 dark:border-neutral-800/60 shadow-xl">
+          <div className="h-10 w-10 rounded-full flex items-center justify-center mb-3 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700/60 text-neutral-500 dark:text-neutral-400">
+            <LockKeyIcon size={20} />
+          </div>
+          <h2 className="text-sm font-semibold tracking-tight mb-1 text-neutral-900 dark:text-neutral-100">
+            page unavailable
+          </h2>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
+            this page isn't available or public sharing has been disabled by the owner.
+          </p>
+        </div>
+
+        {/* Watermark */}
+        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 text-[10px] lowercase select-none border px-2.5 py-1 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-neutral-800/10 dark:border-neutral-100/10 text-neutral-800/50 dark:text-neutral-100/50 shadow-sm pointer-events-none">
+          <img src="/verso.svg" alt="verso" className="h-3.5 w-3.5 shrink-0 rounded-sm" />
+          <span>
+            shared via{" "}
+            <a
+              href="https://przknv.cc/about"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold hover:underline text-neutral-800 dark:text-neutral-100 pointer-events-auto"
+            >
+              verso
+            </a>
+          </span>
+        </div>
       </div>
     );
   }
