@@ -557,36 +557,33 @@ const MergedConnectionStatus = ({
 
       {isOpen && (
         <div
-          className={`absolute top-full right-0 mt-1.5 z-50 w-56 p-2.5 shadow-xl border text-[11px] font-mono lowercase space-y-2.5 transition-all ${t(
+          className={`absolute top-full right-0 mt-1 z-50 w-44 p-1.5 shadow-lg border text-[10px] font-mono lowercase space-y-1 transition-all ${t(
             "bg-neutral-900 border-neutral-800 text-neutral-200",
             "bg-white border-neutral-200 text-neutral-800",
           )}`}
         >
-          <div className="flex items-center justify-between pb-1.5 border-b border-border-light dark:border-border-dark">
-            <span className="font-bold text-[10px] uppercase tracking-wider text-neutral-400">
-              Connection Status
+          <div className="flex items-center justify-between px-1 pb-1 border-b border-border-light dark:border-border-dark">
+            <span className="font-bold text-[9px] uppercase tracking-wider text-neutral-400">
+              sync status
             </span>
-            <span className="text-[10px] opacity-60">verso sync</span>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5 opacity-70">
-                {isOnline ? <WifiHighIcon size={13} /> : <WifiSlashIcon size={13} />}
-                Network
-              </span>
-              <span className={`text-[10px] ${isOnline ? "text-green-500" : "text-red-500"}`}>
-                {isOnline ? "online" : "offline"}
-              </span>
-            </div>
+          <div className="flex items-center justify-between px-1 py-0.5">
+            <span className="flex items-center gap-1 opacity-70">
+              {isOnline ? <WifiHighIcon size={11} /> : <WifiSlashIcon size={11} />}
+              network
+            </span>
+            <span className={`text-[9px] ${isOnline ? "text-green-500" : "text-red-500"}`}>
+              {isOnline ? "online" : "offline"}
+            </span>
+          </div>
 
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5 opacity-70">
-                <UsersIcon size={13} className={wsTextColor} />
-                Live Collaboration
-              </span>
-              <span className={`text-[10px] ${wsTextColor}`}>{wsTextLabel}</span>
-            </div>
+          <div className="flex items-center justify-between px-1 py-0.5">
+            <span className="flex items-center gap-1 opacity-70">
+              <UsersIcon size={11} className={wsTextColor} />
+              collab
+            </span>
+            <span className={`text-[9px] ${wsTextColor}`}>{wsTextLabel}</span>
           </div>
         </div>
       )}

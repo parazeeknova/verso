@@ -156,8 +156,14 @@ func (cs *CollabService) Authorize(r *http.Request) (yws.ConnectionConfig, bool)
 		// Check if page has public share enabled
 		share, shareErr := cs.pageShareRepo.GetByPageID(ctx, pageID)
 		if shareErr == nil && share.IsEnabled {
-			readOnly = true
-			logger.Log.Debug().Str("user_id", userID).Str("page_id", pageID).Msg("collab auth granted (page shared)")
+			if share.AccessLevel == "edit" || share.AccessLevel == "public_edit" {
+				if !page.IsLocked {
+					readOnly = false
+				}
+			} else {
+				readOnly = true
+			}
+			logger.Log.Debug().Str("user_id", userID).Str("page_id", pageID).Str("access_level", share.AccessLevel).Bool("read_only", readOnly).Msg("collab auth granted (page shared)")
 			return yws.ConnectionConfig{ReadOnly: readOnly}, true
 		}
 
@@ -168,9 +174,12 @@ func (cs *CollabService) Authorize(r *http.Request) (yws.ConnectionConfig, bool)
 	// 3. Anonymous / Public Access
 	share, shareErr := cs.pageShareRepo.GetByPageID(ctx, pageID)
 	if shareErr == nil && share.IsEnabled {
-		// Public page is shared — allow read-only access for anonymous users
-		readOnly = true
-		logger.Log.Debug().Str("page_id", pageID).Msg("collab auth granted (anonymous on public share)")
+		if share.AccessLevel == "public_edit" && !page.IsLocked {
+			readOnly = false
+		} else {
+			readOnly = true
+		}
+		logger.Log.Debug().Str("page_id", pageID).Str("access_level", share.AccessLevel).Bool("read_only", readOnly).Msg("collab auth granted (anonymous on public share)")
 		return yws.ConnectionConfig{ReadOnly: readOnly}, true
 	}
 

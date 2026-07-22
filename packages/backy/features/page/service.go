@@ -1052,13 +1052,17 @@ func (s *PageService) GetPageShare(ctx context.Context, pageID string, userID st
 	return share, nil
 }
 
-func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID string, isEnabled bool, searchIndexing bool) (models.PageShare, error) {
+func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID string, isEnabled bool, searchIndexing bool, accessLevel string) (models.PageShare, error) {
 	page, err := s.pageRepo.GetByID(ctx, pageID)
 	if err != nil {
 		return models.PageShare{}, err
 	}
 	if err := s.requireWrite(ctx, page.SpaceID, userID); err != nil {
 		return models.PageShare{}, err
+	}
+
+	if accessLevel == "" {
+		accessLevel = "read"
 	}
 
 	share, err := s.pageShareRepo.GetByPageID(ctx, pageID)
@@ -1074,6 +1078,7 @@ func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID
 				ShareToken:     token,
 				SearchIndexing: searchIndexing,
 				IsEnabled:      isEnabled,
+				AccessLevel:    accessLevel,
 			}
 		} else {
 			return models.PageShare{}, err
@@ -1081,6 +1086,7 @@ func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID
 	} else {
 		share.IsEnabled = isEnabled
 		share.SearchIndexing = searchIndexing
+		share.AccessLevel = accessLevel
 		if share.ShareToken == "" {
 			token, err := generateRandomString(32)
 			if err != nil {

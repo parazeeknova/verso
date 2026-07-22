@@ -21,6 +21,7 @@ interface PublicShareResponse {
     shareToken: string;
     shortCode: string | null;
     searchIndexing: boolean;
+    accessLevel?: string;
   };
 }
 
@@ -79,9 +80,11 @@ const SharedPageComponent = () => {
     return { content: [], type: "doc" };
   }, [data?.page?.contentJson]);
 
+  const canEdit = data?.share.accessLevel === "public_edit";
+
   const editor = useEditor({
     content,
-    editable: false,
+    editable: canEdit,
     editorProps: {
       attributes: {
         class: "outline-none border-none focus:outline-none focus:border-none focus:ring-0",

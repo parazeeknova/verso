@@ -1219,8 +1219,9 @@ func (h *Handlers) GetConsolePageShare(c *gin.Context) {
 }
 
 type UpdateConsolePageShareRequest struct {
-	IsEnabled      bool `json:"isEnabled"`
-	SearchIndexing bool `json:"searchIndexing"`
+	IsEnabled      bool   `json:"isEnabled"`
+	SearchIndexing bool   `json:"searchIndexing"`
+	AccessLevel    string `json:"accessLevel"`
 }
 
 // UpdateConsolePageShare handles PUT /api/console/pages/:id/share.
@@ -1239,7 +1240,7 @@ func (h *Handlers) UpdateConsolePageShare(c *gin.Context) {
 		return
 	}
 
-	share, err := h.pageService.UpdatePageShare(c.Request.Context(), pageID, userID, req.IsEnabled, req.SearchIndexing)
+	share, err := h.pageService.UpdatePageShare(c.Request.Context(), pageID, userID, req.IsEnabled, req.SearchIndexing, req.AccessLevel)
 	if err != nil {
 		if errors.Is(err, pagefeat.ErrPageNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
@@ -1318,6 +1319,7 @@ func (h *Handlers) GetPublicShare(c *gin.Context) {
 			"shareToken":     share.ShareToken,
 			"shortCode":      share.ShortCode,
 			"searchIndexing": share.SearchIndexing,
+			"accessLevel":    share.AccessLevel,
 		},
 	})
 }
