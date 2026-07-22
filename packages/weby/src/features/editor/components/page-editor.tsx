@@ -41,6 +41,7 @@ import { setFlashToast } from "#/features/console/components/flash-toast";
 import { useIsPageWatching, useWatchPage } from "#/features/console/hooks/use-page-watches";
 import { useUpdatePage, usePageShare } from "#/features/console/hooks/use-pages";
 import { getGuestPokemon } from "#/features/editor/lib/pokemon-avatars";
+import { isPageOwnerPresence } from "#/features/editor/lib/collaboration-presence";
 import { TableMenu } from "./table/table-menu";
 import { ColumnsMenu } from "./columns/columns-menu";
 import { CalloutMenu } from "./callout/callout-menu";
@@ -594,6 +595,7 @@ const MergedConnectionStatus = ({
 
 interface ActiveCollaborator {
   clientId: number;
+  id?: string;
   isGuest?: boolean;
   name: string;
   avatar_url?: string | null;
@@ -1268,16 +1270,18 @@ export const PageEditor = ({
           | {
               avatar_url?: string;
               color?: string;
+              id?: string;
               isGuest?: boolean;
               isOwner?: boolean;
               name?: string;
             }
           | undefined;
-        if (u?.name && !u.isOwner) {
+        if (u?.name && !isPageOwnerPresence(u, creatorId)) {
           list.push({
             avatar_url: u.avatar_url,
             clientId,
             color: u.color || "#3b82f6",
+            id: u.id,
             isGuest: u.isGuest,
             name: u.name,
           });
@@ -1298,7 +1302,7 @@ export const PageEditor = ({
       awareness.off("update", updateCollaborators);
       provider.off("status", updateCollaborators);
     };
-  }, [providerReady, collabUser]);
+  }, [creatorId, providerReady, collabUser]);
 
   useEffect(() => {
     if (providersRef.current && collabData?.token) {
