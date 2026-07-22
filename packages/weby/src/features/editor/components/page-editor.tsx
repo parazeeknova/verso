@@ -41,6 +41,7 @@ import { setFlashToast } from "#/features/console/components/flash-toast";
 import { useIsPageWatching, useWatchPage } from "#/features/console/hooks/use-page-watches";
 import { useUpdatePage, usePageShare } from "#/features/console/hooks/use-pages";
 import { getGuestPokemon, getPokemonDetails } from "#/features/editor/lib/pokemon-avatars";
+import { isPageOwnerPresence } from "#/features/editor/lib/collaboration-presence";
 import type { CollaboratorAwarenessUser } from "#/features/editor/lib/collaboration-presence";
 import { TableMenu } from "./table/table-menu";
 import { ColumnsMenu } from "./columns/columns-menu";
@@ -1331,7 +1332,7 @@ export const PageEditor = ({
       const list: ActiveCollaborator[] = [];
       for (const [clientId, state] of states.entries()) {
         const u = state.user as CollaboratorAwarenessUser | undefined;
-        if (u?.name && clientId !== awareness.clientID) {
+        if (u?.name && clientId !== awareness.clientID && !isPageOwnerPresence(u, creatorId)) {
           list.push({
             avatar_url: u.avatar_url,
             clientId,
