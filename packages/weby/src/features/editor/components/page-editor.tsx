@@ -34,6 +34,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { EditorMoreMenu } from "#/features/editor/components/editor-more-menu";
 import { SharePopover } from "./share-popover";
 import { PageHistoryModal } from "./page-history-modal";
+import { useAuth } from "#/features/auth/hooks/use-auth";
 import {
   useIsPageFavorited,
   useTogglePageFavorite,
@@ -1044,6 +1045,7 @@ export const PageEditor = ({
   createdAt,
   updatedAt,
   textContent,
+  isStandaloneShare,
   onDeleteStart,
 }: PageEditorProps) => {
   const { isDarkMode } = useTheme();
@@ -1057,12 +1059,15 @@ export const PageEditor = ({
   const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
   const [headings, setHeadings] = useState<BlogHeading[]>(() => extractEditorHeadings(content));
 
-  const { data: creator } = useUserById(creatorId ?? "");
+  const { data: currentUser } = useAuth();
+  const isLoggedIn = !!currentUser;
+
+  const { data: creator } = useUserById(creatorId ?? "", { enabled: isLoggedIn });
   const { handleTitleBlur, handleTitleChange, localTitle, saveTitle, setLocalTitle, titleRef } =
     usePageTitle(title, pageId);
 
   const collabUrl = useCollaborationUrl();
-  const { data: collabData, refetch: refetchCollabToken } = useCollabToken();
+  const { data: collabData, refetch: refetchCollabToken } = useCollabToken({ enabled: isLoggedIn });
   const [collabStatus, setCollabStatus] = useState<WebSocketStatus | string>(
     WebSocketStatus.Disconnected,
   );
@@ -1199,10 +1204,10 @@ export const PageEditor = ({
     handleTitleKeyPress(e, titleRef, localTitle, setLocalTitle, saveTitle, editor);
   };
 
-  const { data: favData } = useIsPageFavorited(pageId);
+  const { data: favData } = useIsPageFavorited(pageId, { enabled: isLoggedIn });
   const toggleFav = useTogglePageFavorite();
   const isFaved = favData?.favorited ?? false;
-  const { data: watchData } = useIsPageWatching(pageId);
+  const { data: watchData } = useIsPageWatching(pageId, { enabled: isLoggedIn });
   const watchPage = useWatchPage();
   const isWatching = watchData?.watching ?? false;
 
@@ -1366,16 +1371,18 @@ export const PageEditor = ({
             </div>
           )}
           <MergedConnectionStatus collabStatus={collabStatus} t={t} />
-          {editable && <SharePopover pageId={pageId} />}
-          <button
-            aria-label={isFaved ? "Unfavorite page" : "Favorite page"}
-            aria-pressed={isFaved}
-            className={`p-0.5 transition-colors ${isFaved ? "text-yellow-400" : t("text-text-dark/40 hover:text-text-dark", "text-text-light/40 hover:text-text-light")}`}
-            onClick={() => toggleFav.mutate(pageId)}
-            type="button"
-          >
-            <BookmarkSimpleIcon size={14} weight={isFaved ? "fill" : "regular"} />
-          </button>
+          {editable && isLoggedIn && <SharePopover pageId={pageId} />}
+          {isLoggedIn && (
+            <button
+              aria-label={isFaved ? "Unfavorite page" : "Favorite page"}
+              aria-pressed={isFaved}
+              className={`p-0.5 transition-colors ${isFaved ? "text-yellow-400" : t("text-text-dark/40 hover:text-text-dark", "text-text-light/40 hover:text-text-light")}`}
+              onClick={() => toggleFav.mutate(pageId)}
+              type="button"
+            >
+              <BookmarkSimpleIcon size={14} weight={isFaved ? "fill" : "regular"} />
+            </button>
+          )}
           <button
             aria-label="Open table of contents"
             className={`p-0.5 transition-colors ${tocOpen ? t("text-text-dark", "text-text-light") : t("text-text-dark/40 hover:text-text-dark", "text-text-light/40 hover:text-text-light")}`}
@@ -1392,37 +1399,39 @@ export const PageEditor = ({
           >
             <InfoIcon size={14} />
           </button>
-          <EditorMoreMenu
-            pageId={pageId}
-            title={localTitle}
-            spaceName={spaceName}
-            spaceSlug={spaceSlug}
-            creatorId={creatorId}
-            createdAt={createdAt}
-            updatedAt={updatedAt}
-            textContent={textContent}
-            editor={editor}
-            isFaved={isFaved}
-            onToggleFav={() => toggleFav.mutate(pageId)}
-            favPending={toggleFav.isPending}
-            fullWidth={fullWidth}
-            onDeleteStart={() => {
-              setIsDeleting(true);
-              onDeleteStart?.();
-            }}
-            onDeleteSettled={() => setIsDeleting(false)}
-            onToggleFullWidth={toggleFullWidth}
-            isWatching={isWatching}
-            onToggleWatch={() =>
-              watchPage.mutate(pageId, {
-                onSuccess: (data) => {
-                  setFlashToast(data.watching ? "watching page" : "stopped watching");
-                },
-              })
-            }
-            watchPending={watchPage.isPending}
-            onOpenHistory={() => setHistoryOpen(true)}
-          />
+          {!isStandaloneShare && (
+            <EditorMoreMenu
+              pageId={pageId}
+              title={localTitle}
+              spaceName={spaceName}
+              spaceSlug={spaceSlug}
+              creatorId={creatorId}
+              createdAt={createdAt}
+              updatedAt={updatedAt}
+              textContent={textContent}
+              editor={editor}
+              isFaved={isFaved}
+              onToggleFav={() => toggleFav.mutate(pageId)}
+              favPending={toggleFav.isPending}
+              fullWidth={fullWidth}
+              onDeleteStart={() => {
+                setIsDeleting(true);
+                onDeleteStart?.();
+              }}
+              onDeleteSettled={() => setIsDeleting(false)}
+              onToggleFullWidth={toggleFullWidth}
+              isWatching={isWatching}
+              onToggleWatch={() =>
+                watchPage.mutate(pageId, {
+                  onSuccess: (data) => {
+                    setFlashToast(data.watching ? "watching page" : "stopped watching");
+                  },
+                })
+              }
+              watchPending={watchPage.isPending}
+              onOpenHistory={() => setHistoryOpen(true)}
+            />
+          )}
         </div>
       </div>
 

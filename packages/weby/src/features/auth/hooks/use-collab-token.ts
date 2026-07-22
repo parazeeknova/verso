@@ -5,8 +5,9 @@ export interface CollabTokenResponse {
   token: string;
 }
 
-export const useCollabToken = () =>
+export const useCollabToken = (options?: { enabled?: boolean }) =>
   useQuery<CollabTokenResponse>({
+    enabled: options?.enabled ?? true,
     queryFn: ({ signal }) =>
       fetchProtected<CollabTokenResponse>("/api/console/auth/collab-token", {
         method: "POST",

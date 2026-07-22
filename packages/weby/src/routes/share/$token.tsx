@@ -2,10 +2,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
+import { useAuth } from "#/features/auth/hooks/use-auth";
 import { useTheme } from "#/shared/hooks/use-theme";
-import { useEffect, useMemo } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import { getEditorExtensions } from "#/features/editor/extensions";
+import { useEffect } from "react";
+import { PageEditor } from "#/features/editor/components/page-editor";
 
 interface PublicShareResponse {
   page: {
@@ -29,6 +29,7 @@ const SharedPageComponent = () => {
   const { token } = Route.useParams();
   const { isDarkMode } = useTheme();
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const { data: user } = useAuth();
 
   const { data, isPending, isError } = useQuery<PublicShareResponse>({
     queryFn: () => fetchProtected<PublicShareResponse>(`/api/shares/${token}`),
@@ -60,51 +61,6 @@ const SharedPageComponent = () => {
     };
   }, [data]);
 
-  const content = useMemo(() => {
-    if (!data?.page?.contentJson) {
-      return { content: [], type: "doc" };
-    }
-    try {
-      const parsed = JSON.parse(data.page.contentJson);
-      if (
-        parsed &&
-        typeof parsed === "object" &&
-        parsed.type === "doc" &&
-        Array.isArray(parsed.content)
-      ) {
-        return parsed;
-      }
-    } catch {
-      // fall through
-    }
-    return { content: [], type: "doc" };
-  }, [data?.page?.contentJson]);
-
-  const canEdit = data?.share.accessLevel === "public_edit";
-
-  const editor = useEditor({
-    content,
-    editable: canEdit,
-    editorProps: {
-      attributes: {
-        class: "outline-none border-none focus:outline-none focus:border-none focus:ring-0",
-      },
-    },
-    extensions: getEditorExtensions(),
-    immediatelyRender: false,
-  });
-
-  // Keep editor content in sync when loaded
-  useEffect(() => {
-    if (editor && !editor.isDestroyed && data?.page?.contentJson) {
-      try {
-        editor.commands.setContent(JSON.parse(data.page.contentJson));
-      } catch (error) {
-        console.error(error);
-      }
-    }
-  }, [editor, data?.page?.contentJson]);
-
   if (isPending) {
     return (
       <div
@@ -131,22 +87,32 @@ const SharedPageComponent = () => {
     );
   }
 
+  const accessLevel = data.share.accessLevel || "read";
+  const canEdit =
+    accessLevel === "public_edit" ||
+    (!!user && (accessLevel === "edit" || accessLevel === "public_edit"));
+
   return (
     <div
-      className={`min-h-screen w-full overflow-y-auto select-text font-sans tracking-tight leading-relaxed ${t(
+      className={`h-screen w-full flex flex-col overflow-hidden font-sans tracking-tight leading-relaxed ${t(
         "bg-bg-dark text-text-dark",
         "bg-bg-light text-text-light",
       )}`}
     >
-      <div className="w-full blog-reader-prose px-4 mx-auto max-w-2xl pt-24 pb-32">
-        <h1 className="w-full text-5xl font-black pt-8 pb-0 px-0 mb-0.5 font-sans tracking-tight leading-tight">
-          {data.page.title || "Untitled"}
-        </h1>
-        <EditorContent editor={editor} />
+      <div className="flex-1 min-h-0 w-full relative">
+        <PageEditor
+          pageId={data.page.id}
+          contentJson={data.page.contentJson}
+          editable={canEdit}
+          isLocked={false}
+          title={data.page.title}
+          updatedAt={data.page.updatedAt}
+          isStandaloneShare={true}
+        />
       </div>
 
       {/* Watermark */}
-      <div className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 text-[10px] lowercase select-none border px-2.5 py-1 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-neutral-800/10 dark:border-neutral-100/10 text-neutral-800/50 dark:text-neutral-100/50 shadow-sm">
+      <div className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 text-[10px] lowercase select-none border px-2.5 py-1 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-neutral-800/10 dark:border-neutral-100/10 text-neutral-800/50 dark:text-neutral-100/50 shadow-sm pointer-events-none">
         <img src="/verso.svg" alt="verso" className="h-3.5 w-3.5 shrink-0 rounded-sm" />
         <span>
           shared via{" "}
@@ -154,7 +120,7 @@ const SharedPageComponent = () => {
             href="https://przknv.cc/about"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-semibold hover:underline text-neutral-800 dark:text-neutral-100"
+            className="font-semibold hover:underline text-neutral-800 dark:text-neutral-100 pointer-events-auto"
           >
             verso
           </a>

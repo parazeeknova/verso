@@ -12,6 +12,7 @@ export interface PageEditorProps {
   createdAt?: string;
   updatedAt?: string;
   textContent?: string;
+  isStandaloneShare?: boolean;
   onDeleteStart?: () => void;
   onDeleteSettled?: () => void;
 }
