@@ -515,24 +515,11 @@ const MergedConnectionStatus = ({
     "border-neutral-700 text-neutral-400 hover:text-neutral-200",
     "border-neutral-300 text-neutral-600 hover:text-neutral-800",
   );
-  let dotStyle = "bg-neutral-400";
-  let labelText = "collab";
 
   if (isOnline && isWsConnected) {
     badgeStyle = "border-green-500/30 text-green-500 bg-green-500/10 hover:bg-green-500/20";
-    dotStyle = "bg-green-500";
-    labelText = "collab";
   } else if (isOnline && isWsConnecting) {
     badgeStyle = "border-amber-500/30 text-amber-500 bg-amber-500/10 animate-pulse";
-    dotStyle = "bg-amber-500";
-    labelText = "connecting...";
-  } else {
-    badgeStyle = t(
-      "border-neutral-700 text-neutral-400 hover:text-neutral-200",
-      "border-neutral-300 text-neutral-600 hover:text-neutral-800",
-    );
-    dotStyle = "bg-neutral-400";
-    labelText = "collab";
   }
 
   let wsTextColor = "text-neutral-400";
@@ -546,17 +533,27 @@ const MergedConnectionStatus = ({
     wsTextLabel = "connecting";
   }
 
+  let wsIconColor = "opacity-40 text-neutral-400";
+  if (isWsConnected) {
+    wsIconColor = "text-green-500";
+  } else if (isWsConnecting) {
+    wsIconColor = "text-amber-500 animate-pulse";
+  }
+
   return (
     <div ref={dropdownRef} className="relative flex items-center justify-center">
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`flex items-center gap-1.5 text-[9px] px-1.5 py-0.5 border transition-all cursor-pointer ${badgeStyle}`}
+        className={`flex items-center gap-1.5 px-1.5 py-0.5 border transition-all cursor-pointer ${badgeStyle}`}
         aria-label="Connection Status"
       >
-        {isOnline ? <WifiHighIcon size={12} /> : <WifiSlashIcon size={12} />}
-        <span className={`size-1.5 rounded-full ${dotStyle}`} />
-        <span>{labelText}</span>
+        {isOnline ? (
+          <WifiHighIcon size={12} className="text-green-500" />
+        ) : (
+          <WifiSlashIcon size={12} className="text-red-500" />
+        )}
+        <UsersIcon size={12} className={wsIconColor} />
       </button>
 
       {isOpen && (
