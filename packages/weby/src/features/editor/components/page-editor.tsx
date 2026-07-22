@@ -548,11 +548,7 @@ const MergedConnectionStatus = ({
         className={`flex items-center gap-1.5 px-1.5 py-0.5 border transition-all cursor-pointer ${badgeStyle}`}
         aria-label="Connection Status"
       >
-        {isOnline ? (
-          <WifiHighIcon size={12} className="text-green-500" />
-        ) : (
-          <WifiSlashIcon size={12} className="text-red-500" />
-        )}
+        {isOnline ? <WifiHighIcon size={12} /> : <WifiSlashIcon size={12} />}
         <UsersIcon size={12} className={wsIconColor} />
       </button>
 
@@ -573,11 +569,7 @@ const MergedConnectionStatus = ({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 opacity-70">
-                {isOnline ? (
-                  <WifiHighIcon size={13} className="text-green-500" />
-                ) : (
-                  <WifiSlashIcon size={13} className="text-red-500" />
-                )}
+                {isOnline ? <WifiHighIcon size={13} /> : <WifiSlashIcon size={13} />}
                 Network
               </span>
               <span className={`text-[10px] ${isOnline ? "text-green-500" : "text-red-500"}`}>
