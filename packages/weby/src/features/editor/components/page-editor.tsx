@@ -58,14 +58,17 @@ import type { PageEditorProps } from "#/features/editor/types/editor.types";
 import { useUserById } from "#/features/console/hooks/use-users";
 import { AvatarBadge } from "#/shared/components/avatar-badge";
 
-const parseContent = (raw: string): JSONContent => {
+const parseContent = (raw: unknown): JSONContent => {
+  if (!raw) {
+    return { content: [], type: "doc" };
+  }
   try {
-    const parsed = JSON.parse(raw);
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
     if (
       parsed &&
       typeof parsed === "object" &&
-      parsed.type === "doc" &&
-      Array.isArray(parsed.content)
+      (parsed as Record<string, unknown>).type === "doc" &&
+      Array.isArray((parsed as Record<string, unknown>).content)
     ) {
       return parsed as JSONContent;
     }
