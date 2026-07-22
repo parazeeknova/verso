@@ -117,6 +117,7 @@ func main() {
 	var pageService *pfeat.PageService
 	var favRepo *repositories.SpaceFavoriteRepo
 	var pageFavRepo *repositories.PageFavoriteRepo
+	var collabService *collabfeat.CollabService
 	if dbAvailable {
 		pool := database.GetPool()
 		pageRepo := repositories.NewPageRepo(pool)
@@ -149,7 +150,7 @@ func main() {
 
 		// Yjs Collaboration Service
 		pageShareRepo := repositories.NewPageShareRepo()
-		collabService := collabfeat.NewCollabService(pool, pageRepo, spaceRepo, pageShareRepo)
+		collabService = collabfeat.NewCollabService(pool, pageRepo, spaceRepo, pageShareRepo)
 		if notificationService != nil {
 			collabService.SetNotifier(notificationService)
 		}
@@ -290,12 +291,7 @@ func main() {
 		api.POST("/auth/mfa/verify", authHandlers.VerifyMFA)
 
 		// Yjs Collaboration WebSocket endpoint (handles both auth & shared pages)
-		if dbAvailable {
-			// Find collabService initialized above or bind WS endpoint
-			collabService := collabfeat.NewCollabService(database.GetPool(), repositories.NewPageRepo(database.GetPool()), repositories.NewSpaceRepo(), repositories.NewPageShareRepo())
-			if notificationService != nil {
-				collabService.SetNotifier(notificationService)
-			}
+		if dbAvailable && collabService != nil {
 			r.GET("/ws/collab", collabService.ServeWS)
 			r.GET("/ws/collab/*room", collabService.ServeWS)
 			api.GET("/collab/ws", collabService.ServeWS)
