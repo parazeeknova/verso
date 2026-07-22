@@ -466,11 +466,18 @@ const CreatorByline = ({
   );
 };
 
-const InternetIndicator = ({ t }: { t: (dark: string, light: string) => string }) => {
+const MergedConnectionStatus = ({
+  collabStatus,
+  t,
+}: {
+  collabStatus: WebSocketStatus | string;
+  t: (dark: string, light: string) => string;
+}) => {
   const [isOnline, setIsOnline] = useState(
     typeof navigator === "undefined" ? true : navigator.onLine,
   );
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -485,72 +492,116 @@ const InternetIndicator = ({ t }: { t: (dark: string, light: string) => string }
     };
   }, []);
 
-  return (
-    <div
-      className="relative flex items-center justify-center cursor-default"
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-    >
-      <div
-        className={`p-0.5 transition-colors ${
-          isOnline
-            ? t(
-                "text-text-dark/40 hover:text-text-dark",
-                "text-text-light/40 hover:text-text-light",
-              )
-            : "text-red-500 animate-pulse"
-        }`}
-        aria-label={isOnline ? "Online" : "Offline"}
-      >
-        {isOnline ? <WifiHighIcon size={14} /> : <WifiSlashIcon size={14} />}
-      </div>
-      {showTooltip && (
-        <div
-          className={`pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 whitespace-nowrap px-2 py-0.5 text-[9px] font-mono lowercase shadow-lg border ${t(
-            "border-border-dark bg-bg-dark text-text-dark",
-            "border-border-light bg-bg-light text-text-light",
-          )}`}
-        >
-          {isOnline ? "online" : "offline (no connection)"}
-        </div>
-      )}
-    </div>
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const isWsConnected = collabStatus === WebSocketStatus.Connected || collabStatus === "connected";
+  const isWsConnecting =
+    collabStatus === WebSocketStatus.Connecting || collabStatus === "connecting";
+
+  let badgeStyle = t(
+    "border-neutral-700 text-neutral-400 hover:text-neutral-200",
+    "border-neutral-300 text-neutral-600 hover:text-neutral-800",
   );
-};
-
-const CollabStatusIndicator = ({
-  status,
-  t,
-}: {
-  status: WebSocketStatus | string;
-  t: (dark: string, light: string) => string;
-}) => {
-  const isConnected = status === WebSocketStatus.Connected || status === "connected";
-  const isConnecting = status === WebSocketStatus.Connecting || status === "connecting";
-
-  let badgeStyle = t("border-neutral-700 text-neutral-400", "border-neutral-300 text-neutral-500");
   let dotStyle = "bg-neutral-400";
   let labelText = "offline";
 
-  if (isConnected) {
-    badgeStyle = "border-green-500/30 text-green-500 bg-green-500/10";
+  if (isOnline && isWsConnected) {
+    badgeStyle = "border-green-500/30 text-green-500 bg-green-500/10 hover:bg-green-500/20";
     dotStyle = "bg-green-500";
     labelText = "live";
-  } else if (isConnecting) {
+  } else if (isOnline && isWsConnecting) {
     badgeStyle = "border-amber-500/30 text-amber-500 bg-amber-500/10 animate-pulse";
     dotStyle = "bg-amber-500";
     labelText = "connecting...";
+  } else if (!isOnline) {
+    badgeStyle = "border-red-500/30 text-red-500 bg-red-500/10";
+    dotStyle = "bg-red-500";
+    labelText = "offline";
+  }
+
+  let wsDotStyle = "bg-neutral-500";
+  let wsTextColor = "text-neutral-400";
+  let wsTextLabel = "disconnected";
+
+  if (isWsConnected) {
+    wsDotStyle = "bg-green-500";
+    wsTextColor = "text-green-500";
+    wsTextLabel = "connected";
+  } else if (isWsConnecting) {
+    wsDotStyle = "bg-amber-500 animate-pulse";
+    wsTextColor = "text-amber-500";
+    wsTextLabel = "connecting";
   }
 
   return (
-    <div
-      className="relative flex items-center justify-center cursor-default"
-      title={`Live Collaboration: ${status}`}
-    >
-      <div className={`flex items-center gap-1 text-[9px] px-1 py-0.5 border ${badgeStyle}`}>
+    <div ref={dropdownRef} className="relative flex items-center justify-center">
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className={`flex items-center gap-1.5 text-[9px] px-1.5 py-0.5 border transition-all cursor-pointer ${badgeStyle}`}
+        aria-label="Connection Status"
+      >
+        {isOnline ? <WifiHighIcon size={12} /> : <WifiSlashIcon size={12} />}
         <span className={`size-1.5 rounded-full ${dotStyle}`} />
         <span>{labelText}</span>
-      </div>
+      </button>
+
+      {isOpen && (
+        <div
+          className={`absolute top-full right-0 mt-1.5 z-50 w-56 p-2.5 shadow-xl border text-[11px] font-mono lowercase space-y-2.5 transition-all ${t(
+            "bg-neutral-900 border-neutral-800 text-neutral-200",
+            "bg-white border-neutral-200 text-neutral-800",
+          )}`}
+        >
+          <div className="flex items-center justify-between pb-1.5 border-b border-border-light dark:border-border-dark">
+            <span className="font-bold text-[10px] uppercase tracking-wider text-neutral-400">
+              Connection Status
+            </span>
+            <span className="text-[10px] opacity-60">verso sync</span>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 opacity-70">
+                {isOnline ? (
+                  <WifiHighIcon size={13} className="text-green-500" />
+                ) : (
+                  <WifiSlashIcon size={13} className="text-red-500" />
+                )}
+                Network
+              </span>
+              <span className={`text-[10px] ${isOnline ? "text-green-500" : "text-red-500"}`}>
+                {isOnline ? "online" : "offline"}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 opacity-70">
+                <span className={`size-2 rounded-full ${wsDotStyle}`} />
+                Live Collaboration
+              </span>
+              <span className={`text-[10px] ${wsTextColor}`}>{wsTextLabel}</span>
+            </div>
+
+            <div className="flex items-center justify-between text-[10px] opacity-60 pt-1 border-t border-border-light dark:border-border-dark">
+              <span>Local Storage</span>
+              <span>y-indexeddb active</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -1327,8 +1378,7 @@ export const PageEditor = ({
               </button>
             </div>
           )}
-          <InternetIndicator t={t} />
-          <CollabStatusIndicator status={collabStatus} t={t} />
+          <MergedConnectionStatus collabStatus={collabStatus} t={t} />
           {editable && <SharePopover pageId={pageId} />}
           <button
             aria-label={isFaved ? "Unfavorite page" : "Favorite page"}
