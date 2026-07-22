@@ -352,7 +352,8 @@ const usePageEditorInstance = (
       return getCollabEditorExtensions(provider, user);
     }
     return getEditorExtensions();
-  }, [provider, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [provider]);
 
   return useEditor(
     {
@@ -1265,22 +1266,11 @@ export const PageEditor = ({
     };
   }, [pageId, collabUrl, collabData?.token, isLoggedIn, refetchCollabToken]);
 
-  useEffect(() => {
-    const provider = providersRef.current?.remote;
-    if (provider?.awareness && collabUser) {
-      provider.awareness.setLocalStateField("user", {
-        avatar_url: collabUser.avatar_url,
-        color: collabUser.color || getRandomColor(collabUser.name || collabUser.id),
-        name: collabUser.name,
-      });
-    }
-  }, [providerReady, collabUser]);
-
   const [activeCollaborators, setActiveCollaborators] = useState<ActiveCollaborator[]>([]);
 
   useEffect(() => {
     const provider = providersRef.current?.remote;
-    if (!provider || !providerReady) {
+    if (!provider || !providerReady || !collabUser) {
       return;
     }
 
@@ -1288,6 +1278,12 @@ export const PageEditor = ({
     if (!awareness) {
       return;
     }
+
+    awareness.setLocalStateField("user", {
+      avatar_url: collabUser.avatar_url,
+      color: collabUser.color || getRandomColor(collabUser.name || collabUser.id),
+      name: collabUser.name,
+    });
 
     const updateCollaborators = () => {
       const states = awareness.getStates();
@@ -1310,11 +1306,17 @@ export const PageEditor = ({
 
     awareness.on("change", updateCollaborators);
     awareness.on("update", updateCollaborators);
+
+    provider.on("synced", updateCollaborators);
+    provider.on("status", updateCollaborators);
+
     return () => {
       awareness.off("change", updateCollaborators);
       awareness.off("update", updateCollaborators);
+      provider.off("synced", updateCollaborators);
+      provider.off("status", updateCollaborators);
     };
-  }, [providerReady]);
+  }, [providerReady, collabUser]);
 
   useEffect(() => {
     if (providersRef.current && collabData?.token) {

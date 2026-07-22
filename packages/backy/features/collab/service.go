@@ -177,7 +177,7 @@ func (cs *CollabService) Authorize(r *http.Request) (yws.ConnectionConfig, bool)
 	// 3. Anonymous / Public Access
 	share, shareErr := cs.pageShareRepo.GetByPageID(ctx, pageID)
 	if shareErr == nil && share.IsEnabled {
-		if share.AccessLevel == "public_edit" && !page.IsLocked {
+		if (share.AccessLevel == "edit" || share.AccessLevel == "public_edit") && !page.IsLocked {
 			readOnly = false
 		} else {
 			readOnly = true
