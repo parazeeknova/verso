@@ -6,13 +6,23 @@ export const useCollaborationUrl = (): string =>
       return "ws://localhost:7000/ws/collab";
     }
 
-    const { host: windowHost, protocol: windowProtocol } = window.location;
+    const { host: windowHost, hostname, protocol: windowProtocol } = window.location;
     const isSecure = windowProtocol === "https:";
-    const protocol = isSecure ? "wss:" : "ws:";
+    let protocol = isSecure ? "wss:" : "ws:";
     let host = windowHost;
 
     if (host.includes(":3000")) {
       host = host.replace(":3000", ":7000");
+    } else if (
+      windowProtocol.startsWith("electrobun") ||
+      windowProtocol.startsWith("file") ||
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      !host.includes(":")
+    ) {
+      // In Electrobun desktop app or native webview environment where host doesn't specify backend port
+      host = "localhost:7000";
+      protocol = "ws:";
     }
 
     return `${protocol}//${host}/ws/collab`;
