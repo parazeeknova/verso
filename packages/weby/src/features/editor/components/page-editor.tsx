@@ -14,6 +14,7 @@ import {
   ArrowSquareOutIcon,
   WifiHighIcon,
   WifiSlashIcon,
+  UsersIcon,
 } from "@phosphor-icons/react";
 import { gsap } from "gsap";
 import { useTheme } from "#/shared/hooks/use-theme";
@@ -515,32 +516,32 @@ const MergedConnectionStatus = ({
     "border-neutral-300 text-neutral-600 hover:text-neutral-800",
   );
   let dotStyle = "bg-neutral-400";
-  let labelText = "offline";
+  let labelText = "collab";
 
   if (isOnline && isWsConnected) {
     badgeStyle = "border-green-500/30 text-green-500 bg-green-500/10 hover:bg-green-500/20";
     dotStyle = "bg-green-500";
-    labelText = "live";
+    labelText = "collab";
   } else if (isOnline && isWsConnecting) {
     badgeStyle = "border-amber-500/30 text-amber-500 bg-amber-500/10 animate-pulse";
     dotStyle = "bg-amber-500";
     labelText = "connecting...";
-  } else if (!isOnline) {
-    badgeStyle = "border-red-500/30 text-red-500 bg-red-500/10";
-    dotStyle = "bg-red-500";
-    labelText = "offline";
+  } else {
+    badgeStyle = t(
+      "border-neutral-700 text-neutral-400 hover:text-neutral-200",
+      "border-neutral-300 text-neutral-600 hover:text-neutral-800",
+    );
+    dotStyle = "bg-neutral-400";
+    labelText = "collab";
   }
 
-  let wsDotStyle = "bg-neutral-500";
   let wsTextColor = "text-neutral-400";
   let wsTextLabel = "disconnected";
 
   if (isWsConnected) {
-    wsDotStyle = "bg-green-500";
     wsTextColor = "text-green-500";
     wsTextLabel = "connected";
   } else if (isWsConnecting) {
-    wsDotStyle = "bg-amber-500 animate-pulse";
     wsTextColor = "text-amber-500";
     wsTextLabel = "connecting";
   }
@@ -589,15 +590,10 @@ const MergedConnectionStatus = ({
 
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 opacity-70">
-                <span className={`size-2 rounded-full ${wsDotStyle}`} />
+                <UsersIcon size={13} className={wsTextColor} />
                 Live Collaboration
               </span>
               <span className={`text-[10px] ${wsTextColor}`}>{wsTextLabel}</span>
-            </div>
-
-            <div className="flex items-center justify-between text-[10px] opacity-60 pt-1 border-t border-border-light dark:border-border-dark">
-              <span>Local Storage</span>
-              <span>y-indexeddb active</span>
             </div>
           </div>
         </div>
