@@ -42,6 +42,7 @@ import {
 import { setFlashToast } from "#/features/console/components/flash-toast";
 import { useIsPageWatching, useWatchPage } from "#/features/console/hooks/use-page-watches";
 import { useUpdatePage, usePageShare } from "#/features/console/hooks/use-pages";
+import { getGuestPokemon } from "#/features/editor/lib/pokemon-avatars";
 import { TableMenu } from "./table/table-menu";
 import { ColumnsMenu } from "./columns/columns-menu";
 import { CalloutMenu } from "./callout/callout-menu";
@@ -592,6 +593,86 @@ const MergedConnectionStatus = ({
   );
 };
 
+interface ActiveCollaborator {
+  clientId: number;
+  name: string;
+  avatar_url?: string | null;
+  color?: string;
+}
+
+const ActiveCollaboratorsStack = ({
+  collaborators,
+  t,
+}: {
+  collaborators: ActiveCollaborator[];
+  t: (dark: string, light: string) => string;
+}) => {
+  if (collaborators.length === 0) {
+    return null;
+  }
+
+  const maxVisible = 4;
+  const visible = collaborators.slice(0, maxVisible);
+  const overflowCount = Math.max(0, collaborators.length - maxVisible);
+
+  return (
+    <div className="flex items-center -space-x-1.5 overflow-hidden pl-1 select-none">
+      {visible.map((user, idx) => {
+        const initials = user.name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase();
+
+        return (
+          <div
+            key={`${user.clientId}-${idx}`}
+            className="group relative flex items-center justify-center shrink-0"
+          >
+            {user.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt={user.name}
+                className={`h-5 w-5 rounded-full object-cover ring-2 transition-transform duration-150 group-hover:z-10 group-hover:scale-110 ${t(
+                  "ring-neutral-900 border border-neutral-700",
+                  "ring-white border border-neutral-300",
+                )}`}
+                style={{ borderColor: user.color || undefined }}
+              />
+            ) : (
+              <div
+                className={`h-5 w-5 rounded-full flex items-center justify-center text-[8.5px] font-bold text-white ring-2 transition-transform duration-150 group-hover:z-10 group-hover:scale-110 ${t(
+                  "ring-neutral-900",
+                  "ring-white",
+                )}`}
+                style={{ backgroundColor: user.color || "#3b82f6" }}
+              >
+                {initials}
+              </div>
+            )}
+            <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-50 hidden group-hover:block whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-medium bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 shadow-md">
+              {user.name}
+            </div>
+          </div>
+        );
+      })}
+
+      {overflowCount > 0 && (
+        <div
+          className={`flex h-5 w-5 items-center justify-center rounded-full text-[8.5px] font-bold ring-2 ${t(
+            "ring-neutral-900 bg-neutral-800 text-neutral-300",
+            "ring-white bg-neutral-200 text-neutral-700",
+          )}`}
+          title={`${overflowCount} more collaborator${overflowCount > 1 ? "s" : ""}`}
+        >
+          +{overflowCount}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ShareInfoSection = ({
   pageId,
   isLoggedIn = true,
@@ -1087,12 +1168,23 @@ export const PageEditor = ({
 
   const [providerReady, setProviderReady] = useState(false);
 
+  const guestPokemon = useMemo(() => getGuestPokemon(), []);
+
   const collabUser = useMemo(
     () =>
-      creator
-        ? { avatar_url: creator.avatar_url, id: creatorId, name: creator.name || creator.username }
-        : undefined,
-    [creatorId, creator],
+      currentUser && isLoggedIn
+        ? {
+            avatar_url: currentUser.avatar_url,
+            id: currentUser.id,
+            name: currentUser.name || currentUser.username,
+          }
+        : {
+            avatar_url: guestPokemon.avatar,
+            color: guestPokemon.color,
+            id: `guest-${guestPokemon.name.toLowerCase()}`,
+            name: `${guestPokemon.name} (Guest)`,
+          },
+    [currentUser, isLoggedIn, guestPokemon],
   );
 
   useEffect(() => {
@@ -1104,8 +1196,8 @@ export const PageEditor = ({
       setProviderReady(true);
     } else {
       const documentName = `page.${pageId}`;
-      const tokenQuery = collabData?.token ? `&token=${encodeURIComponent(collabData.token)}` : "";
-      const socketUrl = `${collabUrl}?room=${encodeURIComponent(documentName)}${tokenQuery}`;
+      const tokenQuery = collabData?.token ? `?token=${encodeURIComponent(collabData.token)}` : "";
+      const socketUrl = `${collabUrl}${tokenQuery}`;
       const ydoc = new Y.Doc();
       const local = new IndexeddbPersistence(documentName, ydoc);
       const socket = new HocuspocusProviderWebsocket({
@@ -1145,6 +1237,44 @@ export const PageEditor = ({
       setProviderReady(false);
     };
   }, [pageId, collabUrl, collabData?.token, isLoggedIn, refetchCollabToken]);
+
+  const [activeCollaborators, setActiveCollaborators] = useState<ActiveCollaborator[]>([]);
+
+  useEffect(() => {
+    const provider = providersRef.current?.remote;
+    if (!provider || !providerReady) {
+      return;
+    }
+
+    const { awareness } = provider;
+    if (!awareness) {
+      return;
+    }
+
+    const updateCollaborators = () => {
+      const states = awareness.getStates();
+      const list: ActiveCollaborator[] = [];
+      for (const [clientId, state] of states.entries()) {
+        const u = state.user as { name?: string; avatar_url?: string; color?: string } | undefined;
+        if (u?.name) {
+          list.push({
+            avatar_url: u.avatar_url,
+            clientId,
+            color: u.color || "#3b82f6",
+            name: u.name,
+          });
+        }
+      }
+      setActiveCollaborators(list);
+    };
+
+    updateCollaborators();
+
+    awareness.on("change", updateCollaborators);
+    return () => {
+      awareness.off("change", updateCollaborators);
+    };
+  }, [providerReady]);
 
   useEffect(() => {
     if (providersRef.current && collabData?.token) {
@@ -1381,6 +1511,7 @@ export const PageEditor = ({
             </div>
           )}
           <MergedConnectionStatus collabStatus={collabStatus} t={t} />
+          <ActiveCollaboratorsStack collaborators={activeCollaborators} t={t} />
           {editable && isLoggedIn && <SharePopover pageId={pageId} />}
           {isLoggedIn && (
             <button

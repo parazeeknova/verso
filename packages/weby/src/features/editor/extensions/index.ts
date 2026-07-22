@@ -170,7 +170,7 @@ const getRandomColor = (name?: string) => {
 
 export const getCollabEditorExtensions = (
   provider: HocuspocusProvider,
-  user?: { id?: string; name?: string; avatar_url?: string | null },
+  user?: { id?: string; name?: string; avatar_url?: string | null; color?: string },
 ) => [
   ...getEditorExtensions(),
   Collaboration.configure({
@@ -179,7 +179,8 @@ export const getCollabEditorExtensions = (
   CollaborationCaret.configure({
     provider,
     user: {
-      color: getRandomColor(user?.name || user?.id),
+      avatar_url: user?.avatar_url,
+      color: user?.color || getRandomColor(user?.name || user?.id),
       name: user?.name || "Anonymous",
     },
   }),
