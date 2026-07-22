@@ -17,7 +17,16 @@ import {
 } from "@phosphor-icons/react";
 import { gsap } from "gsap";
 import { useTheme } from "#/shared/hooks/use-theme";
-import { getEditorExtensions } from "#/features/editor/extensions";
+import * as Y from "yjs";
+import { IndexeddbPersistence } from "y-indexeddb";
+import {
+  HocuspocusProvider,
+  HocuspocusProviderWebsocket,
+  WebSocketStatus,
+} from "@hocuspocus/provider";
+import { getEditorExtensions, getCollabEditorExtensions } from "#/features/editor/extensions";
+import { useCollabToken } from "#/features/auth/hooks/use-collab-token";
+import { useCollaborationUrl } from "#/features/editor/hooks/use-collaboration-url";
 import { useEditorContent } from "#/features/editor/hooks/use-editor-content";
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
 import { useQueryClient } from "@tanstack/react-query";
@@ -320,32 +329,44 @@ const usePageEditorInstance = (
   editable: boolean,
   setHeadings: (headings: BlogHeading[]) => void,
   markDirtyRef: React.MutableRefObject<(() => void) | null>,
+  provider?: HocuspocusProvider | null,
+  user?: { id?: string; name?: string; avatar_url?: string | null },
 ) => {
   const editableRef = useRef(editable);
   useEffect(() => {
     editableRef.current = editable;
   }, [editable]);
 
-  return useEditor({
-    content,
-    editable,
-    editorProps: {
-      attributes: {
-        class: "outline-none border-none focus:outline-none focus:border-none focus:ring-0",
+  const extensions = useMemo(() => {
+    if (provider) {
+      return getCollabEditorExtensions(provider, user);
+    }
+    return getEditorExtensions();
+  }, [provider, user]);
+
+  return useEditor(
+    {
+      content: provider ? undefined : content,
+      editable,
+      editorProps: {
+        attributes: {
+          class: "outline-none border-none focus:outline-none focus:border-none focus:ring-0",
+        },
+      },
+      extensions,
+      immediatelyRender: false,
+      onUpdate: ({ editor }) => {
+        const liveContent = editor.getJSON();
+        if (liveContent) {
+          setHeadings(extractEditorHeadings(liveContent));
+        }
+        if (editableRef.current) {
+          markDirtyRef.current?.();
+        }
       },
     },
-    extensions: getEditorExtensions(),
-    immediatelyRender: false,
-    onUpdate: ({ editor }) => {
-      const liveContent = editor.getJSON();
-      if (liveContent) {
-        setHeadings(extractEditorHeadings(liveContent));
-      }
-      if (editableRef.current) {
-        markDirtyRef.current?.();
-      }
-    },
-  });
+    [editable, extensions, provider],
+  );
 };
 
 const useSyncEditorContent = (
@@ -493,6 +514,43 @@ const InternetIndicator = ({ t }: { t: (dark: string, light: string) => string }
           {isOnline ? "online" : "offline (no connection)"}
         </div>
       )}
+    </div>
+  );
+};
+
+const CollabStatusIndicator = ({
+  status,
+  t,
+}: {
+  status: WebSocketStatus | string;
+  t: (dark: string, light: string) => string;
+}) => {
+  const isConnected = status === WebSocketStatus.Connected || status === "connected";
+  const isConnecting = status === WebSocketStatus.Connecting || status === "connecting";
+
+  let badgeStyle = t("border-neutral-700 text-neutral-400", "border-neutral-300 text-neutral-500");
+  let dotStyle = "bg-neutral-400";
+  let labelText = "offline";
+
+  if (isConnected) {
+    badgeStyle = "border-green-500/30 text-green-500 bg-green-500/10";
+    dotStyle = "bg-green-500";
+    labelText = "live";
+  } else if (isConnecting) {
+    badgeStyle = "border-amber-500/30 text-amber-500 bg-amber-500/10 animate-pulse";
+    dotStyle = "bg-amber-500";
+    labelText = "connecting...";
+  }
+
+  return (
+    <div
+      className="relative flex items-center justify-center cursor-default"
+      title={`Live Collaboration: ${status}`}
+    >
+      <div className={`flex items-center gap-1 text-[9px] px-1 py-0.5 border ${badgeStyle}`}>
+        <span className={`size-1.5 rounded-full ${dotStyle}`} />
+        <span>{labelText}</span>
+      </div>
     </div>
   );
 };
@@ -967,9 +1025,73 @@ export const PageEditor = ({
   const { handleTitleBlur, handleTitleChange, localTitle, saveTitle, setLocalTitle, titleRef } =
     usePageTitle(title, pageId);
 
+  const collabUrl = useCollaborationUrl();
+  const { data: collabData, refetch: refetchCollabToken } = useCollabToken();
+  const [collabStatus, setCollabStatus] = useState<WebSocketStatus | string>(
+    WebSocketStatus.Disconnected,
+  );
+
+  const providersRef = useRef<{
+    local: IndexeddbPersistence;
+    remote: HocuspocusProvider;
+    socket: HocuspocusProviderWebsocket;
+  } | null>(null);
+
+  const [providerReady, setProviderReady] = useState(false);
+
+  useEffect(() => {
+    if (!pageId) {
+      return;
+    }
+
+    const documentName = `page.${pageId}`;
+    const ydoc = new Y.Doc();
+    const local = new IndexeddbPersistence(documentName, ydoc);
+    const socket = new HocuspocusProviderWebsocket({
+      url: collabUrl,
+    });
+
+    const remote = new HocuspocusProvider({
+      document: ydoc,
+      name: documentName,
+      onAuthenticationFailed: () => {
+        const handleRefresh = async () => {
+          const res = await refetchCollabToken();
+          if (res.data?.token && remote) {
+            remote.configuration.token = res.data.token;
+            socket.disconnect();
+            setTimeout(() => socket.connect(), 100);
+          }
+        };
+        void handleRefresh();
+      },
+      onStatus: ({ status }) => setCollabStatus(status),
+      token: collabData?.token,
+      websocketProvider: socket,
+    });
+
+    providersRef.current = { local, remote, socket };
+    setProviderReady(true);
+
+    return () => {
+      socket.destroy();
+      remote.destroy();
+      local.destroy();
+      providersRef.current = null;
+      setProviderReady(false);
+    };
+  }, [pageId, collabUrl, collabData?.token, refetchCollabToken]);
+
   const markDirtyRef = useRef<(() => void) | null>(null);
 
-  const editor = usePageEditorInstance(content, editable && !isLocked, setHeadings, markDirtyRef);
+  const editor = usePageEditorInstance(
+    content,
+    editable && !isLocked,
+    setHeadings,
+    markDirtyRef,
+    providerReady ? providersRef.current?.remote : null,
+    creator ? { id: creatorId, name: creator.name || creator.username } : undefined,
+  );
 
   const updatePage = useUpdatePage();
   const handleToggleEditMode = useCallback(
@@ -1188,6 +1310,7 @@ export const PageEditor = ({
             </div>
           )}
           <InternetIndicator t={t} />
+          <CollabStatusIndicator status={collabStatus} t={t} />
           {editable && <SharePopover pageId={pageId} />}
           <button
             aria-label={isFaved ? "Unfavorite page" : "Favorite page"}

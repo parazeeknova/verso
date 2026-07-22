@@ -38,6 +38,10 @@ import { MathInline, MathBlock } from "./math";
 import { CustomAttachment } from "./attachment";
 import { CustomYoutube } from "./youtube";
 
+import { Collaboration } from "@tiptap/extension-collaboration";
+import { CollaborationCaret } from "@tiptap/extension-collaboration-caret";
+import type { HocuspocusProvider } from "@hocuspocus/provider";
+
 import plaintext from "highlight.js/lib/languages/plaintext";
 
 const lowlight = createLowlight(common);
@@ -136,4 +140,46 @@ export const getEditorExtensions = () => [
   Status,
   Columns,
   Column,
+];
+
+const userColors = [
+  "#f783ac",
+  "#af52de",
+  "#7000ff",
+  "#4078f2",
+  "#0184bc",
+  "#50a14f",
+  "#a05a00",
+  "#c18401",
+  "#e45649",
+];
+
+const getRandomColor = (name?: string) => {
+  if (!name) {
+    return userColors[0];
+  }
+  let hash = 0;
+  for (let i = 0; i < name.length; i += 1) {
+    const code = name.codePointAt(i) || 0;
+    hash = (code + hash * 31) % userColors.length;
+  }
+  const index = Math.abs(hash) % userColors.length;
+  return userColors[index];
+};
+
+export const getCollabEditorExtensions = (
+  provider: HocuspocusProvider,
+  user?: { id?: string; name?: string; avatar_url?: string | null },
+) => [
+  ...getEditorExtensions(),
+  Collaboration.configure({
+    document: provider.document,
+  }),
+  CollaborationCaret.configure({
+    provider,
+    user: {
+      color: getRandomColor(user?.name || user?.id),
+      name: user?.name || "Anonymous",
+    },
+  }),
 ];

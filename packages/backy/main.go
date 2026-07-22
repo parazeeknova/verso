@@ -13,6 +13,7 @@ import (
 
 	"verso/backy/database"
 	authfeat "verso/backy/features/auth"
+	collabfeat "verso/backy/features/collab"
 	dfeat "verso/backy/features/debug"
 	gfeat "verso/backy/features/group"
 	mfafeat "verso/backy/features/mfa"
@@ -145,6 +146,13 @@ func main() {
 		spaceService.SetNotifier(notificationService)
 		groupService.SetNotifier(notificationService)
 		pageService.SetNotifier(notificationService)
+
+		// Yjs Collaboration Service
+		pageShareRepo := repositories.NewPageShareRepo()
+		collabService := collabfeat.NewCollabService(pool, pageRepo, spaceRepo, pageShareRepo)
+		if notificationService != nil {
+			collabService.SetNotifier(notificationService)
+		}
 
 		h = handlers.NewWithDB(cfg, pageService, spaceService, workspaceService, groupService)
 		h.SetNotifier(notificationService)
@@ -281,10 +289,24 @@ func main() {
 		// MFA verification (public, requires mfa challenge cookie)
 		api.POST("/auth/mfa/verify", authHandlers.VerifyMFA)
 
+		// Yjs Collaboration WebSocket endpoint (handles both auth & shared pages)
+		if dbAvailable {
+			// Find collabService initialized above or bind WS endpoint
+			collabService := collabfeat.NewCollabService(database.GetPool(), repositories.NewPageRepo(database.GetPool()), repositories.NewSpaceRepo(), repositories.NewPageShareRepo())
+			if notificationService != nil {
+				collabService.SetNotifier(notificationService)
+			}
+			r.GET("/ws/collab", collabService.ServeWS)
+			api.GET("/collab/ws", collabService.ServeWS)
+		}
+
 		// Console routes (protected)
 		console := api.Group("/console")
 		console.Use(middleware.AuthRequired(authService))
 		{
+			// Collab token endpoint
+			console.POST("/auth/collab-token", authHandlers.CollabToken)
+
 			// Profile
 			profileHandlers.RegisterRoutes(console)
 

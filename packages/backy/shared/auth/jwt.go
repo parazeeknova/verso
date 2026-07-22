@@ -237,3 +237,73 @@ func GetRefreshTokenCookieName() string {
 	}
 	return "verso_refresh_token"
 }
+
+// CollabTokenClaims holds claims for WebSocket collaboration authentication.
+type CollabTokenClaims struct {
+	jwt.RegisteredClaims
+	UserID      string `json:"uid"`
+	WorkspaceID string `json:"workspaceId,omitempty"`
+	Type        string `json:"type"` // "collab"
+}
+
+// GenerateCollabToken creates a short-lived JWT token specifically for WebSocket collaboration sync.
+func GenerateCollabToken(userID uuid.UUID, workspaceID string) (string, error) {
+	secret := getAccessTokenSecret()
+	issuer := getJWTIssuer()
+	audience := getJWTAudience()
+
+	now := time.Now()
+	ttl := 24 * time.Hour
+
+	claims := CollabTokenClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    issuer,
+			Subject:   userID.String(),
+			Audience:  jwt.ClaimStrings{audience},
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(ttl)),
+			NotBefore: jwt.NewNumericDate(now),
+			ID:        uuid.New().String(),
+		},
+		UserID:      userID.String(),
+		WorkspaceID: workspaceID,
+		Type:        "collab",
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(secret))
+}
+
+// ValidateCollabToken parses and validates a collaboration JWT token string.
+func ValidateCollabToken(tokenString string) (*CollabTokenClaims, error) {
+	secret := getAccessTokenSecret()
+	issuer := getJWTIssuer()
+	audience := getJWTAudience()
+
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		&CollabTokenClaims{},
+		func(t *jwt.Token) (interface{}, error) {
+			return []byte(secret), nil
+		},
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+		jwt.WithIssuer(issuer),
+		jwt.WithAudience(audience),
+		jwt.WithExpirationRequired(),
+		jwt.WithLeeway(30*time.Second),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("parse collab token: %w", err)
+	}
+
+	claims, ok := token.Claims.(*CollabTokenClaims)
+	if !ok || !token.Valid {
+		return nil, fmt.Errorf("invalid collab token claims")
+	}
+
+	if claims.Type != "collab" && claims.Type != "" {
+		return nil, fmt.Errorf("invalid token type for collaboration: %s", claims.Type)
+	}
+
+	return claims, nil
+}
