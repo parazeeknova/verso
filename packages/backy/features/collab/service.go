@@ -76,8 +76,12 @@ func (cs *CollabService) Authorize(r *http.Request) (yws.ConnectionConfig, bool)
 	if room == "" {
 		// Fallback to path element e.g. /ws/collab/page.<id>
 		parts := strings.Split(r.URL.Path, "/")
-		if len(parts) > 0 {
-			room = parts[len(parts)-1]
+		for i := len(parts) - 1; i >= 0; i-- {
+			p := parts[i]
+			if strings.HasPrefix(p, "page.") || len(extractPageID(p)) > 0 {
+				room = p
+				break
+			}
 		}
 	}
 

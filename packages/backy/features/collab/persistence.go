@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/reearth/ygo/crdt"
@@ -22,9 +23,14 @@ func NewPagePersistence(pool *pgxpool.Pool) *PagePersistence {
 	return &PagePersistence{pool: pool}
 }
 
-// extractPageID strips optional "page." prefix from room name.
+// extractPageID strips optional "page." prefix from room name and validates UUID syntax.
 func extractPageID(room string) string {
-	return strings.TrimPrefix(room, "page.")
+	cleaned := strings.TrimPrefix(room, "page.")
+	cleaned = strings.TrimPrefix(cleaned, "/")
+	if _, err := uuid.Parse(cleaned); err != nil {
+		return ""
+	}
+	return cleaned
 }
 
 // LoadDoc loads the stored ydoc binary update for the given room (page ID).

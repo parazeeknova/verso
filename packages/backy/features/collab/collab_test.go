@@ -37,19 +37,23 @@ func TestCollabTokenClaims(t *testing.T) {
 }
 
 func TestExtractPageID(t *testing.T) {
-	assert.Equal(t, "12345", extractPageID("page.12345"))
-	assert.Equal(t, "12345", extractPageID("12345"))
+	testUUID := uuid.New().String()
+	assert.Equal(t, testUUID, extractPageID("page."+testUUID))
+	assert.Equal(t, testUUID, extractPageID(testUUID))
 	assert.Equal(t, "", extractPageID(""))
+	assert.Equal(t, "", extractPageID("invalid-non-uuid"))
+	assert.Equal(t, "", extractPageID("collab"))
 }
 
 func TestAuthorizeTokenExtraction(t *testing.T) {
 	userID := uuid.New()
 	workspaceID := uuid.New().String()
+	pageUUID := uuid.New().String()
 
 	tokenStr, err := auth.GenerateCollabToken(userID, workspaceID)
 	require.NoError(t, err)
 
-	u, err := url.Parse("/ws/collab?room=page.test-id&token=" + tokenStr)
+	u, err := url.Parse("/ws/collab?room=page." + pageUUID + "&token=" + tokenStr)
 	require.NoError(t, err)
 
 	req := &http.Request{
@@ -59,10 +63,10 @@ func TestAuthorizeTokenExtraction(t *testing.T) {
 	}
 
 	room := req.URL.Query().Get("room")
-	assert.Equal(t, "page.test-id", room)
+	assert.Equal(t, "page."+pageUUID, room)
 
 	pageID := extractPageID(room)
-	assert.Equal(t, "test-id", pageID)
+	assert.Equal(t, pageUUID, pageID)
 
 	extractedToken := req.URL.Query().Get("token")
 	claims, err := auth.ValidateCollabToken(extractedToken)

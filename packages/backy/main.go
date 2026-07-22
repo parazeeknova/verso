@@ -297,7 +297,9 @@ func main() {
 				collabService.SetNotifier(notificationService)
 			}
 			r.GET("/ws/collab", collabService.ServeWS)
+			r.GET("/ws/collab/*room", collabService.ServeWS)
 			api.GET("/collab/ws", collabService.ServeWS)
+			api.GET("/collab/ws/*room", collabService.ServeWS)
 		}
 
 		// Console routes (protected)
