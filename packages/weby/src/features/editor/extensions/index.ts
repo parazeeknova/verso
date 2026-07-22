@@ -64,6 +64,7 @@ export const getEditorExtensions = () => [
     },
     heading: false,
     link: false,
+    undoRedo: false,
   }),
   HeadingWithIds.configure({
     levels: [1, 2, 3],

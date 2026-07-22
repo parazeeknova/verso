@@ -108,6 +108,12 @@ export const getAuthMe = (cookieHeader?: string | null) =>
     headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
   });
 
+export const getCollabToken = (cookieHeader?: string | null) =>
+  fetchBacky<{ token: string }>("console/auth/collab-token", {
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+    method: "POST",
+  });
+
 export const getBacky = (
   endpoint: string,
   cookieHeader?: string | null,

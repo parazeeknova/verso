@@ -51,6 +51,7 @@ import { Route as ApiAuthRefreshRouteImport } from './routes/api/auth/refresh'
 import { Route as ApiAuthMeRouteImport } from './routes/api/auth/me'
 import { Route as ApiAuthLogoutRouteImport } from './routes/api/auth/logout'
 import { Route as ApiAuthLoginRouteImport } from './routes/api/auth/login'
+import { Route as ApiAuthCollabTokenRouteImport } from './routes/api/auth/collab-token'
 import { Route as ApiAuthBootstrapStateRouteImport } from './routes/api/auth/bootstrap-state'
 import { Route as SSpaceSlugPPageidRouteImport } from './routes/s/$spaceSlug/p/$pageid'
 import { Route as ApiConsoleWorkspacesIdRouteImport } from './routes/api/console/workspaces/$id'
@@ -78,6 +79,7 @@ import { Route as ApiConsoleMfaDisableRouteImport } from './routes/api/console/m
 import { Route as ApiConsoleMfaBackupCodesRouteImport } from './routes/api/console/mfa/backup-codes'
 import { Route as ApiConsoleGroupsIdRouteImport } from './routes/api/console/groups/$id'
 import { Route as ApiConsoleDebugTablesRouteImport } from './routes/api/console/debug/tables'
+import { Route as ApiConsoleAuthCollabTokenRouteImport } from './routes/api/console/auth/collab-token'
 import { Route as ApiAuthMfaVerifyRouteImport } from './routes/api/auth/mfa/verify'
 import { Route as ApiConsoleWorkspacesIdGroupsRouteImport } from './routes/api/console/workspaces/$id/groups'
 import { Route as ApiConsoleUsersIdRoleRouteImport } from './routes/api/console/users/$id/role'
@@ -322,6 +324,11 @@ const ApiAuthLoginRoute = ApiAuthLoginRouteImport.update({
   path: '/api/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthCollabTokenRoute = ApiAuthCollabTokenRouteImport.update({
+  id: '/api/auth/collab-token',
+  path: '/api/auth/collab-token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthBootstrapStateRoute = ApiAuthBootstrapStateRouteImport.update({
   id: '/api/auth/bootstrap-state',
   path: '/api/auth/bootstrap-state',
@@ -469,6 +476,12 @@ const ApiConsoleDebugTablesRoute = ApiConsoleDebugTablesRouteImport.update({
   path: '/api/console/debug/tables',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiConsoleAuthCollabTokenRoute =
+  ApiConsoleAuthCollabTokenRouteImport.update({
+    id: '/api/console/auth/collab-token',
+    path: '/api/console/auth/collab-token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAuthMfaVerifyRoute = ApiAuthMfaVerifyRouteImport.update({
   id: '/api/auth/mfa/verify',
   path: '/api/auth/mfa/verify',
@@ -673,6 +686,7 @@ export interface FileRoutesByFullPath {
   '/share/$token': typeof ShareTokenRoute
   '/home/': typeof HomeIndexRoute
   '/api/auth/bootstrap-state': typeof ApiAuthBootstrapStateRoute
+  '/api/auth/collab-token': typeof ApiAuthCollabTokenRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/me': typeof ApiAuthMeRoute
@@ -695,6 +709,7 @@ export interface FileRoutesByFullPath {
   '/settings/systems/debug': typeof SettingsSystemsDebugRoute
   '/s/$spaceSlug/': typeof SSpaceSlugIndexRoute
   '/api/auth/mfa/verify': typeof ApiAuthMfaVerifyRoute
+  '/api/console/auth/collab-token': typeof ApiConsoleAuthCollabTokenRoute
   '/api/console/debug/tables': typeof ApiConsoleDebugTablesRouteWithChildren
   '/api/console/groups/$id': typeof ApiConsoleGroupsIdRouteWithChildren
   '/api/console/mfa/backup-codes': typeof ApiConsoleMfaBackupCodesRoute
@@ -773,6 +788,7 @@ export interface FileRoutesByTo {
   '/share/$token': typeof ShareTokenRoute
   '/home': typeof HomeIndexRoute
   '/api/auth/bootstrap-state': typeof ApiAuthBootstrapStateRoute
+  '/api/auth/collab-token': typeof ApiAuthCollabTokenRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/me': typeof ApiAuthMeRoute
@@ -795,6 +811,7 @@ export interface FileRoutesByTo {
   '/settings/systems/debug': typeof SettingsSystemsDebugRoute
   '/s/$spaceSlug': typeof SSpaceSlugIndexRoute
   '/api/auth/mfa/verify': typeof ApiAuthMfaVerifyRoute
+  '/api/console/auth/collab-token': typeof ApiConsoleAuthCollabTokenRoute
   '/api/console/debug/tables': typeof ApiConsoleDebugTablesRouteWithChildren
   '/api/console/groups/$id': typeof ApiConsoleGroupsIdRouteWithChildren
   '/api/console/mfa/backup-codes': typeof ApiConsoleMfaBackupCodesRoute
@@ -876,6 +893,7 @@ export interface FileRoutesById {
   '/share/$token': typeof ShareTokenRoute
   '/home/': typeof HomeIndexRoute
   '/api/auth/bootstrap-state': typeof ApiAuthBootstrapStateRoute
+  '/api/auth/collab-token': typeof ApiAuthCollabTokenRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/me': typeof ApiAuthMeRoute
@@ -898,6 +916,7 @@ export interface FileRoutesById {
   '/settings/systems/debug': typeof SettingsSystemsDebugRoute
   '/s/$spaceSlug/': typeof SSpaceSlugIndexRoute
   '/api/auth/mfa/verify': typeof ApiAuthMfaVerifyRoute
+  '/api/console/auth/collab-token': typeof ApiConsoleAuthCollabTokenRoute
   '/api/console/debug/tables': typeof ApiConsoleDebugTablesRouteWithChildren
   '/api/console/groups/$id': typeof ApiConsoleGroupsIdRouteWithChildren
   '/api/console/mfa/backup-codes': typeof ApiConsoleMfaBackupCodesRoute
@@ -980,6 +999,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/home/'
     | '/api/auth/bootstrap-state'
+    | '/api/auth/collab-token'
     | '/api/auth/login'
     | '/api/auth/logout'
     | '/api/auth/me'
@@ -1002,6 +1022,7 @@ export interface FileRouteTypes {
     | '/settings/systems/debug'
     | '/s/$spaceSlug/'
     | '/api/auth/mfa/verify'
+    | '/api/console/auth/collab-token'
     | '/api/console/debug/tables'
     | '/api/console/groups/$id'
     | '/api/console/mfa/backup-codes'
@@ -1080,6 +1101,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/home'
     | '/api/auth/bootstrap-state'
+    | '/api/auth/collab-token'
     | '/api/auth/login'
     | '/api/auth/logout'
     | '/api/auth/me'
@@ -1102,6 +1124,7 @@ export interface FileRouteTypes {
     | '/settings/systems/debug'
     | '/s/$spaceSlug'
     | '/api/auth/mfa/verify'
+    | '/api/console/auth/collab-token'
     | '/api/console/debug/tables'
     | '/api/console/groups/$id'
     | '/api/console/mfa/backup-codes'
@@ -1182,6 +1205,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/home/'
     | '/api/auth/bootstrap-state'
+    | '/api/auth/collab-token'
     | '/api/auth/login'
     | '/api/auth/logout'
     | '/api/auth/me'
@@ -1204,6 +1228,7 @@ export interface FileRouteTypes {
     | '/settings/systems/debug'
     | '/s/$spaceSlug/'
     | '/api/auth/mfa/verify'
+    | '/api/console/auth/collab-token'
     | '/api/console/debug/tables'
     | '/api/console/groups/$id'
     | '/api/console/mfa/backup-codes'
@@ -1279,6 +1304,7 @@ export interface RootRouteChildren {
   ShShortcodeRoute: typeof ShShortcodeRoute
   ShareTokenRoute: typeof ShareTokenRoute
   ApiAuthBootstrapStateRoute: typeof ApiAuthBootstrapStateRoute
+  ApiAuthCollabTokenRoute: typeof ApiAuthCollabTokenRoute
   ApiAuthLoginRoute: typeof ApiAuthLoginRoute
   ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
   ApiAuthMeRoute: typeof ApiAuthMeRoute
@@ -1295,6 +1321,7 @@ export interface RootRouteChildren {
   ApiSharesTokenRoute: typeof ApiSharesTokenRoute
   ApiShortShortcodeRoute: typeof ApiShortShortcodeRoute
   ApiAuthMfaVerifyRoute: typeof ApiAuthMfaVerifyRoute
+  ApiConsoleAuthCollabTokenRoute: typeof ApiConsoleAuthCollabTokenRoute
   ApiConsoleDebugTablesRoute: typeof ApiConsoleDebugTablesRouteWithChildren
   ApiConsoleGroupsIdRoute: typeof ApiConsoleGroupsIdRouteWithChildren
   ApiConsoleMfaBackupCodesRoute: typeof ApiConsoleMfaBackupCodesRoute
@@ -1605,6 +1632,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/collab-token': {
+      id: '/api/auth/collab-token'
+      path: '/api/auth/collab-token'
+      fullPath: '/api/auth/collab-token'
+      preLoaderRoute: typeof ApiAuthCollabTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/bootstrap-state': {
       id: '/api/auth/bootstrap-state'
       path: '/api/auth/bootstrap-state'
@@ -1792,6 +1826,13 @@ declare module '@tanstack/react-router' {
       path: '/api/console/debug/tables'
       fullPath: '/api/console/debug/tables'
       preLoaderRoute: typeof ApiConsoleDebugTablesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/console/auth/collab-token': {
+      id: '/api/console/auth/collab-token'
+      path: '/api/console/auth/collab-token'
+      fullPath: '/api/console/auth/collab-token'
+      preLoaderRoute: typeof ApiConsoleAuthCollabTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/mfa/verify': {
@@ -2389,6 +2430,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShShortcodeRoute: ShShortcodeRoute,
   ShareTokenRoute: ShareTokenRoute,
   ApiAuthBootstrapStateRoute: ApiAuthBootstrapStateRoute,
+  ApiAuthCollabTokenRoute: ApiAuthCollabTokenRoute,
   ApiAuthLoginRoute: ApiAuthLoginRoute,
   ApiAuthLogoutRoute: ApiAuthLogoutRoute,
   ApiAuthMeRoute: ApiAuthMeRoute,
@@ -2405,6 +2447,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSharesTokenRoute: ApiSharesTokenRoute,
   ApiShortShortcodeRoute: ApiShortShortcodeRoute,
   ApiAuthMfaVerifyRoute: ApiAuthMfaVerifyRoute,
+  ApiConsoleAuthCollabTokenRoute: ApiConsoleAuthCollabTokenRoute,
   ApiConsoleDebugTablesRoute: ApiConsoleDebugTablesRouteWithChildren,
   ApiConsoleGroupsIdRoute: ApiConsoleGroupsIdRouteWithChildren,
   ApiConsoleMfaBackupCodesRoute: ApiConsoleMfaBackupCodesRoute,

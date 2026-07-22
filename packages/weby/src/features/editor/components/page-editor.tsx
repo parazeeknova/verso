@@ -1039,48 +1039,66 @@ export const PageEditor = ({
 
   const [providerReady, setProviderReady] = useState(false);
 
+  const collabUser = useMemo(
+    () =>
+      creator
+        ? { avatar_url: creator.avatar_url, id: creatorId, name: creator.name || creator.username }
+        : undefined,
+    [creatorId, creator],
+  );
+
   useEffect(() => {
     if (!pageId) {
       return;
     }
 
-    const documentName = `page.${pageId}`;
-    const ydoc = new Y.Doc();
-    const local = new IndexeddbPersistence(documentName, ydoc);
-    const socket = new HocuspocusProviderWebsocket({
-      url: collabUrl,
-    });
+    if (providersRef.current) {
+      setProviderReady(true);
+    } else {
+      const documentName = `page.${pageId}`;
+      const ydoc = new Y.Doc();
+      const local = new IndexeddbPersistence(documentName, ydoc);
+      const socket = new HocuspocusProviderWebsocket({
+        url: collabUrl,
+      });
 
-    const remote = new HocuspocusProvider({
-      document: ydoc,
-      name: documentName,
-      onAuthenticationFailed: () => {
-        const handleRefresh = async () => {
-          const res = await refetchCollabToken();
-          if (res.data?.token && remote) {
-            remote.configuration.token = res.data.token;
-            socket.disconnect();
-            setTimeout(() => socket.connect(), 100);
-          }
-        };
-        void handleRefresh();
-      },
-      onStatus: ({ status }) => setCollabStatus(status),
-      token: collabData?.token,
-      websocketProvider: socket,
-    });
+      const remote = new HocuspocusProvider({
+        document: ydoc,
+        name: documentName,
+        onAuthenticationFailed: () => {
+          const handleRefresh = async () => {
+            const res = await refetchCollabToken();
+            if (res.data?.token && providersRef.current) {
+              providersRef.current.remote.configuration.token = res.data.token;
+              providersRef.current.socket.disconnect();
+              setTimeout(() => providersRef.current?.socket.connect(), 100);
+            }
+          };
+          void handleRefresh();
+        },
+        onStatus: ({ status }) => setCollabStatus(status),
+        token: collabData?.token,
+        websocketProvider: socket,
+      });
 
-    providersRef.current = { local, remote, socket };
-    setProviderReady(true);
+      providersRef.current = { local, remote, socket };
+      setProviderReady(true);
+    }
 
     return () => {
-      socket.destroy();
-      remote.destroy();
-      local.destroy();
+      providersRef.current?.socket.destroy();
+      providersRef.current?.remote.destroy();
+      providersRef.current?.local.destroy();
       providersRef.current = null;
       setProviderReady(false);
     };
   }, [pageId, collabUrl, collabData?.token, refetchCollabToken]);
+
+  useEffect(() => {
+    if (providersRef.current && collabData?.token) {
+      providersRef.current.remote.configuration.token = collabData.token;
+    }
+  }, [collabData?.token]);
 
   const markDirtyRef = useRef<(() => void) | null>(null);
 
@@ -1090,7 +1108,7 @@ export const PageEditor = ({
     setHeadings,
     markDirtyRef,
     providerReady ? providersRef.current?.remote : null,
-    creator ? { id: creatorId, name: creator.name || creator.username } : undefined,
+    collabUser,
   );
 
   const updatePage = useUpdatePage();
