@@ -170,3 +170,14 @@ export const getGuestPokemon = (): GuestPokemon => {
   const idx = Number.parseInt(guestIndexStr, 10) % POKEMON_LIST.length;
   return POKEMON_LIST[idx] || POKEMON_LIST[0];
 };
+
+export const getPokemonDetails = (nameOrAvatar?: string | null): GuestPokemon | undefined => {
+  if (!nameOrAvatar) {
+    return undefined;
+  }
+  const cleanName = nameOrAvatar
+    .replace(/\s*\(Guest\)$/i, "")
+    .toLowerCase()
+    .trim();
+  return POKEMON_LIST.find((p) => p.name.toLowerCase() === cleanName || p.avatar === nameOrAvatar);
+};

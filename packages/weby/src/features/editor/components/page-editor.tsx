@@ -40,7 +40,7 @@ import {
 import { setFlashToast } from "#/features/console/components/flash-toast";
 import { useIsPageWatching, useWatchPage } from "#/features/console/hooks/use-page-watches";
 import { useUpdatePage, usePageShare } from "#/features/console/hooks/use-pages";
-import { getGuestPokemon } from "#/features/editor/lib/pokemon-avatars";
+import { getGuestPokemon, getPokemonDetails } from "#/features/editor/lib/pokemon-avatars";
 import { isPageOwnerPresence } from "#/features/editor/lib/collaboration-presence";
 import type { CollaboratorAwarenessUser } from "#/features/editor/lib/collaboration-presence";
 import { TableMenu } from "./table/table-menu";
@@ -614,8 +614,27 @@ const CollaboratorAvatar = ({
   t: (dark: string, light: string) => string;
   user: ActiveCollaborator;
 }) => {
-  if (user.avatar_url && user.isGuest) {
-    return <img src={user.avatar_url} alt={user.name} className="h-5 w-5 object-contain" />;
+  const isPokemon =
+    user.isGuest ||
+    user.id?.startsWith("guest-") ||
+    (user.avatar_url &&
+      (user.avatar_url.includes("pokemon") || user.avatar_url.includes("githubusercontent")));
+
+  if (user.avatar_url && isPokemon) {
+    return (
+      <div
+        className={`h-5 w-5 rounded-full flex items-center justify-center overflow-hidden ring-2 p-0.5 bg-neutral-800/90 dark:bg-neutral-900/90 ${t(
+          "ring-neutral-900 border border-neutral-700/60",
+          "ring-white border border-neutral-300",
+        )}`}
+      >
+        <img
+          src={user.avatar_url}
+          alt={user.name}
+          className="h-3.5 w-3.5 object-contain grayscale opacity-80 transition-all duration-200 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110"
+        />
+      </div>
+    );
   }
 
   if (user.avatar_url) {
@@ -629,7 +648,7 @@ const CollaboratorAvatar = ({
         <img
           src={user.avatar_url}
           alt={user.name}
-          className="h-full w-full object-contain grayscale opacity-90 dark:grayscale dark:brightness-90"
+          className="h-full w-full object-contain grayscale opacity-90 dark:grayscale dark:brightness-90 transition-all duration-200 group-hover:grayscale-0 group-hover:opacity-100"
         />
       </div>
     );
@@ -672,14 +691,43 @@ const ActiveCollaboratorsStack = ({
           .slice(0, 2)
           .toUpperCase();
 
+        const pokemonInfo = getPokemonDetails(user.avatar_url || user.name);
+        const isGuest =
+          user.isGuest ||
+          user.id?.startsWith("guest-") ||
+          user.name.includes("(Guest)") ||
+          Boolean(pokemonInfo);
+        const cleanName = pokemonInfo?.name || user.name.replace(/\s*\(Guest\)$/i, "");
+
+        let subtitle = "Collaborator • Active now";
+        if (pokemonInfo) {
+          subtitle = `Pokémon #${pokemonInfo.id} • Active guest`;
+        } else if (isGuest) {
+          subtitle = "Guest collaborator • Active now";
+        }
+
         return (
           <div
             key={`${user.clientId}-${idx}`}
             className="group relative flex items-center justify-center shrink-0"
           >
             <CollaboratorAvatar initials={initials} t={t} user={user} />
-            <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-50 hidden group-hover:block whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-medium bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 shadow-md">
-              {user.name}
+            <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 hidden group-hover:flex flex-col items-center select-none animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex flex-col gap-0.5 rounded-lg px-2.5 py-1.5 text-xs bg-neutral-900/95 text-white dark:bg-neutral-900/95 dark:text-white border border-neutral-700/60 shadow-xl backdrop-blur-md">
+                <div className="flex items-center gap-1.5 font-semibold text-[11px] leading-tight whitespace-nowrap">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+                  <span>{cleanName}</span>
+                  {isGuest && (
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 leading-none">
+                      Guest
+                    </span>
+                  )}
+                </div>
+                <div className="text-[9.5px] text-neutral-400 font-normal leading-tight whitespace-nowrap flex items-center gap-1">
+                  <span>{subtitle}</span>
+                </div>
+              </div>
+              <div className="w-2 h-2 -mt-1 rotate-45 bg-neutral-900/95 border-r border-b border-neutral-700/60" />
             </div>
           </div>
         );
