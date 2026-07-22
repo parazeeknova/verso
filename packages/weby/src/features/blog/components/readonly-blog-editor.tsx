@@ -1,7 +1,7 @@
 // eslint-disable-next-line import/no-named-as-default
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
 import { createLowlight, common } from "lowlight";
 import { HeadingWithIds } from "./tiptap-heading-ids";
@@ -24,6 +24,17 @@ interface ReadonlyBlogEditorProps {
 export const ReadonlyBlogEditor = ({ content, onHeadingsExtracted }: ReadonlyBlogEditorProps) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  const validContent = useMemo(
+    () =>
+      content &&
+      typeof content === "object" &&
+      content.type === "doc" &&
+      Array.isArray(content.content)
+        ? content
+        : { content: [], type: "doc" },
+    [content],
+  );
+
   const extractHeadings = useCallback(() => {
     const container = wrapperRef.current;
     if (!container) {
@@ -43,7 +54,7 @@ export const ReadonlyBlogEditor = ({ content, onHeadingsExtracted }: ReadonlyBlo
   }, [onHeadingsExtracted]);
 
   const editor = useEditor({
-    content: content ?? { content: [], type: "doc" },
+    content: validContent,
     editable: false,
     extensions: [
       StarterKit.configure({
@@ -82,8 +93,8 @@ export const ReadonlyBlogEditor = ({ content, onHeadingsExtracted }: ReadonlyBlo
     if (!editor) {
       return;
     }
-    editor.commands.setContent(content ?? { content: [], type: "doc" });
-  }, [editor, content]);
+    editor.commands.setContent(validContent);
+  }, [editor, validContent]);
 
   // Collapse blank lines in code blocks
   useEffect(() => {

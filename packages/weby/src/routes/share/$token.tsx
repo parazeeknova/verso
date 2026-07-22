@@ -61,13 +61,22 @@ const SharedPageComponent = () => {
 
   const content = useMemo(() => {
     if (!data?.page?.contentJson) {
-      return {};
+      return { content: [], type: "doc" };
     }
     try {
-      return JSON.parse(data.page.contentJson);
+      const parsed = JSON.parse(data.page.contentJson);
+      if (
+        parsed &&
+        typeof parsed === "object" &&
+        parsed.type === "doc" &&
+        Array.isArray(parsed.content)
+      ) {
+        return parsed;
+      }
     } catch {
-      return {};
+      // fall through
     }
+    return { content: [], type: "doc" };
   }, [data?.page?.contentJson]);
 
   const editor = useEditor({
