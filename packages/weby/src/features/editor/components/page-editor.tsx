@@ -617,13 +617,18 @@ const CollaboratorAvatar = ({
   t: (dark: string, light: string) => string;
   user: ActiveCollaborator;
 }) => {
+  const pokemonInfo = getPokemonDetails(user.avatar_url || user.name);
+  const avatarUrl = user.avatar_url || pokemonInfo?.avatar;
   const isPokemon =
     user.isGuest ||
     user.id?.startsWith("guest-") ||
-    (user.avatar_url &&
-      (user.avatar_url.includes("pokemon") || user.avatar_url.includes("githubusercontent")));
+    user.name.includes("(Guest)") ||
+    Boolean(pokemonInfo) ||
+    Boolean(
+      avatarUrl && (avatarUrl.includes("pokemon") || avatarUrl.includes("githubusercontent")),
+    );
 
-  if (user.avatar_url && isPokemon) {
+  if (avatarUrl && isPokemon) {
     return (
       <div
         className={`h-5 w-5 rounded-full flex items-center justify-center overflow-hidden ring-2 p-0.5 bg-neutral-800/90 dark:bg-neutral-900/90 ${t(
@@ -632,7 +637,7 @@ const CollaboratorAvatar = ({
         )}`}
       >
         <img
-          src={user.avatar_url}
+          src={avatarUrl}
           alt={user.name}
           className="h-3.5 w-3.5 object-contain grayscale opacity-80 transition-all duration-200 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110"
         />
