@@ -1221,8 +1221,6 @@ export const PageEditor = ({
                 const res = await refetchCollabToken();
                 if (res.data?.token && providersRef.current) {
                   providersRef.current.remote.configuration.token = res.data.token;
-                  providersRef.current.socket.disconnect();
-                  setTimeout(() => providersRef.current?.socket.connect(), 100);
                 }
               };
               void handleRefresh();
@@ -1232,6 +1230,29 @@ export const PageEditor = ({
         token: collabData?.token,
         websocketProvider: socket,
       });
+
+      const handleStatusUpdate = (s: WebSocketStatus | string) => {
+        setCollabStatus(s);
+      };
+
+      socket.on("status", ({ status }: { status: WebSocketStatus | string }) =>
+        handleStatusUpdate(status),
+      );
+      socket.on("open", () => handleStatusUpdate(WebSocketStatus.Connected));
+      socket.on("connect", () => handleStatusUpdate(WebSocketStatus.Connected));
+      socket.on("close", () => handleStatusUpdate(WebSocketStatus.Disconnected));
+      socket.on("disconnect", () => handleStatusUpdate(WebSocketStatus.Disconnected));
+
+      remote.on("status", ({ status }: { status: WebSocketStatus | string }) =>
+        handleStatusUpdate(status),
+      );
+      remote.on("synced", ({ state }: { state: boolean }) => {
+        if (state) {
+          handleStatusUpdate(WebSocketStatus.Connected);
+        }
+      });
+      remote.on("connect", () => handleStatusUpdate(WebSocketStatus.Connected));
+      remote.on("disconnect", () => handleStatusUpdate(WebSocketStatus.Disconnected));
 
       providersRef.current = { local, remote, socket };
       setProviderReady(true);
