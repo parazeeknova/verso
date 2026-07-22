@@ -523,7 +523,8 @@ const MergedConnectionStatus = ({
   );
 
   if (isOnline && isWsConnected) {
-    badgeStyle = "border-green-500/30 text-green-500 bg-green-500/10 hover:bg-green-500/20";
+    badgeStyle =
+      "border-purple-500/30 text-purple-500 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20";
   } else if (isOnline && isWsConnecting) {
     badgeStyle = "border-amber-500/30 text-amber-500 bg-amber-500/10 animate-pulse";
   }
@@ -532,7 +533,7 @@ const MergedConnectionStatus = ({
   let wsTextLabel = "disconnected";
 
   if (isWsConnected) {
-    wsTextColor = "text-green-500";
+    wsTextColor = "text-purple-500 dark:text-purple-400";
     wsTextLabel = "connected";
   } else if (isWsConnecting) {
     wsTextColor = "text-amber-500";
@@ -541,7 +542,7 @@ const MergedConnectionStatus = ({
 
   let wsIconColor = "opacity-40 text-neutral-400";
   if (isWsConnected) {
-    wsIconColor = "text-green-500";
+    wsIconColor = "text-purple-500 dark:text-purple-400";
   } else if (isWsConnecting) {
     wsIconColor = "text-amber-500 animate-pulse";
   }
@@ -576,7 +577,9 @@ const MergedConnectionStatus = ({
               {isOnline ? <WifiHighIcon size={11} /> : <WifiSlashIcon size={11} />}
               network
             </span>
-            <span className={`text-[9px] ${isOnline ? "text-green-500" : "text-red-500"}`}>
+            <span
+              className={`text-[9px] ${isOnline ? "text-purple-500 dark:text-purple-400" : "text-red-500"}`}
+            >
               {isOnline ? "online" : "offline"}
             </span>
           </div>
@@ -682,7 +685,7 @@ const ActiveCollaboratorsStack = ({
   const overflowCount = Math.max(0, collaborators.length - maxVisible);
 
   return (
-    <div className="flex items-center -space-x-1.5 overflow-hidden pl-1 select-none">
+    <div className="flex items-center -space-x-1.5 pl-1 select-none">
       {visible.map((user, idx) => {
         const initials = user.name
           .split(" ")
@@ -712,13 +715,14 @@ const ActiveCollaboratorsStack = ({
             className="group relative flex items-center justify-center shrink-0"
           >
             <CollaboratorAvatar initials={initials} t={t} user={user} />
-            <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 hidden group-hover:flex flex-col items-center select-none animate-in fade-in zoom-in-95 duration-150">
+            <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 hidden group-hover:flex flex-col items-center select-none animate-in fade-in zoom-in-95 duration-150">
+              <div className="w-2 h-2 -mb-1 rotate-45 bg-neutral-900/95 border-l border-t border-neutral-700/60" />
               <div className="flex flex-col gap-0.5 rounded-lg px-2.5 py-1.5 text-xs bg-neutral-900/95 text-white dark:bg-neutral-900/95 dark:text-white border border-neutral-700/60 shadow-xl backdrop-blur-md">
                 <div className="flex items-center gap-1.5 font-semibold text-[11px] leading-tight whitespace-nowrap">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-purple-400 shrink-0" />
                   <span>{cleanName}</span>
                   {isGuest && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 leading-none">
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 leading-none">
                       Guest
                     </span>
                   )}
@@ -727,7 +731,6 @@ const ActiveCollaboratorsStack = ({
                   <span>{subtitle}</span>
                 </div>
               </div>
-              <div className="w-2 h-2 -mt-1 rotate-45 bg-neutral-900/95 border-r border-b border-neutral-700/60" />
             </div>
           </div>
         );
