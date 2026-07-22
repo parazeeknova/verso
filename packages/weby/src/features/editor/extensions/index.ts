@@ -27,6 +27,7 @@ import { Superscript } from "@tiptap/extension-superscript";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { HeadingWithIds } from "#/features/blog/components/tiptap-heading-ids";
+import type { CollaboratorAwarenessUser } from "../lib/collaboration-presence";
 import GlobalDragHandle from "./drag-handle";
 import SlashCommand from "./slash-command";
 import { EmojiCommand } from "./emoji-command";
@@ -176,7 +177,7 @@ export const getRandomColor = (name?: string) => {
 
 export const getCollabEditorExtensions = (
   provider: WebsocketProvider,
-  user?: { id?: string; name?: string; avatar_url?: string | null; color?: string },
+  user?: CollaboratorAwarenessUser,
 ) => [
   ...getEditorExtensions(),
   Collaboration.configure({
@@ -200,6 +201,9 @@ export const getCollabEditorExtensions = (
     user: {
       avatar_url: user?.avatar_url,
       color: user?.color || getRandomColor(user?.name || user?.id),
+      id: user?.id,
+      isGuest: user?.isGuest,
+      isOwner: user?.isOwner,
       name: user?.name || "Anonymous",
     },
   }),

@@ -42,6 +42,7 @@ import { useIsPageWatching, useWatchPage } from "#/features/console/hooks/use-pa
 import { useUpdatePage, usePageShare } from "#/features/console/hooks/use-pages";
 import { getGuestPokemon } from "#/features/editor/lib/pokemon-avatars";
 import { isPageOwnerPresence } from "#/features/editor/lib/collaboration-presence";
+import type { CollaboratorAwarenessUser } from "#/features/editor/lib/collaboration-presence";
 import { TableMenu } from "./table/table-menu";
 import { ColumnsMenu } from "./columns/columns-menu";
 import { CalloutMenu } from "./callout/callout-menu";
@@ -336,7 +337,7 @@ const usePageEditorInstance = (
   setHeadings: (headings: BlogHeading[]) => void,
   markDirtyRef: React.MutableRefObject<(() => void) | null>,
   provider?: WebsocketProvider | null,
-  user?: { id?: string; name?: string; avatar_url?: string | null },
+  user?: CollaboratorAwarenessUser,
 ) => {
   const editableRef = useRef(editable);
   useEffect(() => {
@@ -349,7 +350,7 @@ const usePageEditorInstance = (
     }
     return getEditorExtensions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provider]);
+  }, [provider, user]);
 
   return useEditor(
     {
@@ -1266,16 +1267,7 @@ export const PageEditor = ({
       const states = awareness.getStates();
       const list: ActiveCollaborator[] = [];
       for (const [clientId, state] of states.entries()) {
-        const u = state.user as
-          | {
-              avatar_url?: string;
-              color?: string;
-              id?: string;
-              isGuest?: boolean;
-              isOwner?: boolean;
-              name?: string;
-            }
-          | undefined;
+        const u = state.user as CollaboratorAwarenessUser | undefined;
         if (u?.name && !isPageOwnerPresence(u, creatorId)) {
           list.push({
             avatar_url: u.avatar_url,
