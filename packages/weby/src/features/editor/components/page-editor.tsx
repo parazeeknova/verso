@@ -382,11 +382,12 @@ const useSyncEditorContent = (
   content: JSONContent,
   contentJson: string,
   dirty: boolean,
+  providerReady: boolean,
 ) => {
   const previousContentJsonRef = useRef(contentJson);
 
   useEffect(() => {
-    if (!editor) {
+    if (!editor || providerReady) {
       return;
     }
     if (previousContentJsonRef.current === contentJson) {
@@ -402,7 +403,7 @@ const useSyncEditorContent = (
     }
     previousContentJsonRef.current = contentJson;
     editor.commands.setContent(content);
-  }, [content, contentJson, editor, dirty]);
+  }, [content, contentJson, editor, dirty, providerReady]);
 };
 
 const useEscapeKeyListener = (isOpen: boolean, setIsOpen: (open: boolean) => void) => {
@@ -1412,11 +1413,19 @@ export const PageEditor = ({
     const currentStateStr = JSON.stringify(userState);
     if (lastUserStateRef.current !== currentStateStr) {
       lastUserStateRef.current = currentStateStr;
-      if (typeof editor.commands.updateUser === "function") {
-        editor.commands.updateUser(userState);
+
+      const caretExt = editor.extensionManager.extensions.find(
+        (ext) => ext.name === "collaborationCaret" || ext.name === "collaborationCursor",
+      );
+      if (caretExt) {
+        caretExt.options.user = userState;
+      }
+
+      if (providersRef.current?.remote) {
+        providersRef.current.remote.awareness.setLocalStateField("user", userState);
       }
     }
-  }, [editor, collabUser]);
+  }, [editor, collabUser, providerReady]);
 
   if (editor && !editor.isDestroyed) {
     const storage = editor.storage as unknown as Record<string, Record<string, string | undefined>>;
@@ -1484,7 +1493,7 @@ export const PageEditor = ({
 
   markDirtyRef.current = markDirty;
 
-  useSyncEditorContent(editor, content, contentJson, dirty);
+  useSyncEditorContent(editor, content, contentJson, dirty, providerReady);
 
   useEffect(() => {
     setHeadings(extractEditorHeadings(content));
