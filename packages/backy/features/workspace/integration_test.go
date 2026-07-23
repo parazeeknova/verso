@@ -144,6 +144,7 @@ func setupTestDB(t *testing.T) *testDB {
 	db.pageSvc = pagefeat.NewPageService(db.pageRepo, db.pageWatcherRepo, db.pageHistoryRepo, db.spaceRepo, db.groupRepo)
 	db.groupSvc = groupfeat.NewGroupService(db.groupRepo, db.workspaceRepo)
 	db.commentSvc = commentfeat.NewCommentService(db.commentRepo, db.pageRepo, db.spaceRepo, notifeat.NoopNotifier(), commentfeat.NewCommentHub())
+	db.commentSvc.SetWorkspaceRepo(db.workspaceRepo)
 
 	truncateTables(t, ctx)
 

@@ -47,6 +47,7 @@ type CommentService struct {
 	commentRepo   *repositories.CommentRepo
 	pageRepo      *repositories.PageRepo
 	spaceRepo     *repositories.SpaceRepo
+	workspaceRepo *repositories.WorkspaceRepo
 	notifier      notifeat.Notifier
 	hub           *CommentHub
 	pageShareRepo *repositories.PageShareRepo
@@ -72,6 +73,10 @@ func (s *CommentService) SetPageShareRepo(repo *repositories.PageShareRepo) {
 	s.pageShareRepo = repo
 }
 
+func (s *CommentService) SetWorkspaceRepo(repo *repositories.WorkspaceRepo) {
+	s.workspaceRepo = repo
+}
+
 func (s *CommentService) IsPageShared(ctx context.Context, pageID string) bool {
 	if s.pageShareRepo == nil {
 		return false
@@ -83,23 +88,49 @@ func (s *CommentService) IsPageShared(ctx context.Context, pageID string) bool {
 	return share.IsEnabled
 }
 
+func (s *CommentService) isUserMember(ctx context.Context, workspaceID, spaceID, userID string) bool {
+	if userID == "" || userID == "guest" {
+		return false
+	}
+	if s.workspaceRepo != nil {
+		isMember, err := s.workspaceRepo.IsMember(ctx, workspaceID, userID)
+		if err == nil && isMember {
+			return true
+		}
+	}
+	if s.spaceRepo != nil {
+		isMember, err := s.spaceRepo.IsMember(ctx, spaceID, userID)
+		if err == nil && isMember {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *CommentService) canUserAccessPage(ctx context.Context, page models.Page, userID string) bool {
+	if s.IsPageShared(ctx, page.ID) {
+		return true
+	}
+	return s.isUserMember(ctx, page.WorkspaceID, page.SpaceID, userID)
+}
+
 // CreateComment creates a top-level comment or a thread reply.
 func (s *CommentService) CreateComment(ctx context.Context, pageID string, creatorID string, input CreateCommentInput) (*models.CommentWithDetails, error) {
+	page, err := s.pageRepo.GetByID(ctx, pageID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching page: %w", err)
+	}
+
 	if s.pageShareRepo != nil {
 		share, err := s.pageShareRepo.GetByPageID(ctx, pageID)
 		if err == nil {
 			if share.CommentAccess == "disabled" {
 				return nil, ErrCommentsDisabled
 			}
-			if share.CommentAccess == "members" && (creatorID == "" || creatorID == "guest") {
+			if share.CommentAccess == "members" && !s.isUserMember(ctx, page.WorkspaceID, page.SpaceID, creatorID) {
 				return nil, ErrMembersOnlyComments
 			}
 		}
-	}
-
-	page, err := s.pageRepo.GetByID(ctx, pageID)
-	if err != nil {
-		return nil, fmt.Errorf("fetching page: %w", err)
 	}
 
 	if input.ParentCommentID != nil && *input.ParentCommentID != "" {
@@ -177,8 +208,8 @@ func (s *CommentService) ListComments(ctx context.Context, pageID string) ([]mod
 	return s.commentRepo.ListByPageID(ctx, pageID)
 }
 
-// GetComment retrieves a single comment by ID.
-func (s *CommentService) GetComment(ctx context.Context, commentID string) (*models.CommentWithDetails, error) {
+// GetComment retrieves a single comment by ID after verifying authorization to the containing page.
+func (s *CommentService) GetComment(ctx context.Context, commentID string, userID string) (*models.CommentWithDetails, error) {
 	c, err := s.commentRepo.GetByID(ctx, commentID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -186,6 +217,16 @@ func (s *CommentService) GetComment(ctx context.Context, commentID string) (*mod
 		}
 		return nil, err
 	}
+
+	page, err := s.pageRepo.GetByID(ctx, c.PageID)
+	if err != nil {
+		return nil, ErrCommentNotFound
+	}
+
+	if !s.canUserAccessPage(ctx, page, userID) {
+		return nil, ErrForbidden
+	}
+
 	return c, nil
 }
 
@@ -380,7 +421,9 @@ func (s *CommentService) notifyCommentAction(ctx context.Context, page models.Pa
 	for _, id := range mentionedIDs {
 		if id != comment.CreatorID {
 			if _, alreadyNotified := recipients[id]; !alreadyNotified {
-				filteredMentions = append(filteredMentions, id)
+				if s.canUserAccessPage(ctx, page, id) {
+					filteredMentions = append(filteredMentions, id)
+				}
 			}
 		}
 	}

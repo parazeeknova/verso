@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"verso/backy/database"
 	"verso/backy/database/models"
 	notifeat "verso/backy/features/notification"
 	"verso/backy/repositories"
@@ -232,6 +233,12 @@ func (s *SpaceService) DeleteSpace(ctx context.Context, id, userID string) error
 		if err := s.commentRepo.DeleteBySpaceID(ctx, id); err != nil {
 			return fmt.Errorf("deleting comments in space: %w", err)
 		}
+	}
+
+	pool := database.GetPool()
+	_, _ = pool.Exec(ctx, `UPDATE notifications SET deleted_at = now() WHERE (entity_id = $1 OR metadata->>'spaceId' = $1) AND deleted_at IS NULL`, id)
+	for _, pageID := range pageIDs {
+		_, _ = pool.Exec(ctx, `UPDATE notifications SET deleted_at = now() WHERE (entity_id = $1 OR metadata->>'pageId' = $1) AND deleted_at IS NULL`, pageID)
 	}
 
 	if err := s.spaceRepo.SoftDelete(ctx, id); err != nil {

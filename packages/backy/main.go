@@ -168,6 +168,7 @@ func main() {
 		}
 		commentService := commentfeat.NewCommentService(commentRepo, pageRepo, spaceRepo, notifier, commentHub)
 		commentService.SetPageShareRepo(pageShareRepo)
+		commentService.SetWorkspaceRepo(workspaceRepo)
 		spaceService.SetCommentRepo(commentRepo)
 		commentHandlers = commentfeat.NewCommentHandlers(commentService, commentHub)
 

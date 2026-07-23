@@ -128,16 +128,21 @@ func (h *CommentHandlers) ListComments(c *gin.Context) {
 }
 
 func (h *CommentHandlers) GetComment(c *gin.Context) {
+	userID := middleware.GetCurrentUserID(c)
 	commentID := c.Param("commentId")
 	if commentID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "comment ID is required"})
 		return
 	}
 
-	comment, err := h.commentService.GetComment(c.Request.Context(), commentID)
+	comment, err := h.commentService.GetComment(c.Request.Context(), commentID, userID)
 	if err != nil {
 		if errors.Is(err, ErrCommentNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "comment not found"})
+			return
+		}
+		if errors.Is(err, ErrForbidden) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
 			return
 		}
 		logger.Log.Error().Err(err).Str("comment_id", commentID).Msg("get comment error")

@@ -836,6 +836,10 @@ func (s *PageService) softDeletePageAndDescendantsTx(ctx context.Context, tx pgx
 		return fmt.Errorf("deleting comments for page %q: %w", pageID, err)
 	}
 
+	if _, err := tx.Exec(ctx, `UPDATE notifications SET deleted_at = now() WHERE (entity_id = $1 OR metadata->>'pageId' = $1) AND deleted_at IS NULL`, pageID); err != nil {
+		return fmt.Errorf("deleting notifications for page %q: %w", pageID, err)
+	}
+
 	if _, err := tx.Exec(ctx, `DELETE FROM page_history WHERE page_id = $1`, pageID); err != nil {
 		return fmt.Errorf("deleting page history for page %q: %w", pageID, err)
 	}
