@@ -57,7 +57,15 @@ func (h *AuthHandlers) CollabToken(c *gin.Context) {
 		return
 	}
 
-	workspaceID, _ := h.authService.GetUserPrimaryWorkspaceID(c.Request.Context(), accessClaims.UserID)
+	workspaceID, err := h.authService.GetUserPrimaryWorkspaceID(c.Request.Context(), accessClaims.UserID)
+	if err != nil || workspaceID == "" {
+		if errors.Is(err, ErrNoWorkspace) || workspaceID == "" {
+			c.JSON(http.StatusForbidden, auth.ErrorResponse{Error: "user does not belong to any workspace"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, auth.ErrorResponse{Error: "failed to retrieve workspace"})
+		return
+	}
 
 	collabToken, err := auth.GenerateCollabToken(uid, workspaceID)
 	if err != nil {

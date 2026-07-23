@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"verso/backy/database/models"
 	"verso/backy/middleware"
 	"verso/backy/shared/auth"
 )
@@ -280,6 +281,77 @@ func (cs *CollabService) HandleLeavePresence(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+// PageAccessResult contains the evaluation result of resolving access to a page.
+type PageAccessResult struct {
+	Granted  bool
+	ReadOnly bool
+	Role     string
+}
+
+func (cs *CollabService) resolvePageAccess(ctx context.Context, page models.Page, userID, userWorkspaceID string) PageAccessResult {
+	readOnly := page.IsLocked
+
+	if userID != "" {
+		space, spaceErr := cs.spaceRepo.GetByID(ctx, page.SpaceID)
+		var userGroupIDs []string
+		if spaceErr == nil && cs.groupRepo != nil {
+			userGroupIDs, _ = cs.groupRepo.ListUserGroupIDsInWorkspace(ctx, userID, space.WorkspaceID)
+		}
+
+		// 1. Space Level Access: direct or group space role
+		effectiveRole, err := cs.spaceRepo.GetEffectiveRole(ctx, page.SpaceID, userID, userGroupIDs)
+		if err == nil && effectiveRole != "" {
+			if effectiveRole == models.SpaceRoleReader {
+				readOnly = true
+			}
+			return PageAccessResult{Granted: true, ReadOnly: readOnly, Role: string(effectiveRole)}
+		}
+
+		// 2. App Level Access: check space visibility and workspace match
+		if spaceErr == nil {
+			isWorkspaceMatch := userWorkspaceID != "" && userWorkspaceID == space.WorkspaceID
+			if !isWorkspaceMatch && cs.workspaceRepo != nil {
+				isMember, _ := cs.workspaceRepo.IsMember(ctx, space.WorkspaceID, userID)
+				isWorkspaceMatch = isMember
+			}
+			if space.Visibility == "public" || (space.Visibility == "workspace" && isWorkspaceMatch) {
+				if space.DefaultRole == models.SpaceRoleReader {
+					readOnly = true
+				}
+				return PageAccessResult{Granted: true, ReadOnly: readOnly, Role: string(space.DefaultRole)}
+			}
+		}
+
+		// 3. Page share enabled
+		share, shareErr := cs.pageShareRepo.GetByPageID(ctx, page.ID)
+		if shareErr == nil && share.IsEnabled {
+			if share.AccessLevel == "edit" || share.AccessLevel == "public_edit" {
+				if !page.IsLocked {
+					readOnly = false
+				}
+			} else {
+				readOnly = true
+			}
+			return PageAccessResult{Granted: true, ReadOnly: readOnly, Role: "shared"}
+		}
+
+		return PageAccessResult{Granted: false, ReadOnly: true, Role: ""}
+	}
+
+	// Unauthenticated: allow only if public page share is enabled
+	share, shareErr := cs.pageShareRepo.GetByPageID(ctx, page.ID)
+	if shareErr == nil && share.IsEnabled {
+		if (share.AccessLevel == "edit" || share.AccessLevel == "public_edit") && !page.IsLocked {
+			readOnly = false
+		} else {
+			readOnly = true
+		}
+		return PageAccessResult{Granted: true, ReadOnly: readOnly, Role: "public_share"}
+	}
+
+	return PageAccessResult{Granted: false, ReadOnly: true, Role: ""}
+}
+
 // canAccessPagePresence checks if current request can access page presence.
 func (cs *CollabService) canAccessPagePresence(c *gin.Context, pageID string) bool {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
@@ -291,8 +363,10 @@ func (cs *CollabService) canAccessPagePresence(c *gin.Context, pageID string) bo
 	}
 
 	authHeader := c.GetHeader("Authorization")
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-	if tokenStr == "" {
+	var tokenStr string
+	if strings.HasPrefix(authHeader, "Bearer ") {
+		tokenStr = strings.TrimPrefix(authHeader, "Bearer ")
+	} else {
 		tokenStr = c.Query("token")
 	}
 
@@ -312,50 +386,6 @@ func (cs *CollabService) canAccessPagePresence(c *gin.Context, pageID string) bo
 		}
 	}
 
-	if userID != "" {
-		space, spaceErr := cs.spaceRepo.GetByID(ctx, page.SpaceID)
-
-		// 1. Space level access
-		var userGroupIDs []string
-		if spaceErr == nil && cs.groupRepo != nil {
-			userGroupIDs, _ = cs.groupRepo.ListUserGroupIDsInWorkspace(ctx, userID, space.WorkspaceID)
-		}
-		effectiveRole, err := cs.spaceRepo.GetEffectiveRole(ctx, page.SpaceID, userID, userGroupIDs)
-		if err == nil && effectiveRole != "" {
-			return true
-		}
-
-		// 2. Space visibility
-		if spaceErr == nil {
-			if space.Visibility == "public" {
-				return true
-			}
-			if space.Visibility == "workspace" {
-				if userWorkspaceID != "" && userWorkspaceID == space.WorkspaceID {
-					return true
-				}
-				if cs.workspaceRepo != nil {
-					if isMember, _ := cs.workspaceRepo.IsMember(ctx, space.WorkspaceID, userID); isMember {
-						return true
-					}
-				}
-			}
-		}
-
-		// 3. Page share enabled
-		share, err := cs.pageShareRepo.GetByPageID(ctx, pageID)
-		if err == nil && share.IsEnabled {
-			return true
-		}
-
-		return false
-	}
-
-	// Unauthenticated: allow only if public page share is enabled
-	share, err := cs.pageShareRepo.GetByPageID(ctx, pageID)
-	if err == nil && share.IsEnabled {
-		return true
-	}
-
-	return false
+	res := cs.resolvePageAccess(ctx, page, userID, userWorkspaceID)
+	return res.Granted
 }

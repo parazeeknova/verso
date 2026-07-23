@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	yws "github.com/reearth/ygo/provider/websocket"
 
-	"verso/backy/database/models"
 	notifeat "verso/backy/features/notification"
 	"verso/backy/repositories"
 	"verso/backy/shared/auth"
@@ -35,6 +34,8 @@ func NewCollabService(
 	pageRepo *repositories.PageRepo,
 	spaceRepo *repositories.SpaceRepo,
 	pageShareRepo *repositories.PageShareRepo,
+	groupRepo *repositories.GroupRepo,
+	workspaceRepo *repositories.WorkspaceRepo,
 ) *CollabService {
 	persistence := NewPagePersistence(pool)
 	server := yws.NewServerWithPersistence(persistence)
@@ -47,8 +48,8 @@ func NewCollabService(
 		pageRepo:      pageRepo,
 		spaceRepo:     spaceRepo,
 		pageShareRepo: pageShareRepo,
-		groupRepo:     repositories.NewGroupRepo(),
-		workspaceRepo: repositories.NewWorkspaceRepo(),
+		groupRepo:     groupRepo,
+		workspaceRepo: workspaceRepo,
 		presenceStore: NewPresenceStore(12 * time.Second),
 	}
 
@@ -137,74 +138,13 @@ func (cs *CollabService) Authorize(r *http.Request) (yws.ConnectionConfig, bool)
 	}
 
 	// Base readOnly decision: page lock forces readOnly
-	readOnly := page.IsLocked
-
-	// Check permissions based on authentication state
-	if userID != "" {
-		space, spaceErr := cs.spaceRepo.GetByID(ctx, page.SpaceID)
-		var userGroupIDs []string
-		if spaceErr == nil && cs.groupRepo != nil {
-			userGroupIDs, _ = cs.groupRepo.ListUserGroupIDsInWorkspace(ctx, userID, space.WorkspaceID)
-		}
-
-		// 1. Space Level Access: check user's role (direct or group) in the page's space
-		effectiveRole, err := cs.spaceRepo.GetEffectiveRole(ctx, page.SpaceID, userID, userGroupIDs)
-		if err == nil && effectiveRole != "" {
-			if effectiveRole == models.SpaceRoleReader {
-				readOnly = true
-			}
-			// Member of space: allowed
-			logger.Log.Debug().Str("user_id", userID).Str("page_id", pageID).Bool("read_only", readOnly).Msg("collab auth granted (space member)")
-			return yws.ConnectionConfig{ReadOnly: readOnly}, true
-		}
-
-		// 2. App Level Access: check space visibility and workspace match
-		if spaceErr == nil {
-			isWorkspaceMatch := userWorkspaceID != "" && userWorkspaceID == space.WorkspaceID
-			if !isWorkspaceMatch && cs.workspaceRepo != nil {
-				isMember, _ := cs.workspaceRepo.IsMember(ctx, space.WorkspaceID, userID)
-				isWorkspaceMatch = isMember
-			}
-			if space.Visibility == "public" || (space.Visibility == "workspace" && isWorkspaceMatch) {
-				if space.DefaultRole == models.SpaceRoleReader {
-					readOnly = true
-				}
-				logger.Log.Debug().Str("user_id", userID).Str("page_id", pageID).Bool("read_only", readOnly).Msg("collab auth granted (app level / space visibility)")
-				return yws.ConnectionConfig{ReadOnly: readOnly}, true
-			}
-		}
-
-		// Check if page has public share enabled
-		share, shareErr := cs.pageShareRepo.GetByPageID(ctx, pageID)
-		if shareErr == nil && share.IsEnabled {
-			if share.AccessLevel == "edit" || share.AccessLevel == "public_edit" {
-				if !page.IsLocked {
-					readOnly = false
-				}
-			} else {
-				readOnly = true
-			}
-			logger.Log.Debug().Str("user_id", userID).Str("page_id", pageID).Str("access_level", share.AccessLevel).Bool("read_only", readOnly).Msg("collab auth granted (page shared)")
-			return yws.ConnectionConfig{ReadOnly: readOnly}, true
-		}
-
-		logger.Log.Warn().Str("user_id", userID).Str("page_id", pageID).Msg("collab auth denied: user lacks access to space")
-		return yws.ConnectionConfig{}, false
+	res := cs.resolvePageAccess(ctx, page, userID, userWorkspaceID)
+	if res.Granted {
+		logger.Log.Debug().Str("user_id", userID).Str("page_id", pageID).Bool("read_only", res.ReadOnly).Msg("collab auth granted")
+		return yws.ConnectionConfig{ReadOnly: res.ReadOnly}, true
 	}
 
-	// 3. Anonymous / Public Access
-	share, shareErr := cs.pageShareRepo.GetByPageID(ctx, pageID)
-	if shareErr == nil && share.IsEnabled {
-		if (share.AccessLevel == "edit" || share.AccessLevel == "public_edit") && !page.IsLocked {
-			readOnly = false
-		} else {
-			readOnly = true
-		}
-		logger.Log.Debug().Str("page_id", pageID).Str("access_level", share.AccessLevel).Bool("read_only", readOnly).Msg("collab auth granted (anonymous on public share)")
-		return yws.ConnectionConfig{ReadOnly: readOnly}, true
-	}
-
-	logger.Log.Warn().Str("page_id", pageID).Msg("collab auth denied: anonymous user on unshared page")
+	logger.Log.Warn().Str("user_id", userID).Str("page_id", pageID).Msg("collab auth denied")
 	return yws.ConnectionConfig{}, false
 }
 

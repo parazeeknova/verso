@@ -569,7 +569,7 @@ func (h *Handlers) UpdateConsolePage(c *gin.Context) {
 
 	editable, err := h.pageService.CanWrite(c.Request.Context(), page.SpaceID, userID)
 	if err != nil {
-		editable = true
+		editable = false
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -1251,6 +1251,10 @@ func (h *Handlers) UpdateConsolePageShare(c *gin.Context) {
 
 	share, err := h.pageService.UpdatePageShare(c.Request.Context(), pageID, userID, req.IsEnabled, req.SearchIndexing, req.AccessLevel)
 	if err != nil {
+		if errors.Is(err, pagefeat.ErrInvalidAccessLevel) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		if errors.Is(err, pagefeat.ErrPageNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
 			return

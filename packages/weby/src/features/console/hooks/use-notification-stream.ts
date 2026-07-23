@@ -52,6 +52,7 @@ export const useNotificationStream = (enabled: boolean) => {
             if (notif.entityType === "page" || notif.type.startsWith("page_")) {
               void queryClient.invalidateQueries({ queryKey: ["pageTree"] });
               void queryClient.invalidateQueries({ queryKey: ["pages"] });
+              void queryClient.invalidateQueries({ queryKey: ["consolePages"] });
             }
 
             void (async () => {

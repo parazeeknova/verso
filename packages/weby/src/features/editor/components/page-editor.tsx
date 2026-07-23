@@ -1245,7 +1245,7 @@ export const PageEditor = ({
 
   const { data: creator } = useUserById(creatorId ?? "", { enabled: isLoggedIn });
   const { handleTitleBlur, handleTitleChange, localTitle, saveTitle, setLocalTitle, titleRef } =
-    usePageTitle(title, pageId, { enabled: isLoggedIn });
+    usePageTitle(title, pageId, { enabled: editable });
 
   const collabUrl = useCollaborationUrl();
   const { data: collabData } = useCollabToken({ enabled: isLoggedIn });

@@ -459,14 +459,22 @@ func (s *AuthService) RevokeSession(ctx context.Context, sessionID string) error
 	return s.sessionRepo.RevokeSession(ctx, sessionID)
 }
 
+var (
+	ErrNoWorkspace              = errors.New("user has no workspace")
+	ErrWorkspaceRepoUnavailable = errors.New("workspace repository unavailable")
+)
+
 // GetUserPrimaryWorkspaceID fetches the primary workspace ID for a user.
 func (s *AuthService) GetUserPrimaryWorkspaceID(ctx context.Context, userID string) (string, error) {
 	if s.workspaceRepo == nil {
-		return "", nil
+		return "", ErrWorkspaceRepoUnavailable
 	}
 	workspaces, err := s.workspaceRepo.ListByUser(ctx, userID)
-	if err != nil || len(workspaces) == 0 {
+	if err != nil {
 		return "", err
+	}
+	if len(workspaces) == 0 {
+		return "", ErrNoWorkspace
 	}
 	return workspaces[0].ID, nil
 }

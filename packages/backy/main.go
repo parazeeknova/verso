@@ -150,7 +150,7 @@ func main() {
 
 		// Yjs Collaboration Service
 		pageShareRepo := repositories.NewPageShareRepo()
-		collabService = collabfeat.NewCollabService(pool, pageRepo, spaceRepo, pageShareRepo)
+		collabService = collabfeat.NewCollabService(pool, pageRepo, spaceRepo, pageShareRepo, groupRepo, workspaceRepo)
 		if notificationService != nil {
 			collabService.SetNotifier(notificationService)
 		}

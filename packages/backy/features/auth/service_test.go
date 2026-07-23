@@ -10,6 +10,6 @@ import (
 func TestGetUserPrimaryWorkspaceIDNilRepo(t *testing.T) {
 	svc := &AuthService{}
 	id, err := svc.GetUserPrimaryWorkspaceID(context.Background(), "user-123")
-	assert.NoError(t, err)
+	assert.ErrorIs(t, err, ErrWorkspaceRepoUnavailable)
 	assert.Equal(t, "", id)
 }
