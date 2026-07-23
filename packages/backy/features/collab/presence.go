@@ -296,9 +296,11 @@ func (cs *CollabService) canAccessPagePresence(c *gin.Context, pageID string) bo
 	}
 
 	var userID string
+	var userWorkspaceID string
 	if tokenStr != "" {
 		if claims, err := auth.ValidateCollabToken(tokenStr); err == nil && claims != nil {
 			userID = claims.UserID
+			userWorkspaceID = claims.WorkspaceID
 		} else if claims, err := auth.ValidateAccessToken(tokenStr); err == nil && claims != nil {
 			userID = claims.UserID
 		}
@@ -306,15 +308,31 @@ func (cs *CollabService) canAccessPagePresence(c *gin.Context, pageID string) bo
 
 	if userID != "" {
 		// 1. Space level access
-		effectiveRole, err := cs.spaceRepo.GetEffectiveRole(ctx, page.SpaceID, userID, nil)
+		var userGroupIDs []string
+		if cs.groupRepo != nil {
+			userGroupIDs, _ = cs.groupRepo.ListUserGroupIDsInWorkspace(ctx, userID, page.SpaceID)
+		}
+		effectiveRole, err := cs.spaceRepo.GetEffectiveRole(ctx, page.SpaceID, userID, userGroupIDs)
 		if err == nil && effectiveRole != "" {
 			return true
 		}
 
 		// 2. Space visibility
 		space, err := cs.spaceRepo.GetByID(ctx, page.SpaceID)
-		if err == nil && (space.Visibility == "public" || space.Visibility == "workspace") {
-			return true
+		if err == nil {
+			if space.Visibility == "public" {
+				return true
+			}
+			if space.Visibility == "workspace" {
+				if userWorkspaceID != "" && userWorkspaceID == space.WorkspaceID {
+					return true
+				}
+				if cs.workspaceRepo != nil {
+					if isMember, _ := cs.workspaceRepo.IsMember(ctx, space.WorkspaceID, userID); isMember {
+						return true
+					}
+				}
+			}
 		}
 
 		// 3. Page share enabled

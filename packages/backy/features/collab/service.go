@@ -24,6 +24,7 @@ type CollabService struct {
 	spaceRepo     *repositories.SpaceRepo
 	pageShareRepo *repositories.PageShareRepo
 	groupRepo     *repositories.GroupRepo
+	workspaceRepo *repositories.WorkspaceRepo
 	notifier      *notifeat.NotificationService
 	presenceStore *PresenceStore
 }
@@ -47,6 +48,7 @@ func NewCollabService(
 		spaceRepo:     spaceRepo,
 		pageShareRepo: pageShareRepo,
 		groupRepo:     repositories.NewGroupRepo(),
+		workspaceRepo: repositories.NewWorkspaceRepo(),
 		presenceStore: NewPresenceStore(12 * time.Second),
 	}
 
@@ -158,7 +160,11 @@ func (cs *CollabService) Authorize(r *http.Request) (yws.ConnectionConfig, bool)
 
 		// 2. App Level Access: check space visibility and workspace match
 		if spaceErr == nil {
-			isWorkspaceMatch := userWorkspaceID == "" || userWorkspaceID == space.WorkspaceID
+			isWorkspaceMatch := userWorkspaceID != "" && userWorkspaceID == space.WorkspaceID
+			if !isWorkspaceMatch && cs.workspaceRepo != nil {
+				isMember, _ := cs.workspaceRepo.IsMember(ctx, space.WorkspaceID, userID)
+				isWorkspaceMatch = isMember
+			}
 			if space.Visibility == "public" || (space.Visibility == "workspace" && isWorkspaceMatch) {
 				if space.DefaultRole == models.SpaceRoleReader {
 					readOnly = true
