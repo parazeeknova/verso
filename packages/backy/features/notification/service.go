@@ -69,7 +69,7 @@ func (s *NotificationService) Notify(ctx context.Context, event NotificationEven
 			n.WorkspaceID = &event.WorkspaceID
 		}
 
-		if err := s.notifRepo.Insert(ctx, n); err != nil {
+		if err := s.notifRepo.Insert(bgCtx, n); err != nil {
 			logger.Log.Error().Err(err).
 				Str("recipient", recipientID).
 				Str("type", string(event.Type)).
@@ -82,7 +82,7 @@ func (s *NotificationService) Notify(ctx context.Context, event NotificationEven
 			actorName := ""
 			actorAvatar := ""
 			if event.ActorID != "" && event.ActorID != "guest" {
-				if actor, err := s.userRepo.FindMetaByID(ctx, event.ActorID); err == nil && actor != nil {
+				if actor, err := s.userRepo.FindMetaByID(bgCtx, event.ActorID); err == nil && actor != nil {
 					actorName = actor.Name
 					actorAvatar = actor.AvatarURL
 				}

@@ -152,7 +152,7 @@ func (s *CommentService) CreateComment(ctx context.Context, pageID string, creat
 	}
 
 	// Queue Notifications
-	go s.notifyCommentAction(ctx, page, created, input.ParentCommentID)
+	go s.notifyCommentAction(context.Background(), page, created, input.ParentCommentID)
 
 	return created, nil
 }
