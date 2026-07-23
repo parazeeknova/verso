@@ -24,12 +24,17 @@ func NewCommentRepo() *CommentRepo {
 
 // Insert creates a new comment row and returns it with user details.
 func (r *CommentRepo) Insert(ctx context.Context, c models.Comment) (*models.CommentWithDetails, error) {
+	var creatorIDVal *string
+	if c.CreatorID != "" && c.CreatorID != "guest" {
+		creatorIDVal = &c.CreatorID
+	}
+
 	query := `
 		INSERT INTO comments (id, workspace_id, space_id, page_id, creator_id, parent_comment_id, content, selection, type, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 	_, err := r.pool.Exec(
 		ctx, query,
-		c.ID, c.WorkspaceID, c.SpaceID, c.PageID, c.CreatorID, c.ParentCommentID,
+		c.ID, c.WorkspaceID, c.SpaceID, c.PageID, creatorIDVal, c.ParentCommentID,
 		c.Content, c.Selection, c.Type, c.CreatedAt, c.UpdatedAt,
 	)
 	if err != nil {
@@ -42,7 +47,7 @@ func (r *CommentRepo) Insert(ctx context.Context, c models.Comment) (*models.Com
 // GetByID returns a single comment by ID enriched with creator and resolved_by info.
 func (r *CommentRepo) GetByID(ctx context.Context, id string) (*models.CommentWithDetails, error) {
 	query := `
-		SELECT c.id, c.workspace_id, c.space_id, c.page_id, c.creator_id, c.parent_comment_id,
+		SELECT c.id, c.workspace_id, c.space_id, c.page_id, COALESCE(c.creator_id::text, 'guest'), c.parent_comment_id,
 		       c.content, c.selection, c.type, c.resolved_at, c.resolved_by_id, c.edited_at,
 		       c.created_at, c.updated_at, c.deleted_at,
 		       COALESCE(u.name, 'Guest'), COALESCE(u.avatar_url, ''),
@@ -93,7 +98,7 @@ func (r *CommentRepo) GetByID(ctx context.Context, id string) (*models.CommentWi
 // ListByPageID returns all non-deleted comments for a page ordered chronologically.
 func (r *CommentRepo) ListByPageID(ctx context.Context, pageID string) ([]models.CommentWithDetails, error) {
 	query := `
-		SELECT c.id, c.workspace_id, c.space_id, c.page_id, c.creator_id, c.parent_comment_id,
+		SELECT c.id, c.workspace_id, c.space_id, c.page_id, COALESCE(c.creator_id::text, 'guest'), c.parent_comment_id,
 		       c.content, c.selection, c.type, c.resolved_at, c.resolved_by_id, c.edited_at,
 		       c.created_at, c.updated_at, c.deleted_at,
 		       COALESCE(u.name, 'Guest'), COALESCE(u.avatar_url, ''),

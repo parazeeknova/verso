@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS comments (
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     space_id UUID NOT NULL REFERENCES spaces(id) ON DELETE CASCADE,
     page_id UUID NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
-    creator_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    creator_id UUID REFERENCES users(id) ON DELETE CASCADE,
     parent_comment_id UUID REFERENCES comments(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     selection TEXT,
