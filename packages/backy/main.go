@@ -162,7 +162,7 @@ func main() {
 		// Comment Service & Handlers
 		commentRepo := repositories.NewCommentRepo()
 		commentHub := commentfeat.NewCommentHub()
-		var notifier notifeat.Notifier = notifeat.NoopNotifier()
+		notifier := notifeat.NoopNotifier()
 		if notificationService != nil {
 			notifier = notificationService
 		}
