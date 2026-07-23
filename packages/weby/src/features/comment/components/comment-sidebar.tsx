@@ -25,6 +25,7 @@ interface CommentSidebarProps {
   isOpen: boolean;
   onClose?: () => void;
   userRole?: string;
+  isPageOwner?: boolean;
 }
 
 export const CommentSidebar = ({
@@ -33,6 +34,7 @@ export const CommentSidebar = ({
   isOpen,
   onClose,
   userRole,
+  isPageOwner,
 }: CommentSidebarProps) => {
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
   const { data: user } = useAuth();
@@ -175,6 +177,7 @@ export const CommentSidebar = ({
     return activeThreads.map((thread) => (
       <CommentThread
         isDarkMode={isDarkMode}
+        isPageOwner={isPageOwner}
         key={thread.id}
         onAddReply={handleAddReply}
         onDeleteComment={handleDeleteComment}

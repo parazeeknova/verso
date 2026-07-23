@@ -235,7 +235,7 @@ func (s *CommentService) DeleteComment(ctx context.Context, commentID string, us
 	return nil
 }
 
-// ToggleResolve resolves or re-opens a comment thread.
+// ToggleResolve resolves or re-opens a comment thread (only page owner allowed).
 func (s *CommentService) ToggleResolve(ctx context.Context, commentID string, userID string, input ResolveCommentInput) (*models.CommentWithDetails, error) {
 	comment, err := s.commentRepo.GetByID(ctx, commentID)
 	if err != nil {
@@ -243,6 +243,15 @@ func (s *CommentService) ToggleResolve(ctx context.Context, commentID string, us
 			return nil, ErrCommentNotFound
 		}
 		return nil, err
+	}
+
+	page, err := s.pageRepo.GetByID(ctx, comment.PageID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching page for resolve check: %w", err)
+	}
+
+	if userID == "" || userID != page.CreatorID {
+		return nil, ErrForbidden
 	}
 
 	updated, err := s.commentRepo.ToggleResolve(ctx, commentID, input.Resolved, userID)

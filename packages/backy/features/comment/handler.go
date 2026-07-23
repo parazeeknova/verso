@@ -209,6 +209,10 @@ func (h *CommentHandlers) ToggleResolve(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "comment not found"})
 			return
 		}
+		if errors.Is(err, ErrForbidden) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "only page owner can resolve comments"})
+			return
+		}
 		logger.Log.Error().Err(err).Str("comment_id", commentID).Msg("resolve comment error")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to resolve comment"})
 		return

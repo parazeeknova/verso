@@ -13,6 +13,7 @@ interface CommentThreadProps {
   onDeleteComment: (commentId: string) => Promise<void>;
   onResolveComment: (commentId: string, resolved: boolean) => Promise<void>;
   userRole?: string;
+  isPageOwner?: boolean;
 }
 
 export const CommentThread = ({
@@ -25,6 +26,7 @@ export const CommentThread = ({
   onDeleteComment,
   onResolveComment,
   userRole,
+  isPageOwner,
 }: CommentThreadProps) => {
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
   const [isReplying, setIsReplying] = useState(false);
@@ -60,6 +62,7 @@ export const CommentThread = ({
         comment={rootComment}
         frameless
         isDarkMode={isDarkMode}
+        isPageOwner={isPageOwner}
         onDelete={onDeleteComment}
         onReply={() => setIsReplying(true)}
         onResolve={onResolveComment}

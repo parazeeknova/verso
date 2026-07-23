@@ -19,6 +19,7 @@ interface CommentItemProps {
   onResolve?: (commentId: string, resolved: boolean) => Promise<void>;
   userRole?: string;
   frameless?: boolean;
+  isPageOwner?: boolean;
 }
 
 const formatTimeAgo = (dateStr: string) => {
@@ -88,6 +89,7 @@ const CommentActions = ({
   setIsMenuOpen,
   setIsEditing,
   onDelete,
+  isPageOwner,
   t,
 }: {
   isRootComment: boolean;
@@ -101,10 +103,11 @@ const CommentActions = ({
   setIsMenuOpen: (fn: (o: boolean) => boolean) => void;
   setIsEditing: (val: boolean) => void;
   onDelete: (commentId: string) => Promise<void>;
+  isPageOwner?: boolean;
   t: (dark: string, light: string) => string;
 }) => (
   <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100">
-    {isRootComment && onResolve && (
+    {isRootComment && onResolve && isPageOwner && (
       <button
         className={`flex h-5 w-5 items-center justify-center border p-0.5 lowercase transition-colors ${
           isResolved
@@ -190,6 +193,7 @@ export const CommentItem = ({
   onResolve,
   userRole,
   frameless = false,
+  isPageOwner = false,
 }: CommentItemProps) => {
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
   const { data: currentUser } = useAuth();
@@ -252,6 +256,7 @@ export const CommentItem = ({
           commentId={comment.id}
           isMenuOpen={isMenuOpen}
           isOwner={isOwner}
+          isPageOwner={isPageOwner}
           isResolved={isResolved}
           isRootComment={isRootComment}
           onDelete={onDelete}

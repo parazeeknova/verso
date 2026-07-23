@@ -1817,6 +1817,7 @@ export const PageEditor = ({
         <CommentSidebar
           isDarkMode={isDarkMode}
           isOpen={commentsOpen}
+          isPageOwner={Boolean(currentUser && creatorId && currentUser.id === creatorId)}
           onClose={() => setCommentsOpen(false)}
           pageId={pageId}
         />
