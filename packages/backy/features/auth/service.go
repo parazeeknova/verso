@@ -459,6 +459,18 @@ func (s *AuthService) RevokeSession(ctx context.Context, sessionID string) error
 	return s.sessionRepo.RevokeSession(ctx, sessionID)
 }
 
+// GetUserPrimaryWorkspaceID fetches the primary workspace ID for a user.
+func (s *AuthService) GetUserPrimaryWorkspaceID(ctx context.Context, userID string) (string, error) {
+	if s.workspaceRepo == nil {
+		return "", nil
+	}
+	workspaces, err := s.workspaceRepo.ListByUser(ctx, userID)
+	if err != nil || len(workspaces) == 0 {
+		return "", err
+	}
+	return workspaces[0].ID, nil
+}
+
 func sha256Hash(input string) string {
 	hash := sha256.Sum256([]byte(input))
 	return base64.RawURLEncoding.EncodeToString(hash[:])

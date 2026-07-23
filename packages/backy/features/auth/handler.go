@@ -57,7 +57,9 @@ func (h *AuthHandlers) CollabToken(c *gin.Context) {
 		return
 	}
 
-	collabToken, err := auth.GenerateCollabToken(uid, "")
+	workspaceID, _ := h.authService.GetUserPrimaryWorkspaceID(c.Request.Context(), accessClaims.UserID)
+
+	collabToken, err := auth.GenerateCollabToken(uid, workspaceID)
 	if err != nil {
 		logger.Log.Error().Err(err).Msg("failed to generate collab token")
 		c.JSON(http.StatusInternalServerError, auth.ErrorResponse{Error: "failed to generate token"})
