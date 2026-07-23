@@ -243,8 +243,15 @@ func (s *NotificationService) generateText(event NotificationEvent) (string, str
 		actorName := s.metadataStr(event.Metadata, "actorName", "Someone")
 		pageTitle := s.metadataStr(event.Metadata, "pageTitle", "a page")
 		commentText := s.metadataStr(event.Metadata, "commentText", "a comment")
-		if len(commentText) > 40 {
-			commentText = commentText[:40] + "..."
+		if len(commentText) > 30 {
+			commentText = commentText[:30] + "..."
+		}
+		parentText := s.metadataStr(event.Metadata, "parentText", "")
+		if parentText != "" {
+			if len(parentText) > 25 {
+				parentText = parentText[:25] + "..."
+			}
+			return fmt.Sprintf("Reply on %s", pageTitle), fmt.Sprintf("%s replied %q to your comment %q on %s", actorName, commentText, parentText, pageTitle)
 		}
 		return fmt.Sprintf("Reply on %s", pageTitle), fmt.Sprintf("%s replied %q to your comment on %s", actorName, commentText, pageTitle)
 	case EventCommentMention:

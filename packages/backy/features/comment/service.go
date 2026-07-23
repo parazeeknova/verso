@@ -318,6 +318,7 @@ func (s *CommentService) notifyCommentAction(ctx context.Context, page models.Pa
 					"actorName":   actorName,
 					"actorAvatar": comment.Creator.AvatarURL,
 					"commentText": comment.Content,
+					"parentText":  parent.Content,
 				},
 			})
 			recipients[parent.CreatorID] = struct{}{}
