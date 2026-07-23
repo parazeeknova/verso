@@ -1,5 +1,6 @@
 import { BellIcon, CircleIcon, XIcon } from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
 import { useAuth } from "#/features/auth/hooks/use-auth";
@@ -32,59 +33,111 @@ interface NotificationBellProps {
 
 export const NotificationBell = ({ isDarkMode }: NotificationBellProps) => {
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const { data: user } = useAuth();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [notiOpen, setNotiOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const notiRef = useRef<HTMLDivElement>(null);
-  const queryClient = useQueryClient();
-  const { data: user } = useAuth();
 
-  useNotificationStream(!!user);
+  useNotificationStream(Boolean(user?.id));
 
   const { data: countData } = useQuery({
-    enabled: !!user,
+    enabled: Boolean(user?.id),
     queryFn: ({ signal }) =>
       fetchProtected<{ count: number }>("/api/console/notifications/unread-count", { signal }),
     queryKey: ["notifications", "unread-count"],
-    refetchInterval: 10_000,
   });
 
   const { data: notifications } = useQuery({
-    enabled: notiOpen && !!user,
+    enabled: Boolean(user?.id),
     queryFn: ({ signal }) =>
       fetchProtected<NotificationItem[]>("/api/console/notifications", { signal }),
     queryKey: ["notifications", "list"],
-    refetchOnMount: "always",
   });
 
   const readMutation = useMutation({
     mutationFn: (id: string) =>
-      fetchProtected<{ status: string }>(`/api/console/notifications/${id}/read`, {
-        method: "PUT",
+      fetchProtected<{ success: boolean }>(`/api/console/notifications/${id}/read`, {
+        method: "PATCH",
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    },
-  });
-
-  const dismissAllMutation = useMutation({
-    mutationFn: () =>
-      fetchProtected<{ count: number }>("/api/console/notifications/dismiss-all", {
-        method: "DELETE",
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 
   const dismissMutation = useMutation({
     mutationFn: (id: string) =>
-      fetchProtected<{ status: string }>(`/api/console/notifications/${id}`, {
+      fetchProtected<{ success: boolean }>(`/api/console/notifications/${id}`, {
         method: "DELETE",
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
+
+  const dismissAllMutation = useMutation({
+    mutationFn: () =>
+      fetchProtected<{ count: number }>("/api/console/notifications/all", {
+        method: "DELETE",
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  const handleNotifClick = async (n: NotificationItem) => {
+    if (!n.readAt) {
+      readMutation.mutate(n.id);
+    }
+    setNotiOpen(false);
+
+    let meta: Record<string, string> = {};
+    try {
+      if (n.metadata) {
+        meta =
+          typeof n.metadata === "string"
+            ? (JSON.parse(n.metadata) as Record<string, string>)
+            : (n.metadata as unknown as Record<string, string>);
+      }
+    } catch {
+      // ignore
+    }
+
+    const pageId =
+      meta.pageId ||
+      (n.entityType === "page" ? n.entityId : undefined) ||
+      (n.entityType === "comment" ? n.entityId : undefined);
+    const commentId = meta.commentId || (n.entityType === "comment" ? n.entityId : undefined);
+
+    if (pageId) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("verso:open-comments", { detail: { commentId, pageId } }),
+        );
+      }
+
+      try {
+        const pageData = await fetchProtected<{ id: string; slugId: string; spaceId: string }>(
+          `/api/console/pages/${pageId}`,
+        );
+        if (pageData?.slugId && pageData?.spaceId) {
+          const spaceData = await fetchProtected<{ id: string; slug: string }>(
+            `/api/console/spaces/${pageData.spaceId}`,
+          );
+          if (spaceData?.slug) {
+            void navigate({
+              params: { pageid: pageData.slugId, spaceSlug: spaceData.slug },
+              search: (prev) => ({ ...prev, comments: "open" }),
+              to: "/s/$spaceSlug/p/$pageid",
+            });
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+  };
 
   useEffect(() => {
     if (!notiOpen) {
@@ -151,9 +204,7 @@ export const NotificationBell = ({ isDarkMode }: NotificationBellProps) => {
                     className={`group flex w-full items-start gap-2.5 px-3 py-2 text-left text-[11px] leading-tight ${n.readAt ? t("text-text-dark/40", "text-text-light/40") : t("text-text-dark/70 hover:bg-white/5", "text-text-light/70 hover:bg-black/3")}`}
                     key={n.id}
                     onClick={() => {
-                      if (!n.readAt) {
-                        readMutation.mutate(n.id);
-                      }
+                      void handleNotifClick(n);
                     }}
                     type="button"
                   >

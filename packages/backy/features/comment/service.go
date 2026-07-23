@@ -295,10 +295,15 @@ func (s *CommentService) ToggleResolve(ctx context.Context, commentID string, us
 func (s *CommentService) notifyCommentAction(ctx context.Context, page models.Page, comment *models.CommentWithDetails, parentCommentID *string) {
 	recipients := make(map[string]struct{})
 
+	actorName := comment.Creator.Name
+	if actorName == "" {
+		actorName = "Someone"
+	}
+
 	// Handle Thread Reply Notification
 	if parentCommentID != nil && *parentCommentID != "" {
 		parent, err := s.commentRepo.GetByID(ctx, *parentCommentID)
-		if err == nil && parent != nil && parent.CreatorID != comment.CreatorID {
+		if err == nil && parent != nil && parent.CreatorID != comment.CreatorID && parent.CreatorID != "" && parent.CreatorID != "guest" {
 			s.notifier.Notify(ctx, notifeat.NotificationEvent{
 				Type:         notifeat.EventCommentReply,
 				WorkspaceID:  page.WorkspaceID,
@@ -307,12 +312,38 @@ func (s *CommentService) notifyCommentAction(ctx context.Context, page models.Pa
 				EntityType:   "comment",
 				EntityID:     comment.ID,
 				Metadata: map[string]string{
-					"pageId":    page.ID,
-					"pageTitle": page.Title,
-					"commentId": comment.ID,
+					"pageId":      page.ID,
+					"pageTitle":   page.Title,
+					"commentId":   comment.ID,
+					"actorName":   actorName,
+					"actorAvatar": comment.Creator.AvatarURL,
+					"commentText": comment.Content,
 				},
 			})
 			recipients[parent.CreatorID] = struct{}{}
+		}
+	}
+
+	// Handle Page Owner Notification
+	if page.CreatorID != "" && page.CreatorID != comment.CreatorID {
+		if _, alreadyNotified := recipients[page.CreatorID]; !alreadyNotified {
+			s.notifier.Notify(ctx, notifeat.NotificationEvent{
+				Type:         notifeat.EventCommentCreated,
+				WorkspaceID:  page.WorkspaceID,
+				ActorID:      comment.CreatorID,
+				RecipientIDs: []string{page.CreatorID},
+				EntityType:   "comment",
+				EntityID:     comment.ID,
+				Metadata: map[string]string{
+					"pageId":      page.ID,
+					"pageTitle":   page.Title,
+					"commentId":   comment.ID,
+					"actorName":   actorName,
+					"actorAvatar": comment.Creator.AvatarURL,
+					"commentText": comment.Content,
+				},
+			})
+			recipients[page.CreatorID] = struct{}{}
 		}
 	}
 
@@ -336,9 +367,12 @@ func (s *CommentService) notifyCommentAction(ctx context.Context, page models.Pa
 			EntityType:   "comment",
 			EntityID:     comment.ID,
 			Metadata: map[string]string{
-				"pageId":    page.ID,
-				"pageTitle": page.Title,
-				"commentId": comment.ID,
+				"pageId":      page.ID,
+				"pageTitle":   page.Title,
+				"commentId":   comment.ID,
+				"actorName":   actorName,
+				"actorAvatar": comment.Creator.AvatarURL,
+				"commentText": comment.Content,
 			},
 		})
 	}

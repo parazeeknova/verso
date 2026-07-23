@@ -1524,6 +1524,25 @@ export const PageEditor = ({
     [pageComments],
   );
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("comments") === "open" || params.has("commentId")) {
+        setCommentsOpen(true);
+      }
+    }
+    const handleOpenCommentsEvent = (e: Event) => {
+      const { detail } = e as CustomEvent<{ pageId?: string; commentId?: string }>;
+      if (!detail?.pageId || detail.pageId === pageId) {
+        setCommentsOpen(true);
+      }
+    };
+    window.addEventListener("verso:open-comments", handleOpenCommentsEvent);
+    return () => {
+      window.removeEventListener("verso:open-comments", handleOpenCommentsEvent);
+    };
+  }, [pageId]);
+
   const toggleFullWidth = useCallback(() => {
     setFullWidth((prev) => {
       const next = !prev;

@@ -81,10 +81,20 @@ func (s *NotificationService) Notify(ctx context.Context, event NotificationEven
 		if s.hub != nil {
 			actorName := ""
 			actorAvatar := ""
-			if event.ActorID != "" {
+			if event.ActorID != "" && event.ActorID != "guest" {
 				if actor, err := s.userRepo.FindMetaByID(ctx, event.ActorID); err == nil && actor != nil {
 					actorName = actor.Name
 					actorAvatar = actor.AvatarURL
+				}
+			}
+			if actorName == "" {
+				if name, ok := event.Metadata["actorName"]; ok {
+					actorName = name
+				}
+			}
+			if actorAvatar == "" {
+				if avatar, ok := event.Metadata["actorAvatar"]; ok {
+					actorAvatar = avatar
 				}
 			}
 			s.hub.Publish(recipientID, models.NotificationWithActor{
@@ -221,9 +231,22 @@ func (s *NotificationService) generateText(event NotificationEvent) (string, str
 		return "2FA enabled", "Two-factor authentication has been enabled on your account."
 	case EventProfileMFADisabled:
 		return "2FA disabled", "Two-factor authentication has been disabled on your account."
+	case EventCommentCreated:
+		actorName := s.metadataStr(event.Metadata, "actorName", "Someone")
+		pageTitle := s.metadataStr(event.Metadata, "pageTitle", "your page")
+		commentText := s.metadataStr(event.Metadata, "commentText", "a comment")
+		if len(commentText) > 40 {
+			commentText = commentText[:40] + "..."
+		}
+		return fmt.Sprintf("Comment on %s", pageTitle), fmt.Sprintf("%s commented %q on your %s page", actorName, commentText, pageTitle)
 	case EventCommentReply:
+		actorName := s.metadataStr(event.Metadata, "actorName", "Someone")
 		pageTitle := s.metadataStr(event.Metadata, "pageTitle", "a page")
-		return "New reply to comment", fmt.Sprintf("Someone replied to your comment on %q.", pageTitle)
+		commentText := s.metadataStr(event.Metadata, "commentText", "a comment")
+		if len(commentText) > 40 {
+			commentText = commentText[:40] + "..."
+		}
+		return fmt.Sprintf("Reply on %s", pageTitle), fmt.Sprintf("%s replied %q to your comment on %s", actorName, commentText, pageTitle)
 	case EventCommentMention:
 		pageTitle := s.metadataStr(event.Metadata, "pageTitle", "a page")
 		return "Mentioned in comment", fmt.Sprintf("You were mentioned in a comment on %q.", pageTitle)

@@ -28,6 +28,7 @@ const (
 	EventProfileMFAEnabled       NotificationEventType = "profile.mfa_enabled"
 	EventProfileMFADisabled      NotificationEventType = "profile.mfa_disabled"
 	EventCommentReply            NotificationEventType = "comment.reply"
+	EventCommentCreated          NotificationEventType = "comment.created"
 	EventCommentMention          NotificationEventType = "comment.mention"
 	EventCommentResolved         NotificationEventType = "comment.resolved"
 )
