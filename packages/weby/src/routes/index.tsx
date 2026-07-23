@@ -367,7 +367,9 @@ const Home = function Home() {
         <div className="shrink-0 space-y-2">
           <h3 className="font-medium text-base">voo look what i made</h3>
           <ProjectList
-            imageOverrides={{ doty: "/stock/doty.png" }}
+            imageOverrides={{
+              "Doty is an over-configured nix flake for opinionated developers": "/stock/doty.png",
+            }}
             onDetail={handleProjectDetail}
           />
         </div>

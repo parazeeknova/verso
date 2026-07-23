@@ -12,28 +12,97 @@ interface ProjectCardProps {
 
 const ProjectCard = ({ onDetail, project }: ProjectCardProps) => {
   const [stackOpen, setStackOpen] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const previewImgRef = useRef<HTMLImageElement>(null);
 
   const linkUrl = project.productUrl || project.repoUrl;
+
+  const handlePreviewEnter = () => {
+    if (!previewRef.current || !previewImgRef.current) {
+      return;
+    }
+    gsap.killTweensOf(previewRef.current);
+    gsap.killTweensOf(previewImgRef.current);
+    gsap.set(previewRef.current, { display: "block" });
+    gsap.fromTo(
+      previewRef.current,
+      { opacity: 0, rotateX: 8, scale: 0.85, y: 20 },
+      { duration: 0.4, ease: "back.out(1.4)", opacity: 1, rotateX: 0, scale: 1, y: 0 },
+    );
+    gsap.fromTo(
+      previewImgRef.current,
+      { scale: 1.15 },
+      { duration: 0.6, ease: "power3.out", scale: 1 },
+    );
+  };
+
+  const handlePreviewMove = (e: React.MouseEvent) => {
+    if (!previewRef.current) {
+      return;
+    }
+    gsap.to(previewRef.current, {
+      duration: 0.3,
+      ease: "power2.out",
+      x: e.clientX + 16,
+      y: e.clientY - 60,
+    });
+  };
+
+  const handlePreviewLeave = () => {
+    if (!previewRef.current) {
+      return;
+    }
+    gsap.killTweensOf(previewRef.current);
+    gsap.to(previewRef.current, {
+      duration: 0.25,
+      ease: "power2.in",
+      onComplete: () => {
+        gsap.set(previewRef.current, { display: "none" });
+      },
+      opacity: 0,
+      scale: 0.9,
+      y: 10,
+    });
+  };
 
   return (
     <div className="flex items-start gap-4">
       {project.image ? (
-        <a
-          className="group relative shrink-0 block w-16 h-16 sm:w-20 sm:h-20 overflow-hidden"
-          href={linkUrl}
-          rel="noopener noreferrer"
-          style={{ transform: "rotate(-3deg)" }}
-          target="_blank"
-        >
-          <img
-            alt={project.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-            src={project.image}
-          />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-300 group-hover:bg-black/50 group-hover:opacity-100">
-            <ArrowUpRightIcon className="text-white" size={20} />
+        <>
+          <a
+            className="group relative shrink-0 block w-28 h-28 sm:w-36 sm:h-36 overflow-hidden"
+            href={linkUrl}
+            onMouseEnter={handlePreviewEnter}
+            onMouseMove={handlePreviewMove}
+            onMouseLeave={handlePreviewLeave}
+            rel="noopener noreferrer"
+            style={{ transform: "rotate(-3deg)" }}
+            target="_blank"
+          >
+            <img
+              alt={project.title}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              src={project.image}
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-300 group-hover:bg-black/50 group-hover:opacity-100">
+              <ArrowUpRightIcon className="text-white" size={24} />
+            </div>
+          </a>
+          <div
+            ref={previewRef}
+            className="pointer-events-none fixed left-0 top-0 z-50 hidden"
+            style={{ perspective: 800 }}
+          >
+            <div className="rounded-lg overflow-hidden shadow-2xl border border-white/10 bg-black/80 backdrop-blur-sm">
+              <img
+                ref={previewImgRef}
+                alt={project.title}
+                className="block w-72 h-auto object-cover"
+                src={project.image}
+              />
+            </div>
           </div>
-        </a>
+        </>
       ) : null}
       <div>
         <h3 className="font-medium text-xs sm:text-sm">{project.title}</h3>

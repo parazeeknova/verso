@@ -78,7 +78,7 @@ export const NotificationBell = ({ isDarkMode }: NotificationBellProps) => {
 
   const dismissAllMutation = useMutation({
     mutationFn: () =>
-      fetchProtected<{ count: number }>("/api/console/notifications/all", {
+      fetchProtected<{ count: number }>("/api/console/notifications/dismiss-all", {
         method: "DELETE",
       }),
     onSuccess: () => {
@@ -186,7 +186,7 @@ export const NotificationBell = ({ isDarkMode }: NotificationBellProps) => {
               >
                 notifications
               </span>
-              {unreadCount > 0 && (
+              {allNotifs.length > 0 && (
                 <button
                   className={`text-[10px] lowercase ${t("text-text-dark/30 hover:text-text-dark/60", "text-text-light/30 hover:text-text-light/60")} disabled:opacity-30`}
                   disabled={dismissAllMutation.isPending}
