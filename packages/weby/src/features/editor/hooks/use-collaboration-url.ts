@@ -17,10 +17,9 @@ export const useCollaborationUrl = (): string =>
       windowProtocol.startsWith("electrobun") ||
       windowProtocol.startsWith("file") ||
       hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      !host.includes(":")
+      hostname === "127.0.0.1"
     ) {
-      // In Electrobun desktop app or native webview environment where host doesn't specify backend port
+      // In Electrobun desktop app or local development environment
       host = "localhost:7000";
       protocol = "ws:";
     }

@@ -57,6 +57,12 @@ export const useEditorContent = (
     }
   }, [updatePage.isPending, flush]);
 
+  useEffect(() => {
+    if (options?.enabled !== false && dirtyRef.current) {
+      flush();
+    }
+  }, [options?.enabled, flush]);
+
   const markDirty = useCallback(() => {
     dirtyRef.current = true;
     setDirty(true);

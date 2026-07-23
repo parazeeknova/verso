@@ -203,6 +203,13 @@ func main() {
 		start := time.Now()
 		path := c.Request.URL.Path
 		rawQuery := c.Request.URL.RawQuery
+		if strings.Contains(rawQuery, "token=") {
+			queryVals := c.Request.URL.Query()
+			if queryVals.Has("token") {
+				queryVals.Set("token", "[REDACTED]")
+				rawQuery = queryVals.Encode()
+			}
+		}
 
 		c.Next()
 
@@ -286,6 +293,7 @@ func main() {
 		if dbAvailable && collabService != nil {
 			api.POST("/shares/:token/presence", collabService.HandleShareHeartbeatPresence)
 			api.GET("/shares/:token/presence", collabService.HandleShareGetPresence)
+			api.POST("/shares/:token/presence/leave", collabService.HandleLeavePresence)
 			api.POST("/pages/:id/presence", collabService.HandleHeartbeatPresence)
 			api.GET("/pages/:id/presence", collabService.HandleGetPresence)
 			api.POST("/pages/:id/presence/leave", collabService.HandleLeavePresence)
@@ -378,6 +386,13 @@ func main() {
 			console.GET("/pages/:id/share", h.GetConsolePageShare)
 			console.PUT("/pages/:id/share", h.UpdateConsolePageShare)
 			console.POST("/pages/:id/share/shorten", h.ShortenConsolePageShare)
+
+			// Page Presence
+			if collabService != nil {
+				console.POST("/pages/:id/presence", collabService.HandleHeartbeatPresence)
+				console.GET("/pages/:id/presence", collabService.HandleGetPresence)
+				console.POST("/pages/:id/presence/leave", collabService.HandleLeavePresence)
+			}
 
 			// Page Tree
 			console.GET("/pages/tree", h.GetConsolePageTree)

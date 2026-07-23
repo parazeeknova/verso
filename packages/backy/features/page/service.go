@@ -1063,6 +1063,8 @@ func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID
 
 	if accessLevel == "" {
 		accessLevel = "read"
+	} else if accessLevel != "read" && accessLevel != "edit" && accessLevel != "public_edit" {
+		return models.PageShare{}, fmt.Errorf("invalid access level %q: must be read, edit, or public_edit", accessLevel)
 	}
 
 	share, err := s.pageShareRepo.GetByPageID(ctx, pageID)

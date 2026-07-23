@@ -253,7 +253,7 @@ func GenerateCollabToken(userID uuid.UUID, workspaceID string) (string, error) {
 	audience := getJWTAudience()
 
 	now := time.Now()
-	ttl := 2 * time.Hour
+	ttl := 15 * time.Minute
 
 	claims := CollabTokenClaims{
 		RegisteredClaims: jwt.RegisteredClaims{

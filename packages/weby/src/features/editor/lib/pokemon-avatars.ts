@@ -184,6 +184,6 @@ export const getPokemonDetails = (nameOrAvatar?: string | null): GuestPokemon | 
     (p) =>
       p.name.toLowerCase() === cleanName ||
       p.avatar === nameOrAvatar ||
-      (nameOrAvatar.includes("/pokemon/") && nameOrAvatar.includes(`${p.id}.`)),
+      (nameOrAvatar.includes("/pokemon/") && nameOrAvatar.includes(`/pokemon/${p.id}.`)),
   );
 };

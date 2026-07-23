@@ -23,6 +23,7 @@ type CollabService struct {
 	pageRepo      *repositories.PageRepo
 	spaceRepo     *repositories.SpaceRepo
 	pageShareRepo *repositories.PageShareRepo
+	groupRepo     *repositories.GroupRepo
 	notifier      *notifeat.NotificationService
 	presenceStore *PresenceStore
 }
@@ -45,6 +46,7 @@ func NewCollabService(
 		pageRepo:      pageRepo,
 		spaceRepo:     spaceRepo,
 		pageShareRepo: pageShareRepo,
+		groupRepo:     repositories.NewGroupRepo(),
 		presenceStore: NewPresenceStore(12 * time.Second),
 	}
 
@@ -117,10 +119,12 @@ func (cs *CollabService) Authorize(r *http.Request) (yws.ConnectionConfig, bool)
 
 	// Validate token if present
 	var userID string
+	var userWorkspaceID string
 	if tokenStr != "" {
 		collabClaims, err := auth.ValidateCollabToken(tokenStr)
 		if err == nil && collabClaims != nil {
 			userID = collabClaims.UserID
+			userWorkspaceID = collabClaims.WorkspaceID
 		} else {
 			// Fallback: check standard access token
 			accessClaims, err := auth.ValidateAccessToken(tokenStr)
@@ -135,8 +139,14 @@ func (cs *CollabService) Authorize(r *http.Request) (yws.ConnectionConfig, bool)
 
 	// Check permissions based on authentication state
 	if userID != "" {
-		// 1. Space Level Access: check user's role in the page's space
-		effectiveRole, err := cs.spaceRepo.GetEffectiveRole(ctx, page.SpaceID, userID, nil)
+		space, spaceErr := cs.spaceRepo.GetByID(ctx, page.SpaceID)
+		var userGroupIDs []string
+		if spaceErr == nil && cs.groupRepo != nil {
+			userGroupIDs, _ = cs.groupRepo.ListUserGroupIDsInWorkspace(ctx, userID, space.WorkspaceID)
+		}
+
+		// 1. Space Level Access: check user's role (direct or group) in the page's space
+		effectiveRole, err := cs.spaceRepo.GetEffectiveRole(ctx, page.SpaceID, userID, userGroupIDs)
 		if err == nil && effectiveRole != "" {
 			if effectiveRole == models.SpaceRoleReader {
 				readOnly = true
@@ -146,10 +156,10 @@ func (cs *CollabService) Authorize(r *http.Request) (yws.ConnectionConfig, bool)
 			return yws.ConnectionConfig{ReadOnly: readOnly}, true
 		}
 
-		// 2. App Level Access: check space visibility and default role
-		space, spaceErr := cs.spaceRepo.GetByID(ctx, page.SpaceID)
+		// 2. App Level Access: check space visibility and workspace match
 		if spaceErr == nil {
-			if space.Visibility == "public" || space.Visibility == "workspace" {
+			isWorkspaceMatch := userWorkspaceID == "" || userWorkspaceID == space.WorkspaceID
+			if space.Visibility == "public" || (space.Visibility == "workspace" && isWorkspaceMatch) {
 				if space.DefaultRole == models.SpaceRoleReader {
 					readOnly = true
 				}

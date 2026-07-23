@@ -1,21 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchProtected } from "./fetch-protected";
+import { useAuth } from "./use-auth";
 
 export interface CollabTokenResponse {
   token: string;
 }
 
-export const useCollabToken = (options?: { enabled?: boolean }) =>
-  useQuery<CollabTokenResponse>({
-    enabled: options?.enabled ?? true,
+export const useCollabToken = (options?: { enabled?: boolean; userId?: string }) => {
+  const { data: user } = useAuth();
+  const activeUserId = options?.userId ?? user?.id;
+  const isEnabled = (options?.enabled ?? true) && Boolean(activeUserId);
+
+  return useQuery<CollabTokenResponse>({
+    enabled: isEnabled,
     queryFn: ({ signal }) =>
       fetchProtected<CollabTokenResponse>("/api/console/auth/collab-token", {
         method: "POST",
         signal,
       }),
-    queryKey: ["collabToken"],
-    // Refetch every 12 hours
-    refetchInterval: 12 * 60 * 60 * 1000,
-    // 1 hour stale time
-    staleTime: 60 * 60 * 1000,
+    queryKey: ["collabToken", activeUserId ?? "anonymous"],
+    // Refetch every 10 minutes to match 15-minute token TTL
+    refetchInterval: 10 * 60 * 1000,
+    // 5 minutes stale time
+    staleTime: 5 * 60 * 1000,
   });
+};

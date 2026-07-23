@@ -24,8 +24,13 @@ export const Route = createFileRoute("/api/console/pages/$id/presence")({
       },
       POST: async ({ params, request }) => {
         const cookieHeader = request?.headers?.get("cookie") ?? undefined;
+        let body: unknown;
         try {
-          const body = (await request.json()) as unknown;
+          body = await request.json();
+        } catch {
+          return Response.json({ error: "Invalid JSON payload" }, { status: 400 });
+        }
+        try {
           const result = await postPagePresence(params.id, body, cookieHeader);
           return Response.json(result);
         } catch (error) {

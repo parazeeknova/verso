@@ -78,10 +78,18 @@ func (p *PagePersistence) StoreUpdate(room string, update []byte) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Load existing ydoc
+	tx, err := p.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("beginning tx for room %s: %w", room, err)
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	// Load existing ydoc with row lock
 	var existing []byte
-	querySelect := `SELECT ydoc FROM pages WHERE id = $1 AND deleted_at IS NULL`
-	err := p.pool.QueryRow(ctx, querySelect, pageID).Scan(&existing)
+	querySelect := `SELECT ydoc FROM pages WHERE id = $1 AND deleted_at IS NULL FOR UPDATE`
+	err = tx.QueryRow(ctx, querySelect, pageID).Scan(&existing)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil
@@ -95,15 +103,18 @@ func (p *PagePersistence) StoreUpdate(room string, update []byte) error {
 	} else {
 		merged, err = crdt.MergeUpdatesV1(existing, update)
 		if err != nil {
-			// If merging fails, fallback to update
-			merged = update
+			return fmt.Errorf("merging ydoc updates for room %s: %w", room, err)
 		}
 	}
 
 	queryUpdate := `UPDATE pages SET ydoc = $1, updated_at = now() WHERE id = $2 AND deleted_at IS NULL`
-	_, err = p.pool.Exec(ctx, queryUpdate, merged, pageID)
+	_, err = tx.Exec(ctx, queryUpdate, merged, pageID)
 	if err != nil {
 		return fmt.Errorf("storing ydoc for room %s: %w", room, err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("committing ydoc update for room %s: %w", room, err)
 	}
 
 	return nil

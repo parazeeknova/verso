@@ -48,7 +48,7 @@ import plaintext from "highlight.js/lib/languages/plaintext";
 const lowlight = createLowlight(common);
 lowlight.register("mermaid", plaintext);
 
-export const getEditorExtensions = () => [
+export const getEditorExtensions = (options?: { isCollab?: boolean }) => [
   CustomImage,
   CustomVideo,
   CustomAudio,
@@ -65,7 +65,7 @@ export const getEditorExtensions = () => [
     },
     heading: false,
     link: false,
-    undoRedo: false,
+    undoRedo: options?.isCollab ? false : undefined,
   }),
   HeadingWithIds.configure({
     levels: [1, 2, 3],
@@ -182,7 +182,7 @@ export const getCollabEditorExtensions = (
   provider: WebsocketProvider,
   user?: CollaboratorAwarenessUser,
 ) => [
-  ...getEditorExtensions(),
+  ...getEditorExtensions({ isCollab: true }),
   Collaboration.configure({
     document: provider.doc,
   }),

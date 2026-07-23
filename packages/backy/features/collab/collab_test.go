@@ -2,7 +2,6 @@ package collab
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"os"
 	"testing"
@@ -73,13 +72,6 @@ func TestAuthorizeTokenExtraction(t *testing.T) {
 	claims, err := auth.ValidateCollabToken(extractedToken)
 	require.NoError(t, err)
 	assert.Equal(t, userID.String(), claims.UserID)
-}
-
-func TestCollabHTTPMock(t *testing.T) {
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/ws/collab?room=page.invalid-id", nil)
-	assert.Equal(t, "GET", req.Method)
-	assert.Equal(t, 200, rec.Code)
 }
 
 func TestPagePersistenceNilGuard(t *testing.T) {

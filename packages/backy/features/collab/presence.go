@@ -245,9 +245,17 @@ func (cs *CollabService) HandleShareGetPresence(c *gin.Context) {
 	})
 }
 
-// HandleLeavePresence handles DELETE/POST /api/pages/:id/presence/leave
+// HandleLeavePresence handles DELETE/POST /api/pages/:id/presence/leave and /api/shares/:token/presence/leave
 func (cs *CollabService) HandleLeavePresence(c *gin.Context) {
 	pageID := c.Param("id")
+	token := c.Param("token")
+	if pageID == "" && token != "" {
+		share, err := cs.pageShareRepo.GetByShareToken(c.Request.Context(), token)
+		if err == nil && share.IsEnabled {
+			pageID = share.PageID
+		}
+	}
+
 	clientID := c.Query("clientId")
 	if clientID == "" {
 		var body struct {
@@ -257,10 +265,17 @@ func (cs *CollabService) HandleLeavePresence(c *gin.Context) {
 		clientID = body.ClientID
 	}
 
-	if pageID != "" && clientID != "" {
-		cs.presenceStore.RemovePresence(pageID, clientID)
+	if pageID == "" || clientID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "pageId and clientId required"})
+		return
 	}
 
+	if !cs.canAccessPagePresence(c, pageID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "presence access denied"})
+		return
+	}
+
+	cs.presenceStore.RemovePresence(pageID, clientID)
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 

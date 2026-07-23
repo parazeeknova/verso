@@ -96,7 +96,6 @@ const SharedPageComponent = () => {
           </p>
         </div>
 
-        {/* Watermark */}
         <div className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 text-[10px] lowercase select-none border rounded-none px-2.5 py-1 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-neutral-800/10 dark:border-neutral-100/10 text-neutral-800/50 dark:text-neutral-100/50 shadow-sm pointer-events-none">
           <img src="/verso.svg" alt="verso" className="h-3.5 w-3.5 shrink-0 rounded-none" />
           <span>
@@ -141,7 +140,6 @@ const SharedPageComponent = () => {
         />
       </div>
 
-      {/* Watermark */}
       <div className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 text-[10px] lowercase select-none border px-2.5 py-1 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-neutral-800/10 dark:border-neutral-100/10 text-neutral-800/50 dark:text-neutral-100/50 shadow-sm pointer-events-none">
         <img src="/verso.svg" alt="verso" className="h-3.5 w-3.5 shrink-0 rounded-sm" />
         <span>

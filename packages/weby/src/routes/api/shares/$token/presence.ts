@@ -22,8 +22,13 @@ export const Route = createFileRoute("/api/shares/$token/presence")({
         }
       },
       POST: async ({ params, request }) => {
+        let body: unknown;
         try {
-          const body = (await request.json()) as unknown;
+          body = await request.json();
+        } catch {
+          return Response.json({ error: "Invalid JSON payload" }, { status: 400 });
+        }
+        try {
           const result = await postPublicSharePresence(params.token, body);
           return Response.json(result);
         } catch (error) {
