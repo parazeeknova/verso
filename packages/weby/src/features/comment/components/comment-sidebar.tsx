@@ -1,5 +1,11 @@
-import { ChatCircleDotsIcon, PaperPlaneRightIcon, XIcon } from "@phosphor-icons/react";
-import { useMemo, useState } from "react";
+import {
+  ChatCircleDotsIcon,
+  CheckCircleIcon,
+  PaperPlaneRightIcon,
+  XIcon,
+} from "@phosphor-icons/react";
+import { gsap } from "gsap";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "#/features/auth/hooks/use-auth";
 import type { CommentItem } from "#/shared/types";
 import { useCommentStream } from "../hooks/use-comment-stream";
@@ -15,22 +21,57 @@ import { CommentThread } from "./comment-thread";
 interface CommentSidebarProps {
   pageId: string;
   isDarkMode: boolean;
+  isOpen: boolean;
   onClose?: () => void;
   userRole?: string;
 }
 
-export const CommentSidebar = ({ pageId, isDarkMode, onClose, userRole }: CommentSidebarProps) => {
+export const CommentSidebar = ({
+  pageId,
+  isDarkMode,
+  isOpen,
+  onClose,
+  userRole,
+}: CommentSidebarProps) => {
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
   const { data: user } = useAuth();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [shouldRender, setShouldRender] = useState(isOpen);
 
   const [tab, setTab] = useState<"open" | "resolved">("open");
   const [newCommentText, setNewCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Enable real-time SSE updates for page comments
-  useCommentStream(pageId);
+  useCommentStream(pageId, isOpen);
 
-  const { data: comments = [], isLoading } = useComments(pageId);
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+      if (panelRef.current) {
+        gsap.killTweensOf(panelRef.current);
+        gsap.fromTo(
+          panelRef.current,
+          { opacity: 0, width: 0, x: 20 },
+          { duration: 0.25, ease: "power2.out", opacity: 1, width: "20rem", x: 0 },
+        );
+      }
+    } else if (shouldRender && panelRef.current) {
+      gsap.killTweensOf(panelRef.current);
+      gsap.to(panelRef.current, {
+        duration: 0.2,
+        ease: "power2.in",
+        onComplete: () => {
+          setShouldRender(false);
+        },
+        opacity: 0,
+        width: 0,
+        x: 20,
+      });
+    }
+  }, [isOpen, shouldRender]);
+
+  const { data: comments = [], isLoading } = useComments(pageId, { enabled: shouldRender });
   const createMutation = useCreateComment(pageId);
   const updateMutation = useUpdateComment(pageId);
   const deleteMutation = useDeleteComment(pageId);
@@ -100,6 +141,10 @@ export const CommentSidebar = ({ pageId, isDarkMode, onClose, userRole }: Commen
     await resolveMutation.mutateAsync({ commentId, input: { resolved } });
   };
 
+  if (!shouldRender) {
+    return null;
+  }
+
   const activeThreads = tab === "open" ? openThreads : resolvedThreads;
 
   const renderContent = () => {
@@ -138,51 +183,51 @@ export const CommentSidebar = ({ pageId, isDarkMode, onClose, userRole }: Commen
 
   return (
     <div
-      className={`flex h-full w-80 shrink-0 flex-col border-l lowercase ${t("border-border-dark bg-bg-dark text-text-dark", "border-border-light bg-bg-light text-text-light")}`}
+      ref={panelRef}
+      className={`flex h-full shrink-0 flex-col overflow-hidden border-l lowercase ${t("border-border-dark bg-bg-dark text-text-dark", "border-border-light bg-bg-light text-text-light")}`}
+      style={{ width: "20rem" }}
     >
-      {/* Header */}
+      {/* Compact Top Header: Tabs with icons & reduced height */}
       <div
-        className={`flex items-center justify-between border-b px-3 py-2 ${t("border-border-dark", "border-border-light")}`}
+        className={`flex h-8 shrink-0 items-center justify-between border-b px-1.5 text-xs ${t("border-border-dark", "border-border-light")}`}
       >
-        <div className="flex items-center gap-1.5 font-medium text-xs">
-          <ChatCircleDotsIcon size={14} />
-          <span>comments</span>
-        </div>
-        {onClose && (
+        <div className="flex items-center gap-0.5 h-full">
           <button
-            className={`p-0.5 opacity-60 hover:opacity-100 ${t("text-text-dark", "text-text-light")}`}
-            onClick={onClose}
+            className={`flex h-full items-center gap-1.5 px-2.5 font-medium text-[11px] border-b-2 transition-colors ${
+              tab === "open"
+                ? "border-blue-500 text-blue-500"
+                : "border-transparent opacity-50 hover:opacity-80"
+            }`}
+            onClick={() => setTab("open")}
             type="button"
           >
-            <XIcon size={14} />
+            <ChatCircleDotsIcon size={13} />
+            <span>open ({openThreads.length})</span>
+          </button>
+          <button
+            className={`flex h-full items-center gap-1.5 px-2.5 font-medium text-[11px] border-b-2 transition-colors ${
+              tab === "resolved"
+                ? "border-green-500 text-green-500"
+                : "border-transparent opacity-50 hover:opacity-80"
+            }`}
+            onClick={() => setTab("resolved")}
+            type="button"
+          >
+            <CheckCircleIcon size={13} />
+            <span>resolved ({resolvedThreads.length})</span>
+          </button>
+        </div>
+
+        {onClose && (
+          <button
+            className={`p-1 opacity-50 hover:opacity-100 transition-opacity ${t("text-text-dark", "text-text-light")}`}
+            onClick={onClose}
+            title="Close comments"
+            type="button"
+          >
+            <XIcon size={13} />
           </button>
         )}
-      </div>
-
-      {/* Tabs */}
-      <div className={`flex border-b text-xs ${t("border-border-dark", "border-border-light")}`}>
-        <button
-          className={`flex-1 py-1.5 text-center font-medium border-b-2 transition-colors ${
-            tab === "open"
-              ? "border-blue-500 text-blue-500"
-              : `border-transparent opacity-50 hover:opacity-80`
-          }`}
-          onClick={() => setTab("open")}
-          type="button"
-        >
-          open ({openThreads.length})
-        </button>
-        <button
-          className={`flex-1 py-1.5 text-center font-medium border-b-2 transition-colors ${
-            tab === "resolved"
-              ? "border-green-500 text-green-500"
-              : `border-transparent opacity-50 hover:opacity-80`
-          }`}
-          onClick={() => setTab("resolved")}
-          type="button"
-        >
-          resolved ({resolvedThreads.length})
-        </button>
       </div>
 
       {/* Comments List */}

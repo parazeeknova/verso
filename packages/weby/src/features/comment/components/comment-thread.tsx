@@ -58,6 +58,7 @@ export const CommentThread = ({
       {/* Root parent comment */}
       <CommentItem
         comment={rootComment}
+        frameless
         isDarkMode={isDarkMode}
         onDelete={onDeleteComment}
         onReply={() => setIsReplying(true)}
@@ -69,10 +70,11 @@ export const CommentThread = ({
 
       {/* Nested Replies */}
       {replies.length > 0 && (
-        <div className="ml-3 border-l-2 space-y-1 pl-2 border-border-dark/40">
+        <div className="ml-3 border-l-2 space-y-2 pt-1 pl-2 border-border-dark/40">
           {replies.map((reply) => (
             <CommentItem
               comment={reply}
+              frameless
               isDarkMode={isDarkMode}
               key={reply.id}
               onDelete={onDeleteComment}

@@ -1814,13 +1814,12 @@ export const PageEditor = ({
           )}
         </div>
 
-        {commentsOpen && (
-          <CommentSidebar
-            isDarkMode={isDarkMode}
-            onClose={() => setCommentsOpen(false)}
-            pageId={pageId}
-          />
-        )}
+        <CommentSidebar
+          isDarkMode={isDarkMode}
+          isOpen={commentsOpen}
+          onClose={() => setCommentsOpen(false)}
+          pageId={pageId}
+        />
       </div>
 
       {inlineCommentState && (

@@ -18,6 +18,7 @@ interface CommentItemProps {
   onDelete: (commentId: string) => Promise<void>;
   onResolve?: (commentId: string, resolved: boolean) => Promise<void>;
   userRole?: string;
+  frameless?: boolean;
 }
 
 const formatTimeAgo = (dateStr: string) => {
@@ -188,6 +189,7 @@ export const CommentItem = ({
   onDelete,
   onResolve,
   userRole,
+  frameless = false,
 }: CommentItemProps) => {
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
   const { data: currentUser } = useAuth();
@@ -236,7 +238,11 @@ export const CommentItem = ({
 
   return (
     <div
-      className={`group relative border p-2 text-xs transition-colors ${t("border-border-dark/60 bg-bg-dark/40", "border-border-light/60 bg-bg-light/40")}`}
+      className={`group relative text-xs transition-colors ${
+        frameless
+          ? "p-0 bg-transparent"
+          : `border p-2 ${t("border-border-dark/60 bg-bg-dark/40", "border-border-light/60 bg-bg-light/40")}`
+      }`}
       data-comment-id={comment.id}
     >
       <div className="flex items-center justify-between gap-1.5 pb-1">

@@ -9,9 +9,9 @@ import type {
 
 export const getCommentsQueryKey = (pageId: string | undefined) => ["comments", pageId];
 
-export const useComments = (pageId: string | undefined) =>
+export const useComments = (pageId: string | undefined, options?: { enabled?: boolean }) =>
   useQuery({
-    enabled: !!pageId,
+    enabled: Boolean(pageId) && (options?.enabled ?? true),
     queryFn: ({ signal }) =>
       fetchProtected<CommentItem[]>(`/api/console/pages/${pageId}/comments`, { signal }),
     queryKey: getCommentsQueryKey(pageId),
