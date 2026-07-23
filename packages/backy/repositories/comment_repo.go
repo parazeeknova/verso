@@ -45,10 +45,10 @@ func (r *CommentRepo) GetByID(ctx context.Context, id string) (*models.CommentWi
 		SELECT c.id, c.workspace_id, c.space_id, c.page_id, c.creator_id, c.parent_comment_id,
 		       c.content, c.selection, c.type, c.resolved_at, c.resolved_by_id, c.edited_at,
 		       c.created_at, c.updated_at, c.deleted_at,
-		       COALESCE(u.name, ''), COALESCE(u.avatar_url, ''),
+		       COALESCE(u.name, 'Guest'), COALESCE(u.avatar_url, ''),
 		       COALESCE(ru.name, ''), COALESCE(ru.avatar_url, '')
 		FROM comments c
-		JOIN users u ON u.id = c.creator_id
+		LEFT JOIN users u ON u.id = c.creator_id
 		LEFT JOIN users ru ON ru.id = c.resolved_by_id
 		WHERE c.id = $1 AND c.deleted_at IS NULL`
 
@@ -75,6 +75,9 @@ func (r *CommentRepo) GetByID(ctx context.Context, id string) (*models.CommentWi
 	cmd.Selection = selection
 	cmd.ResolvedByID = resolvedByID
 	cmd.Creator.ID = cmd.CreatorID
+	if cmd.Creator.Name == "" {
+		cmd.Creator.Name = "Guest"
+	}
 
 	if resolvedByID != nil {
 		cmd.ResolvedBy = &models.CommentUserMeta{
@@ -93,10 +96,10 @@ func (r *CommentRepo) ListByPageID(ctx context.Context, pageID string) ([]models
 		SELECT c.id, c.workspace_id, c.space_id, c.page_id, c.creator_id, c.parent_comment_id,
 		       c.content, c.selection, c.type, c.resolved_at, c.resolved_by_id, c.edited_at,
 		       c.created_at, c.updated_at, c.deleted_at,
-		       COALESCE(u.name, ''), COALESCE(u.avatar_url, ''),
+		       COALESCE(u.name, 'Guest'), COALESCE(u.avatar_url, ''),
 		       COALESCE(ru.name, ''), COALESCE(ru.avatar_url, '')
 		FROM comments c
-		JOIN users u ON u.id = c.creator_id
+		LEFT JOIN users u ON u.id = c.creator_id
 		LEFT JOIN users ru ON ru.id = c.resolved_by_id
 		WHERE c.page_id = $1 AND c.deleted_at IS NULL
 		ORDER BY c.created_at ASC`
@@ -128,6 +131,9 @@ func (r *CommentRepo) ListByPageID(ctx context.Context, pageID string) ([]models
 		cmd.Selection = selection
 		cmd.ResolvedByID = resolvedByID
 		cmd.Creator.ID = cmd.CreatorID
+		if cmd.Creator.Name == "" {
+			cmd.Creator.Name = "Guest"
+		}
 
 		if resolvedByID != nil {
 			cmd.ResolvedBy = &models.CommentUserMeta{

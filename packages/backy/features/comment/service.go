@@ -39,11 +39,12 @@ type ResolveCommentInput struct {
 }
 
 type CommentService struct {
-	commentRepo *repositories.CommentRepo
-	pageRepo    *repositories.PageRepo
-	spaceRepo   *repositories.SpaceRepo
-	notifier    notifeat.Notifier
-	hub         *CommentHub
+	commentRepo   *repositories.CommentRepo
+	pageRepo      *repositories.PageRepo
+	spaceRepo     *repositories.SpaceRepo
+	notifier      notifeat.Notifier
+	hub           *CommentHub
+	pageShareRepo *repositories.PageShareRepo
 }
 
 func NewCommentService(
@@ -60,6 +61,21 @@ func NewCommentService(
 		notifier:    notifier,
 		hub:         hub,
 	}
+}
+
+func (s *CommentService) SetPageShareRepo(repo *repositories.PageShareRepo) {
+	s.pageShareRepo = repo
+}
+
+func (s *CommentService) IsPageShared(ctx context.Context, pageID string) bool {
+	if s.pageShareRepo == nil {
+		return false
+	}
+	share, err := s.pageShareRepo.GetByPageID(ctx, pageID)
+	if err != nil {
+		return false
+	}
+	return share.IsEnabled
 }
 
 // CreateComment creates a top-level comment or a thread reply.

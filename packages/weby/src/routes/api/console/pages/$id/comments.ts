@@ -7,19 +7,13 @@ export const Route = createFileRoute("/api/console/pages/$id/comments")({
     handlers: {
       GET: async ({ params, request }) => {
         const cookieHeader = request.headers.get("cookie");
-        if (!cookieHeader) {
-          return Response.json({ error: "Unauthorized" }, { status: 401 });
-        }
-        const comments = await getComments(params.id, cookieHeader);
+        const comments = await getComments(params.id, cookieHeader ?? undefined);
         return Response.json(comments ?? []);
       },
       POST: async ({ params, request }) => {
         const cookieHeader = request.headers.get("cookie");
-        if (!cookieHeader) {
-          return Response.json({ error: "Unauthorized" }, { status: 401 });
-        }
         const body = (await request.json()) as CreateCommentInput;
-        const comment = await createComment(params.id, body, cookieHeader);
+        const comment = await createComment(params.id, body, cookieHeader ?? undefined);
         return Response.json(comment, { status: 201 });
       },
     },

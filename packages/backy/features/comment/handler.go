@@ -44,16 +44,19 @@ func (h *CommentHandlers) RegisterRoutes(rg *gin.RouterGroup) {
 }
 
 func (h *CommentHandlers) CreateComment(c *gin.Context) {
-	userID := middleware.GetCurrentUserID(c)
-	if userID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
-		return
-	}
-
 	pageID := c.Param("id")
 	if pageID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "page ID is required"})
 		return
+	}
+
+	userID := middleware.GetCurrentUserID(c)
+	if userID == "" {
+		if !h.commentService.IsPageShared(c.Request.Context(), pageID) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
+			return
+		}
+		userID = "guest"
 	}
 
 	var input CreateCommentInput
@@ -85,6 +88,12 @@ func (h *CommentHandlers) ListComments(c *gin.Context) {
 	pageID := c.Param("id")
 	if pageID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "page ID is required"})
+		return
+	}
+
+	userID := middleware.GetCurrentUserID(c)
+	if userID == "" && !h.commentService.IsPageShared(c.Request.Context(), pageID) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
 		return
 	}
 
@@ -212,6 +221,12 @@ func (h *CommentHandlers) StreamComments(c *gin.Context) {
 	pageID := c.Param("id")
 	if pageID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "page ID is required"})
+		return
+	}
+
+	userID := middleware.GetCurrentUserID(c)
+	if userID == "" && !h.commentService.IsPageShared(c.Request.Context(), pageID) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
 		return
 	}
 

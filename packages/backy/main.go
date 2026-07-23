@@ -167,6 +167,7 @@ func main() {
 			notifier = notificationService
 		}
 		commentService := commentfeat.NewCommentService(commentRepo, pageRepo, spaceRepo, notifier, commentHub)
+		commentService.SetPageShareRepo(pageShareRepo)
 		commentHandlers = commentfeat.NewCommentHandlers(commentService, commentHub)
 
 		h = handlers.NewWithDB(cfg, pageService, spaceService, workspaceService, groupService)
@@ -429,11 +430,6 @@ func main() {
 				pushHandlers.RegisterRoutes(console)
 			}
 
-			// Comments
-			if commentHandlers != nil {
-				commentHandlers.RegisterRoutes(console)
-			}
-
 			// System settings (owner-only, requires DB)
 			if dbAvailable {
 				systemSettingsHandlers := ssfeat.NewSystemSettingsHandlers()
@@ -472,6 +468,13 @@ func main() {
 
 			// User lookup (any authenticated user)
 			console.GET("/users/:id", userHandlers.GetUserByID)
+		}
+
+		// Comments (uses OptionalAuth to support guests on publicly shared pages)
+		if commentHandlers != nil {
+			consoleComments := api.Group("/console")
+			consoleComments.Use(middleware.OptionalAuth(authService))
+			commentHandlers.RegisterRoutes(consoleComments)
 		}
 	}
 

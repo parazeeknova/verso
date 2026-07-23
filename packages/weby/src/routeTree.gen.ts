@@ -113,6 +113,7 @@ import { Route as ApiConsoleSpacesIdMembersUserIdRouteImport } from './routes/ap
 import { Route as ApiConsoleSpacesIdGroupsGroupIdRouteImport } from './routes/api/console/spaces/$id/groups/$groupId'
 import { Route as ApiConsolePagesIdShareShortenRouteImport } from './routes/api/console/pages/$id/share/shorten'
 import { Route as ApiConsolePagesIdHistoryHistoryIdRouteImport } from './routes/api/console/pages/$id/history/$historyId'
+import { Route as ApiConsolePagesIdCommentsStreamRouteImport } from './routes/api/console/pages/$id/comments/stream'
 import { Route as ApiConsoleGroupsIdMembersUserIdRouteImport } from './routes/api/console/groups/$id/members/$userId'
 import { Route as ApiConsoleDebugTablesTableNameRowsRouteImport } from './routes/api/console/debug/tables/$tableName/rows'
 import { Route as ApiConsoleSpacesSpaceIdPagesBySlugSlugIdRouteImport } from './routes/api/console/spaces/$spaceId/pages/by-slug/$slugId'
@@ -677,6 +678,12 @@ const ApiConsolePagesIdHistoryHistoryIdRoute =
     path: '/$historyId',
     getParentRoute: () => ApiConsolePagesIdHistoryRoute,
   } as any)
+const ApiConsolePagesIdCommentsStreamRoute =
+  ApiConsolePagesIdCommentsStreamRouteImport.update({
+    id: '/stream',
+    path: '/stream',
+    getParentRoute: () => ApiConsolePagesIdCommentsRoute,
+  } as any)
 const ApiConsoleGroupsIdMembersUserIdRoute =
   ApiConsoleGroupsIdMembersUserIdRouteImport.update({
     id: '/$userId',
@@ -777,7 +784,7 @@ export interface FileRoutesByFullPath {
   '/api/console/groups/$id/members': typeof ApiConsoleGroupsIdMembersRouteWithChildren
   '/api/console/notifications/$id/read': typeof ApiConsoleNotificationsIdReadRoute
   '/api/console/pages/$id/children': typeof ApiConsolePagesIdChildrenRoute
-  '/api/console/pages/$id/comments': typeof ApiConsolePagesIdCommentsRoute
+  '/api/console/pages/$id/comments': typeof ApiConsolePagesIdCommentsRouteWithChildren
   '/api/console/pages/$id/favorite': typeof ApiConsolePagesIdFavoriteRoute
   '/api/console/pages/$id/favorited': typeof ApiConsolePagesIdFavoritedRoute
   '/api/console/pages/$id/history': typeof ApiConsolePagesIdHistoryRouteWithChildren
@@ -799,6 +806,7 @@ export interface FileRoutesByFullPath {
   '/api/console/workspaces/$id/groups': typeof ApiConsoleWorkspacesIdGroupsRoute
   '/api/console/debug/tables/$tableName/rows': typeof ApiConsoleDebugTablesTableNameRowsRoute
   '/api/console/groups/$id/members/$userId': typeof ApiConsoleGroupsIdMembersUserIdRoute
+  '/api/console/pages/$id/comments/stream': typeof ApiConsolePagesIdCommentsStreamRoute
   '/api/console/pages/$id/history/$historyId': typeof ApiConsolePagesIdHistoryHistoryIdRoute
   '/api/console/pages/$id/share/shorten': typeof ApiConsolePagesIdShareShortenRoute
   '/api/console/spaces/$id/groups/$groupId': typeof ApiConsoleSpacesIdGroupsGroupIdRoute
@@ -884,7 +892,7 @@ export interface FileRoutesByTo {
   '/api/console/groups/$id/members': typeof ApiConsoleGroupsIdMembersRouteWithChildren
   '/api/console/notifications/$id/read': typeof ApiConsoleNotificationsIdReadRoute
   '/api/console/pages/$id/children': typeof ApiConsolePagesIdChildrenRoute
-  '/api/console/pages/$id/comments': typeof ApiConsolePagesIdCommentsRoute
+  '/api/console/pages/$id/comments': typeof ApiConsolePagesIdCommentsRouteWithChildren
   '/api/console/pages/$id/favorite': typeof ApiConsolePagesIdFavoriteRoute
   '/api/console/pages/$id/favorited': typeof ApiConsolePagesIdFavoritedRoute
   '/api/console/pages/$id/history': typeof ApiConsolePagesIdHistoryRouteWithChildren
@@ -906,6 +914,7 @@ export interface FileRoutesByTo {
   '/api/console/workspaces/$id/groups': typeof ApiConsoleWorkspacesIdGroupsRoute
   '/api/console/debug/tables/$tableName/rows': typeof ApiConsoleDebugTablesTableNameRowsRoute
   '/api/console/groups/$id/members/$userId': typeof ApiConsoleGroupsIdMembersUserIdRoute
+  '/api/console/pages/$id/comments/stream': typeof ApiConsolePagesIdCommentsStreamRoute
   '/api/console/pages/$id/history/$historyId': typeof ApiConsolePagesIdHistoryHistoryIdRoute
   '/api/console/pages/$id/share/shorten': typeof ApiConsolePagesIdShareShortenRoute
   '/api/console/spaces/$id/groups/$groupId': typeof ApiConsoleSpacesIdGroupsGroupIdRoute
@@ -994,7 +1003,7 @@ export interface FileRoutesById {
   '/api/console/groups/$id/members': typeof ApiConsoleGroupsIdMembersRouteWithChildren
   '/api/console/notifications/$id/read': typeof ApiConsoleNotificationsIdReadRoute
   '/api/console/pages/$id/children': typeof ApiConsolePagesIdChildrenRoute
-  '/api/console/pages/$id/comments': typeof ApiConsolePagesIdCommentsRoute
+  '/api/console/pages/$id/comments': typeof ApiConsolePagesIdCommentsRouteWithChildren
   '/api/console/pages/$id/favorite': typeof ApiConsolePagesIdFavoriteRoute
   '/api/console/pages/$id/favorited': typeof ApiConsolePagesIdFavoritedRoute
   '/api/console/pages/$id/history': typeof ApiConsolePagesIdHistoryRouteWithChildren
@@ -1016,6 +1025,7 @@ export interface FileRoutesById {
   '/api/console/workspaces/$id/groups': typeof ApiConsoleWorkspacesIdGroupsRoute
   '/api/console/debug/tables/$tableName/rows': typeof ApiConsoleDebugTablesTableNameRowsRoute
   '/api/console/groups/$id/members/$userId': typeof ApiConsoleGroupsIdMembersUserIdRoute
+  '/api/console/pages/$id/comments/stream': typeof ApiConsolePagesIdCommentsStreamRoute
   '/api/console/pages/$id/history/$historyId': typeof ApiConsolePagesIdHistoryHistoryIdRoute
   '/api/console/pages/$id/share/shorten': typeof ApiConsolePagesIdShareShortenRoute
   '/api/console/spaces/$id/groups/$groupId': typeof ApiConsoleSpacesIdGroupsGroupIdRoute
@@ -1127,6 +1137,7 @@ export interface FileRouteTypes {
     | '/api/console/workspaces/$id/groups'
     | '/api/console/debug/tables/$tableName/rows'
     | '/api/console/groups/$id/members/$userId'
+    | '/api/console/pages/$id/comments/stream'
     | '/api/console/pages/$id/history/$historyId'
     | '/api/console/pages/$id/share/shorten'
     | '/api/console/spaces/$id/groups/$groupId'
@@ -1234,6 +1245,7 @@ export interface FileRouteTypes {
     | '/api/console/workspaces/$id/groups'
     | '/api/console/debug/tables/$tableName/rows'
     | '/api/console/groups/$id/members/$userId'
+    | '/api/console/pages/$id/comments/stream'
     | '/api/console/pages/$id/history/$historyId'
     | '/api/console/pages/$id/share/shorten'
     | '/api/console/spaces/$id/groups/$groupId'
@@ -1343,6 +1355,7 @@ export interface FileRouteTypes {
     | '/api/console/workspaces/$id/groups'
     | '/api/console/debug/tables/$tableName/rows'
     | '/api/console/groups/$id/members/$userId'
+    | '/api/console/pages/$id/comments/stream'
     | '/api/console/pages/$id/history/$historyId'
     | '/api/console/pages/$id/share/shorten'
     | '/api/console/spaces/$id/groups/$groupId'
@@ -2130,6 +2143,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiConsolePagesIdHistoryHistoryIdRouteImport
       parentRoute: typeof ApiConsolePagesIdHistoryRoute
     }
+    '/api/console/pages/$id/comments/stream': {
+      id: '/api/console/pages/$id/comments/stream'
+      path: '/stream'
+      fullPath: '/api/console/pages/$id/comments/stream'
+      preLoaderRoute: typeof ApiConsolePagesIdCommentsStreamRouteImport
+      parentRoute: typeof ApiConsolePagesIdCommentsRoute
+    }
     '/api/console/groups/$id/members/$userId': {
       id: '/api/console/groups/$id/members/$userId'
       path: '/$userId'
@@ -2256,6 +2276,20 @@ const ApiConsoleNotificationsRouteWithChildren =
     ApiConsoleNotificationsRouteChildren,
   )
 
+interface ApiConsolePagesIdCommentsRouteChildren {
+  ApiConsolePagesIdCommentsStreamRoute: typeof ApiConsolePagesIdCommentsStreamRoute
+}
+
+const ApiConsolePagesIdCommentsRouteChildren: ApiConsolePagesIdCommentsRouteChildren =
+  {
+    ApiConsolePagesIdCommentsStreamRoute: ApiConsolePagesIdCommentsStreamRoute,
+  }
+
+const ApiConsolePagesIdCommentsRouteWithChildren =
+  ApiConsolePagesIdCommentsRoute._addFileChildren(
+    ApiConsolePagesIdCommentsRouteChildren,
+  )
+
 interface ApiConsolePagesIdHistoryRouteChildren {
   ApiConsolePagesIdHistoryHistoryIdRoute: typeof ApiConsolePagesIdHistoryHistoryIdRoute
 }
@@ -2287,7 +2321,7 @@ const ApiConsolePagesIdShareRouteWithChildren =
 
 interface ApiConsolePagesIdRouteChildren {
   ApiConsolePagesIdChildrenRoute: typeof ApiConsolePagesIdChildrenRoute
-  ApiConsolePagesIdCommentsRoute: typeof ApiConsolePagesIdCommentsRoute
+  ApiConsolePagesIdCommentsRoute: typeof ApiConsolePagesIdCommentsRouteWithChildren
   ApiConsolePagesIdFavoriteRoute: typeof ApiConsolePagesIdFavoriteRoute
   ApiConsolePagesIdFavoritedRoute: typeof ApiConsolePagesIdFavoritedRoute
   ApiConsolePagesIdHistoryRoute: typeof ApiConsolePagesIdHistoryRouteWithChildren
@@ -2303,7 +2337,7 @@ interface ApiConsolePagesIdRouteChildren {
 
 const ApiConsolePagesIdRouteChildren: ApiConsolePagesIdRouteChildren = {
   ApiConsolePagesIdChildrenRoute: ApiConsolePagesIdChildrenRoute,
-  ApiConsolePagesIdCommentsRoute: ApiConsolePagesIdCommentsRoute,
+  ApiConsolePagesIdCommentsRoute: ApiConsolePagesIdCommentsRouteWithChildren,
   ApiConsolePagesIdFavoriteRoute: ApiConsolePagesIdFavoriteRoute,
   ApiConsolePagesIdFavoritedRoute: ApiConsolePagesIdFavoritedRoute,
   ApiConsolePagesIdHistoryRoute: ApiConsolePagesIdHistoryRouteWithChildren,
