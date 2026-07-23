@@ -567,6 +567,11 @@ func (h *Handlers) UpdateConsolePage(c *gin.Context) {
 		return
 	}
 
+	editable, err := h.pageService.CanWrite(c.Request.Context(), page.SpaceID, userID)
+	if err != nil {
+		editable = true
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"id":           page.ID,
 		"slugId":       page.SlugID,
@@ -579,8 +584,12 @@ func (h *Handlers) UpdateConsolePage(c *gin.Context) {
 		"isPublished":  page.IsPublished,
 		"isLocked":     page.IsLocked,
 		"parentPageId": page.ParentPageID,
+		"spaceId":      page.SpaceID,
+		"creatorId":    page.CreatorID,
 		"createdAt":    page.CreatedAt.Format(time.RFC3339),
 		"updatedAt":    page.UpdatedAt.Format(time.RFC3339),
+		"editable":     editable,
+		"isShared":     h.pageService.IsPageShared(c.Request.Context(), page.ID),
 	})
 }
 

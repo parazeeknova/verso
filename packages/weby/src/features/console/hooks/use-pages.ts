@@ -177,7 +177,11 @@ export const useUpdatePage = () => {
       });
       for (const [queryKey, pageData] of queries) {
         if (pageData && pageData.id === data.id) {
-          queryClient.setQueryData<ConsolePageDetail>(queryKey, data);
+          queryClient.setQueryData<ConsolePageDetail>(queryKey, (old) => ({
+            ...old,
+            ...data,
+            editable: data.editable ?? old?.editable ?? true,
+          }));
         }
       }
 
