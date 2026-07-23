@@ -632,7 +632,7 @@ const CollaboratorAvatar = ({
   if (avatarUrl && isPokemon) {
     return (
       <div
-        className={`h-5 w-5 rounded-full flex items-center justify-center overflow-hidden ring-2 p-0.5 bg-neutral-800/90 dark:bg-neutral-900/90 ${t(
+        className={`h-5 w-5 flex items-center justify-center overflow-hidden ring-2 p-0.5 bg-neutral-800/90 dark:bg-neutral-900/90 ${t(
           "ring-neutral-900 border border-neutral-700/60",
           "ring-white border border-neutral-300",
         )}`}
@@ -640,7 +640,7 @@ const CollaboratorAvatar = ({
         <img
           src={avatarUrl}
           alt={user.name}
-          className="h-3.5 w-3.5 object-contain transition-all duration-200 group-hover:scale-110"
+          className="h-3.5 w-3.5 object-contain grayscale transition-all duration-200 group-hover:scale-110"
         />
       </div>
     );
@@ -729,7 +729,7 @@ const ActiveCollaboratorsStack = ({
                     <img
                       src={user.avatar_url || pokemonInfo?.avatar}
                       alt=""
-                      className="h-4 w-4 object-contain shrink-0"
+                      className="h-4 w-4 object-contain shrink-0 grayscale"
                     />
                   ) : (
                     <span className="h-2 w-2 bg-purple-400 shrink-0" />
