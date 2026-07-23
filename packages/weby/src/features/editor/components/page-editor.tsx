@@ -792,16 +792,16 @@ const ShareInfoSection = ({
   const shortUrl = share?.shortCode ? `${origin}/sh/${share.shortCode}` : "";
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <h4
-        className={`text-[9px] font-bold uppercase tracking-wider ${t("text-neutral-500", "text-neutral-400")}`}
+        className={`text-xs font-bold uppercase tracking-wider ${t("text-neutral-500", "text-neutral-400")}`}
       >
         share & web
       </h4>
       <div className="flex items-center justify-between gap-2">
         <span className={t("text-neutral-500", "text-neutral-400")}>web access</span>
         <span
-          className={`font-semibold text-[9.5px] ${share?.isEnabled ? "text-accent" : t("text-neutral-400", "text-neutral-500")}`}
+          className={`font-semibold text-[11px] ${share?.isEnabled ? "text-purple-600 dark:text-purple-400" : t("text-neutral-400", "text-neutral-500")}`}
         >
           {share?.isEnabled ? "shared to web" : "private"}
         </span>
@@ -811,18 +811,18 @@ const ShareInfoSection = ({
         <>
           <div className="flex items-center justify-between gap-2">
             <span className={t("text-neutral-500", "text-neutral-400")}>search indexing</span>
-            <span className="font-semibold text-[9.5px]">
+            <span className="font-semibold text-[11px]">
               {share.searchIndexing ? "allow" : "disallow"}
             </span>
           </div>
 
           {publicUrl && (
-            <div className="flex flex-col gap-0.5 pt-0.5">
+            <div className="flex flex-col gap-1 pt-0.5">
               <span className={t("text-neutral-500", "text-neutral-400")}>public link</span>
               <div
-                className={`flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
+                className={`flex items-center gap-1.5 border px-2 py-1 text-[10px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
                   "border-neutral-800 bg-black/30 text-neutral-300",
-                  "border-neutral-200 bg-neutral-100 text-neutral-700",
+                  "border-neutral-200 bg-neutral-100 text-neutral-800",
                 )}`}
               >
                 <span className="flex-1 overflow-hidden text-ellipsis">{publicUrl}</span>
@@ -833,9 +833,9 @@ const ShareInfoSection = ({
                   title="copy link"
                 >
                   {copied ? (
-                    <CheckIcon className="size-2.5 text-accent" />
+                    <CheckIcon className="size-3 text-purple-600 dark:text-purple-400" />
                   ) : (
-                    <CopyIcon className="size-2.5" />
+                    <CopyIcon className="size-3" />
                   )}
                 </button>
                 <a
@@ -845,19 +845,19 @@ const ShareInfoSection = ({
                   className="hover:opacity-100 opacity-60 transition-opacity"
                   title="open in new tab"
                 >
-                  <ArrowSquareOutIcon className="size-2.5" />
+                  <ArrowSquareOutIcon className="size-3" />
                 </a>
               </div>
             </div>
           )}
 
           {shortUrl && (
-            <div className="flex flex-col gap-0.5 pt-0.5">
+            <div className="flex flex-col gap-1 pt-0.5">
               <span className={t("text-neutral-500", "text-neutral-400")}>short link</span>
               <div
-                className={`flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
+                className={`flex items-center gap-1.5 border px-2 py-1 text-[10px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
                   "border-neutral-800 bg-black/30 text-neutral-300",
-                  "border-neutral-200 bg-neutral-100 text-neutral-700",
+                  "border-neutral-200 bg-neutral-100 text-neutral-800",
                 )}`}
               >
                 <span className="flex-1 overflow-hidden text-ellipsis">{shortUrl}</span>
@@ -868,9 +868,9 @@ const ShareInfoSection = ({
                   title="copy link"
                 >
                   {shortCopied ? (
-                    <CheckIcon className="size-2.5 text-accent" />
+                    <CheckIcon className="size-3 text-purple-600 dark:text-purple-400" />
                   ) : (
-                    <CopyIcon className="size-2.5" />
+                    <CopyIcon className="size-3" />
                   )}
                 </button>
                 <a
@@ -880,7 +880,7 @@ const ShareInfoSection = ({
                   className="hover:opacity-100 opacity-60 transition-opacity"
                   title="open in new tab"
                 >
-                  <ArrowSquareOutIcon className="size-2.5" />
+                  <ArrowSquareOutIcon className="size-3" />
                 </a>
               </div>
             </div>
@@ -970,14 +970,14 @@ const PageDetailsPanel = ({
       />
       <div
         ref={panelRef}
-        className={`absolute top-0 right-0 h-full w-full sm:w-52 border-l p-3 flex flex-col shadow-xl pointer-events-auto ${t(
+        className={`absolute top-0 right-0 h-full w-full sm:w-60 border-l p-3.5 flex flex-col shadow-xl pointer-events-auto ${t(
           "bg-neutral-900 border-neutral-800 text-neutral-200",
           "bg-white border-neutral-200 text-neutral-800",
         )}`}
       >
-        <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center justify-between mb-3">
           <h3
-            className={`text-[9px] font-bold tracking-wider uppercase ${t("text-neutral-500", "text-neutral-400")}`}
+            className={`text-xs font-bold tracking-wider uppercase ${t("text-neutral-500", "text-neutral-400")}`}
           >
             page info
           </h3>
@@ -990,20 +990,20 @@ const PageDetailsPanel = ({
             onClick={onClose}
             type="button"
           >
-            <XIcon size={12} />
+            <XIcon size={14} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-3 text-[10px]">
-          <div className="space-y-1.5">
+        <div className="flex-1 overflow-y-auto space-y-3.5 text-xs">
+          <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <span className={t("text-neutral-500", "text-neutral-400")}>author</span>
-              <div className="flex items-center gap-1 font-medium min-w-0">
+              <div className="flex items-center gap-1.5 font-medium min-w-0">
                 <AvatarBadge
                   icon={creator?.avatar_url}
                   name={displayName}
-                  className="w-3.5 h-3.5 shrink-0 bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center rounded-full"
-                  initialsClass="text-[7px] text-neutral-600 dark:text-neutral-300 font-semibold"
+                  className="w-4 h-4 shrink-0 bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center rounded-full"
+                  initialsClass="text-[8px] text-neutral-600 dark:text-neutral-300 font-semibold"
                 />
                 <span className="truncate">{displayName}</span>
               </div>
@@ -1019,11 +1019,11 @@ const PageDetailsPanel = ({
 
           <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
 
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {createdAt && (
               <div className="flex items-center justify-between gap-2">
                 <span className={t("text-neutral-500", "text-neutral-400")}>created</span>
-                <span className="font-medium text-[9.5px] font-mono text-right">
+                <span className="font-medium text-[11px] font-mono text-right">
                   {formatDateTime(createdAt)}
                 </span>
               </div>
@@ -1031,7 +1031,7 @@ const PageDetailsPanel = ({
             {updatedAt && (
               <div className="flex items-center justify-between gap-2">
                 <span className={t("text-neutral-500", "text-neutral-400")}>modified</span>
-                <span className="font-medium text-[9.5px] font-mono text-right">
+                <span className="font-medium text-[11px] font-mono text-right">
                   {formatDateTime(updatedAt)}
                 </span>
               </div>
@@ -1047,9 +1047,9 @@ const PageDetailsPanel = ({
 
           <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
 
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <h4
-              className={`text-[9px] font-bold uppercase tracking-wider ${t("text-neutral-500", "text-neutral-400")}`}
+              className={`text-xs font-bold uppercase tracking-wider ${t("text-neutral-500", "text-neutral-400")}`}
             >
               metrics
             </h4>
