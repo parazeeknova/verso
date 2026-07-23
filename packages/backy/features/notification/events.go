@@ -27,6 +27,10 @@ const (
 	EventProfilePasswordChanged  NotificationEventType = "profile.password_changed"
 	EventProfileMFAEnabled       NotificationEventType = "profile.mfa_enabled"
 	EventProfileMFADisabled      NotificationEventType = "profile.mfa_disabled"
+	EventCommentReply            NotificationEventType = "comment.reply"
+	EventCommentCreated          NotificationEventType = "comment.created"
+	EventCommentMention          NotificationEventType = "comment.mention"
+	EventCommentResolved         NotificationEventType = "comment.resolved"
 )
 
 // NotificationEvent carries all data needed to create and deliver a notification.

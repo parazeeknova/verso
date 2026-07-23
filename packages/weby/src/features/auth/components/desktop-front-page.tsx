@@ -1,5 +1,5 @@
 // oxlint-disable no-shadow: fak this shi
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowRightIcon,
@@ -14,6 +14,7 @@ import { useMFAVerify } from "#/features/auth/hooks/use-mfa";
 import { useIsBootstrapped, useBootstrapState } from "#/features/auth/hooks/use-bootstrap-state";
 
 import { useTheme } from "#/shared/hooks/use-theme";
+import { crossfadeVideo, getHeaderGradient } from "#/shared/lib/video-helpers";
 
 interface GradientTextProps {
   as?: "h1" | "h2" | "h3" | "span";
@@ -42,6 +43,23 @@ const GradientText = ({ as: Tag = "h1", children, className = "" }: GradientText
   );
 };
 
+const themeClass = (isDarkMode: boolean) =>
+  isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light";
+
+const inputClass = (isDarkMode: boolean) =>
+  `w-full border-b py-1.5 text-xs outline-none bg-transparent ${
+    isDarkMode
+      ? "border-border-dark focus:border-text-dark"
+      : "border-border-light focus:border-text-light"
+  }`;
+
+const submitClass = (isDarkMode: boolean) =>
+  `w-full mt-4 py-2.5 text-xs font-semibold lowercase transition-colors ${
+    isDarkMode
+      ? "bg-text-dark text-bg-dark hover:bg-text-dark/90"
+      : "bg-text-light text-bg-light hover:bg-text-light/90"
+  } disabled:opacity-50`;
+
 export const DesktopFrontPage = () => {
   const navigate = useNavigate();
   const { data: user, isLoading: isAuthLoading } = useAuth();
@@ -65,6 +83,47 @@ export const DesktopFrontPage = () => {
   const [mfaRequired, setMfaRequired] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const nextVideoRef = useRef<HTMLVideoElement>(null);
+  const gradientRef = useRef<HTMLDivElement>(null);
+  const videoActiveNext = useRef(false);
+
+  const animatedToggleTheme = useCallback(() => {
+    const nextDark = !isDarkMode;
+    const nextSrc = nextDark
+      ? "https://img.przknv.cc/t/header.mp4"
+      : "https://img.przknv.cc/t/footer.mp4";
+    const fromRef = videoActiveNext.current ? nextVideoRef : videoRef;
+    const toRef = videoActiveNext.current ? videoRef : nextVideoRef;
+    crossfadeVideo(fromRef, toRef, nextSrc, () => {
+      videoActiveNext.current = !videoActiveNext.current;
+      toggleTheme();
+    });
+  }, [isDarkMode, toggleTheme]);
+
+  useEffect(() => {
+    const src = isDarkMode
+      ? "https://img.przknv.cc/t/header.mp4"
+      : "https://img.przknv.cc/t/footer.mp4";
+    if (videoActiveNext.current) {
+      if (nextVideoRef.current) {
+        nextVideoRef.current.src = src;
+        nextVideoRef.current.style.opacity = "1";
+      }
+      if (videoRef.current) {
+        videoRef.current.style.opacity = "0";
+      }
+    } else {
+      if (videoRef.current) {
+        videoRef.current.src = src;
+        videoRef.current.style.opacity = "1";
+      }
+      if (nextVideoRef.current) {
+        nextVideoRef.current.style.opacity = "0";
+      }
+    }
+  }, [isDarkMode]);
 
   // If user is already logged in, automatically navigate to console
   useEffect(() => {
@@ -172,11 +231,7 @@ export const DesktopFrontPage = () => {
         </label>
         <input
           id="setup-name"
-          className={`w-full border-b py-1.5 text-xs outline-none bg-transparent ${
-            isDarkMode
-              ? "border-border-dark focus:border-text-dark"
-              : "border-border-light focus:border-text-light"
-          }`}
+          className={inputClass(isDarkMode)}
           onChange={(e) => setName(e.target.value)}
           placeholder="alex"
           required
@@ -190,11 +245,7 @@ export const DesktopFrontPage = () => {
         </label>
         <input
           id="setup-email"
-          className={`w-full border-b py-1.5 text-xs outline-none bg-transparent ${
-            isDarkMode
-              ? "border-border-dark focus:border-text-dark"
-              : "border-border-light focus:border-text-light"
-          }`}
+          className={inputClass(isDarkMode)}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="alex@example.com"
           required
@@ -209,11 +260,7 @@ export const DesktopFrontPage = () => {
         <div className="relative">
           <input
             id="setup-password"
-            className={`w-full border-b py-1.5 pr-8 text-xs outline-none bg-transparent ${
-              isDarkMode
-                ? "border-border-dark focus:border-text-dark"
-                : "border-border-light focus:border-text-light"
-            }`}
+            className={inputClass(isDarkMode)}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
             required
@@ -230,15 +277,7 @@ export const DesktopFrontPage = () => {
           </button>
         </div>
       </div>
-      <button
-        className={`w-full mt-4 py-2.5 text-xs font-semibold lowercase transition-colors ${
-          isDarkMode
-            ? "bg-text-dark text-bg-dark hover:bg-text-dark/90"
-            : "bg-text-light text-bg-light hover:bg-text-light/90"
-        } disabled:opacity-50`}
-        disabled={loading}
-        type="submit"
-      >
+      <button className={submitClass(isDarkMode)} disabled={loading} type="submit">
         {loading ? "creating account..." : "create account"}
       </button>
     </form>
@@ -252,11 +291,7 @@ export const DesktopFrontPage = () => {
         </label>
         <input
           id="login-mfa"
-          className={`w-full border-b py-1.5 text-xs outline-none bg-transparent text-center tracking-widest ${
-            isDarkMode
-              ? "border-border-dark focus:border-text-dark"
-              : "border-border-light focus:border-text-light"
-          }`}
+          className={`${inputClass(isDarkMode)} text-center tracking-widest`}
           maxLength={6}
           onChange={(e) => setMfaCode(e.target.value)}
           placeholder="000000"
@@ -265,15 +300,7 @@ export const DesktopFrontPage = () => {
           value={mfaCode}
         />
       </div>
-      <button
-        className={`w-full mt-4 py-2.5 text-xs font-semibold lowercase transition-colors ${
-          isDarkMode
-            ? "bg-text-dark text-bg-dark hover:bg-text-dark/90"
-            : "bg-text-light text-bg-light hover:bg-text-light/90"
-        } disabled:opacity-50`}
-        disabled={loading}
-        type="submit"
-      >
+      <button className={submitClass(isDarkMode)} disabled={loading} type="submit">
         {loading ? "verifying..." : "verify code"}
       </button>
     </form>
@@ -287,11 +314,7 @@ export const DesktopFrontPage = () => {
         </label>
         <input
           id="login-user"
-          className={`w-full border-b py-1.5 text-xs outline-none bg-transparent ${
-            isDarkMode
-              ? "border-border-dark focus:border-text-dark"
-              : "border-border-light focus:border-text-light"
-          }`}
+          className={inputClass(isDarkMode)}
           onChange={(e) => setUsernameOrEmail(e.target.value)}
           placeholder="username or email"
           required
@@ -306,11 +329,7 @@ export const DesktopFrontPage = () => {
         <div className="relative">
           <input
             id="login-pass"
-            className={`w-full border-b py-1.5 pr-8 text-xs outline-none bg-transparent ${
-              isDarkMode
-                ? "border-border-dark focus:border-text-dark"
-                : "border-border-light focus:border-text-light"
-            }`}
+            className={inputClass(isDarkMode)}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
             required
@@ -327,15 +346,7 @@ export const DesktopFrontPage = () => {
           </button>
         </div>
       </div>
-      <button
-        className={`w-full mt-4 py-2.5 text-xs font-semibold lowercase transition-colors ${
-          isDarkMode
-            ? "bg-text-dark text-bg-dark hover:bg-text-dark/90"
-            : "bg-text-light text-bg-light hover:bg-text-light/90"
-        } disabled:opacity-50`}
-        disabled={loading}
-        type="submit"
-      >
+      <button className={submitClass(isDarkMode)} disabled={loading} type="submit">
         {loading ? "logging in..." : "log in"}
       </button>
     </form>
@@ -351,13 +362,41 @@ export const DesktopFrontPage = () => {
     return renderLoginForm();
   };
 
+  const headerGradient = getHeaderGradient(isDarkMode);
+
   return (
     <div
       data-theme={isDarkMode ? "dark" : "light"}
-      className={`min-h-screen w-full flex flex-col justify-between select-none transition-colors duration-300 ${
-        isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
-      }`}
+      className={`min-h-screen w-full flex flex-col justify-between select-none transition-colors duration-300 ${themeClass(isDarkMode)}`}
     >
+      {/* Header Video */}
+      <div className="relative mx-auto w-full max-w-xl h-48 sm:h-64 lg:h-80 overflow-hidden">
+        <video
+          ref={nextVideoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ opacity: 0 }}
+          src="https://img.przknv.cc/t/footer.mp4"
+        />
+        <video
+          ref={videoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          src="https://img.przknv.cc/t/header.mp4"
+        />
+        <div
+          ref={gradientRef}
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: headerGradient }}
+        />
+      </div>
+
       {/* Top navbar with unboxed theme toggle with icons */}
       <header className="p-4 sm:p-6 flex items-center justify-end w-full">
         <button
@@ -365,7 +404,7 @@ export const DesktopFrontPage = () => {
           className={`flex items-center gap-1.5 text-xs lowercase transition-opacity opacity-50 hover:opacity-100 focus:outline-none ${
             isDarkMode ? "text-text-dark" : "text-text-light"
           }`}
-          onClick={toggleTheme}
+          onClick={animatedToggleTheme}
           type="button"
         >
           {isDarkMode ? <SunIcon size={14} /> : <MoonIcon size={14} />}

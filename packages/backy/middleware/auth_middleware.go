@@ -53,6 +53,30 @@ func AuthRequired(authService SessionValidator) gin.HandlerFunc {
 	}
 }
 
+func OptionalAuth(authService SessionValidator) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenString := extractToken(c)
+		if tokenString != "" {
+			claims, err := auth.ValidateAccessToken(tokenString)
+			if err == nil {
+				if claims.SessionID != "" && authService != nil {
+					active, checkErr := authService.ValidateSession(c.Request.Context(), claims.SessionID)
+					if checkErr == nil && active {
+						c.Set(ContextKeyClaims, claims)
+						c.Set(ContextKeyUserID, claims.UserID)
+						c.Set(ContextKeyIsOwner, claims.IsOwner)
+					}
+				} else {
+					c.Set(ContextKeyClaims, claims)
+					c.Set(ContextKeyUserID, claims.UserID)
+					c.Set(ContextKeyIsOwner, claims.IsOwner)
+				}
+			}
+		}
+		c.Next()
+	}
+}
+
 func extractToken(c *gin.Context) string {
 	authHeader := c.GetHeader("Authorization")
 	if strings.HasPrefix(authHeader, "Bearer ") {
@@ -79,6 +103,14 @@ func GetCurrentClaims(c *gin.Context) *auth.AccessTokenClaims {
 		return nil
 	}
 	return claims.(*auth.AccessTokenClaims)
+}
+
+func GetCurrentUserRole(c *gin.Context) string {
+	claims := GetCurrentClaims(c)
+	if claims == nil {
+		return ""
+	}
+	return claims.Role
 }
 
 func OwnerRequired() gin.HandlerFunc {

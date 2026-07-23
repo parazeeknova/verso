@@ -355,6 +355,12 @@ export const DragHandlePlugin = (options: GlobalDragHandleOptions & { pluginKey:
             return;
           }
 
+          const viewRect = view.dom.getBoundingClientRect();
+          if (event.clientX < viewRect.left || event.clientX > viewRect.right) {
+            hideDragHandle();
+            return;
+          }
+
           const node = nodeDOMAtCoords(
             {
               x: event.clientX + 50 + options.dragHandleWidth,
@@ -386,7 +392,12 @@ export const DragHandlePlugin = (options: GlobalDragHandleOptions & { pluginKey:
             if (!dragHandleElement) {
               return;
             }
-            dragHandleElement.style.left = `${innerRect.left + 4}px`;
+            const handleLeft = innerRect.left + 4;
+            if (handleLeft < viewRect.left - 24) {
+              hideDragHandle();
+              return;
+            }
+            dragHandleElement.style.left = `${handleLeft}px`;
             dragHandleElement.style.top = `${innerRect.top + 4}px`;
             showDragHandle();
             return;
@@ -428,7 +439,13 @@ export const DragHandlePlugin = (options: GlobalDragHandleOptions & { pluginKey:
             return;
           }
 
-          dragHandleElement.style.left = `${rect.left - rect.width}px`;
+          const targetLeft = rect.left - rect.width;
+          if (targetLeft < viewRect.left - 24) {
+            hideDragHandle();
+            return;
+          }
+
+          dragHandleElement.style.left = `${targetLeft}px`;
           dragHandleElement.style.top = `${rect.top}px`;
           showDragHandle();
         },

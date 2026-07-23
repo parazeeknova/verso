@@ -7,6 +7,8 @@ docs/
 .output/
 dist/
 .commandcode/
+.mimocode/
+.mimo*
 
 # Devenv / Direnv
 .devenv/

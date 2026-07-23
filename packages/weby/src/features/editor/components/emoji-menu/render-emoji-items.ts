@@ -2,6 +2,7 @@ import { ReactRenderer } from "@tiptap/react";
 import type { SuggestionProps } from "@tiptap/suggestion";
 import { EmojiList } from "./emoji-list";
 import { autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom";
+import { animateIn, animateOut } from "#/shared/lib/animate-popup";
 
 export const renderEmojiItems = () => {
   let component: ReactRenderer | null = null;
@@ -15,15 +16,17 @@ export const renderEmojiItems = () => {
       cleanup = null;
     }
 
-    if (popup) {
-      popup.remove();
-      popup = null;
-    }
+    animateOut(popup, () => {
+      if (popup) {
+        popup.remove();
+        popup = null;
+      }
 
-    if (component) {
-      component.destroy();
-      component = null;
-    }
+      if (component) {
+        component.destroy();
+        component = null;
+      }
+    });
   };
 
   return {
@@ -45,6 +48,8 @@ export const renderEmojiItems = () => {
       popup.style.left = "0";
       popup.append(component.element);
       document.body.append(popup);
+
+      animateIn(popup);
 
       const virtualElement = {
         getBoundingClientRect: () =>

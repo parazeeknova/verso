@@ -29,10 +29,10 @@ func (h *NotificationHandlers) RegisterRoutes(rg *gin.RouterGroup) {
 		notifGroup.GET("", h.ListNotifications)
 		notifGroup.GET("/unread-count", h.UnreadCount)
 		notifGroup.GET("/stream", h.Stream)
-		notifGroup.PUT("/:id/read", h.MarkRead)
 		notifGroup.PUT("/read-all", h.MarkAllRead)
-		notifGroup.DELETE("/:id", h.DismissNotification)
+		notifGroup.PUT("/:id/read", h.MarkRead)
 		notifGroup.DELETE("/dismiss-all", h.DismissAllNotifications)
+		notifGroup.DELETE("/:id", h.DismissNotification)
 	}
 }
 

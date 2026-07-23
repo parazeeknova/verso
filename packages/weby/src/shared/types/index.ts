@@ -20,6 +20,7 @@ export interface ExperienceItem {
 
 export interface Project {
   desc: string;
+  image?: string;
   productUrl?: string;
   readmeUrl?: string;
   repoUrl?: string;
@@ -143,6 +144,8 @@ export interface PageTreeItem {
   updatedAt: string;
 }
 
+export type CommentAccess = "disabled" | "members" | "all";
+
 export interface PageShare {
   id?: string;
   pageId: string;
@@ -151,6 +154,7 @@ export interface PageShare {
   searchIndexing: boolean;
   isEnabled: boolean;
   accessLevel?: string;
+  commentAccess?: CommentAccess;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -294,4 +298,55 @@ export interface PushSubscriptionPayload {
   p256dh: string;
   auth: string;
   userAgent?: string;
+}
+
+export interface CommentUserMeta {
+  id: string;
+  name: string;
+  avatarUrl: string;
+}
+
+export interface CommentItem {
+  id: string;
+  workspaceId: string;
+  spaceId: string;
+  pageId: string;
+  creatorId: string;
+  parentCommentId?: string | null;
+  content: string;
+  selection?: string | null;
+  type: string;
+  guestName?: string | null;
+  guestAvatar?: string | null;
+  resolvedAt?: string | null;
+  resolvedById?: string | null;
+  editedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  creator: CommentUserMeta;
+  resolvedBy?: CommentUserMeta | null;
+}
+
+export interface CreateCommentInput {
+  content: string;
+  selection?: string;
+  type?: string;
+  parentCommentId?: string;
+  guestName?: string;
+  guestAvatar?: string;
+}
+
+export interface UpdateCommentInput {
+  content: string;
+}
+
+export interface ResolveCommentInput {
+  resolved: boolean;
+}
+
+export interface CommentRealtimeEvent {
+  operation: "commentCreated" | "commentUpdated" | "commentDeleted" | "commentResolved";
+  pageId: string;
+  commentId?: string;
+  comment?: CommentItem;
 }

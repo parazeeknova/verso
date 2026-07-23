@@ -98,9 +98,19 @@ export const ProfileSection = ({ profile, isPending, isMobile }: ProfileSectionP
   return (
     <div className="shrink-0">
       {profile?.name && (
-        <h1 className="font-normal text-xl sm:text-2xl">
+        <h1
+          className="font-normal text-5xl sm:text-7xl pl-2"
+          style={{ fontFamily: '"Louison Adriana", cursive' }}
+        >
           {profile.name}
-          {profile.username && <span className="ml-2 text-sm opacity-50">@{profile.username}</span>}
+          {profile.username && (
+            <span
+              className="ml-2 text-sm opacity-50"
+              style={{ fontFamily: '"Ubuntu Mono", monospace' }}
+            >
+              @{profile.username}
+            </span>
+          )}
         </h1>
       )}
 

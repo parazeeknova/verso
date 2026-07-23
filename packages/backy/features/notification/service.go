@@ -42,7 +42,8 @@ func (s *NotificationService) SetHub(hub *NotificationHub) {
 func (s *NotificationService) Notify(ctx context.Context, event NotificationEvent) {
 	title, body := s.generateText(event)
 
-	bgCtx := context.Background()
+	bgCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	for _, recipientID := range event.RecipientIDs {
 
 		metadataJSON := "{}"
@@ -53,10 +54,15 @@ func (s *NotificationService) Notify(ctx context.Context, event NotificationEven
 			}
 		}
 
+		var actorUserID *string
+		if event.ActorID != "" && event.ActorID != "guest" {
+			actorUserID = &event.ActorID
+		}
+
 		n := models.Notification{
 			ID:              uuid.New().String(),
 			RecipientUserID: recipientID,
-			ActorUserID:     &event.ActorID,
+			ActorUserID:     actorUserID,
 			Type:            string(event.Type),
 			Title:           title,
 			Body:            body,
@@ -69,7 +75,7 @@ func (s *NotificationService) Notify(ctx context.Context, event NotificationEven
 			n.WorkspaceID = &event.WorkspaceID
 		}
 
-		if err := s.notifRepo.Insert(ctx, n); err != nil {
+		if err := s.notifRepo.Insert(bgCtx, n); err != nil {
 			logger.Log.Error().Err(err).
 				Str("recipient", recipientID).
 				Str("type", string(event.Type)).
@@ -81,10 +87,20 @@ func (s *NotificationService) Notify(ctx context.Context, event NotificationEven
 		if s.hub != nil {
 			actorName := ""
 			actorAvatar := ""
-			if event.ActorID != "" {
-				if actor, err := s.userRepo.FindMetaByID(ctx, event.ActorID); err == nil && actor != nil {
+			if event.ActorID != "" && event.ActorID != "guest" {
+				if actor, err := s.userRepo.FindMetaByID(bgCtx, event.ActorID); err == nil && actor != nil {
 					actorName = actor.Name
 					actorAvatar = actor.AvatarURL
+				}
+			}
+			if actorName == "" {
+				if name, ok := event.Metadata["actorName"]; ok {
+					actorName = name
+				}
+			}
+			if actorAvatar == "" {
+				if avatar, ok := event.Metadata["actorAvatar"]; ok {
+					actorAvatar = avatar
 				}
 			}
 			s.hub.Publish(recipientID, models.NotificationWithActor{
@@ -221,9 +237,40 @@ func (s *NotificationService) generateText(event NotificationEvent) (string, str
 		return "2FA enabled", "Two-factor authentication has been enabled on your account."
 	case EventProfileMFADisabled:
 		return "2FA disabled", "Two-factor authentication has been disabled on your account."
+	case EventCommentCreated:
+		actorName := s.metadataStr(event.Metadata, "actorName", "Someone")
+		pageTitle := s.metadataStr(event.Metadata, "pageTitle", "your page")
+		commentText := s.metadataStr(event.Metadata, "commentText", "a comment")
+		commentText = truncateRunes(commentText, 40)
+		return fmt.Sprintf("Comment on %s", pageTitle), fmt.Sprintf("%s commented %q on your %s page", actorName, commentText, pageTitle)
+	case EventCommentReply:
+		actorName := s.metadataStr(event.Metadata, "actorName", "Someone")
+		pageTitle := s.metadataStr(event.Metadata, "pageTitle", "a page")
+		commentText := s.metadataStr(event.Metadata, "commentText", "a comment")
+		commentText = truncateRunes(commentText, 30)
+		parentText := s.metadataStr(event.Metadata, "parentText", "")
+		if parentText != "" {
+			parentText = truncateRunes(parentText, 25)
+			return fmt.Sprintf("Reply on %s", pageTitle), fmt.Sprintf("%s replied %q to your comment %q on %s", actorName, commentText, parentText, pageTitle)
+		}
+		return fmt.Sprintf("Reply on %s", pageTitle), fmt.Sprintf("%s replied %q to your comment on %s", actorName, commentText, pageTitle)
+	case EventCommentMention:
+		pageTitle := s.metadataStr(event.Metadata, "pageTitle", "a page")
+		return "Mentioned in comment", fmt.Sprintf("You were mentioned in a comment on %q.", pageTitle)
+	case EventCommentResolved:
+		pageTitle := s.metadataStr(event.Metadata, "pageTitle", "a page")
+		return "Comment resolved", fmt.Sprintf("Your comment on %q was resolved.", pageTitle)
 	default:
 		return "Notification", "You have a new notification."
 	}
+}
+
+func truncateRunes(s string, maxRunes int) string {
+	runes := []rune(s)
+	if len(runes) > maxRunes {
+		return string(runes[:maxRunes]) + "..."
+	}
+	return s
 }
 
 func (s *NotificationService) metadataStr(meta map[string]string, key, fallback string) string {

@@ -24,6 +24,10 @@ import type {
   UpdatePageInput,
   Workspace,
   PageShare,
+  CommentItem,
+  CreateCommentInput,
+  UpdateCommentInput,
+  ResolveCommentInput,
 } from "#/shared/types";
 import { logger } from "#/shared/lib/logger";
 
@@ -861,4 +865,58 @@ export const postPublicSharePresence = (token: string, payload: unknown) =>
 export const getPublicSharePresence = (token: string) =>
   fetchBacky<{ collaborators: unknown[] }>(`shares/${token}/presence`, {
     method: "GET",
+  });
+
+// Comment API functions
+export const getComments = (pageId: string, cookieHeader?: string | null) =>
+  fetchBacky<CommentItem[]>(`console/pages/${encodeURIComponent(pageId)}/comments`, {
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+  });
+
+export const createComment = (
+  pageId: string,
+  input: CreateCommentInput,
+  cookieHeader?: string | null,
+) =>
+  fetchBacky<CommentItem>(`console/pages/${encodeURIComponent(pageId)}/comments`, {
+    body: JSON.stringify(input),
+    headers: {
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+
+export const updateComment = (
+  commentId: string,
+  input: UpdateCommentInput,
+  cookieHeader?: string | null,
+) =>
+  fetchBacky<CommentItem>(`console/comments/${encodeURIComponent(commentId)}`, {
+    body: JSON.stringify(input),
+    headers: {
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      "Content-Type": "application/json",
+    },
+    method: "PATCH",
+  });
+
+export const deleteComment = (commentId: string, cookieHeader?: string | null) =>
+  fetchBacky<{ status: string }>(`console/comments/${encodeURIComponent(commentId)}`, {
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+    method: "DELETE",
+  });
+
+export const resolveComment = (
+  commentId: string,
+  input: ResolveCommentInput,
+  cookieHeader?: string | null,
+) =>
+  fetchBacky<CommentItem>(`console/comments/${encodeURIComponent(commentId)}/resolve`, {
+    body: JSON.stringify(input),
+    headers: {
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      "Content-Type": "application/json",
+    },
+    method: "POST",
   });

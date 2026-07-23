@@ -1231,6 +1231,7 @@ type UpdateConsolePageShareRequest struct {
 	IsEnabled      bool   `json:"isEnabled"`
 	SearchIndexing bool   `json:"searchIndexing"`
 	AccessLevel    string `json:"accessLevel"`
+	CommentAccess  string `json:"commentAccess"`
 }
 
 // UpdateConsolePageShare handles PUT /api/console/pages/:id/share.
@@ -1249,9 +1250,9 @@ func (h *Handlers) UpdateConsolePageShare(c *gin.Context) {
 		return
 	}
 
-	share, err := h.pageService.UpdatePageShare(c.Request.Context(), pageID, userID, req.IsEnabled, req.SearchIndexing, req.AccessLevel)
+	share, err := h.pageService.UpdatePageShare(c.Request.Context(), pageID, userID, req.IsEnabled, req.SearchIndexing, req.AccessLevel, req.CommentAccess)
 	if err != nil {
-		if errors.Is(err, pagefeat.ErrInvalidAccessLevel) {
+		if errors.Is(err, pagefeat.ErrInvalidAccessLevel) || errors.Is(err, pagefeat.ErrInvalidCommentAccess) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}

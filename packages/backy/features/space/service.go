@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"verso/backy/database"
 	"verso/backy/database/models"
 	notifeat "verso/backy/features/notification"
 	"verso/backy/repositories"
@@ -34,6 +35,7 @@ type SpaceService struct {
 	spaceRepo     *repositories.SpaceRepo
 	pageRepo      *repositories.PageRepo
 	groupRepo     *repositories.GroupRepo
+	commentRepo   *repositories.CommentRepo
 	notifier      notifeat.Notifier
 	storageClient StorageClient
 }
@@ -46,6 +48,11 @@ func NewSpaceService(spaceRepo *repositories.SpaceRepo, pageRepo *repositories.P
 		groupRepo: groupRepo,
 		notifier:  notifeat.NoopNotifier(),
 	}
+}
+
+// SetCommentRepo sets the comment repository on the space service.
+func (s *SpaceService) SetCommentRepo(r *repositories.CommentRepo) {
+	s.commentRepo = r
 }
 
 // SetNotifier sets the notification service on the space service.
@@ -216,9 +223,31 @@ func (s *SpaceService) DeleteSpace(ctx context.Context, id, userID string) error
 		return fmt.Errorf("listing pages in space: %w", err)
 	}
 
+	pool := database.GetPool()
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("beginning transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
 	if len(pageIDs) > 0 {
 		if err := s.pageRepo.SoftDeleteAllInSpace(ctx, id, userID); err != nil {
 			return fmt.Errorf("deleting pages from database: %w", err)
+		}
+	}
+
+	if s.commentRepo != nil {
+		if err := s.commentRepo.DeleteBySpaceID(ctx, id); err != nil {
+			return fmt.Errorf("deleting comments in space: %w", err)
+		}
+	}
+
+	if _, err := tx.Exec(ctx, `UPDATE notifications SET deleted_at = now() WHERE (entity_id = $1 OR metadata->>'spaceId' = $1) AND deleted_at IS NULL`, id); err != nil {
+		return fmt.Errorf("soft-deleting space notifications: %w", err)
+	}
+	if len(pageIDs) > 0 {
+		if _, err := tx.Exec(ctx, `UPDATE notifications SET deleted_at = now() WHERE metadata->>'pageId' = ANY($1) AND deleted_at IS NULL`, pageIDs); err != nil {
+			return fmt.Errorf("soft-deleting page notifications: %w", err)
 		}
 	}
 
@@ -227,6 +256,10 @@ func (s *SpaceService) DeleteSpace(ctx context.Context, id, userID string) error
 			return ErrSpaceNotFound
 		}
 		return fmt.Errorf("deleting space: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("committing transaction: %w", err)
 	}
 
 	// Trigger asynchronous cleanup after successful database commit
@@ -307,14 +340,17 @@ func (s *SpaceService) ListReadableFavoritedSpaces(ctx context.Context, ids []st
 	return readable, nil
 }
 
-// GetSpaceByID returns a space by ID.
-func (s *SpaceService) GetSpaceByID(ctx context.Context, id string) (models.Space, error) {
+// GetSpaceByID returns a space by ID with read permission check.
+func (s *SpaceService) GetSpaceByID(ctx context.Context, id, userID string) (models.Space, error) {
 	space, err := s.spaceRepo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, ErrSpaceNotFound) {
 			return models.Space{}, ErrSpaceNotFound
 		}
 		return models.Space{}, fmt.Errorf("getting space: %w", err)
+	}
+	if err := s.RequireRead(ctx, space.ID, userID); err != nil {
+		return models.Space{}, err
 	}
 	return space, nil
 }

@@ -21,6 +21,7 @@ import {
   useProfile,
   useProjects,
 } from "#/features/landing/hooks/use-data";
+import { crossfadeVideo, getHeaderGradient } from "#/shared/lib/video-helpers";
 
 const useIsMobile = (): boolean => {
   const getSnapshot = useCallback(() => {
@@ -161,12 +162,54 @@ const Home = function Home() {
     }
   }, []);
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const nextVideoRef = useRef<HTMLVideoElement>(null);
+  const gradientRef = useRef<HTMLDivElement>(null);
+  const videoActiveNext = useRef(false);
+
+  useEffect(() => {
+    const src = isDarkMode
+      ? "https://img.przknv.cc/t/header.mp4"
+      : "https://img.przknv.cc/t/footer.mp4";
+    if (videoActiveNext.current) {
+      if (nextVideoRef.current) {
+        nextVideoRef.current.src = src;
+        nextVideoRef.current.style.opacity = "1";
+      }
+      if (videoRef.current) {
+        videoRef.current.style.opacity = "0";
+      }
+    } else {
+      if (videoRef.current) {
+        videoRef.current.src = src;
+        videoRef.current.style.opacity = "1";
+      }
+      if (nextVideoRef.current) {
+        nextVideoRef.current.style.opacity = "0";
+      }
+    }
+  }, [isDarkMode]);
+
   const toggleTheme = useCallback(() => {
     const newTheme = isDarkMode ? "light" : "dark";
     setIsDarkMode(!isDarkMode);
     localStorage.setItem("theme", newTheme);
     document.documentElement.dataset.theme = newTheme;
   }, [isDarkMode]);
+
+  const animatedToggleTheme = useCallback(() => {
+    const nextDark = !isDarkMode;
+    const nextSrc = nextDark
+      ? "https://img.przknv.cc/t/header.mp4"
+      : "https://img.przknv.cc/t/footer.mp4";
+    const fromRef = videoActiveNext.current ? nextVideoRef : videoRef;
+    const toRef = videoActiveNext.current ? videoRef : nextVideoRef;
+
+    crossfadeVideo(fromRef, toRef, nextSrc, () => {
+      videoActiveNext.current = !videoActiveNext.current;
+      toggleTheme();
+    });
+  }, [isDarkMode, toggleTheme]);
 
   const handleProjectDetail = useCallback(
     (project: { productUrl?: string; readmeUrl?: string; repoUrl?: string; title: string }) => {
@@ -258,14 +301,44 @@ const Home = function Home() {
     );
   }
 
+  const headerGradient = getHeaderGradient(isDarkMode);
+
   return (
     <div
       data-theme={isDarkMode ? "dark" : "light"}
-      className={`min-h-screen w-full select-none overflow-y-auto p-4 sm:p-6 lg:p-8 ${
+      className={`min-h-screen w-full select-none overflow-y-auto ${
         isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
       }`}
     >
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 sm:gap-8">
+      {/* Header Video */}
+      <div className="relative mx-auto w-full max-w-3xl h-48 sm:h-64 overflow-hidden">
+        <video
+          ref={nextVideoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ opacity: 0 }}
+          src="https://img.przknv.cc/t/footer.mp4"
+        />
+        <video
+          ref={videoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          src="https://img.przknv.cc/t/header.mp4"
+        />
+        <div
+          ref={gradientRef}
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: headerGradient }}
+        />
+      </div>
+
+      <div className="mx-auto flex max-w-3xl flex-col gap-6 sm:gap-8 p-4 sm:p-6 lg:p-8">
         <div className="flex items-center justify-end gap-3 w-full">
           <button
             className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${
@@ -281,7 +354,7 @@ const Home = function Home() {
           <button
             aria-label="Toggle theme"
             className="rounded-full p-2 focus:outline-none focus-visible:ring-1 focus-visible:ring-current/40"
-            onClick={toggleTheme}
+            onClick={animatedToggleTheme}
             ref={themeRefs.buttonRef}
             type="button"
           >
@@ -313,6 +386,15 @@ const Home = function Home() {
         <div className="shrink-0 flex items-center justify-between pt-2">
           <SocialLinks profile={profile} />
           <LoginPopup isDarkMode={isDarkMode} />
+        </div>
+
+        <div className="flex justify-end pt-4 pb-2">
+          <span
+            className="text-4xl sm:text-5xl opacity-40"
+            style={{ fontFamily: '"Louison Adriana", cursive' }}
+          >
+            — with love, harsh
+          </span>
         </div>
       </div>
     </div>

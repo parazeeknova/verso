@@ -2,6 +2,7 @@ import { ReactRenderer } from "@tiptap/react";
 import type { SuggestionProps } from "@tiptap/suggestion";
 import type { SlashMenuItemType } from "./types";
 import { autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom";
+import { animateIn, animateOut } from "#/shared/lib/animate-popup";
 import { CommandList } from "./command-list";
 import type { CommandListRef } from "./command-list";
 
@@ -42,20 +43,26 @@ const renderItems = () => {
         cleanup = null;
       }
 
-      if (popup) {
-        popup.remove();
-        popup = null;
-      }
+      animateOut(popup, () => {
+        if (popup) {
+          popup.remove();
+          popup = null;
+        }
 
-      if (component) {
-        component.destroy();
-        component = null;
-      }
+        if (component) {
+          component.destroy();
+          component = null;
+        }
+      });
     },
     onKeyDown: (props: { event: KeyboardEvent }) => {
       if (props.event.key === "Escape") {
         if (popup) {
-          popup.style.display = "none";
+          animateOut(popup, () => {
+            if (popup) {
+              popup.style.display = "none";
+            }
+          });
         }
         return true;
       }
@@ -85,6 +92,8 @@ const renderItems = () => {
         popup.append(component.element);
       }
 
+      animateIn(popup);
+
       cleanup = autoUpdate(
         {
           getBoundingClientRect: () =>
@@ -98,7 +107,11 @@ const renderItems = () => {
       component?.updateProps(props);
 
       if (popup) {
+        const wasHidden = popup.style.display === "none";
         popup.style.display = "";
+        if (wasHidden) {
+          animateIn(popup);
+        }
       }
 
       if (!props.clientRect) {

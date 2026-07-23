@@ -15,7 +15,10 @@ import {
   WifiHighIcon,
   WifiSlashIcon,
   UsersIcon,
+  ChatCircleDotsIcon,
 } from "@phosphor-icons/react";
+import { CommentSidebar, CommentDialog, useComments, useCommentStream } from "#/features/comment";
+import { BubbleMenu } from "./toolbar/bubble-menu";
 import { gsap } from "gsap";
 import { useTheme } from "#/shared/hooks/use-theme";
 import type { WebsocketProvider } from "y-websocket";
@@ -487,6 +490,7 @@ const MergedConnectionStatus = ({
   );
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -501,10 +505,35 @@ const MergedConnectionStatus = ({
     };
   }, []);
 
+  const closeMenu = useCallback(() => {
+    if (panelRef.current) {
+      gsap.to(panelRef.current, {
+        duration: 0.12,
+        ease: "power2.in",
+        onComplete: () => setIsOpen(false),
+        opacity: 0,
+        scale: 0.95,
+        y: -4,
+      });
+    } else {
+      setIsOpen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && panelRef.current) {
+      gsap.fromTo(
+        panelRef.current,
+        { opacity: 0, scale: 0.95, y: -4 },
+        { duration: 0.15, ease: "power2.out", opacity: 1, scale: 1, y: 0 },
+      );
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
+        closeMenu();
       }
     };
     if (isOpen) {
@@ -513,7 +542,7 @@ const MergedConnectionStatus = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, closeMenu]);
 
   const isWsConnected = collabStatus === "connected";
   const isWsConnecting = collabStatus === "connecting";
@@ -524,10 +553,15 @@ const MergedConnectionStatus = ({
   );
 
   if (isOnline && isWsConnected) {
-    badgeStyle =
-      "border-purple-500/30 text-purple-500 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20";
+    badgeStyle = t(
+      "border-purple-500/30 text-purple-400 bg-purple-500/10 hover:bg-purple-500/20",
+      "border-purple-300 text-purple-600 bg-purple-50 hover:bg-purple-100",
+    );
   } else if (isOnline && isWsConnecting) {
-    badgeStyle = "border-amber-500/30 text-amber-500 bg-amber-500/10 animate-pulse";
+    badgeStyle = t(
+      "border-amber-500/30 text-amber-500 bg-amber-500/10 animate-pulse",
+      "border-amber-300 text-amber-600 bg-amber-50 animate-pulse",
+    );
   }
 
   let wsTextColor = "text-neutral-400";
@@ -552,7 +586,13 @@ const MergedConnectionStatus = ({
     <div ref={dropdownRef} className="relative flex items-center justify-center">
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+          if (isOpen) {
+            closeMenu();
+          } else {
+            setIsOpen(true);
+          }
+        }}
         className={`flex items-center gap-1.5 px-1.5 py-0.5 border transition-all cursor-pointer ${badgeStyle}`}
         aria-label="Connection Status"
       >
@@ -562,7 +602,8 @@ const MergedConnectionStatus = ({
 
       {isOpen && (
         <div
-          className={`absolute top-full right-0 mt-1 z-50 w-44 p-1.5 shadow-lg border text-[10px] font-mono lowercase space-y-1 transition-all ${t(
+          ref={panelRef}
+          className={`absolute top-full right-0 mt-1 z-50 w-44 p-1.5 shadow-lg border text-[10px] font-mono lowercase space-y-1 ${t(
             "bg-neutral-900 border-neutral-800 text-neutral-200",
             "bg-white border-neutral-200 text-neutral-800",
           )}`}
@@ -632,15 +673,15 @@ const CollaboratorAvatar = ({
   if (avatarUrl && isPokemon) {
     return (
       <div
-        className={`h-5 w-5 flex items-center justify-center overflow-hidden ring-2 p-0.5 bg-neutral-800/90 dark:bg-neutral-900/90 ${t(
-          "ring-neutral-900 border border-neutral-700/60",
-          "ring-white border border-neutral-300",
+        className={`h-5 w-5 flex items-center justify-center overflow-hidden ring-1 p-0.5 transition-all ${t(
+          "bg-neutral-900 ring-neutral-900 border border-neutral-700/60",
+          "bg-white ring-neutral-200 border border-neutral-300",
         )}`}
       >
         <img
           src={avatarUrl}
           alt={user.name}
-          className="h-3.5 w-3.5 object-contain grayscale transition-all duration-200 group-hover:scale-110"
+          className="h-3.5 w-3.5 object-contain transition-all duration-200 group-hover:scale-110"
         />
       </div>
     );
@@ -649,9 +690,9 @@ const CollaboratorAvatar = ({
   if (user.avatar_url) {
     return (
       <div
-        className={`h-5 w-5 rounded-full flex items-center justify-center overflow-hidden ring-2 p-0.5 bg-neutral-500 ${t(
-          "ring-neutral-900 border border-neutral-600",
-          "ring-white border border-neutral-400",
+        className={`h-5 w-5 rounded-full flex items-center justify-center overflow-hidden ring-1 p-0.5 transition-all ${t(
+          "bg-neutral-900 ring-neutral-900 border border-neutral-700/60",
+          "bg-white ring-neutral-200 border border-neutral-300",
         )}`}
       >
         <img
@@ -665,12 +706,96 @@ const CollaboratorAvatar = ({
 
   return (
     <div
-      className={`h-5 w-5 rounded-full flex items-center justify-center text-[8.5px] font-bold text-white ring-2 bg-neutral-500 ${t(
-        "ring-neutral-900",
-        "ring-white",
+      className={`h-5 w-5 rounded-full flex items-center justify-center text-[8.5px] font-bold ring-1 transition-all ${t(
+        "bg-neutral-800 text-white ring-neutral-700",
+        "bg-neutral-200 text-neutral-800 ring-neutral-300",
       )}`}
     >
       {initials}
+    </div>
+  );
+};
+
+const CollaboratorTooltip = ({
+  initials,
+  t,
+  user,
+  pokemonInfo,
+  isGuest,
+  cleanName,
+  subtitle,
+}: {
+  initials: string;
+  t: (dark: string, light: string) => string;
+  user: ActiveCollaborator;
+  pokemonInfo: ReturnType<typeof getPokemonDetails>;
+  isGuest: boolean;
+  cleanName: string;
+  subtitle: string;
+}) => {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+
+  const showTooltip = useCallback(() => {
+    if (tooltipRef.current) {
+      gsap.set(tooltipRef.current, { display: "flex" });
+      gsap.fromTo(
+        tooltipRef.current,
+        { opacity: 0, scale: 0.95, y: -4 },
+        { duration: 0.15, ease: "power2.out", opacity: 1, scale: 1, y: 0 },
+      );
+    }
+  }, []);
+
+  const hideTooltip = useCallback(() => {
+    if (tooltipRef.current) {
+      gsap.to(tooltipRef.current, {
+        duration: 0.1,
+        ease: "power2.in",
+        onComplete: () => {
+          gsap.set(tooltipRef.current, { display: "none" });
+        },
+        opacity: 0,
+        scale: 0.95,
+        y: -4,
+      });
+    }
+  }, []);
+
+  return (
+    <div
+      className="relative flex items-center justify-center shrink-0"
+      onMouseEnter={showTooltip}
+      onMouseLeave={hideTooltip}
+    >
+      <CollaboratorAvatar initials={initials} t={t} user={user} />
+      <div
+        ref={tooltipRef}
+        className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 hidden flex-col items-center select-none"
+      >
+        <div className="w-2 h-2 -mb-1 rotate-45 bg-neutral-900/95 border-l border-t border-neutral-700/60" />
+        <div className="flex flex-col gap-1 rounded-none px-2.5 py-1.5 text-xs bg-neutral-900/95 text-white dark:bg-neutral-900/95 dark:text-white border border-neutral-700/60 shadow-xl backdrop-blur-md">
+          <div className="flex items-center gap-1.5 font-semibold text-[11px] leading-tight whitespace-nowrap">
+            {user.avatar_url || pokemonInfo?.avatar ? (
+              <img
+                src={user.avatar_url || pokemonInfo?.avatar}
+                alt=""
+                className="h-4 w-4 object-contain shrink-0 grayscale"
+              />
+            ) : (
+              <span className="h-2 w-2 bg-purple-400 shrink-0" />
+            )}
+            <span>{cleanName}</span>
+            {isGuest && (
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1 py-0.5 rounded-none bg-purple-500/20 text-purple-300 border border-purple-500/30 leading-none">
+                Guest
+              </span>
+            )}
+          </div>
+          <div className="text-[9.5px] text-neutral-400 font-normal leading-tight whitespace-nowrap flex items-center gap-1">
+            <span>{subtitle}</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -716,37 +841,16 @@ const ActiveCollaboratorsStack = ({
         }
 
         return (
-          <div
+          <CollaboratorTooltip
             key={`${user.clientId}-${idx}`}
-            className="group relative flex items-center justify-center shrink-0"
-          >
-            <CollaboratorAvatar initials={initials} t={t} user={user} />
-            <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 hidden group-hover:flex flex-col items-center select-none animate-in fade-in zoom-in-95 duration-150">
-              <div className="w-2 h-2 -mb-1 rotate-45 bg-neutral-900/95 border-l border-t border-neutral-700/60" />
-              <div className="flex flex-col gap-1 rounded-none px-2.5 py-1.5 text-xs bg-neutral-900/95 text-white dark:bg-neutral-900/95 dark:text-white border border-neutral-700/60 shadow-xl backdrop-blur-md">
-                <div className="flex items-center gap-1.5 font-semibold text-[11px] leading-tight whitespace-nowrap">
-                  {user.avatar_url || pokemonInfo?.avatar ? (
-                    <img
-                      src={user.avatar_url || pokemonInfo?.avatar}
-                      alt=""
-                      className="h-4 w-4 object-contain shrink-0 grayscale"
-                    />
-                  ) : (
-                    <span className="h-2 w-2 bg-purple-400 shrink-0" />
-                  )}
-                  <span>{cleanName}</span>
-                  {isGuest && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider px-1 py-0.5 rounded-none bg-purple-500/20 text-purple-300 border border-purple-500/30 leading-none">
-                      Guest
-                    </span>
-                  )}
-                </div>
-                <div className="text-[9.5px] text-neutral-400 font-normal leading-tight whitespace-nowrap flex items-center gap-1">
-                  <span>{subtitle}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+            initials={initials}
+            t={t}
+            user={user}
+            pokemonInfo={pokemonInfo}
+            isGuest={isGuest}
+            cleanName={cleanName}
+            subtitle={subtitle}
+          />
         );
       })}
 
@@ -784,16 +888,16 @@ const ShareInfoSection = ({
   const shortUrl = share?.shortCode ? `${origin}/sh/${share.shortCode}` : "";
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <h4
-        className={`text-[9px] font-bold uppercase tracking-wider ${t("text-neutral-500", "text-neutral-400")}`}
+        className={`text-xs font-bold uppercase tracking-wider ${t("text-neutral-500", "text-neutral-400")}`}
       >
         share & web
       </h4>
       <div className="flex items-center justify-between gap-2">
         <span className={t("text-neutral-500", "text-neutral-400")}>web access</span>
         <span
-          className={`font-semibold text-[9.5px] ${share?.isEnabled ? "text-accent" : t("text-neutral-400", "text-neutral-500")}`}
+          className={`font-semibold text-[11px] ${share?.isEnabled ? "text-purple-600 dark:text-purple-400" : t("text-neutral-400", "text-neutral-500")}`}
         >
           {share?.isEnabled ? "shared to web" : "private"}
         </span>
@@ -803,18 +907,18 @@ const ShareInfoSection = ({
         <>
           <div className="flex items-center justify-between gap-2">
             <span className={t("text-neutral-500", "text-neutral-400")}>search indexing</span>
-            <span className="font-semibold text-[9.5px]">
+            <span className="font-semibold text-[11px]">
               {share.searchIndexing ? "allow" : "disallow"}
             </span>
           </div>
 
           {publicUrl && (
-            <div className="flex flex-col gap-0.5 pt-0.5">
+            <div className="flex flex-col gap-1 pt-0.5">
               <span className={t("text-neutral-500", "text-neutral-400")}>public link</span>
               <div
-                className={`flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
+                className={`flex items-center gap-1.5 border px-2 py-1 text-[10px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
                   "border-neutral-800 bg-black/30 text-neutral-300",
-                  "border-neutral-200 bg-neutral-100 text-neutral-700",
+                  "border-neutral-200 bg-neutral-100 text-neutral-800",
                 )}`}
               >
                 <span className="flex-1 overflow-hidden text-ellipsis">{publicUrl}</span>
@@ -825,9 +929,9 @@ const ShareInfoSection = ({
                   title="copy link"
                 >
                   {copied ? (
-                    <CheckIcon className="size-2.5 text-accent" />
+                    <CheckIcon className="size-3 text-purple-600 dark:text-purple-400" />
                   ) : (
-                    <CopyIcon className="size-2.5" />
+                    <CopyIcon className="size-3" />
                   )}
                 </button>
                 <a
@@ -837,19 +941,19 @@ const ShareInfoSection = ({
                   className="hover:opacity-100 opacity-60 transition-opacity"
                   title="open in new tab"
                 >
-                  <ArrowSquareOutIcon className="size-2.5" />
+                  <ArrowSquareOutIcon className="size-3" />
                 </a>
               </div>
             </div>
           )}
 
           {shortUrl && (
-            <div className="flex flex-col gap-0.5 pt-0.5">
+            <div className="flex flex-col gap-1 pt-0.5">
               <span className={t("text-neutral-500", "text-neutral-400")}>short link</span>
               <div
-                className={`flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
+                className={`flex items-center gap-1.5 border px-2 py-1 text-[10px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
                   "border-neutral-800 bg-black/30 text-neutral-300",
-                  "border-neutral-200 bg-neutral-100 text-neutral-700",
+                  "border-neutral-200 bg-neutral-100 text-neutral-800",
                 )}`}
               >
                 <span className="flex-1 overflow-hidden text-ellipsis">{shortUrl}</span>
@@ -860,9 +964,9 @@ const ShareInfoSection = ({
                   title="copy link"
                 >
                   {shortCopied ? (
-                    <CheckIcon className="size-2.5 text-accent" />
+                    <CheckIcon className="size-3 text-purple-600 dark:text-purple-400" />
                   ) : (
-                    <CopyIcon className="size-2.5" />
+                    <CopyIcon className="size-3" />
                   )}
                 </button>
                 <a
@@ -872,7 +976,7 @@ const ShareInfoSection = ({
                   className="hover:opacity-100 opacity-60 transition-opacity"
                   title="open in new tab"
                 >
-                  <ArrowSquareOutIcon className="size-2.5" />
+                  <ArrowSquareOutIcon className="size-3" />
                 </a>
               </div>
             </div>
@@ -962,14 +1066,14 @@ const PageDetailsPanel = ({
       />
       <div
         ref={panelRef}
-        className={`absolute top-0 right-0 h-full w-full sm:w-52 border-l p-3 flex flex-col shadow-xl pointer-events-auto ${t(
+        className={`absolute top-0 right-0 h-full w-full sm:w-60 border-l p-3.5 flex flex-col shadow-xl pointer-events-auto ${t(
           "bg-neutral-900 border-neutral-800 text-neutral-200",
           "bg-white border-neutral-200 text-neutral-800",
         )}`}
       >
-        <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center justify-between mb-3">
           <h3
-            className={`text-[9px] font-bold tracking-wider uppercase ${t("text-neutral-500", "text-neutral-400")}`}
+            className={`text-xs font-bold tracking-wider uppercase ${t("text-neutral-500", "text-neutral-400")}`}
           >
             page info
           </h3>
@@ -982,20 +1086,20 @@ const PageDetailsPanel = ({
             onClick={onClose}
             type="button"
           >
-            <XIcon size={12} />
+            <XIcon size={14} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-3 text-[10px]">
-          <div className="space-y-1.5">
+        <div className="flex-1 overflow-y-auto space-y-3.5 text-xs">
+          <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <span className={t("text-neutral-500", "text-neutral-400")}>author</span>
-              <div className="flex items-center gap-1 font-medium min-w-0">
+              <div className="flex items-center gap-1.5 font-medium min-w-0">
                 <AvatarBadge
                   icon={creator?.avatar_url}
                   name={displayName}
-                  className="w-3.5 h-3.5 shrink-0 bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center rounded-full"
-                  initialsClass="text-[7px] text-neutral-600 dark:text-neutral-300 font-semibold"
+                  className="w-4 h-4 shrink-0 bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center rounded-full"
+                  initialsClass="text-[8px] text-neutral-600 dark:text-neutral-300 font-semibold"
                 />
                 <span className="truncate">{displayName}</span>
               </div>
@@ -1011,11 +1115,11 @@ const PageDetailsPanel = ({
 
           <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
 
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {createdAt && (
               <div className="flex items-center justify-between gap-2">
                 <span className={t("text-neutral-500", "text-neutral-400")}>created</span>
-                <span className="font-medium text-[9.5px] font-mono text-right">
+                <span className="font-medium text-[11px] font-mono text-right">
                   {formatDateTime(createdAt)}
                 </span>
               </div>
@@ -1023,7 +1127,7 @@ const PageDetailsPanel = ({
             {updatedAt && (
               <div className="flex items-center justify-between gap-2">
                 <span className={t("text-neutral-500", "text-neutral-400")}>modified</span>
-                <span className="font-medium text-[9.5px] font-mono text-right">
+                <span className="font-medium text-[11px] font-mono text-right">
                   {formatDateTime(updatedAt)}
                 </span>
               </div>
@@ -1039,9 +1143,9 @@ const PageDetailsPanel = ({
 
           <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
 
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <h4
-              className={`text-[9px] font-bold uppercase tracking-wider ${t("text-neutral-500", "text-neutral-400")}`}
+              className={`text-xs font-bold uppercase tracking-wider ${t("text-neutral-500", "text-neutral-400")}`}
             >
               metrics
             </h4>
@@ -1508,6 +1612,37 @@ export const PageEditor = ({
   const isWatching = watchData?.watching ?? false;
 
   const [fullWidth, setFullWidth] = useState(getInitialFullWidth);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [inlineCommentState, setInlineCommentState] = useState<{ selectedText: string } | null>(
+    null,
+  );
+
+  const { data: pageComments = [] } = useComments(pageId);
+  useCommentStream(pageId);
+
+  const unresolvedCommentCount = useMemo(
+    () => pageComments.filter((c) => !c.parentCommentId && !c.resolvedAt).length,
+    [pageComments],
+  );
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("comments") === "open" || params.has("commentId")) {
+        setCommentsOpen(true);
+      }
+    }
+    const handleOpenCommentsEvent = (e: Event) => {
+      const { detail } = e as CustomEvent<{ pageId?: string; commentId?: string }>;
+      if (!detail?.pageId || detail.pageId === pageId) {
+        setCommentsOpen(true);
+      }
+    };
+    window.addEventListener("verso:open-comments", handleOpenCommentsEvent);
+    return () => {
+      window.removeEventListener("verso:open-comments", handleOpenCommentsEvent);
+    };
+  }, [pageId]);
 
   const toggleFullWidth = useCallback(() => {
     setFullWidth((prev) => {
@@ -1520,6 +1655,29 @@ export const PageEditor = ({
   const contentRef = useRef<HTMLDivElement>(null);
 
   const effectiveEditable = editable && !isLocked && !isDeleting;
+
+  const handleOpenInlineComment = useCallback(() => {
+    if (!editor || editor.isDestroyed) {
+      return;
+    }
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to);
+    setInlineCommentState({ selectedText });
+  }, [editor]);
+
+  useEffect(() => {
+    const handleCommentMarkClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement)?.closest(".comment-mark");
+      if (target) {
+        setCommentsOpen(true);
+      }
+    };
+    const container = contentRef.current;
+    container?.addEventListener("click", handleCommentMarkClick);
+    return () => {
+      container?.removeEventListener("click", handleCommentMarkClick);
+    };
+  }, [editor]);
 
   const handleContentClick = useContentClickHandler(editor, effectiveEditable, contentRef);
 
@@ -1681,6 +1839,19 @@ export const PageEditor = ({
             </button>
           )}
           <button
+            aria-label="Comments"
+            className={`relative p-0.5 transition-colors ${commentsOpen ? t("text-text-dark", "text-text-light") : t("text-text-dark/40 hover:text-text-dark", "text-text-light/40 hover:text-text-light")}`}
+            onClick={() => setCommentsOpen((prev) => !prev)}
+            type="button"
+          >
+            <ChatCircleDotsIcon size={14} />
+            {unresolvedCommentCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-purple-600 px-1 text-[8px] font-bold text-white shadow-xs">
+                {unresolvedCommentCount > 99 ? "99+" : unresolvedCommentCount}
+              </span>
+            )}
+          </button>
+          <button
             aria-label="Open table of contents"
             className={`p-0.5 transition-colors ${tocOpen ? t("text-text-dark", "text-text-light") : t("text-text-dark/40 hover:text-text-dark", "text-text-light/40 hover:text-text-light")}`}
             onClick={() => setTocOpen((prev) => !prev)}
@@ -1732,47 +1903,71 @@ export const PageEditor = ({
         </div>
       </div>
 
-      <div
-        ref={contentRef}
-        className={`w-full blog-reader-prose flex-1 min-h-0 overflow-y-auto pb-32 ${fullWidth ? "px-8 md:px-16 lg:px-24" : "px-4 mx-auto max-w-2xl"}`}
-        onClick={handleContentClick}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            handleContentClick(e);
-          }
-        }}
-        aria-label="page content"
-        aria-multiline="true"
-        role="textbox"
-        tabIndex={0}
-      >
-        <textarea
-          ref={titleRef}
-          rows={1}
-          className={`w-full resize-none overflow-hidden bg-transparent !text-5xl !font-black border-none outline-none focus:outline-none focus:border-none focus:ring-0 pt-8 pb-0 px-0 mb-0.5 font-sans tracking-tight leading-tight ${t("text-neutral-200 placeholder-neutral-700", "text-neutral-800 placeholder-neutral-300")}`}
-          placeholder="Untitled"
-          value={localTitle}
-          onChange={(e) => handleTitleChange(e.target.value)}
-          onBlur={handleTitleBlur}
-          onKeyDown={handleTitleKeyDown}
-          disabled={!effectiveEditable}
+      <div className="flex flex-1 min-h-0 w-full overflow-hidden relative">
+        <div
+          ref={contentRef}
+          className={`w-full blog-reader-prose flex-1 min-h-0 overflow-y-auto pb-32 ${fullWidth ? "px-8 md:px-16 lg:px-24" : "px-4 mx-auto max-w-2xl"}`}
+          onClick={handleContentClick}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              handleContentClick(e);
+            }
+          }}
+          aria-label="page content"
+          aria-multiline="true"
+          role="textbox"
+          tabIndex={0}
+        >
+          <textarea
+            ref={titleRef}
+            rows={1}
+            className={`w-full resize-none overflow-hidden bg-transparent !text-5xl !font-black border-none outline-none focus:outline-none focus:border-none focus:ring-0 pt-8 pb-0 px-0 mb-0.5 font-sans tracking-tight leading-tight ${t("text-neutral-200 placeholder-neutral-700", "text-neutral-800 placeholder-neutral-300")}`}
+            placeholder="Untitled"
+            value={localTitle}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            onBlur={handleTitleBlur}
+            onKeyDown={handleTitleKeyDown}
+            disabled={!effectiveEditable}
+          />
+          <CreatorByline creator={creator} t={t} />
+          <EditorContent editor={editor} />
+          {editor && effectiveEditable && (
+            <>
+              <BubbleMenu editor={editor} onAddComment={handleOpenInlineComment} />
+              <TableMenu editor={editor} />
+              <ColumnsMenu editor={editor} />
+              <CalloutMenu editor={editor} />
+              <ImageMenu editor={editor} />
+              <VideoMenu editor={editor} />
+              <AudioMenu editor={editor} />
+              <PdfMenu editor={editor} />
+              <YoutubeMenu editor={editor} />
+              <TableHandlesLayer editor={editor} />
+            </>
+          )}
+        </div>
+
+        <CommentSidebar
+          isDarkMode={isDarkMode}
+          isOpen={commentsOpen}
+          isPageOwner={Boolean(currentUser && creatorId && currentUser.id === creatorId)}
+          onClose={() => setCommentsOpen(false)}
+          pageId={pageId}
         />
-        <CreatorByline creator={creator} t={t} />
-        <EditorContent editor={editor} />
-        {editor && effectiveEditable && (
-          <>
-            <TableMenu editor={editor} />
-            <ColumnsMenu editor={editor} />
-            <CalloutMenu editor={editor} />
-            <ImageMenu editor={editor} />
-            <VideoMenu editor={editor} />
-            <AudioMenu editor={editor} />
-            <PdfMenu editor={editor} />
-            <YoutubeMenu editor={editor} />
-            <TableHandlesLayer editor={editor} />
-          </>
-        )}
       </div>
+
+      {inlineCommentState && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <CommentDialog
+            editor={editor}
+            isDarkMode={isDarkMode}
+            onClose={() => setInlineCommentState(null)}
+            onSuccess={() => setCommentsOpen(true)}
+            pageId={pageId}
+            selectedText={inlineCommentState.selectedText}
+          />
+        </div>
+      )}
 
       <PageDetailsPanel
         pageId={pageId}

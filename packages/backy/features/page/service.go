@@ -832,6 +832,14 @@ func (s *PageService) softDeletePageAndDescendantsTx(ctx context.Context, tx pgx
 		return fmt.Errorf("soft-deleting page %q: %w", pageID, err)
 	}
 
+	if _, err := tx.Exec(ctx, `UPDATE comments SET deleted_at = now() WHERE page_id = $1 AND deleted_at IS NULL`, pageID); err != nil {
+		return fmt.Errorf("deleting comments for page %q: %w", pageID, err)
+	}
+
+	if _, err := tx.Exec(ctx, `UPDATE notifications SET deleted_at = now() WHERE (entity_id = $1 OR metadata->>'pageId' = $1) AND deleted_at IS NULL`, pageID); err != nil {
+		return fmt.Errorf("deleting notifications for page %q: %w", pageID, err)
+	}
+
 	if _, err := tx.Exec(ctx, `DELETE FROM page_history WHERE page_id = $1`, pageID); err != nil {
 		return fmt.Errorf("deleting page history for page %q: %w", pageID, err)
 	}
@@ -1079,9 +1087,12 @@ func (s *PageService) GetPageShare(ctx context.Context, pageID string, userID st
 	return share, nil
 }
 
-var ErrInvalidAccessLevel = errors.New("invalid access level")
+var (
+	ErrInvalidAccessLevel   = errors.New("invalid access level")
+	ErrInvalidCommentAccess = errors.New("invalid comment access level")
+)
 
-func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID string, isEnabled bool, searchIndexing bool, accessLevel string) (models.PageShare, error) {
+func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID string, isEnabled bool, searchIndexing bool, accessLevel string, commentAccess string) (models.PageShare, error) {
 	page, err := s.pageRepo.GetByID(ctx, pageID)
 	if err != nil {
 		return models.PageShare{}, err
@@ -1094,6 +1105,12 @@ func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID
 		accessLevel = "read"
 	} else if accessLevel != "read" && accessLevel != "edit" && accessLevel != "public_edit" {
 		return models.PageShare{}, fmt.Errorf("%w %q: must be read, edit, or public_edit", ErrInvalidAccessLevel, accessLevel)
+	}
+
+	if commentAccess == "" {
+		commentAccess = "all"
+	} else if commentAccess != "disabled" && commentAccess != "members" && commentAccess != "all" {
+		return models.PageShare{}, fmt.Errorf("%w %q: must be disabled, members, or all", ErrInvalidCommentAccess, commentAccess)
 	}
 
 	share, err := s.pageShareRepo.GetByPageID(ctx, pageID)
@@ -1110,6 +1127,7 @@ func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID
 				SearchIndexing: searchIndexing,
 				IsEnabled:      isEnabled,
 				AccessLevel:    accessLevel,
+				CommentAccess:  commentAccess,
 			}
 		} else {
 			return models.PageShare{}, err
@@ -1118,6 +1136,7 @@ func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID
 		share.IsEnabled = isEnabled
 		share.SearchIndexing = searchIndexing
 		share.AccessLevel = accessLevel
+		share.CommentAccess = commentAccess
 		if share.ShareToken == "" {
 			token, err := generateRandomString(32)
 			if err != nil {
