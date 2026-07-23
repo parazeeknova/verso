@@ -114,7 +114,7 @@ export const NotificationBell = ({ isDarkMode }: NotificationBellProps) => {
       >
         <BellIcon size={12} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1.5 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-1 text-[8px] font-medium text-white">
+          <span className="absolute -top-1.5 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-purple-600 px-1 text-[8px] font-bold text-white shadow-xs">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
