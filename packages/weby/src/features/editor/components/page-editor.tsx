@@ -527,10 +527,15 @@ const MergedConnectionStatus = ({
   );
 
   if (isOnline && isWsConnected) {
-    badgeStyle =
-      "border-purple-500/30 text-purple-500 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20";
+    badgeStyle = t(
+      "border-purple-500/30 text-purple-400 bg-purple-500/10 hover:bg-purple-500/20",
+      "border-purple-300 text-purple-600 bg-purple-50 hover:bg-purple-100",
+    );
   } else if (isOnline && isWsConnecting) {
-    badgeStyle = "border-amber-500/30 text-amber-500 bg-amber-500/10 animate-pulse";
+    badgeStyle = t(
+      "border-amber-500/30 text-amber-500 bg-amber-500/10 animate-pulse",
+      "border-amber-300 text-amber-600 bg-amber-50 animate-pulse",
+    );
   }
 
   let wsTextColor = "text-neutral-400";
@@ -635,15 +640,15 @@ const CollaboratorAvatar = ({
   if (avatarUrl && isPokemon) {
     return (
       <div
-        className={`h-5 w-5 flex items-center justify-center overflow-hidden ring-2 p-0.5 bg-neutral-800/90 dark:bg-neutral-900/90 ${t(
-          "ring-neutral-900 border border-neutral-700/60",
-          "ring-white border border-neutral-300",
+        className={`h-5 w-5 flex items-center justify-center overflow-hidden ring-1 p-0.5 transition-all ${t(
+          "bg-neutral-900 ring-neutral-900 border border-neutral-700/60",
+          "bg-white ring-neutral-200 border border-neutral-300",
         )}`}
       >
         <img
           src={avatarUrl}
           alt={user.name}
-          className="h-3.5 w-3.5 object-contain grayscale transition-all duration-200 group-hover:scale-110"
+          className="h-3.5 w-3.5 object-contain transition-all duration-200 group-hover:scale-110"
         />
       </div>
     );
@@ -652,9 +657,9 @@ const CollaboratorAvatar = ({
   if (user.avatar_url) {
     return (
       <div
-        className={`h-5 w-5 rounded-full flex items-center justify-center overflow-hidden ring-2 p-0.5 bg-neutral-500 ${t(
-          "ring-neutral-900 border border-neutral-600",
-          "ring-white border border-neutral-400",
+        className={`h-5 w-5 rounded-full flex items-center justify-center overflow-hidden ring-1 p-0.5 transition-all ${t(
+          "bg-neutral-900 ring-neutral-900 border border-neutral-700/60",
+          "bg-white ring-neutral-200 border border-neutral-300",
         )}`}
       >
         <img
@@ -668,9 +673,9 @@ const CollaboratorAvatar = ({
 
   return (
     <div
-      className={`h-5 w-5 rounded-full flex items-center justify-center text-[8.5px] font-bold text-white ring-2 bg-neutral-500 ${t(
-        "ring-neutral-900",
-        "ring-white",
+      className={`h-5 w-5 rounded-full flex items-center justify-center text-[8.5px] font-bold ring-1 transition-all ${t(
+        "bg-neutral-800 text-white ring-neutral-700",
+        "bg-neutral-200 text-neutral-800 ring-neutral-300",
       )}`}
     >
       {initials}

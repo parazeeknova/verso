@@ -168,6 +168,34 @@ const Home = function Home() {
     document.documentElement.dataset.theme = newTheme;
   }, [isDarkMode]);
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const nextVideoRef = useRef<HTMLVideoElement>(null);
+  const gradientRef = useRef<HTMLDivElement>(null);
+
+  const animatedToggleTheme = useCallback(() => {
+    const nextDark = !isDarkMode;
+    const tl = gsap.timeline();
+    tl.set(nextVideoRef.current, {
+      src: nextDark ? "/stock/header.mp4" : "/stock/footer.mp4",
+    });
+    tl.call(() => {
+      if (nextVideoRef.current) {
+        void nextVideoRef.current.play();
+      }
+    });
+    tl.to(nextVideoRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 1 });
+    tl.to(videoRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 0 }, "<");
+    tl.call(() => {
+      const newTheme = nextDark ? "dark" : "light";
+      setIsDarkMode(nextDark);
+      localStorage.setItem("theme", newTheme);
+      document.documentElement.dataset.theme = newTheme;
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
+    });
+  }, [isDarkMode]);
+
   const handleProjectDetail = useCallback(
     (project: { productUrl?: string; readmeUrl?: string; repoUrl?: string; title: string }) => {
       if (!project.readmeUrl) {
@@ -263,6 +291,7 @@ const Home = function Home() {
     ? `linear-gradient(to bottom, ${bgColor}00 0%, ${bgColor}00 15%, ${bgColor}33 30%, ${bgColor}88 50%, ${bgColor}cc 70%, ${bgColor} 85%, ${bgColor} 100%)`
     : `linear-gradient(to bottom, ${bgColor}00 0%, ${bgColor}00 60%, ${bgColor}66 75%, ${bgColor}cc 88%, ${bgColor} 100%)`;
   const headerVideo = isDarkMode ? "/stock/header.mp4" : "/stock/footer.mp4";
+  const nextVideo = isDarkMode ? "/stock/footer.mp4" : "/stock/header.mp4";
 
   return (
     <div
@@ -274,6 +303,17 @@ const Home = function Home() {
       {/* Header Video */}
       <div className="relative mx-auto w-full max-w-3xl h-48 sm:h-64 overflow-hidden">
         <video
+          ref={nextVideoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ opacity: 0 }}
+          src={nextVideo}
+        />
+        <video
+          ref={videoRef}
           autoPlay
           loop
           muted
@@ -282,6 +322,7 @@ const Home = function Home() {
           src={headerVideo}
         />
         <div
+          ref={gradientRef}
           className="absolute inset-0 pointer-events-none"
           style={{ background: headerGradient }}
         />
@@ -303,7 +344,7 @@ const Home = function Home() {
           <button
             aria-label="Toggle theme"
             className="rounded-full p-2 focus:outline-none focus-visible:ring-1 focus-visible:ring-current/40"
-            onClick={toggleTheme}
+            onClick={animatedToggleTheme}
             ref={themeRefs.buttonRef}
             type="button"
           >

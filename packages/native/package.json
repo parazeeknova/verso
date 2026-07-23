@@ -1,6 +1,6 @@
 {
   "name": "@verso/native",
-  "version": "0.4.98",
+  "version": "0.4.100",
   "private": true,
   "type": "module",
   "scripts": {

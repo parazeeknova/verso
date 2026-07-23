@@ -1,6 +1,5 @@
 import {
   GlobeIcon,
-  GlobeXIcon,
   CopyIcon,
   CheckIcon,
   ArrowSquareOutIcon,
@@ -38,7 +37,7 @@ const SquareSwitch = ({ checked, disabled, onChange, isDarkMode }: SquareSwitchP
       onClick={onChange}
       disabled={disabled}
       className={`relative inline-flex h-3.5 w-6 shrink-0 cursor-pointer items-center transition-colors duration-150 focus:outline-none ${
-        checked ? "bg-accent" : inactiveBg
+        checked ? "bg-purple-600 dark:bg-purple-500" : inactiveBg
       }`}
     >
       <span
@@ -86,8 +85,12 @@ const AccessPermissionsSection = ({
   ];
 
   return (
-    <div className="flex flex-col gap-1.5 pt-1.5 border-t border-border-light dark:border-border-dark">
-      <div className="font-semibold lowercase text-text-light dark:text-text-dark text-[10px]">
+    <div
+      className={`flex flex-col gap-1.5 pt-1.5 border-t ${t("border-neutral-800", "border-neutral-200")}`}
+    >
+      <div
+        className={`font-semibold lowercase text-[10px] ${t("text-neutral-300", "text-neutral-700")}`}
+      >
         access permissions
       </div>
       <div className="flex flex-col gap-1">
@@ -101,18 +104,28 @@ const AccessPermissionsSection = ({
               disabled={disabled}
               className={`flex items-center justify-between px-2 py-1 border text-[10px] lowercase transition-all cursor-pointer ${
                 isSelected
-                  ? "border-accent bg-accent/10 text-accent font-medium"
-                  : t("border-border-dark hover:bg-white/5", "border-border-light hover:bg-black/5")
+                  ? t(
+                      "border-purple-500/50 bg-purple-500/10 text-purple-300 font-medium",
+                      "border-purple-600/50 bg-purple-50 text-purple-700 font-medium",
+                    )
+                  : t(
+                      "border-neutral-800 hover:bg-neutral-800/50 text-neutral-400 hover:text-neutral-200",
+                      "border-neutral-200 hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900",
+                    )
               }`}
             >
               <div className="flex items-center gap-1.5">
                 <Icon size={12} />
                 <div className="flex flex-col items-start leading-tight">
                   <span>{label}</span>
-                  <span className="text-[8px] opacity-50">{desc}</span>
+                  <span className={`text-[8px] ${t("text-neutral-400", "text-neutral-500")}`}>
+                    {desc}
+                  </span>
                 </div>
               </div>
-              {isSelected && <CheckIcon size={12} />}
+              {isSelected && (
+                <CheckIcon size={12} className="text-purple-600 dark:text-purple-400" />
+              )}
             </button>
           );
         })}
@@ -216,7 +229,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
   const publicUrl = share?.shareToken ? `${origin}/share/${share.shareToken}` : "";
   const shortUrl = share?.shortCode ? `${origin}/sh/${share.shortCode}` : "";
 
-  const isSharedActive = share?.isEnabled;
+  const isSharedActive = Boolean(share?.isEnabled);
   const currentAccessLevel = share?.accessLevel || "read";
 
   return (
@@ -225,7 +238,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
         aria-label="Share page settings"
         className={`p-0.5 transition-colors cursor-pointer ${
           isSharedActive
-            ? "text-accent hover:text-accent/80"
+            ? "text-purple-600 dark:text-purple-400 font-bold"
             : t(
                 "text-text-dark/40 hover:text-text-dark",
                 "text-text-light/40 hover:text-text-light",
@@ -234,14 +247,14 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
         onClick={() => setOpen((v) => !v)}
         type="button"
       >
-        {isSharedActive ? <GlobeIcon size={14} /> : <GlobeXIcon size={14} />}
+        <GlobeIcon size={14} />
       </button>
 
       {open && (
         <div
-          className={`absolute top-full right-0 mt-1 border text-[11px] p-2.5 w-72 flex flex-col gap-2.5 z-50 shadow-lg ${t(
-            "border-border-dark bg-bg-dark text-text-dark/70",
-            "border-border-light bg-bg-light text-text-light/70",
+          className={`absolute top-full right-0 mt-1 border text-[11px] p-2.5 w-72 flex flex-col gap-2.5 z-50 shadow-xl ${t(
+            "border-neutral-800 bg-neutral-900 text-neutral-200",
+            "border-neutral-200 bg-white text-neutral-800",
           )}`}
         >
           {isPending ? (
@@ -251,10 +264,14 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
               {/* Share to web toggle */}
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <div className="font-semibold lowercase text-text-light dark:text-text-dark text-[11px]">
+                  <div
+                    className={`font-semibold lowercase text-[11px] ${t("text-neutral-200", "text-neutral-800")}`}
+                  >
                     share to web
                   </div>
-                  <div className="text-[9px] opacity-40 lowercase">
+                  <div
+                    className={`text-[9px] lowercase ${t("text-neutral-400", "text-neutral-500")}`}
+                  >
                     make page publicly accessible
                   </div>
                 </div>
@@ -277,11 +294,15 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
 
                   {/* Public link */}
                   <div className="flex flex-col gap-0.5">
-                    <div className="text-[9px] font-medium lowercase opacity-45">public link</div>
+                    <div
+                      className={`text-[9px] font-medium lowercase ${t("text-neutral-400", "text-neutral-500")}`}
+                    >
+                      public link
+                    </div>
                     <div
                       className={`flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
-                        "border-border-dark bg-black/20",
-                        "border-border-light bg-white",
+                        "border-neutral-800 bg-neutral-950 text-neutral-300",
+                        "border-neutral-200 bg-neutral-100 text-neutral-800",
                       )}`}
                     >
                       <span className="flex-1 overflow-hidden text-ellipsis">{publicUrl}</span>
@@ -293,7 +314,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                           title="copy link"
                         >
                           {copied ? (
-                            <CheckIcon className="size-2.5 text-accent" />
+                            <CheckIcon className="size-2.5 text-purple-600 dark:text-purple-400" />
                           ) : (
                             <CopyIcon className="size-2.5" />
                           )}
@@ -313,15 +334,17 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
 
                   {/* Short link */}
                   <div className="flex flex-col gap-0.5">
-                    {share.shortCode ? (
+                    {share?.shortCode ? (
                       <>
-                        <div className="text-[9px] font-medium lowercase opacity-45">
+                        <div
+                          className={`text-[9px] font-medium lowercase ${t("text-neutral-400", "text-neutral-500")}`}
+                        >
                           short link
                         </div>
                         <div
                           className={`flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
-                            "border-border-dark bg-black/20",
-                            "border-border-light bg-white",
+                            "border-neutral-800 bg-neutral-950 text-neutral-300",
+                            "border-neutral-200 bg-neutral-100 text-neutral-800",
                           )}`}
                         >
                           <span className="flex-1 overflow-hidden text-ellipsis">{shortUrl}</span>
@@ -333,7 +356,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                               title="copy link"
                             >
                               {shortCopied ? (
-                                <CheckIcon className="size-2.5 text-accent" />
+                                <CheckIcon className="size-2.5 text-purple-600 dark:text-purple-400" />
                               ) : (
                                 <CopyIcon className="size-2.5" />
                               )}
@@ -356,8 +379,8 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                         onClick={handleShorten}
                         disabled={shortenShare.isPending}
                         className={`w-full py-0.5 text-center text-[10px] border lowercase font-medium cursor-pointer transition-colors ${t(
-                          "border-border-dark hover:bg-white/5 text-text-dark/80",
-                          "border-border-light hover:bg-black/5 text-text-light/80",
+                          "border-neutral-800 hover:bg-neutral-800/50 text-neutral-300",
+                          "border-neutral-200 hover:bg-neutral-100 text-neutral-700",
                         )}`}
                       >
                         {shortenShare.isPending ? "shortening..." : "shorten link"}
@@ -366,17 +389,23 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                   </div>
 
                   {/* Search engine indexing */}
-                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-border-light dark:border-border-dark">
+                  <div
+                    className={`flex items-center justify-between gap-2 pt-1 border-t ${t("border-neutral-800", "border-neutral-200")}`}
+                  >
                     <div>
-                      <div className="font-semibold lowercase text-text-light dark:text-text-dark text-[11px]">
+                      <div
+                        className={`font-semibold lowercase text-[11px] ${t("text-neutral-200", "text-neutral-800")}`}
+                      >
                         search indexing
                       </div>
-                      <div className="text-[9px] opacity-40 lowercase">
+                      <div
+                        className={`text-[9px] lowercase ${t("text-neutral-400", "text-neutral-500")}`}
+                      >
                         allow engines to index page
                       </div>
                     </div>
                     <SquareSwitch
-                      checked={share.searchIndexing}
+                      checked={Boolean(share?.searchIndexing)}
                       disabled={updateShare.isPending}
                       isDarkMode={isDarkMode}
                       onChange={handleToggleIndexing}
