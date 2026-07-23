@@ -251,6 +251,14 @@ func (s *CommentService) UpdateComment(ctx context.Context, commentID string, us
 		return nil, ErrForbidden
 	}
 
+	page, err := s.pageRepo.GetByID(ctx, comment.PageID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching page for comment: %w", err)
+	}
+	if !s.canUserAccessPage(ctx, page, userID) {
+		return nil, ErrForbidden
+	}
+
 	if comment.ResolvedAt != nil {
 		return nil, ErrCommentResolved
 	}
@@ -292,6 +300,16 @@ func (s *CommentService) DeleteComment(ctx context.Context, commentID string, us
 
 	if comment.CreatorID != userID && !isAdmin {
 		return ErrForbidden
+	}
+
+	if !isAdmin {
+		page, err := s.pageRepo.GetByID(ctx, comment.PageID)
+		if err != nil {
+			return fmt.Errorf("fetching page for comment: %w", err)
+		}
+		if !s.canUserAccessPage(ctx, page, userID) {
+			return ErrForbidden
+		}
 	}
 
 	if err := s.commentRepo.Delete(ctx, commentID); err != nil {
