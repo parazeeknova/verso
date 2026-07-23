@@ -57,6 +57,7 @@ var Projects = []models.Project{
 			"and dynamic Material You color schemes generated from your wallpapers via Matugen. " +
 			"Includes local AI workflows (OCR, Speech-to-Text, and LLMs) along with Waydroid virtualization " +
 			"and Cockpit server panel integration out of the box. Designed to look gorgeous without bloated overhead.",
+		Image:      "https://img.przknv.cc/t/doty.png",
 		Stack:      "Nix, NixOS, Hyprland, Quickshell, Qt, QML, Rust, Matugen, Waydroid, Distrobox, Home Manager",
 		ReadmeURL:  "https://raw.githubusercontent.com/parazeeknova/doty/refs/heads/main/.github/README.md",
 		RepoURL:    "https://github.com/parazeeknova/doty",
@@ -69,6 +70,7 @@ var Projects = []models.Project{
 			"and drag-to-merge all in a ~5MB binary with no Electron, no webview, " +
 			"no cloud, and no subscription for a picture of your own repo. " +
 			"Talks directly to libgit2. Named at 2am. No regrets.",
+		Image:      "https://img.przknv.cc/t/gitcha.png",
 		Stack:      "Rust, egui, eframe, git2, libgit2, diffy, similar, syntect, egui-arbor, egui-phosphor",
 		ReadmeURL:  "https://raw.githubusercontent.com/parazeeknova/gitcha/refs/heads/main/.github/README.md",
 		RepoURL:    "https://github.com/parazeeknova/gitcha",
@@ -77,6 +79,7 @@ var Projects = []models.Project{
 	{
 		Title:      "Lumen is a spatial system for organizing work.",
 		Desc:       "A local-first spatial workspace for free-form kanban, structured tasks, durable offline work, and realtime collaboration with other goodies.",
+		Image:      "https://img.przknv.cc/t/Screenshot_2026-07-08_22.51.03.png",
 		Stack:      "Next.js, Elysia, Elixir, Typescript, Bun, PostgreSQL, Redis, Yjs, Zustand, Tailwind, Tauri, CRDTs, Docker, Playwright, Bun Test, K6 and more",
 		ReadmeURL:  "https://raw.githubusercontent.com/singularityworks-xyz/lumen/refs/heads/origin/.github/README.md",
 		RepoURL:    "https://github.com/singularityworks-xyz/lumen",
@@ -89,6 +92,7 @@ var Projects = []models.Project{
 			"rich media and tipping all tied together by Aura, a reputation " +
 			"system that grows with you, and Zeph, an AI companion that actually " +
 			"remembers you. Built by one person. Slightly unhinged in ambition.",
+		Image:      "https://img.przknv.cc/t/Gk8Fy0aaMAARWSc.jpg",
 		Stack:      "Next.js, React, Elysia, Elixir, TypeScript, Tailwind CSS, PostgreSQL, Redis, RustFS, RabbitMQ, MeiliSearch, AI-sdk, Docker and more",
 		ReadmeURL:  "https://raw.githubusercontent.com/asocialmedia/social/refs/heads/main/.github/README.md",
 		RepoURL:    "https://github.com/asocialmedia/social",

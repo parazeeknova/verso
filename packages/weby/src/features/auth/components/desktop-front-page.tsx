@@ -52,24 +52,24 @@ const getHeaderGradient = (isDarkMode: boolean): string => {
 };
 
 const crossfadeVideo = (
-  videoRef: React.RefObject<HTMLVideoElement | null>,
-  nextRef: React.RefObject<HTMLVideoElement | null>,
+  fromRef: React.RefObject<HTMLVideoElement | null>,
+  toRef: React.RefObject<HTMLVideoElement | null>,
   nextSrc: string,
   onComplete: () => void,
 ) => {
   const tl = gsap.timeline();
-  tl.set(nextRef.current, { src: nextSrc });
+  tl.set(toRef.current, { opacity: 0, src: nextSrc });
   tl.call(() => {
-    if (nextRef.current) {
-      void nextRef.current.play();
+    if (toRef.current) {
+      void toRef.current.play();
     }
   });
-  tl.to(nextRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 1 });
-  tl.to(videoRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 0 }, "<");
+  tl.to(toRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 1 });
+  tl.to(fromRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 0 }, "<");
   tl.call(() => {
     onComplete();
-    if (videoRef.current) {
-      videoRef.current.pause();
+    if (fromRef.current) {
+      fromRef.current.pause();
     }
   });
 };
@@ -118,11 +118,17 @@ export const DesktopFrontPage = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const nextVideoRef = useRef<HTMLVideoElement>(null);
   const gradientRef = useRef<HTMLDivElement>(null);
+  const videoActiveNext = useRef(false);
 
   const animatedToggleTheme = useCallback(() => {
     const nextDark = !isDarkMode;
-    const nextSrc = nextDark ? "/stock/header.mp4" : "/stock/footer.mp4";
-    crossfadeVideo(videoRef, nextVideoRef, nextSrc, () => {
+    const nextSrc = nextDark
+      ? "https://img.przknv.cc/t/header.mp4"
+      : "https://img.przknv.cc/t/footer.mp4";
+    const fromRef = videoActiveNext.current ? nextVideoRef : videoRef;
+    const toRef = videoActiveNext.current ? videoRef : nextVideoRef;
+    crossfadeVideo(fromRef, toRef, nextSrc, () => {
+      videoActiveNext.current = !videoActiveNext.current;
       toggleTheme();
     });
   }, [isDarkMode, toggleTheme]);
@@ -365,7 +371,6 @@ export const DesktopFrontPage = () => {
   };
 
   const headerGradient = getHeaderGradient(isDarkMode);
-  const headerVideo = isDarkMode ? "/stock/header.mp4" : "/stock/footer.mp4";
 
   return (
     <div
@@ -375,13 +380,23 @@ export const DesktopFrontPage = () => {
       {/* Header Video */}
       <div className="relative mx-auto w-full max-w-xl h-48 sm:h-64 lg:h-80 overflow-hidden">
         <video
+          ref={nextVideoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ opacity: 0 }}
+          src="https://img.przknv.cc/t/footer.mp4"
+        />
+        <video
           ref={videoRef}
           autoPlay
           loop
           muted
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
-          src={headerVideo}
+          src="https://img.przknv.cc/t/header.mp4"
         />
         <div
           ref={gradientRef}

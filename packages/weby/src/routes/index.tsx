@@ -171,27 +171,33 @@ const Home = function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const nextVideoRef = useRef<HTMLVideoElement>(null);
   const gradientRef = useRef<HTMLDivElement>(null);
+  const videoActiveNext = useRef(false);
 
   const animatedToggleTheme = useCallback(() => {
     const nextDark = !isDarkMode;
+    const nextSrc = nextDark
+      ? "https://img.przknv.cc/t/header.mp4"
+      : "https://img.przknv.cc/t/footer.mp4";
+    const fromRef = videoActiveNext.current ? nextVideoRef : videoRef;
+    const toRef = videoActiveNext.current ? videoRef : nextVideoRef;
+
     const tl = gsap.timeline();
-    tl.set(nextVideoRef.current, {
-      src: nextDark ? "/stock/header.mp4" : "/stock/footer.mp4",
-    });
+    tl.set(toRef.current, { opacity: 0, src: nextSrc });
     tl.call(() => {
-      if (nextVideoRef.current) {
-        void nextVideoRef.current.play();
+      if (toRef.current) {
+        void toRef.current.play();
       }
     });
-    tl.to(nextVideoRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 1 });
-    tl.to(videoRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 0 }, "<");
+    tl.to(toRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 1 });
+    tl.to(fromRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 0 }, "<");
     tl.call(() => {
+      videoActiveNext.current = !videoActiveNext.current;
       const newTheme = nextDark ? "dark" : "light";
       setIsDarkMode(nextDark);
       localStorage.setItem("theme", newTheme);
       document.documentElement.dataset.theme = newTheme;
-      if (videoRef.current) {
-        videoRef.current.pause();
+      if (fromRef.current) {
+        fromRef.current.pause();
       }
     });
   }, [isDarkMode]);
@@ -290,8 +296,6 @@ const Home = function Home() {
   const headerGradient = isDarkMode
     ? `linear-gradient(to bottom, ${bgColor}00 0%, ${bgColor}00 15%, ${bgColor}33 30%, ${bgColor}88 50%, ${bgColor}cc 70%, ${bgColor} 85%, ${bgColor} 100%)`
     : `linear-gradient(to bottom, ${bgColor}00 0%, ${bgColor}00 60%, ${bgColor}66 75%, ${bgColor}cc 88%, ${bgColor} 100%)`;
-  const headerVideo = isDarkMode ? "/stock/header.mp4" : "/stock/footer.mp4";
-  const nextVideo = isDarkMode ? "/stock/footer.mp4" : "/stock/header.mp4";
 
   return (
     <div
@@ -310,7 +314,7 @@ const Home = function Home() {
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
           style={{ opacity: 0 }}
-          src={nextVideo}
+          src="https://img.przknv.cc/t/footer.mp4"
         />
         <video
           ref={videoRef}
@@ -319,7 +323,7 @@ const Home = function Home() {
           muted
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
-          src={headerVideo}
+          src="https://img.przknv.cc/t/header.mp4"
         />
         <div
           ref={gradientRef}
@@ -366,12 +370,7 @@ const Home = function Home() {
 
         <div className="shrink-0 space-y-2">
           <h3 className="font-medium text-base">voo look what i made</h3>
-          <ProjectList
-            imageOverrides={{
-              "Doty is an over-configured nix flake for opinionated developers": "/stock/doty.png",
-            }}
-            onDetail={handleProjectDetail}
-          />
+          <ProjectList onDetail={handleProjectDetail} />
         </div>
 
         <GitHubActivity isDarkMode={isDarkMode} username={githubUsername}>
@@ -381,6 +380,15 @@ const Home = function Home() {
         <div className="shrink-0 flex items-center justify-between pt-2">
           <SocialLinks profile={profile} />
           <LoginPopup isDarkMode={isDarkMode} />
+        </div>
+
+        <div className="flex justify-end pt-4 pb-2">
+          <span
+            className="text-4xl sm:text-5xl opacity-40"
+            style={{ fontFamily: '"Louison Adriana", cursive' }}
+          >
+            — with love, harsh
+          </span>
         </div>
       </div>
     </div>

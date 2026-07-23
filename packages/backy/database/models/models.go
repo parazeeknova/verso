@@ -32,6 +32,7 @@ type ExperienceItem struct {
 type Project struct {
 	Title      string `json:"title"`
 	Desc       string `json:"desc"`
+	Image      string `json:"image,omitempty"`
 	ReadmeURL  string `json:"readmeUrl,omitempty"`
 	RepoURL    string `json:"repoUrl,omitempty"`
 	ProductURL string `json:"productUrl,omitempty"`

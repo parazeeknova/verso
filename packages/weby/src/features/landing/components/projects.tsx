@@ -6,77 +6,117 @@ import type { Project } from "#/shared/types";
 import { LoadingDots } from "#/shared/components/loading";
 
 interface ProjectCardProps {
+  index: number;
   onDetail?: (project: Project) => void;
   project: Project;
 }
 
-const ProjectCard = ({ onDetail, project }: ProjectCardProps) => {
+const ProjectCard = ({ index, onDetail, project }: ProjectCardProps) => {
   const [stackOpen, setStackOpen] = useState(false);
+  const thumbRef = useRef<HTMLAnchorElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const previewImgRef = useRef<HTMLImageElement>(null);
+  const isEven = index % 2 === 0;
 
   const linkUrl = project.productUrl || project.repoUrl;
 
   const handlePreviewEnter = () => {
-    if (!previewRef.current || !previewImgRef.current) {
+    if (!thumbRef.current || !previewRef.current || !previewImgRef.current) {
       return;
     }
-    gsap.killTweensOf(previewRef.current);
-    gsap.killTweensOf(previewImgRef.current);
-    gsap.set(previewRef.current, { display: "block" });
-    gsap.fromTo(
-      previewRef.current,
-      { opacity: 0, rotateX: 8, scale: 0.85, y: 20 },
-      { duration: 0.4, ease: "back.out(1.4)", opacity: 1, rotateX: 0, scale: 1, y: 0 },
-    );
-    gsap.fromTo(
-      previewImgRef.current,
-      { scale: 1.15 },
-      { duration: 0.6, ease: "power3.out", scale: 1 },
-    );
+    const rect = thumbRef.current.getBoundingClientRect();
+    const previewEl = previewRef.current;
+    const imgEl = previewImgRef.current;
+
+    gsap.killTweensOf(previewEl);
+    gsap.killTweensOf(imgEl);
+    gsap.set(previewEl, {
+      display: "block",
+      height: rect.height,
+      left: rect.left,
+      opacity: 1,
+      top: rect.top,
+      width: rect.width,
+      x: 0,
+      y: 0,
+    });
+    gsap.set(imgEl, { scale: 1 });
+
+    const previewWidth = 288;
+    const previewLeft = isEven ? rect.right + 16 : rect.left - previewWidth - 16;
+    const previewTop = rect.top + rect.height / 2;
+
+    gsap.to(previewEl, {
+      duration: 0.45,
+      ease: "power3.out",
+      left: previewLeft,
+      rotateX: 0,
+      rotateY: 0,
+      top: previewTop,
+      width: previewWidth,
+      yPercent: -50,
+    });
+    gsap.fromTo(imgEl, { scale: 1.2 }, { duration: 0.5, ease: "power3.out", scale: 1 });
   };
 
   const handlePreviewMove = (e: React.MouseEvent) => {
-    if (!previewRef.current) {
+    if (!previewRef.current || !thumbRef.current) {
       return;
     }
+    const thumbRect = thumbRef.current.getBoundingClientRect();
+    const previewWidth = 288;
+    const baseLeft = isEven ? thumbRect.right + 16 : thumbRect.left - previewWidth - 16;
+    const baseTop = thumbRect.top + thumbRect.height / 2;
+    const dx = e.clientX - thumbRect.left - thumbRect.width / 2;
+    const dy = e.clientY - thumbRect.top - thumbRect.height / 2;
     gsap.to(previewRef.current, {
-      duration: 0.3,
+      duration: 0.35,
       ease: "power2.out",
-      x: e.clientX + 16,
-      y: e.clientY - 60,
+      left: baseLeft + dx * 0.06,
+      rotateX: -dy * 0.015,
+      rotateY: dx * 0.015,
+      top: baseTop + dy * 0.06,
     });
   };
 
   const handlePreviewLeave = () => {
-    if (!previewRef.current) {
+    if (!previewRef.current || !thumbRef.current) {
       return;
     }
+    const rect = thumbRef.current.getBoundingClientRect();
     gsap.killTweensOf(previewRef.current);
     gsap.to(previewRef.current, {
-      duration: 0.25,
+      duration: 0.3,
       ease: "power2.in",
+      height: rect.height,
+      left: rect.left,
       onComplete: () => {
-        gsap.set(previewRef.current, { display: "none" });
+        gsap.set(previewRef.current, { display: "none", yPercent: 0 });
       },
       opacity: 0,
-      scale: 0.9,
-      y: 10,
+      rotateX: 0,
+      rotateY: 0,
+      top: rect.top,
+      width: rect.width,
+      x: 0,
+      y: 0,
+      yPercent: 0,
     });
   };
 
   return (
-    <div className="flex items-start gap-4">
+    <div className={`flex items-start gap-4 ${isEven ? "" : "flex-row-reverse"}`}>
       {project.image ? (
         <>
           <a
+            ref={thumbRef}
             className="group relative shrink-0 block w-28 h-28 sm:w-36 sm:h-36 overflow-hidden"
             href={linkUrl}
             onMouseEnter={handlePreviewEnter}
             onMouseMove={handlePreviewMove}
             onMouseLeave={handlePreviewLeave}
             rel="noopener noreferrer"
-            style={{ transform: "rotate(-3deg)" }}
+            style={{ transform: isEven ? "rotate(-3deg)" : "rotate(3deg)" }}
             target="_blank"
           >
             <img
@@ -90,14 +130,14 @@ const ProjectCard = ({ onDetail, project }: ProjectCardProps) => {
           </a>
           <div
             ref={previewRef}
-            className="pointer-events-none fixed left-0 top-0 z-50 hidden"
+            className="pointer-events-none fixed left-0 top-0 z-50 hidden origin-left"
             style={{ perspective: 800 }}
           >
-            <div className="rounded-lg overflow-hidden shadow-2xl border border-white/10 bg-black/80 backdrop-blur-sm">
+            <div className="overflow-hidden shadow-2xl border border-white/10 bg-black/80 backdrop-blur-sm">
               <img
                 ref={previewImgRef}
                 alt={project.title}
-                className="block w-72 h-auto object-cover"
+                className="block w-72 max-h-96 object-contain"
                 src={project.image}
               />
             </div>
@@ -175,25 +215,19 @@ const ProjectCard = ({ onDetail, project }: ProjectCardProps) => {
 };
 
 interface ProjectListProps {
-  imageOverrides?: Record<string, string>;
   onDetail?: (project: Project) => void;
 }
 
-export const ProjectList = ({ imageOverrides, onDetail }: ProjectListProps) => {
+export const ProjectList = ({ onDetail }: ProjectListProps) => {
   const { data: projectData, isPending } = useProjects();
-
-  const enrichedProjects = projectData?.map((p) => ({
-    ...p,
-    image: imageOverrides?.[p.title] ?? p.image,
-  }));
 
   return (
     <div className="space-y-3 sm:space-y-4">
       {isPending ? (
         <LoadingDots />
       ) : (
-        enrichedProjects?.map((project) => (
-          <ProjectCard key={project.title} onDetail={onDetail} project={project} />
+        projectData?.map((project, index) => (
+          <ProjectCard key={project.title} index={index} onDetail={onDetail} project={project} />
         ))
       )}
     </div>
@@ -280,8 +314,8 @@ export const MobileProjectList = ({ onDetail }: MobileProjectListProps) => {
   return (
     <div>
       <div className="relative space-y-3 sm:space-y-4">
-        {projectData.slice(0, 3).map((project) => (
-          <ProjectCard key={project.title} onDetail={onDetail} project={project} />
+        {projectData.slice(0, 3).map((project, index) => (
+          <ProjectCard key={project.title} index={index} onDetail={onDetail} project={project} />
         ))}
 
         {hasMore && (
@@ -290,8 +324,13 @@ export const MobileProjectList = ({ onDetail }: MobileProjectListProps) => {
             ref={extraRef}
             style={{ height: 0, opacity: 0 }}
           >
-            {projectData.slice(3).map((project) => (
-              <ProjectCard key={project.title} onDetail={onDetail} project={project} />
+            {projectData.slice(3).map((project, index) => (
+              <ProjectCard
+                key={project.title}
+                index={index + 3}
+                onDetail={onDetail}
+                project={project}
+              />
             ))}
           </div>
         )}
