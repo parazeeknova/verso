@@ -1305,7 +1305,8 @@ export const PageEditor = ({
       providersRef.current = null;
       setProviderReady(false);
     };
-  }, [pageId, collabUrl, collabData?.token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageId, collabUrl]);
 
   const [activeCollaborators, setActiveCollaborators] = useState<ActiveCollaborator[]>([]);
 

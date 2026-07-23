@@ -253,7 +253,7 @@ func GenerateCollabToken(userID uuid.UUID, workspaceID string) (string, error) {
 	audience := getJWTAudience()
 
 	now := time.Now()
-	ttl := 24 * time.Hour
+	ttl := 2 * time.Hour
 
 	claims := CollabTokenClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -301,7 +301,7 @@ func ValidateCollabToken(tokenString string) (*CollabTokenClaims, error) {
 		return nil, fmt.Errorf("invalid collab token claims")
 	}
 
-	if claims.Type != "collab" && claims.Type != "" {
+	if claims.Type != "collab" {
 		return nil, fmt.Errorf("invalid token type for collaboration: %s", claims.Type)
 	}
 

@@ -1,16 +1,15 @@
 package collab
 
 import (
-	"errors"
+	"context"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
-	"verso/backy/repositories"
-	"verso/backy/shared/auth"
-
 	"github.com/gin-gonic/gin"
+
+	"verso/backy/shared/auth"
 )
 
 // ActiveUser represents a member or guest currently active on a page.
@@ -30,6 +29,8 @@ type PresenceStore struct {
 	mu     sync.RWMutex
 	pages  map[string]map[string]*ActiveUser // pageID -> (clientID -> ActiveUser)
 	expiry time.Duration
+	stopCh chan struct{}
+	once   sync.Once
 }
 
 // NewPresenceStore creates a thread-safe presence store with automatic idle expiry.
@@ -40,9 +41,17 @@ func NewPresenceStore(expiry time.Duration) *PresenceStore {
 	ps := &PresenceStore{
 		pages:  make(map[string]map[string]*ActiveUser),
 		expiry: expiry,
+		stopCh: make(chan struct{}),
 	}
 	go ps.cleanupLoop()
 	return ps
+}
+
+// Stop terminates the background cleanup loop goroutine.
+func (ps *PresenceStore) Stop() {
+	ps.once.Do(func() {
+		close(ps.stopCh)
+	})
 }
 
 func (ps *PresenceStore) UpdatePresence(pageID string, user ActiveUser) {
@@ -92,20 +101,27 @@ func (ps *PresenceStore) RemovePresence(pageID, clientID string) {
 
 func (ps *PresenceStore) cleanupLoop() {
 	ticker := time.NewTicker(4 * time.Second)
-	for range ticker.C {
-		ps.mu.Lock()
-		now := time.Now()
-		for pageID, clientMap := range ps.pages {
-			for clientID, user := range clientMap {
-				if now.Sub(user.LastSeen) > ps.expiry {
-					delete(clientMap, clientID)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ps.stopCh:
+			return
+		case <-ticker.C:
+			ps.mu.Lock()
+			now := time.Now()
+			for pageID, clientMap := range ps.pages {
+				for clientID, user := range clientMap {
+					if now.Sub(user.LastSeen) > ps.expiry {
+						delete(clientMap, clientID)
+					}
+				}
+				if len(clientMap) == 0 {
+					delete(ps.pages, pageID)
 				}
 			}
-			if len(clientMap) == 0 {
-				delete(ps.pages, pageID)
-			}
+			ps.mu.Unlock()
 		}
-		ps.mu.Unlock()
 	}
 }
 
@@ -250,38 +266,55 @@ func (cs *CollabService) HandleLeavePresence(c *gin.Context) {
 
 // canAccessPagePresence checks if current request can access page presence.
 func (cs *CollabService) canAccessPagePresence(c *gin.Context, pageID string) bool {
-	ctx := c.Request.Context()
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
 
-	// Check if authenticated user
+	page, err := cs.pageRepo.GetByID(ctx, pageID)
+	if err != nil {
+		return false
+	}
+
 	authHeader := c.GetHeader("Authorization")
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 	if tokenStr == "" {
 		tokenStr = c.Query("token")
 	}
 
+	var userID string
 	if tokenStr != "" {
-		if claims, err := auth.ValidateAccessToken(tokenStr); err == nil && claims != nil {
-			return true
-		}
 		if claims, err := auth.ValidateCollabToken(tokenStr); err == nil && claims != nil {
-			return true
+			userID = claims.UserID
+		} else if claims, err := auth.ValidateAccessToken(tokenStr); err == nil && claims != nil {
+			userID = claims.UserID
 		}
 	}
 
-	// Check if page share is enabled
+	if userID != "" {
+		// 1. Space level access
+		effectiveRole, err := cs.spaceRepo.GetEffectiveRole(ctx, page.SpaceID, userID, nil)
+		if err == nil && effectiveRole != "" {
+			return true
+		}
+
+		// 2. Space visibility
+		space, err := cs.spaceRepo.GetByID(ctx, page.SpaceID)
+		if err == nil && (space.Visibility == "public" || space.Visibility == "workspace") {
+			return true
+		}
+
+		// 3. Page share enabled
+		share, err := cs.pageShareRepo.GetByPageID(ctx, pageID)
+		if err == nil && share.IsEnabled {
+			return true
+		}
+
+		return false
+	}
+
+	// Unauthenticated: allow only if public page share is enabled
 	share, err := cs.pageShareRepo.GetByPageID(ctx, pageID)
 	if err == nil && share.IsEnabled {
 		return true
-	}
-
-	// Allow if page exists
-	_, err = cs.pageRepo.GetByID(ctx, pageID)
-	if err == nil {
-		return true
-	}
-
-	if errors.Is(err, repositories.ErrShareNotFound) {
-		return false
 	}
 
 	return false
