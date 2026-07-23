@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"verso/backy/middleware"
 	"verso/backy/shared/auth"
 )
 
@@ -303,6 +304,11 @@ func (cs *CollabService) canAccessPagePresence(c *gin.Context, pageID string) bo
 			userWorkspaceID = claims.WorkspaceID
 		} else if claims, err := auth.ValidateAccessToken(tokenStr); err == nil && claims != nil {
 			userID = claims.UserID
+		}
+	}
+	if userID == "" {
+		if uid := c.GetString(middleware.ContextKeyUserID); uid != "" {
+			userID = uid
 		}
 	}
 

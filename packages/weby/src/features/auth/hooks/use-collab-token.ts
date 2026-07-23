@@ -9,7 +9,7 @@ export interface CollabTokenResponse {
 export const useCollabToken = (options?: { enabled?: boolean; userId?: string }) => {
   const { data: user } = useAuth();
   const activeUserId = options?.userId ?? user?.id;
-  const isEnabled = (options?.enabled ?? true) && Boolean(activeUserId);
+  const isEnabled = options?.enabled ?? true;
 
   return useQuery<CollabTokenResponse>({
     enabled: isEnabled,
@@ -18,7 +18,7 @@ export const useCollabToken = (options?: { enabled?: boolean; userId?: string })
         method: "POST",
         signal,
       }),
-    queryKey: ["collabToken", activeUserId ?? "anonymous"],
+    queryKey: ["collabToken", activeUserId ?? "current"],
     // Refetch every 10 minutes to match 15-minute token TTL
     refetchInterval: 10 * 60 * 1000,
     // 5 minutes stale time
