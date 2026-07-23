@@ -34,6 +34,7 @@ type SpaceService struct {
 	spaceRepo     *repositories.SpaceRepo
 	pageRepo      *repositories.PageRepo
 	groupRepo     *repositories.GroupRepo
+	commentRepo   *repositories.CommentRepo
 	notifier      notifeat.Notifier
 	storageClient StorageClient
 }
@@ -46,6 +47,11 @@ func NewSpaceService(spaceRepo *repositories.SpaceRepo, pageRepo *repositories.P
 		groupRepo: groupRepo,
 		notifier:  notifeat.NoopNotifier(),
 	}
+}
+
+// SetCommentRepo sets the comment repository on the space service.
+func (s *SpaceService) SetCommentRepo(r *repositories.CommentRepo) {
+	s.commentRepo = r
 }
 
 // SetNotifier sets the notification service on the space service.
@@ -219,6 +225,12 @@ func (s *SpaceService) DeleteSpace(ctx context.Context, id, userID string) error
 	if len(pageIDs) > 0 {
 		if err := s.pageRepo.SoftDeleteAllInSpace(ctx, id, userID); err != nil {
 			return fmt.Errorf("deleting pages from database: %w", err)
+		}
+	}
+
+	if s.commentRepo != nil {
+		if err := s.commentRepo.DeleteBySpaceID(ctx, id); err != nil {
+			return fmt.Errorf("deleting comments in space: %w", err)
 		}
 	}
 

@@ -220,6 +220,28 @@ func (r *CommentRepo) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
+// DeleteByPageID soft-deletes all comments for a page.
+func (r *CommentRepo) DeleteByPageID(ctx context.Context, pageID string) error {
+	now := time.Now().UTC()
+	query := `UPDATE comments SET deleted_at = $1 WHERE page_id = $2 AND deleted_at IS NULL`
+	_, err := r.pool.Exec(ctx, query, now, pageID)
+	if err != nil {
+		return fmt.Errorf("deleting comments for page %q: %w", pageID, err)
+	}
+	return nil
+}
+
+// DeleteBySpaceID soft-deletes all comments for a space.
+func (r *CommentRepo) DeleteBySpaceID(ctx context.Context, spaceID string) error {
+	now := time.Now().UTC()
+	query := `UPDATE comments SET deleted_at = $1 WHERE space_id = $2 AND deleted_at IS NULL`
+	_, err := r.pool.Exec(ctx, query, now, spaceID)
+	if err != nil {
+		return fmt.Errorf("deleting comments for space %q: %w", spaceID, err)
+	}
+	return nil
+}
+
 // HasChildren returns true if a comment has reply comments.
 func (r *CommentRepo) HasChildren(ctx context.Context, id string) (bool, error) {
 	var count int

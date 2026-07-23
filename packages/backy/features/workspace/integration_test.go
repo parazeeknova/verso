@@ -19,6 +19,7 @@ import (
 	"verso/backy/repositories"
 
 	authfeat "verso/backy/features/auth"
+	commentfeat "verso/backy/features/comment"
 	groupfeat "verso/backy/features/group"
 	notifeat "verso/backy/features/notification"
 	pagefeat "verso/backy/features/page"
@@ -36,10 +37,12 @@ type testDB struct {
 	pageRepo        *repositories.PageRepo
 	pageWatcherRepo *repositories.PageWatcherRepo
 	pageHistoryRepo *repositories.PageHistoryRepo
+	commentRepo     *repositories.CommentRepo
 	workspaceSvc    *ws.WorkspaceService
 	spaceSvc        *spacefeat.SpaceService
 	pageSvc         *pagefeat.PageService
 	groupSvc        *groupfeat.GroupService
+	commentSvc      *commentfeat.CommentService
 }
 
 type pageDeleteEvent struct {
@@ -130,14 +133,17 @@ func setupTestDB(t *testing.T) *testDB {
 		spaceRepo:       repositories.NewSpaceRepo(),
 		pageRepo:        repositories.NewPageRepo(pool),
 		pageHistoryRepo: repositories.NewPageHistoryRepo(pool),
+		commentRepo:     repositories.NewCommentRepo(),
 	}
 
 	db.groupRepo = repositories.NewGroupRepo()
 	db.workspaceSvc = ws.NewWorkspaceService(db.workspaceRepo, db.spaceRepo, db.groupRepo)
 	db.spaceSvc = spacefeat.NewSpaceService(db.spaceRepo, db.pageRepo, db.groupRepo)
+	db.spaceSvc.SetCommentRepo(db.commentRepo)
 	db.pageWatcherRepo = repositories.NewPageWatcherRepo()
 	db.pageSvc = pagefeat.NewPageService(db.pageRepo, db.pageWatcherRepo, db.pageHistoryRepo, db.spaceRepo, db.groupRepo)
 	db.groupSvc = groupfeat.NewGroupService(db.groupRepo, db.workspaceRepo)
+	db.commentSvc = commentfeat.NewCommentService(db.commentRepo, db.pageRepo, db.spaceRepo, notifeat.NoopNotifier(), commentfeat.NewCommentHub())
 
 	truncateTables(t, ctx)
 
@@ -148,7 +154,7 @@ func truncateTables(t *testing.T, ctx context.Context) {
 	t.Helper()
 	pool := database.GetPool()
 	_, err := pool.Exec(ctx, `
-		TRUNCATE TABLE workspace_members, space_members, pages, page_history, spaces, workspaces, user_mfa, password_credentials, sessions, refresh_tokens, users
+		TRUNCATE TABLE comments, workspace_members, space_members, pages, page_history, spaces, workspaces, user_mfa, password_credentials, sessions, refresh_tokens, users
 		RESTART IDENTITY CASCADE
 	`)
 	if err != nil {
@@ -1670,5 +1676,103 @@ func TestPageService_PageSharing(t *testing.T) {
 	_, _, err = db.pageSvc.GetPageByShortCode(ctx, *share.ShortCode)
 	if err == nil {
 		t.Fatal("expected error fetching disabled share by short code, got nil")
+	}
+}
+
+func TestCommentCleanupOnPageAndSpaceDeletion(t *testing.T) {
+	db := setupTestDB(t)
+	ctx := context.Background()
+
+	ownerID := createTestUser(t, ctx, db, "owner", "owner@example.com")
+	w := createTestWorkspace(t, ctx, db, "Test Workspace", "test-ws-"+uuid.New().String()[:8], ownerID)
+	s, err := db.spaceSvc.CreateSpace(ctx, "Test Space", "test-space-"+uuid.New().String()[:8], "", "", w.ID, ownerID)
+	if err != nil {
+		t.Fatalf("create space: %v", err)
+	}
+
+	p1 := models.Page{
+		ID:          uuid.New().String(),
+		SlugID:      uuid.New().String(),
+		Title:       "Page 1",
+		SpaceID:     s.ID,
+		WorkspaceID: w.ID,
+		CreatorID:   ownerID,
+		ContentJSON: []byte("{}"),
+	}
+	if err := db.pageSvc.CreatePage(ctx, p1); err != nil {
+		t.Fatalf("create page 1: %v", err)
+	}
+
+	p2 := models.Page{
+		ID:          uuid.New().String(),
+		SlugID:      uuid.New().String(),
+		Title:       "Page 2",
+		SpaceID:     s.ID,
+		WorkspaceID: w.ID,
+		CreatorID:   ownerID,
+		ContentJSON: []byte("{}"),
+	}
+	if err := db.pageSvc.CreatePage(ctx, p2); err != nil {
+		t.Fatalf("create page 2: %v", err)
+	}
+
+	// Create comment on page 1
+	c1Input := commentfeat.CreateCommentInput{Content: "Comment on Page 1"}
+	c1, err := db.commentSvc.CreateComment(ctx, p1.ID, ownerID, c1Input)
+	if err != nil {
+		t.Fatalf("create comment 1: %v", err)
+	}
+
+	// Create comment on page 2
+	c2Input := commentfeat.CreateCommentInput{Content: "Comment on Page 2"}
+	c2, err := db.commentSvc.CreateComment(ctx, p2.ID, ownerID, c2Input)
+	if err != nil {
+		t.Fatalf("create comment 2: %v", err)
+	}
+
+	// Delete Page 1 -> Associated comment c1 should be deleted
+	if err := db.pageSvc.DeletePage(ctx, p1.ID, ownerID); err != nil {
+		t.Fatalf("delete page 1: %v", err)
+	}
+
+	commentsP1, err := db.commentRepo.ListByPageID(ctx, p1.ID)
+	if err != nil {
+		t.Fatalf("list comments p1: %v", err)
+	}
+	if len(commentsP1) != 0 {
+		t.Fatalf("expected 0 active comments for deleted page 1, got %d", len(commentsP1))
+	}
+
+	// Deleted comment c1 cannot be retrieved by GetByID
+	_, err = db.commentRepo.GetByID(ctx, c1.ID)
+	if err == nil {
+		t.Fatalf("expected error fetching deleted comment c1, got nil")
+	}
+
+	// Page 2 comment c2 still active before space deletion
+	commentsP2, err := db.commentRepo.ListByPageID(ctx, p2.ID)
+	if err != nil {
+		t.Fatalf("list comments p2: %v", err)
+	}
+	if len(commentsP2) != 1 {
+		t.Fatalf("expected 1 active comment for page 2, got %d", len(commentsP2))
+	}
+
+	// Delete Space -> Associated comment c2 should be deleted
+	if err := db.spaceSvc.DeleteSpace(ctx, s.ID, ownerID); err != nil {
+		t.Fatalf("delete space: %v", err)
+	}
+
+	commentsP2After, err := db.commentRepo.ListByPageID(ctx, p2.ID)
+	if err != nil {
+		t.Fatalf("list comments p2 after space delete: %v", err)
+	}
+	if len(commentsP2After) != 0 {
+		t.Fatalf("expected 0 active comments for page 2 after space delete, got %d", len(commentsP2After))
+	}
+
+	_, err = db.commentRepo.GetByID(ctx, c2.ID)
+	if err == nil {
+		t.Fatalf("expected error fetching deleted comment c2 after space delete, got nil")
 	}
 }
