@@ -50,7 +50,7 @@ func (r *CommentRepo) GetByID(ctx context.Context, id string) (*models.CommentWi
 		SELECT c.id, c.workspace_id, c.space_id, c.page_id, COALESCE(c.creator_id::text, 'guest'), c.parent_comment_id,
 		       c.content, c.selection, c.type, c.resolved_at, c.resolved_by_id, c.edited_at,
 		       c.created_at, c.updated_at, c.deleted_at,
-		       COALESCE(u.name, 'Guest'), COALESCE(u.avatar_url, ''),
+		       COALESCE(u.name, c.guest_name, 'Guest'), COALESCE(u.avatar_url, c.guest_avatar, ''),
 		       COALESCE(ru.name, ''), COALESCE(ru.avatar_url, '')
 		FROM comments c
 		LEFT JOIN users u ON u.id = c.creator_id
@@ -101,7 +101,7 @@ func (r *CommentRepo) ListByPageID(ctx context.Context, pageID string) ([]models
 		SELECT c.id, c.workspace_id, c.space_id, c.page_id, COALESCE(c.creator_id::text, 'guest'), c.parent_comment_id,
 		       c.content, c.selection, c.type, c.resolved_at, c.resolved_by_id, c.edited_at,
 		       c.created_at, c.updated_at, c.deleted_at,
-		       COALESCE(u.name, 'Guest'), COALESCE(u.avatar_url, ''),
+		       COALESCE(u.name, c.guest_name, 'Guest'), COALESCE(u.avatar_url, c.guest_avatar, ''),
 		       COALESCE(ru.name, ''), COALESCE(ru.avatar_url, '')
 		FROM comments c
 		LEFT JOIN users u ON u.id = c.creator_id
