@@ -372,7 +372,7 @@ export const ConsoleLayout = () => {
         <div className="relative flex flex-1 overflow-hidden">
           <aside
             ref={sidebarRef}
-            className={`absolute inset-y-0 left-0 z-40 md:relative md:shrink-0 flex flex-col border-r overflow-hidden p-4 transition-colors duration-500 ease-out ${t("border-border-dark", "border-border-light")} ${isDarkMode ? "bg-[#171717]" : "bg-[#e8e8e8]"}`}
+            className={`absolute inset-y-0 left-0 z-40 md:relative md:z-30 md:shrink-0 flex flex-col border-r overflow-hidden p-4 transition-colors duration-500 ease-out ${t("border-border-dark", "border-border-light")} ${isDarkMode ? "bg-[#171717]" : "bg-[#e8e8e8]"}`}
             style={{ visibility: "hidden" }}
           >
             <div className="min-h-0 flex-1 flex flex-col" ref={sidebarContentRef}>
