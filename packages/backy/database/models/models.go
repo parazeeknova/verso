@@ -398,6 +398,7 @@ type PageShare struct {
 	ShortCode      *string   `json:"shortCode,omitempty"`
 	SearchIndexing bool      `json:"searchIndexing"`
 	IsEnabled      bool      `json:"isEnabled"`
+	AccessLevel    string    `json:"accessLevel"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 }

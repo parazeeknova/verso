@@ -1,0 +1,1 @@
+ALTER TABLE page_shares ADD COLUMN IF NOT EXISTS access_level TEXT NOT NULL DEFAULT 'read';

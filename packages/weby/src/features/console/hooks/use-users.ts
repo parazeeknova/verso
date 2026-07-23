@@ -9,9 +9,9 @@ export const useUsers = () =>
     staleTime: 30 * 1000,
   });
 
-export const useUserById = (id: string) =>
+export const useUserById = (id: string, options?: { enabled?: boolean }) =>
   useQuery<ConsoleUser>({
-    enabled: id !== "",
+    enabled: (options?.enabled ?? true) && id !== "",
     queryFn: ({ signal }) =>
       fetchProtected<ConsoleUser>(`/api/console/users/${encodeURIComponent(id)}`, { signal }),
     queryKey: ["userById", id],

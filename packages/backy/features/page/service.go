@@ -29,6 +29,7 @@ type PageService struct {
 	spaceRepo       *repositories.SpaceRepo
 	groupRepo       *repositories.GroupRepo
 	pageShareRepo   *repositories.PageShareRepo
+	workspaceRepo   *repositories.WorkspaceRepo
 	notifier        notifeat.Notifier
 }
 
@@ -41,6 +42,7 @@ func NewPageService(pageRepo *repositories.PageRepo, pageWatcherRepo *repositori
 		spaceRepo:       spaceRepo,
 		groupRepo:       groupRepo,
 		pageShareRepo:   repositories.NewPageShareRepo(),
+		workspaceRepo:   repositories.NewWorkspaceRepo(),
 		notifier:        notifeat.NoopNotifier(),
 	}
 }
@@ -661,6 +663,20 @@ func (s *PageService) requireWrite(ctx context.Context, spaceID, userID string) 
 	if role == models.SpaceRoleAdmin || role == models.SpaceRoleWriter {
 		return nil
 	}
+
+	if role == "" {
+		isWorkspaceMember := false
+		if s.workspaceRepo != nil {
+			isWorkspaceMember, _ = s.workspaceRepo.IsMember(ctx, space.WorkspaceID, userID)
+		}
+		if space.Visibility == "public" || (space.Visibility == "workspace" && isWorkspaceMember) {
+			defRole := space.DefaultRole
+			if defRole == "" || defRole == models.SpaceRoleAdmin || defRole == models.SpaceRoleWriter {
+				return nil
+			}
+		}
+	}
+
 	return ErrPagePermissionDenied
 }
 
@@ -686,6 +702,17 @@ func (s *PageService) RequireRead(ctx context.Context, spaceID, userID string) e
 	if role == models.SpaceRoleAdmin || role == models.SpaceRoleWriter || role == models.SpaceRoleReader {
 		return nil
 	}
+
+	if role == "" {
+		isWorkspaceMember := false
+		if s.workspaceRepo != nil {
+			isWorkspaceMember, _ = s.workspaceRepo.IsMember(ctx, space.WorkspaceID, userID)
+		}
+		if space.Visibility == "public" || (space.Visibility == "workspace" && isWorkspaceMember) {
+			return nil
+		}
+	}
+
 	return ErrPagePermissionDenied
 }
 
@@ -1052,13 +1079,21 @@ func (s *PageService) GetPageShare(ctx context.Context, pageID string, userID st
 	return share, nil
 }
 
-func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID string, isEnabled bool, searchIndexing bool) (models.PageShare, error) {
+var ErrInvalidAccessLevel = errors.New("invalid access level")
+
+func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID string, isEnabled bool, searchIndexing bool, accessLevel string) (models.PageShare, error) {
 	page, err := s.pageRepo.GetByID(ctx, pageID)
 	if err != nil {
 		return models.PageShare{}, err
 	}
 	if err := s.requireWrite(ctx, page.SpaceID, userID); err != nil {
 		return models.PageShare{}, err
+	}
+
+	if accessLevel == "" {
+		accessLevel = "read"
+	} else if accessLevel != "read" && accessLevel != "edit" && accessLevel != "public_edit" {
+		return models.PageShare{}, fmt.Errorf("%w %q: must be read, edit, or public_edit", ErrInvalidAccessLevel, accessLevel)
 	}
 
 	share, err := s.pageShareRepo.GetByPageID(ctx, pageID)
@@ -1074,6 +1109,7 @@ func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID
 				ShareToken:     token,
 				SearchIndexing: searchIndexing,
 				IsEnabled:      isEnabled,
+				AccessLevel:    accessLevel,
 			}
 		} else {
 			return models.PageShare{}, err
@@ -1081,6 +1117,7 @@ func (s *PageService) UpdatePageShare(ctx context.Context, pageID string, userID
 	} else {
 		share.IsEnabled = isEnabled
 		share.SearchIndexing = searchIndexing
+		share.AccessLevel = accessLevel
 		if share.ShareToken == "" {
 			token, err := generateRandomString(32)
 			if err != nil {

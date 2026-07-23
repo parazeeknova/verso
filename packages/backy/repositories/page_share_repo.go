@@ -25,13 +25,13 @@ func NewPageShareRepo() *PageShareRepo {
 
 func (r *PageShareRepo) GetByPageID(ctx context.Context, pageID string) (models.PageShare, error) {
 	query := `
-		SELECT id, page_id, share_token, short_code, search_indexing, is_enabled, created_at, updated_at
+		SELECT id, page_id, share_token, short_code, search_indexing, is_enabled, COALESCE(access_level, 'read'), created_at, updated_at
 		FROM page_shares
 		WHERE page_id = $1`
 
 	var s models.PageShare
 	err := r.pool.QueryRow(ctx, query, pageID).Scan(
-		&s.ID, &s.PageID, &s.ShareToken, &s.ShortCode, &s.SearchIndexing, &s.IsEnabled, &s.CreatedAt, &s.UpdatedAt,
+		&s.ID, &s.PageID, &s.ShareToken, &s.ShortCode, &s.SearchIndexing, &s.IsEnabled, &s.AccessLevel, &s.CreatedAt, &s.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -44,13 +44,13 @@ func (r *PageShareRepo) GetByPageID(ctx context.Context, pageID string) (models.
 
 func (r *PageShareRepo) GetByShareToken(ctx context.Context, token string) (models.PageShare, error) {
 	query := `
-		SELECT id, page_id, share_token, short_code, search_indexing, is_enabled, created_at, updated_at
+		SELECT id, page_id, share_token, short_code, search_indexing, is_enabled, COALESCE(access_level, 'read'), created_at, updated_at
 		FROM page_shares
 		WHERE share_token = $1`
 
 	var s models.PageShare
 	err := r.pool.QueryRow(ctx, query, token).Scan(
-		&s.ID, &s.PageID, &s.ShareToken, &s.ShortCode, &s.SearchIndexing, &s.IsEnabled, &s.CreatedAt, &s.UpdatedAt,
+		&s.ID, &s.PageID, &s.ShareToken, &s.ShortCode, &s.SearchIndexing, &s.IsEnabled, &s.AccessLevel, &s.CreatedAt, &s.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -63,13 +63,13 @@ func (r *PageShareRepo) GetByShareToken(ctx context.Context, token string) (mode
 
 func (r *PageShareRepo) GetByShortCode(ctx context.Context, shortCode string) (models.PageShare, error) {
 	query := `
-		SELECT id, page_id, share_token, short_code, search_indexing, is_enabled, created_at, updated_at
+		SELECT id, page_id, share_token, short_code, search_indexing, is_enabled, COALESCE(access_level, 'read'), created_at, updated_at
 		FROM page_shares
 		WHERE short_code = $1`
 
 	var s models.PageShare
 	err := r.pool.QueryRow(ctx, query, shortCode).Scan(
-		&s.ID, &s.PageID, &s.ShareToken, &s.ShortCode, &s.SearchIndexing, &s.IsEnabled, &s.CreatedAt, &s.UpdatedAt,
+		&s.ID, &s.PageID, &s.ShareToken, &s.ShortCode, &s.SearchIndexing, &s.IsEnabled, &s.AccessLevel, &s.CreatedAt, &s.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -81,16 +81,20 @@ func (r *PageShareRepo) GetByShortCode(ctx context.Context, shortCode string) (m
 }
 
 func (r *PageShareRepo) Upsert(ctx context.Context, s models.PageShare) (models.PageShare, error) {
+	if s.AccessLevel == "" {
+		s.AccessLevel = "read"
+	}
 	query := `
-		INSERT INTO page_shares (id, page_id, share_token, short_code, search_indexing, is_enabled, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO page_shares (id, page_id, share_token, short_code, search_indexing, is_enabled, access_level, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		ON CONFLICT (page_id) DO UPDATE
 		SET share_token = COALESCE(NULLIF(page_shares.share_token, ''), EXCLUDED.share_token),
 		    short_code = COALESCE(EXCLUDED.short_code, page_shares.short_code),
 		    search_indexing = EXCLUDED.search_indexing,
 		    is_enabled = EXCLUDED.is_enabled,
+		    access_level = EXCLUDED.access_level,
 		    updated_at = EXCLUDED.updated_at
-		RETURNING id, page_id, share_token, short_code, search_indexing, is_enabled, created_at, updated_at`
+		RETURNING id, page_id, share_token, short_code, search_indexing, is_enabled, COALESCE(access_level, 'read'), created_at, updated_at`
 
 	now := time.Now().UTC()
 	if s.CreatedAt.IsZero() {
@@ -101,9 +105,9 @@ func (r *PageShareRepo) Upsert(ctx context.Context, s models.PageShare) (models.
 	var res models.PageShare
 	err := r.pool.QueryRow(
 		ctx, query,
-		s.ID, s.PageID, s.ShareToken, s.ShortCode, s.SearchIndexing, s.IsEnabled, s.CreatedAt, s.UpdatedAt,
+		s.ID, s.PageID, s.ShareToken, s.ShortCode, s.SearchIndexing, s.IsEnabled, s.AccessLevel, s.CreatedAt, s.UpdatedAt,
 	).Scan(
-		&res.ID, &res.PageID, &res.ShareToken, &res.ShortCode, &res.SearchIndexing, &res.IsEnabled, &res.CreatedAt, &res.UpdatedAt,
+		&res.ID, &res.PageID, &res.ShareToken, &res.ShortCode, &res.SearchIndexing, &res.IsEnabled, &res.AccessLevel, &res.CreatedAt, &res.UpdatedAt,
 	)
 	if err != nil {
 		return models.PageShare{}, fmt.Errorf("upserting page share: %w", err)

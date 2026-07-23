@@ -13,6 +13,7 @@ import (
 
 	"verso/backy/database"
 	authfeat "verso/backy/features/auth"
+	collabfeat "verso/backy/features/collab"
 	dfeat "verso/backy/features/debug"
 	gfeat "verso/backy/features/group"
 	mfafeat "verso/backy/features/mfa"
@@ -116,6 +117,7 @@ func main() {
 	var pageService *pfeat.PageService
 	var favRepo *repositories.SpaceFavoriteRepo
 	var pageFavRepo *repositories.PageFavoriteRepo
+	var collabService *collabfeat.CollabService
 	if dbAvailable {
 		pool := database.GetPool()
 		pageRepo := repositories.NewPageRepo(pool)
@@ -145,6 +147,13 @@ func main() {
 		spaceService.SetNotifier(notificationService)
 		groupService.SetNotifier(notificationService)
 		pageService.SetNotifier(notificationService)
+
+		// Yjs Collaboration Service
+		pageShareRepo := repositories.NewPageShareRepo()
+		collabService = collabfeat.NewCollabService(pool, pageRepo, spaceRepo, pageShareRepo, groupRepo, workspaceRepo)
+		if notificationService != nil {
+			collabService.SetNotifier(notificationService)
+		}
 
 		h = handlers.NewWithDB(cfg, pageService, spaceService, workspaceService, groupService)
 		h.SetNotifier(notificationService)
@@ -194,6 +203,13 @@ func main() {
 		start := time.Now()
 		path := c.Request.URL.Path
 		rawQuery := c.Request.URL.RawQuery
+		if strings.Contains(rawQuery, "token=") {
+			queryVals := c.Request.URL.Query()
+			if queryVals.Has("token") {
+				queryVals.Set("token", "[REDACTED]")
+				rawQuery = queryVals.Encode()
+			}
+		}
 
 		c.Next()
 
@@ -274,6 +290,15 @@ func main() {
 		api.GET("/shares/:token", h.GetPublicShare)
 		api.GET("/short/:shortCode", h.GetPublicShort)
 
+		if dbAvailable && collabService != nil {
+			api.POST("/shares/:token/presence", collabService.HandleShareHeartbeatPresence)
+			api.GET("/shares/:token/presence", collabService.HandleShareGetPresence)
+			api.POST("/shares/:token/presence/leave", collabService.HandleLeavePresence)
+			api.POST("/pages/:id/presence", collabService.HandleHeartbeatPresence)
+			api.GET("/pages/:id/presence", collabService.HandleGetPresence)
+			api.POST("/pages/:id/presence/leave", collabService.HandleLeavePresence)
+		}
+
 		// Auth routes (public)
 		authHandlers.RegisterRoutes(api)
 		// Login is rate-limited separately
@@ -281,10 +306,26 @@ func main() {
 		// MFA verification (public, requires mfa challenge cookie)
 		api.POST("/auth/mfa/verify", authHandlers.VerifyMFA)
 
+		// Yjs Collaboration WebSocket endpoint (handles both auth & shared pages)
+		if dbAvailable && collabService != nil {
+			r.GET("/ws/collab", collabService.ServeWS)
+			r.GET("/ws/collab/*room", collabService.ServeWS)
+			api.GET("/collab/ws", collabService.ServeWS)
+			api.GET("/collab/ws/*room", collabService.ServeWS)
+		}
+
 		// Console routes (protected)
 		console := api.Group("/console")
 		console.Use(middleware.AuthRequired(authService))
 		{
+			if dbAvailable && collabService != nil {
+				console.POST("/pages/:id/presence", collabService.HandleHeartbeatPresence)
+				console.GET("/pages/:id/presence", collabService.HandleGetPresence)
+				console.POST("/pages/:id/presence/leave", collabService.HandleLeavePresence)
+			}
+			// Collab token endpoint
+			console.POST("/auth/collab-token", authHandlers.CollabToken)
+
 			// Profile
 			profileHandlers.RegisterRoutes(console)
 

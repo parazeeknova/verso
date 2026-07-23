@@ -1582,7 +1582,7 @@ func TestPageService_PageSharing(t *testing.T) {
 	}
 
 	// Update share settings to enable sharing
-	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, true, true)
+	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, true, true, "read")
 	if err != nil {
 		t.Fatalf("enabling page share: %v", err)
 	}
@@ -1595,6 +1595,9 @@ func TestPageService_PageSharing(t *testing.T) {
 	if share.ShareToken == "" {
 		t.Fatal("expected share token to be generated")
 	}
+	if share.AccessLevel != "read" {
+		t.Fatalf("expected access level %q, got %q", "read", share.AccessLevel)
+	}
 
 	// Fetch page by share token
 	fetchedPage, fetchedShare, err := db.pageSvc.GetPageByShareToken(ctx, share.ShareToken)
@@ -1606,6 +1609,26 @@ func TestPageService_PageSharing(t *testing.T) {
 	}
 	if fetchedShare.ID != share.ID {
 		t.Fatalf("expected share ID %q, got %q", share.ID, fetchedShare.ID)
+	}
+	if fetchedShare.AccessLevel != "read" {
+		t.Fatalf("expected access level %q, got %q", "read", fetchedShare.AccessLevel)
+	}
+
+	// Update to non-default access level and verify persistence
+	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, true, true, "public_edit")
+	if err != nil {
+		t.Fatalf("updating page share to public_edit: %v", err)
+	}
+	if share.AccessLevel != "public_edit" {
+		t.Fatalf("expected access level %q, got %q", "public_edit", share.AccessLevel)
+	}
+
+	fetchedShare, err = db.pageSvc.GetPageShare(ctx, p.ID, ownerID)
+	if err != nil {
+		t.Fatalf("fetching page share after update: %v", err)
+	}
+	if fetchedShare.AccessLevel != "public_edit" {
+		t.Fatalf("expected persisted access level %q, got %q", "public_edit", fetchedShare.AccessLevel)
 	}
 
 	// Shorten link
@@ -1630,7 +1653,7 @@ func TestPageService_PageSharing(t *testing.T) {
 	}
 
 	// Disable page sharing
-	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, false, false)
+	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, false, false, "read")
 	if err != nil {
 		t.Fatalf("disabling page share: %v", err)
 	}

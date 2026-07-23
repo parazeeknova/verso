@@ -51,8 +51,10 @@ import { Route as ApiAuthRefreshRouteImport } from './routes/api/auth/refresh'
 import { Route as ApiAuthMeRouteImport } from './routes/api/auth/me'
 import { Route as ApiAuthLogoutRouteImport } from './routes/api/auth/logout'
 import { Route as ApiAuthLoginRouteImport } from './routes/api/auth/login'
+import { Route as ApiAuthCollabTokenRouteImport } from './routes/api/auth/collab-token'
 import { Route as ApiAuthBootstrapStateRouteImport } from './routes/api/auth/bootstrap-state'
 import { Route as SSpaceSlugPPageidRouteImport } from './routes/s/$spaceSlug/p/$pageid'
+import { Route as ApiSharesTokenPresenceRouteImport } from './routes/api/shares/$token/presence'
 import { Route as ApiConsoleWorkspacesIdRouteImport } from './routes/api/console/workspaces/$id'
 import { Route as ApiConsoleUsersIdRouteImport } from './routes/api/console/users/$id'
 import { Route as ApiConsoleUnsplashSearchRouteImport } from './routes/api/console/unsplash/search'
@@ -78,6 +80,7 @@ import { Route as ApiConsoleMfaDisableRouteImport } from './routes/api/console/m
 import { Route as ApiConsoleMfaBackupCodesRouteImport } from './routes/api/console/mfa/backup-codes'
 import { Route as ApiConsoleGroupsIdRouteImport } from './routes/api/console/groups/$id'
 import { Route as ApiConsoleDebugTablesRouteImport } from './routes/api/console/debug/tables'
+import { Route as ApiConsoleAuthCollabTokenRouteImport } from './routes/api/console/auth/collab-token'
 import { Route as ApiAuthMfaVerifyRouteImport } from './routes/api/auth/mfa/verify'
 import { Route as ApiConsoleWorkspacesIdGroupsRouteImport } from './routes/api/console/workspaces/$id/groups'
 import { Route as ApiConsoleUsersIdRoleRouteImport } from './routes/api/console/users/$id/role'
@@ -93,6 +96,7 @@ import { Route as ApiConsolePagesIdUnpublishRouteImport } from './routes/api/con
 import { Route as ApiConsolePagesIdShareRouteImport } from './routes/api/console/pages/$id/share'
 import { Route as ApiConsolePagesIdRestoreRouteImport } from './routes/api/console/pages/$id/restore'
 import { Route as ApiConsolePagesIdPublishRouteImport } from './routes/api/console/pages/$id/publish'
+import { Route as ApiConsolePagesIdPresenceRouteImport } from './routes/api/console/pages/$id/presence'
 import { Route as ApiConsolePagesIdMoveRouteImport } from './routes/api/console/pages/$id/move'
 import { Route as ApiConsolePagesIdHistoryRouteImport } from './routes/api/console/pages/$id/history'
 import { Route as ApiConsolePagesIdFavoritedRouteImport } from './routes/api/console/pages/$id/favorited'
@@ -322,6 +326,11 @@ const ApiAuthLoginRoute = ApiAuthLoginRouteImport.update({
   path: '/api/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthCollabTokenRoute = ApiAuthCollabTokenRouteImport.update({
+  id: '/api/auth/collab-token',
+  path: '/api/auth/collab-token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthBootstrapStateRoute = ApiAuthBootstrapStateRouteImport.update({
   id: '/api/auth/bootstrap-state',
   path: '/api/auth/bootstrap-state',
@@ -331,6 +340,11 @@ const SSpaceSlugPPageidRoute = SSpaceSlugPPageidRouteImport.update({
   id: '/p/$pageid',
   path: '/p/$pageid',
   getParentRoute: () => SSpaceSlugRoute,
+} as any)
+const ApiSharesTokenPresenceRoute = ApiSharesTokenPresenceRouteImport.update({
+  id: '/presence',
+  path: '/presence',
+  getParentRoute: () => ApiSharesTokenRoute,
 } as any)
 const ApiConsoleWorkspacesIdRoute = ApiConsoleWorkspacesIdRouteImport.update({
   id: '/$id',
@@ -469,6 +483,12 @@ const ApiConsoleDebugTablesRoute = ApiConsoleDebugTablesRouteImport.update({
   path: '/api/console/debug/tables',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiConsoleAuthCollabTokenRoute =
+  ApiConsoleAuthCollabTokenRouteImport.update({
+    id: '/api/console/auth/collab-token',
+    path: '/api/console/auth/collab-token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAuthMfaVerifyRoute = ApiAuthMfaVerifyRouteImport.update({
   id: '/api/auth/mfa/verify',
   path: '/api/auth/mfa/verify',
@@ -552,6 +572,12 @@ const ApiConsolePagesIdPublishRoute =
   ApiConsolePagesIdPublishRouteImport.update({
     id: '/publish',
     path: '/publish',
+    getParentRoute: () => ApiConsolePagesIdRoute,
+  } as any)
+const ApiConsolePagesIdPresenceRoute =
+  ApiConsolePagesIdPresenceRouteImport.update({
+    id: '/presence',
+    path: '/presence',
     getParentRoute: () => ApiConsolePagesIdRoute,
   } as any)
 const ApiConsolePagesIdMoveRoute = ApiConsolePagesIdMoveRouteImport.update({
@@ -673,6 +699,7 @@ export interface FileRoutesByFullPath {
   '/share/$token': typeof ShareTokenRoute
   '/home/': typeof HomeIndexRoute
   '/api/auth/bootstrap-state': typeof ApiAuthBootstrapStateRoute
+  '/api/auth/collab-token': typeof ApiAuthCollabTokenRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/me': typeof ApiAuthMeRoute
@@ -687,7 +714,7 @@ export interface FileRoutesByFullPath {
   '/api/console/users': typeof ApiConsoleUsersRouteWithChildren
   '/api/console/workspaces': typeof ApiConsoleWorkspacesRouteWithChildren
   '/api/github/stats': typeof ApiGithubStatsRoute
-  '/api/shares/$token': typeof ApiSharesTokenRoute
+  '/api/shares/$token': typeof ApiSharesTokenRouteWithChildren
   '/api/short/$shortcode': typeof ApiShortShortcodeRoute
   '/s/$spaceSlug/settings': typeof SSpaceSlugSettingsRoute
   '/settings/account/preferences': typeof SettingsAccountPreferencesRoute
@@ -695,6 +722,7 @@ export interface FileRoutesByFullPath {
   '/settings/systems/debug': typeof SettingsSystemsDebugRoute
   '/s/$spaceSlug/': typeof SSpaceSlugIndexRoute
   '/api/auth/mfa/verify': typeof ApiAuthMfaVerifyRoute
+  '/api/console/auth/collab-token': typeof ApiConsoleAuthCollabTokenRoute
   '/api/console/debug/tables': typeof ApiConsoleDebugTablesRouteWithChildren
   '/api/console/groups/$id': typeof ApiConsoleGroupsIdRouteWithChildren
   '/api/console/mfa/backup-codes': typeof ApiConsoleMfaBackupCodesRoute
@@ -720,6 +748,7 @@ export interface FileRoutesByFullPath {
   '/api/console/unsplash/search': typeof ApiConsoleUnsplashSearchRoute
   '/api/console/users/$id': typeof ApiConsoleUsersIdRouteWithChildren
   '/api/console/workspaces/$id': typeof ApiConsoleWorkspacesIdRouteWithChildren
+  '/api/shares/$token/presence': typeof ApiSharesTokenPresenceRoute
   '/s/$spaceSlug/p/$pageid': typeof SSpaceSlugPPageidRoute
   '/api/console/debug/tables/$tableName': typeof ApiConsoleDebugTablesTableNameRouteWithChildren
   '/api/console/files/$bucket/$filename': typeof ApiConsoleFilesBucketFilenameRoute
@@ -730,6 +759,7 @@ export interface FileRoutesByFullPath {
   '/api/console/pages/$id/favorited': typeof ApiConsolePagesIdFavoritedRoute
   '/api/console/pages/$id/history': typeof ApiConsolePagesIdHistoryRouteWithChildren
   '/api/console/pages/$id/move': typeof ApiConsolePagesIdMoveRoute
+  '/api/console/pages/$id/presence': typeof ApiConsolePagesIdPresenceRoute
   '/api/console/pages/$id/publish': typeof ApiConsolePagesIdPublishRoute
   '/api/console/pages/$id/restore': typeof ApiConsolePagesIdRestoreRoute
   '/api/console/pages/$id/share': typeof ApiConsolePagesIdShareRouteWithChildren
@@ -773,6 +803,7 @@ export interface FileRoutesByTo {
   '/share/$token': typeof ShareTokenRoute
   '/home': typeof HomeIndexRoute
   '/api/auth/bootstrap-state': typeof ApiAuthBootstrapStateRoute
+  '/api/auth/collab-token': typeof ApiAuthCollabTokenRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/me': typeof ApiAuthMeRoute
@@ -787,7 +818,7 @@ export interface FileRoutesByTo {
   '/api/console/users': typeof ApiConsoleUsersRouteWithChildren
   '/api/console/workspaces': typeof ApiConsoleWorkspacesRouteWithChildren
   '/api/github/stats': typeof ApiGithubStatsRoute
-  '/api/shares/$token': typeof ApiSharesTokenRoute
+  '/api/shares/$token': typeof ApiSharesTokenRouteWithChildren
   '/api/short/$shortcode': typeof ApiShortShortcodeRoute
   '/s/$spaceSlug/settings': typeof SSpaceSlugSettingsRoute
   '/settings/account/preferences': typeof SettingsAccountPreferencesRoute
@@ -795,6 +826,7 @@ export interface FileRoutesByTo {
   '/settings/systems/debug': typeof SettingsSystemsDebugRoute
   '/s/$spaceSlug': typeof SSpaceSlugIndexRoute
   '/api/auth/mfa/verify': typeof ApiAuthMfaVerifyRoute
+  '/api/console/auth/collab-token': typeof ApiConsoleAuthCollabTokenRoute
   '/api/console/debug/tables': typeof ApiConsoleDebugTablesRouteWithChildren
   '/api/console/groups/$id': typeof ApiConsoleGroupsIdRouteWithChildren
   '/api/console/mfa/backup-codes': typeof ApiConsoleMfaBackupCodesRoute
@@ -820,6 +852,7 @@ export interface FileRoutesByTo {
   '/api/console/unsplash/search': typeof ApiConsoleUnsplashSearchRoute
   '/api/console/users/$id': typeof ApiConsoleUsersIdRouteWithChildren
   '/api/console/workspaces/$id': typeof ApiConsoleWorkspacesIdRouteWithChildren
+  '/api/shares/$token/presence': typeof ApiSharesTokenPresenceRoute
   '/s/$spaceSlug/p/$pageid': typeof SSpaceSlugPPageidRoute
   '/api/console/debug/tables/$tableName': typeof ApiConsoleDebugTablesTableNameRouteWithChildren
   '/api/console/files/$bucket/$filename': typeof ApiConsoleFilesBucketFilenameRoute
@@ -830,6 +863,7 @@ export interface FileRoutesByTo {
   '/api/console/pages/$id/favorited': typeof ApiConsolePagesIdFavoritedRoute
   '/api/console/pages/$id/history': typeof ApiConsolePagesIdHistoryRouteWithChildren
   '/api/console/pages/$id/move': typeof ApiConsolePagesIdMoveRoute
+  '/api/console/pages/$id/presence': typeof ApiConsolePagesIdPresenceRoute
   '/api/console/pages/$id/publish': typeof ApiConsolePagesIdPublishRoute
   '/api/console/pages/$id/restore': typeof ApiConsolePagesIdRestoreRoute
   '/api/console/pages/$id/share': typeof ApiConsolePagesIdShareRouteWithChildren
@@ -876,6 +910,7 @@ export interface FileRoutesById {
   '/share/$token': typeof ShareTokenRoute
   '/home/': typeof HomeIndexRoute
   '/api/auth/bootstrap-state': typeof ApiAuthBootstrapStateRoute
+  '/api/auth/collab-token': typeof ApiAuthCollabTokenRoute
   '/api/auth/login': typeof ApiAuthLoginRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/me': typeof ApiAuthMeRoute
@@ -890,7 +925,7 @@ export interface FileRoutesById {
   '/api/console/users': typeof ApiConsoleUsersRouteWithChildren
   '/api/console/workspaces': typeof ApiConsoleWorkspacesRouteWithChildren
   '/api/github/stats': typeof ApiGithubStatsRoute
-  '/api/shares/$token': typeof ApiSharesTokenRoute
+  '/api/shares/$token': typeof ApiSharesTokenRouteWithChildren
   '/api/short/$shortcode': typeof ApiShortShortcodeRoute
   '/s/$spaceSlug/settings': typeof SSpaceSlugSettingsRoute
   '/settings/account/preferences': typeof SettingsAccountPreferencesRoute
@@ -898,6 +933,7 @@ export interface FileRoutesById {
   '/settings/systems/debug': typeof SettingsSystemsDebugRoute
   '/s/$spaceSlug/': typeof SSpaceSlugIndexRoute
   '/api/auth/mfa/verify': typeof ApiAuthMfaVerifyRoute
+  '/api/console/auth/collab-token': typeof ApiConsoleAuthCollabTokenRoute
   '/api/console/debug/tables': typeof ApiConsoleDebugTablesRouteWithChildren
   '/api/console/groups/$id': typeof ApiConsoleGroupsIdRouteWithChildren
   '/api/console/mfa/backup-codes': typeof ApiConsoleMfaBackupCodesRoute
@@ -923,6 +959,7 @@ export interface FileRoutesById {
   '/api/console/unsplash/search': typeof ApiConsoleUnsplashSearchRoute
   '/api/console/users/$id': typeof ApiConsoleUsersIdRouteWithChildren
   '/api/console/workspaces/$id': typeof ApiConsoleWorkspacesIdRouteWithChildren
+  '/api/shares/$token/presence': typeof ApiSharesTokenPresenceRoute
   '/s/$spaceSlug/p/$pageid': typeof SSpaceSlugPPageidRoute
   '/api/console/debug/tables/$tableName': typeof ApiConsoleDebugTablesTableNameRouteWithChildren
   '/api/console/files/$bucket/$filename': typeof ApiConsoleFilesBucketFilenameRoute
@@ -933,6 +970,7 @@ export interface FileRoutesById {
   '/api/console/pages/$id/favorited': typeof ApiConsolePagesIdFavoritedRoute
   '/api/console/pages/$id/history': typeof ApiConsolePagesIdHistoryRouteWithChildren
   '/api/console/pages/$id/move': typeof ApiConsolePagesIdMoveRoute
+  '/api/console/pages/$id/presence': typeof ApiConsolePagesIdPresenceRoute
   '/api/console/pages/$id/publish': typeof ApiConsolePagesIdPublishRoute
   '/api/console/pages/$id/restore': typeof ApiConsolePagesIdRestoreRoute
   '/api/console/pages/$id/share': typeof ApiConsolePagesIdShareRouteWithChildren
@@ -980,6 +1018,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/home/'
     | '/api/auth/bootstrap-state'
+    | '/api/auth/collab-token'
     | '/api/auth/login'
     | '/api/auth/logout'
     | '/api/auth/me'
@@ -1002,6 +1041,7 @@ export interface FileRouteTypes {
     | '/settings/systems/debug'
     | '/s/$spaceSlug/'
     | '/api/auth/mfa/verify'
+    | '/api/console/auth/collab-token'
     | '/api/console/debug/tables'
     | '/api/console/groups/$id'
     | '/api/console/mfa/backup-codes'
@@ -1027,6 +1067,7 @@ export interface FileRouteTypes {
     | '/api/console/unsplash/search'
     | '/api/console/users/$id'
     | '/api/console/workspaces/$id'
+    | '/api/shares/$token/presence'
     | '/s/$spaceSlug/p/$pageid'
     | '/api/console/debug/tables/$tableName'
     | '/api/console/files/$bucket/$filename'
@@ -1037,6 +1078,7 @@ export interface FileRouteTypes {
     | '/api/console/pages/$id/favorited'
     | '/api/console/pages/$id/history'
     | '/api/console/pages/$id/move'
+    | '/api/console/pages/$id/presence'
     | '/api/console/pages/$id/publish'
     | '/api/console/pages/$id/restore'
     | '/api/console/pages/$id/share'
@@ -1080,6 +1122,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/home'
     | '/api/auth/bootstrap-state'
+    | '/api/auth/collab-token'
     | '/api/auth/login'
     | '/api/auth/logout'
     | '/api/auth/me'
@@ -1102,6 +1145,7 @@ export interface FileRouteTypes {
     | '/settings/systems/debug'
     | '/s/$spaceSlug'
     | '/api/auth/mfa/verify'
+    | '/api/console/auth/collab-token'
     | '/api/console/debug/tables'
     | '/api/console/groups/$id'
     | '/api/console/mfa/backup-codes'
@@ -1127,6 +1171,7 @@ export interface FileRouteTypes {
     | '/api/console/unsplash/search'
     | '/api/console/users/$id'
     | '/api/console/workspaces/$id'
+    | '/api/shares/$token/presence'
     | '/s/$spaceSlug/p/$pageid'
     | '/api/console/debug/tables/$tableName'
     | '/api/console/files/$bucket/$filename'
@@ -1137,6 +1182,7 @@ export interface FileRouteTypes {
     | '/api/console/pages/$id/favorited'
     | '/api/console/pages/$id/history'
     | '/api/console/pages/$id/move'
+    | '/api/console/pages/$id/presence'
     | '/api/console/pages/$id/publish'
     | '/api/console/pages/$id/restore'
     | '/api/console/pages/$id/share'
@@ -1182,6 +1228,7 @@ export interface FileRouteTypes {
     | '/share/$token'
     | '/home/'
     | '/api/auth/bootstrap-state'
+    | '/api/auth/collab-token'
     | '/api/auth/login'
     | '/api/auth/logout'
     | '/api/auth/me'
@@ -1204,6 +1251,7 @@ export interface FileRouteTypes {
     | '/settings/systems/debug'
     | '/s/$spaceSlug/'
     | '/api/auth/mfa/verify'
+    | '/api/console/auth/collab-token'
     | '/api/console/debug/tables'
     | '/api/console/groups/$id'
     | '/api/console/mfa/backup-codes'
@@ -1229,6 +1277,7 @@ export interface FileRouteTypes {
     | '/api/console/unsplash/search'
     | '/api/console/users/$id'
     | '/api/console/workspaces/$id'
+    | '/api/shares/$token/presence'
     | '/s/$spaceSlug/p/$pageid'
     | '/api/console/debug/tables/$tableName'
     | '/api/console/files/$bucket/$filename'
@@ -1239,6 +1288,7 @@ export interface FileRouteTypes {
     | '/api/console/pages/$id/favorited'
     | '/api/console/pages/$id/history'
     | '/api/console/pages/$id/move'
+    | '/api/console/pages/$id/presence'
     | '/api/console/pages/$id/publish'
     | '/api/console/pages/$id/restore'
     | '/api/console/pages/$id/share'
@@ -1279,6 +1329,7 @@ export interface RootRouteChildren {
   ShShortcodeRoute: typeof ShShortcodeRoute
   ShareTokenRoute: typeof ShareTokenRoute
   ApiAuthBootstrapStateRoute: typeof ApiAuthBootstrapStateRoute
+  ApiAuthCollabTokenRoute: typeof ApiAuthCollabTokenRoute
   ApiAuthLoginRoute: typeof ApiAuthLoginRoute
   ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
   ApiAuthMeRoute: typeof ApiAuthMeRoute
@@ -1292,9 +1343,10 @@ export interface RootRouteChildren {
   ApiConsoleUsersRoute: typeof ApiConsoleUsersRouteWithChildren
   ApiConsoleWorkspacesRoute: typeof ApiConsoleWorkspacesRouteWithChildren
   ApiGithubStatsRoute: typeof ApiGithubStatsRoute
-  ApiSharesTokenRoute: typeof ApiSharesTokenRoute
+  ApiSharesTokenRoute: typeof ApiSharesTokenRouteWithChildren
   ApiShortShortcodeRoute: typeof ApiShortShortcodeRoute
   ApiAuthMfaVerifyRoute: typeof ApiAuthMfaVerifyRoute
+  ApiConsoleAuthCollabTokenRoute: typeof ApiConsoleAuthCollabTokenRoute
   ApiConsoleDebugTablesRoute: typeof ApiConsoleDebugTablesRouteWithChildren
   ApiConsoleGroupsIdRoute: typeof ApiConsoleGroupsIdRouteWithChildren
   ApiConsoleMfaBackupCodesRoute: typeof ApiConsoleMfaBackupCodesRoute
@@ -1605,6 +1657,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/collab-token': {
+      id: '/api/auth/collab-token'
+      path: '/api/auth/collab-token'
+      fullPath: '/api/auth/collab-token'
+      preLoaderRoute: typeof ApiAuthCollabTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/bootstrap-state': {
       id: '/api/auth/bootstrap-state'
       path: '/api/auth/bootstrap-state'
@@ -1618,6 +1677,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/s/$spaceSlug/p/$pageid'
       preLoaderRoute: typeof SSpaceSlugPPageidRouteImport
       parentRoute: typeof SSpaceSlugRoute
+    }
+    '/api/shares/$token/presence': {
+      id: '/api/shares/$token/presence'
+      path: '/presence'
+      fullPath: '/api/shares/$token/presence'
+      preLoaderRoute: typeof ApiSharesTokenPresenceRouteImport
+      parentRoute: typeof ApiSharesTokenRoute
     }
     '/api/console/workspaces/$id': {
       id: '/api/console/workspaces/$id'
@@ -1794,6 +1860,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiConsoleDebugTablesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/console/auth/collab-token': {
+      id: '/api/console/auth/collab-token'
+      path: '/api/console/auth/collab-token'
+      fullPath: '/api/console/auth/collab-token'
+      preLoaderRoute: typeof ApiConsoleAuthCollabTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/mfa/verify': {
       id: '/api/auth/mfa/verify'
       path: '/api/auth/mfa/verify'
@@ -1897,6 +1970,13 @@ declare module '@tanstack/react-router' {
       path: '/publish'
       fullPath: '/api/console/pages/$id/publish'
       preLoaderRoute: typeof ApiConsolePagesIdPublishRouteImport
+      parentRoute: typeof ApiConsolePagesIdRoute
+    }
+    '/api/console/pages/$id/presence': {
+      id: '/api/console/pages/$id/presence'
+      path: '/presence'
+      fullPath: '/api/console/pages/$id/presence'
+      preLoaderRoute: typeof ApiConsolePagesIdPresenceRouteImport
       parentRoute: typeof ApiConsolePagesIdRoute
     }
     '/api/console/pages/$id/move': {
@@ -2151,6 +2231,7 @@ interface ApiConsolePagesIdRouteChildren {
   ApiConsolePagesIdFavoritedRoute: typeof ApiConsolePagesIdFavoritedRoute
   ApiConsolePagesIdHistoryRoute: typeof ApiConsolePagesIdHistoryRouteWithChildren
   ApiConsolePagesIdMoveRoute: typeof ApiConsolePagesIdMoveRoute
+  ApiConsolePagesIdPresenceRoute: typeof ApiConsolePagesIdPresenceRoute
   ApiConsolePagesIdPublishRoute: typeof ApiConsolePagesIdPublishRoute
   ApiConsolePagesIdRestoreRoute: typeof ApiConsolePagesIdRestoreRoute
   ApiConsolePagesIdShareRoute: typeof ApiConsolePagesIdShareRouteWithChildren
@@ -2165,6 +2246,7 @@ const ApiConsolePagesIdRouteChildren: ApiConsolePagesIdRouteChildren = {
   ApiConsolePagesIdFavoritedRoute: ApiConsolePagesIdFavoritedRoute,
   ApiConsolePagesIdHistoryRoute: ApiConsolePagesIdHistoryRouteWithChildren,
   ApiConsolePagesIdMoveRoute: ApiConsolePagesIdMoveRoute,
+  ApiConsolePagesIdPresenceRoute: ApiConsolePagesIdPresenceRoute,
   ApiConsolePagesIdPublishRoute: ApiConsolePagesIdPublishRoute,
   ApiConsolePagesIdRestoreRoute: ApiConsolePagesIdRestoreRoute,
   ApiConsolePagesIdShareRoute: ApiConsolePagesIdShareRouteWithChildren,
@@ -2318,6 +2400,18 @@ const ApiConsoleWorkspacesRouteChildren: ApiConsoleWorkspacesRouteChildren = {
 const ApiConsoleWorkspacesRouteWithChildren =
   ApiConsoleWorkspacesRoute._addFileChildren(ApiConsoleWorkspacesRouteChildren)
 
+interface ApiSharesTokenRouteChildren {
+  ApiSharesTokenPresenceRoute: typeof ApiSharesTokenPresenceRoute
+}
+
+const ApiSharesTokenRouteChildren: ApiSharesTokenRouteChildren = {
+  ApiSharesTokenPresenceRoute: ApiSharesTokenPresenceRoute,
+}
+
+const ApiSharesTokenRouteWithChildren = ApiSharesTokenRoute._addFileChildren(
+  ApiSharesTokenRouteChildren,
+)
+
 interface ApiConsoleDebugTablesTableNameRouteChildren {
   ApiConsoleDebugTablesTableNameRowsRoute: typeof ApiConsoleDebugTablesTableNameRowsRoute
 }
@@ -2389,6 +2483,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShShortcodeRoute: ShShortcodeRoute,
   ShareTokenRoute: ShareTokenRoute,
   ApiAuthBootstrapStateRoute: ApiAuthBootstrapStateRoute,
+  ApiAuthCollabTokenRoute: ApiAuthCollabTokenRoute,
   ApiAuthLoginRoute: ApiAuthLoginRoute,
   ApiAuthLogoutRoute: ApiAuthLogoutRoute,
   ApiAuthMeRoute: ApiAuthMeRoute,
@@ -2402,9 +2497,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiConsoleUsersRoute: ApiConsoleUsersRouteWithChildren,
   ApiConsoleWorkspacesRoute: ApiConsoleWorkspacesRouteWithChildren,
   ApiGithubStatsRoute: ApiGithubStatsRoute,
-  ApiSharesTokenRoute: ApiSharesTokenRoute,
+  ApiSharesTokenRoute: ApiSharesTokenRouteWithChildren,
   ApiShortShortcodeRoute: ApiShortShortcodeRoute,
   ApiAuthMfaVerifyRoute: ApiAuthMfaVerifyRoute,
+  ApiConsoleAuthCollabTokenRoute: ApiConsoleAuthCollabTokenRoute,
   ApiConsoleDebugTablesRoute: ApiConsoleDebugTablesRouteWithChildren,
   ApiConsoleGroupsIdRoute: ApiConsoleGroupsIdRouteWithChildren,
   ApiConsoleMfaBackupCodesRoute: ApiConsoleMfaBackupCodesRoute,

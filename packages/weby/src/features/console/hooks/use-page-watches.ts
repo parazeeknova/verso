@@ -14,9 +14,9 @@ export const useWatchPage = () => {
   });
 };
 
-export const useIsPageWatching = (pageId: string) =>
+export const useIsPageWatching = (pageId: string, options?: { enabled?: boolean }) =>
   useQuery<{ watching: boolean }>({
-    enabled: pageId !== "",
+    enabled: (options?.enabled ?? true) && pageId !== "",
     queryFn: ({ signal }) =>
       fetchProtected<{ watching: boolean }>(`/api/console/pages/${pageId}/watching`, { signal }),
     queryKey: ["pageWatching", pageId],

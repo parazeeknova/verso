@@ -567,6 +567,11 @@ func (h *Handlers) UpdateConsolePage(c *gin.Context) {
 		return
 	}
 
+	editable, err := h.pageService.CanWrite(c.Request.Context(), page.SpaceID, userID)
+	if err != nil {
+		editable = false
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"id":           page.ID,
 		"slugId":       page.SlugID,
@@ -579,8 +584,12 @@ func (h *Handlers) UpdateConsolePage(c *gin.Context) {
 		"isPublished":  page.IsPublished,
 		"isLocked":     page.IsLocked,
 		"parentPageId": page.ParentPageID,
+		"spaceId":      page.SpaceID,
+		"creatorId":    page.CreatorID,
 		"createdAt":    page.CreatedAt.Format(time.RFC3339),
 		"updatedAt":    page.UpdatedAt.Format(time.RFC3339),
+		"editable":     editable,
+		"isShared":     h.pageService.IsPageShared(c.Request.Context(), page.ID),
 	})
 }
 
@@ -1219,8 +1228,9 @@ func (h *Handlers) GetConsolePageShare(c *gin.Context) {
 }
 
 type UpdateConsolePageShareRequest struct {
-	IsEnabled      bool `json:"isEnabled"`
-	SearchIndexing bool `json:"searchIndexing"`
+	IsEnabled      bool   `json:"isEnabled"`
+	SearchIndexing bool   `json:"searchIndexing"`
+	AccessLevel    string `json:"accessLevel"`
 }
 
 // UpdateConsolePageShare handles PUT /api/console/pages/:id/share.
@@ -1239,8 +1249,12 @@ func (h *Handlers) UpdateConsolePageShare(c *gin.Context) {
 		return
 	}
 
-	share, err := h.pageService.UpdatePageShare(c.Request.Context(), pageID, userID, req.IsEnabled, req.SearchIndexing)
+	share, err := h.pageService.UpdatePageShare(c.Request.Context(), pageID, userID, req.IsEnabled, req.SearchIndexing, req.AccessLevel)
 	if err != nil {
+		if errors.Is(err, pagefeat.ErrInvalidAccessLevel) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		if errors.Is(err, pagefeat.ErrPageNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
 			return
@@ -1307,6 +1321,7 @@ func (h *Handlers) GetPublicShare(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"page": gin.H{
 			"id":          page.ID,
+			"creatorId":   page.CreatorID,
 			"title":       page.Title,
 			"icon":        page.Icon,
 			"coverPhoto":  page.CoverPhoto,
@@ -1318,6 +1333,7 @@ func (h *Handlers) GetPublicShare(c *gin.Context) {
 			"shareToken":     share.ShareToken,
 			"shortCode":      share.ShortCode,
 			"searchIndexing": share.SearchIndexing,
+			"accessLevel":    share.AccessLevel,
 		},
 	})
 }

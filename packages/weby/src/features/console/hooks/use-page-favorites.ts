@@ -17,9 +17,9 @@ export const useTogglePageFavorite = () => {
   });
 };
 
-export const useIsPageFavorited = (pageId: string) =>
+export const useIsPageFavorited = (pageId: string, options?: { enabled?: boolean }) =>
   useQuery<{ favorited: boolean }>({
-    enabled: pageId !== "",
+    enabled: (options?.enabled ?? true) && pageId !== "",
     queryFn: ({ signal }) =>
       fetchProtected<{ favorited: boolean }>(`/api/console/pages/${pageId}/favorited`, { signal }),
     queryKey: ["pageFavorited", pageId],

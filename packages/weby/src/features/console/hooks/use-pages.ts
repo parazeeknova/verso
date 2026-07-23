@@ -170,12 +170,26 @@ export const useUpdatePage = () => {
       const touchedKeys = Object.keys(input) as (keyof ConsolePageDetail)[];
       return { previousPages, touchedKeys };
     },
-    onSuccess: (_data, _variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: (data, variables) => {
+      const queries = queryClient.getQueriesData<ConsolePageDetail>({
+        exact: false,
         queryKey: ["consolePage"],
       });
-      queryClient.invalidateQueries({ queryKey: ["consolePages"] });
-      queryClient.invalidateQueries({ queryKey: ["pageTree"] });
+      for (const [queryKey, pageData] of queries) {
+        if (pageData && pageData.id === data.id) {
+          queryClient.setQueryData<ConsolePageDetail>(queryKey, (old) => ({
+            ...old,
+            ...data,
+            editable: data.editable ?? old?.editable ?? true,
+          }));
+        }
+      }
+
+      const { input } = variables;
+      if (input.title !== undefined || input.icon !== undefined || input.isLocked !== undefined) {
+        queryClient.invalidateQueries({ queryKey: ["pageTree"] });
+        queryClient.invalidateQueries({ queryKey: ["consolePages"] });
+      }
     },
   });
 };
@@ -254,8 +268,9 @@ export const useMovePage = () => {
   });
 };
 
-export const usePageHistory = (pageId: string) =>
+export const usePageHistory = (pageId: string, options?: { enabled?: boolean }) =>
   useQuery<PageHistoryItem[]>({
+    enabled: (options?.enabled ?? true) && pageId !== "",
     queryFn: ({ signal }) =>
       fetchProtected<PageHistoryItem[]>(`/api/console/pages/${pageId}/history`, { signal }),
     queryKey: ["pageHistory", pageId],
@@ -319,11 +334,11 @@ export const useUpdatePageShare = () => {
   return useMutation<
     PageShare,
     Error,
-    { pageId: string; isEnabled: boolean; searchIndexing: boolean }
+    { pageId: string; isEnabled: boolean; searchIndexing: boolean; accessLevel?: string }
   >({
-    mutationFn: ({ pageId, isEnabled, searchIndexing }) =>
+    mutationFn: ({ pageId, isEnabled, searchIndexing, accessLevel }) =>
       fetchProtected<PageShare>(`/api/console/pages/${pageId}/share`, {
-        body: JSON.stringify({ isEnabled, searchIndexing }),
+        body: JSON.stringify({ accessLevel, isEnabled, searchIndexing }),
         headers: { "Content-Type": "application/json" },
         method: "PUT",
       }),

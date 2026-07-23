@@ -150,6 +150,7 @@ export interface PageShare {
   shortCode?: string | null;
   searchIndexing: boolean;
   isEnabled: boolean;
+  accessLevel?: string;
   createdAt?: string;
   updatedAt?: string;
 }

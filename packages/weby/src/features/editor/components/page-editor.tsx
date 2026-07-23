@@ -14,16 +14,26 @@ import {
   ArrowSquareOutIcon,
   WifiHighIcon,
   WifiSlashIcon,
+  UsersIcon,
 } from "@phosphor-icons/react";
 import { gsap } from "gsap";
 import { useTheme } from "#/shared/hooks/use-theme";
-import { getEditorExtensions } from "#/features/editor/extensions";
+import type { WebsocketProvider } from "y-websocket";
+import {
+  getEditorExtensions,
+  getCollabEditorExtensions,
+  getRandomColor,
+} from "#/features/editor/extensions";
+import { useCollabToken } from "#/features/auth/hooks/use-collab-token";
+import { useCollaborationUrl } from "#/features/editor/hooks/use-collaboration-url";
 import { useEditorContent } from "#/features/editor/hooks/use-editor-content";
+import { usePresenceApi } from "#/features/editor/hooks/use-presence-api";
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
 import { useQueryClient } from "@tanstack/react-query";
 import { EditorMoreMenu } from "#/features/editor/components/editor-more-menu";
 import { SharePopover } from "./share-popover";
 import { PageHistoryModal } from "./page-history-modal";
+import { useAuth } from "#/features/auth/hooks/use-auth";
 import {
   useIsPageFavorited,
   useTogglePageFavorite,
@@ -31,6 +41,8 @@ import {
 import { setFlashToast } from "#/features/console/components/flash-toast";
 import { useIsPageWatching, useWatchPage } from "#/features/console/hooks/use-page-watches";
 import { useUpdatePage, usePageShare } from "#/features/console/hooks/use-pages";
+import { getGuestPokemon, getPokemonDetails } from "#/features/editor/lib/pokemon-avatars";
+import type { CollaboratorAwarenessUser } from "#/features/editor/lib/collaboration-presence";
 import { TableMenu } from "./table/table-menu";
 import { ColumnsMenu } from "./columns/columns-menu";
 import { CalloutMenu } from "./callout/callout-menu";
@@ -47,15 +59,19 @@ import { extractEditorHeadings } from "#/features/editor/lib/editor-headings";
 import type { PageEditorProps } from "#/features/editor/types/editor.types";
 import { useUserById } from "#/features/console/hooks/use-users";
 import { AvatarBadge } from "#/shared/components/avatar-badge";
+import { createCollaborationProvider } from "../lib/collaboration-provider";
 
-const parseContent = (raw: string): JSONContent => {
+const parseContent = (raw: unknown): JSONContent => {
+  if (!raw) {
+    return { content: [], type: "doc" };
+  }
   try {
-    const parsed = JSON.parse(raw);
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
     if (
       parsed &&
       typeof parsed === "object" &&
-      parsed.type === "doc" &&
-      Array.isArray(parsed.content)
+      (parsed as Record<string, unknown>).type === "doc" &&
+      Array.isArray((parsed as Record<string, unknown>).content)
     ) {
       return parsed as JSONContent;
     }
@@ -221,7 +237,7 @@ const handleTitleKeyPress = (
   }
 };
 
-const usePageTitle = (title: string, pageId: string) => {
+const usePageTitle = (title: string, pageId: string, options?: { enabled?: boolean }) => {
   const queryClient = useQueryClient();
   const [localTitle, setLocalTitle] = useState(title);
   const lastSavedTitleRef = useRef(title);
@@ -242,7 +258,7 @@ const usePageTitle = (title: string, pageId: string) => {
   const saveTitle = useCallback(
     async (value: string) => {
       const trimmed = value.trim();
-      if (trimmed === lastSavedTitleRef.current) {
+      if (trimmed === lastSavedTitleRef.current || options?.enabled === false) {
         return;
       }
       if (debounceSaveRef.current) {
@@ -263,7 +279,7 @@ const usePageTitle = (title: string, pageId: string) => {
         console.error("failed to save title:", error);
       }
     },
-    [pageId, queryClient],
+    [pageId, queryClient, options?.enabled],
   );
 
   const handleTitleChange = (newVal: string) => {
@@ -320,32 +336,45 @@ const usePageEditorInstance = (
   editable: boolean,
   setHeadings: (headings: BlogHeading[]) => void,
   markDirtyRef: React.MutableRefObject<(() => void) | null>,
+  provider?: WebsocketProvider | null,
+  user?: CollaboratorAwarenessUser,
 ) => {
   const editableRef = useRef(editable);
   useEffect(() => {
     editableRef.current = editable;
   }, [editable]);
 
-  return useEditor({
-    content,
-    editable,
-    editorProps: {
-      attributes: {
-        class: "outline-none border-none focus:outline-none focus:border-none focus:ring-0",
+  const extensions = useMemo(() => {
+    if (provider) {
+      return getCollabEditorExtensions(provider, user);
+    }
+    return getEditorExtensions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [provider]);
+
+  return useEditor(
+    {
+      content: provider ? undefined : content,
+      editable,
+      editorProps: {
+        attributes: {
+          class: "outline-none border-none focus:outline-none focus:border-none focus:ring-0",
+        },
+      },
+      extensions,
+      immediatelyRender: false,
+      onUpdate: ({ editor }) => {
+        const liveContent = editor.getJSON();
+        if (liveContent) {
+          setHeadings(extractEditorHeadings(liveContent));
+        }
+        if (editableRef.current) {
+          markDirtyRef.current?.();
+        }
       },
     },
-    extensions: getEditorExtensions(),
-    immediatelyRender: false,
-    onUpdate: ({ editor }) => {
-      const liveContent = editor.getJSON();
-      if (liveContent) {
-        setHeadings(extractEditorHeadings(liveContent));
-      }
-      if (editableRef.current) {
-        markDirtyRef.current?.();
-      }
-    },
-  });
+    [editable, extensions, provider],
+  );
 };
 
 const useSyncEditorContent = (
@@ -353,11 +382,12 @@ const useSyncEditorContent = (
   content: JSONContent,
   contentJson: string,
   dirty: boolean,
+  providerReady: boolean,
 ) => {
   const previousContentJsonRef = useRef(contentJson);
 
   useEffect(() => {
-    if (!editor) {
+    if (!editor || providerReady) {
       return;
     }
     if (previousContentJsonRef.current === contentJson) {
@@ -373,7 +403,7 @@ const useSyncEditorContent = (
     }
     previousContentJsonRef.current = contentJson;
     editor.commands.setContent(content);
-  }, [content, contentJson, editor, dirty]);
+  }, [content, contentJson, editor, dirty, providerReady]);
 };
 
 const useEscapeKeyListener = (isOpen: boolean, setIsOpen: (open: boolean) => void) => {
@@ -445,11 +475,18 @@ const CreatorByline = ({
   );
 };
 
-const InternetIndicator = ({ t }: { t: (dark: string, light: string) => string }) => {
+const MergedConnectionStatus = ({
+  collabStatus,
+  t,
+}: {
+  collabStatus: CollaborationStatus;
+  t: (dark: string, light: string) => string;
+}) => {
   const [isOnline, setIsOnline] = useState(
     typeof navigator === "undefined" ? true : navigator.onLine,
   );
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -464,33 +501,264 @@ const InternetIndicator = ({ t }: { t: (dark: string, light: string) => string }
     };
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const isWsConnected = collabStatus === "connected";
+  const isWsConnecting = collabStatus === "connecting";
+
+  let badgeStyle = t(
+    "border-neutral-700 text-neutral-400 hover:text-neutral-200",
+    "border-neutral-300 text-neutral-600 hover:text-neutral-800",
+  );
+
+  if (isOnline && isWsConnected) {
+    badgeStyle =
+      "border-purple-500/30 text-purple-500 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20";
+  } else if (isOnline && isWsConnecting) {
+    badgeStyle = "border-amber-500/30 text-amber-500 bg-amber-500/10 animate-pulse";
+  }
+
+  let wsTextColor = "text-neutral-400";
+  let wsTextLabel = "disconnected";
+
+  if (isWsConnected) {
+    wsTextColor = "text-purple-500 dark:text-purple-400";
+    wsTextLabel = "connected";
+  } else if (isWsConnecting) {
+    wsTextColor = "text-amber-500";
+    wsTextLabel = "connecting";
+  }
+
+  let wsIconColor = "opacity-40 text-neutral-400";
+  if (isWsConnected) {
+    wsIconColor = "text-purple-500 dark:text-purple-400";
+  } else if (isWsConnecting) {
+    wsIconColor = "text-amber-500 animate-pulse";
+  }
+
   return (
-    <div
-      className="relative flex items-center justify-center cursor-default"
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-    >
-      <div
-        className={`p-0.5 transition-colors ${
-          isOnline
-            ? t(
-                "text-text-dark/40 hover:text-text-dark",
-                "text-text-light/40 hover:text-text-light",
-              )
-            : "text-red-500 animate-pulse"
-        }`}
-        aria-label={isOnline ? "Online" : "Offline"}
+    <div ref={dropdownRef} className="relative flex items-center justify-center">
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className={`flex items-center gap-1.5 px-1.5 py-0.5 border transition-all cursor-pointer ${badgeStyle}`}
+        aria-label="Connection Status"
       >
-        {isOnline ? <WifiHighIcon size={14} /> : <WifiSlashIcon size={14} />}
-      </div>
-      {showTooltip && (
+        {isOnline ? <WifiHighIcon size={12} /> : <WifiSlashIcon size={12} />}
+        <UsersIcon size={12} className={wsIconColor} />
+      </button>
+
+      {isOpen && (
         <div
-          className={`pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 whitespace-nowrap px-2 py-0.5 text-[9px] font-mono lowercase shadow-lg border ${t(
-            "border-border-dark bg-bg-dark text-text-dark",
-            "border-border-light bg-bg-light text-text-light",
+          className={`absolute top-full right-0 mt-1 z-50 w-44 p-1.5 shadow-lg border text-[10px] font-mono lowercase space-y-1 transition-all ${t(
+            "bg-neutral-900 border-neutral-800 text-neutral-200",
+            "bg-white border-neutral-200 text-neutral-800",
           )}`}
         >
-          {isOnline ? "online" : "offline (no connection)"}
+          <div className="flex items-center justify-between px-1 pb-1 border-b border-border-light dark:border-border-dark">
+            <span className="font-bold text-[9px] uppercase tracking-wider text-neutral-400">
+              sync status
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between px-1 py-0.5">
+            <span className="flex items-center gap-1 opacity-70">
+              {isOnline ? <WifiHighIcon size={11} /> : <WifiSlashIcon size={11} />}
+              network
+            </span>
+            <span
+              className={`text-[9px] ${isOnline ? "text-purple-500 dark:text-purple-400" : "text-red-500"}`}
+            >
+              {isOnline ? "online" : "offline"}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between px-1 py-0.5">
+            <span className="flex items-center gap-1 opacity-70">
+              <UsersIcon size={11} className={wsTextColor} />
+              collab
+            </span>
+            <span className={`text-[9px] ${wsTextColor}`}>{wsTextLabel}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface ActiveCollaborator {
+  clientId: number | string;
+  id?: string;
+  isGuest?: boolean;
+  name: string;
+  avatar_url?: string | null;
+  color?: string;
+}
+
+type CollaborationStatus = "connected" | "connecting" | "disconnected";
+
+const CollaboratorAvatar = ({
+  initials,
+  t,
+  user,
+}: {
+  initials: string;
+  t: (dark: string, light: string) => string;
+  user: ActiveCollaborator;
+}) => {
+  const pokemonInfo = getPokemonDetails(user.avatar_url || user.name);
+  const avatarUrl = user.avatar_url || pokemonInfo?.avatar;
+  const isPokemon =
+    user.isGuest ||
+    user.id?.startsWith("guest-") ||
+    user.name.includes("(Guest)") ||
+    Boolean(pokemonInfo) ||
+    Boolean(
+      avatarUrl && (avatarUrl.includes("pokemon") || avatarUrl.includes("githubusercontent")),
+    );
+
+  if (avatarUrl && isPokemon) {
+    return (
+      <div
+        className={`h-5 w-5 flex items-center justify-center overflow-hidden ring-2 p-0.5 bg-neutral-800/90 dark:bg-neutral-900/90 ${t(
+          "ring-neutral-900 border border-neutral-700/60",
+          "ring-white border border-neutral-300",
+        )}`}
+      >
+        <img
+          src={avatarUrl}
+          alt={user.name}
+          className="h-3.5 w-3.5 object-contain grayscale transition-all duration-200 group-hover:scale-110"
+        />
+      </div>
+    );
+  }
+
+  if (user.avatar_url) {
+    return (
+      <div
+        className={`h-5 w-5 rounded-full flex items-center justify-center overflow-hidden ring-2 p-0.5 bg-neutral-500 ${t(
+          "ring-neutral-900 border border-neutral-600",
+          "ring-white border border-neutral-400",
+        )}`}
+      >
+        <img
+          src={user.avatar_url}
+          alt={user.name}
+          className="h-full w-full object-cover transition-all duration-200"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`h-5 w-5 rounded-full flex items-center justify-center text-[8.5px] font-bold text-white ring-2 bg-neutral-500 ${t(
+        "ring-neutral-900",
+        "ring-white",
+      )}`}
+    >
+      {initials}
+    </div>
+  );
+};
+
+const ActiveCollaboratorsStack = ({
+  collaborators,
+  t,
+}: {
+  collaborators: ActiveCollaborator[];
+  t: (dark: string, light: string) => string;
+}) => {
+  if (collaborators.length === 0) {
+    return null;
+  }
+
+  const maxVisible = 4;
+  const visible = collaborators.slice(0, maxVisible);
+  const overflowCount = Math.max(0, collaborators.length - maxVisible);
+
+  return (
+    <div className="flex items-center -space-x-1.5 pl-1 select-none">
+      {visible.map((user, idx) => {
+        const initials = user.name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase();
+
+        const pokemonInfo = getPokemonDetails(user.avatar_url || user.name);
+        const isGuest =
+          user.isGuest ||
+          user.id?.startsWith("guest-") ||
+          user.name.includes("(Guest)") ||
+          Boolean(pokemonInfo);
+        const cleanName = pokemonInfo?.name || user.name.replace(/\s*\(Guest\)$/i, "");
+
+        let subtitle = "Collaborator • Active now";
+        if (pokemonInfo) {
+          subtitle = `Pokémon #${pokemonInfo.id} • Active guest`;
+        } else if (isGuest) {
+          subtitle = "Guest collaborator • Active now";
+        }
+
+        return (
+          <div
+            key={`${user.clientId}-${idx}`}
+            className="group relative flex items-center justify-center shrink-0"
+          >
+            <CollaboratorAvatar initials={initials} t={t} user={user} />
+            <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 hidden group-hover:flex flex-col items-center select-none animate-in fade-in zoom-in-95 duration-150">
+              <div className="w-2 h-2 -mb-1 rotate-45 bg-neutral-900/95 border-l border-t border-neutral-700/60" />
+              <div className="flex flex-col gap-1 rounded-none px-2.5 py-1.5 text-xs bg-neutral-900/95 text-white dark:bg-neutral-900/95 dark:text-white border border-neutral-700/60 shadow-xl backdrop-blur-md">
+                <div className="flex items-center gap-1.5 font-semibold text-[11px] leading-tight whitespace-nowrap">
+                  {user.avatar_url || pokemonInfo?.avatar ? (
+                    <img
+                      src={user.avatar_url || pokemonInfo?.avatar}
+                      alt=""
+                      className="h-4 w-4 object-contain shrink-0 grayscale"
+                    />
+                  ) : (
+                    <span className="h-2 w-2 bg-purple-400 shrink-0" />
+                  )}
+                  <span>{cleanName}</span>
+                  {isGuest && (
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-1 py-0.5 rounded-none bg-purple-500/20 text-purple-300 border border-purple-500/30 leading-none">
+                      Guest
+                    </span>
+                  )}
+                </div>
+                <div className="text-[9.5px] text-neutral-400 font-normal leading-tight whitespace-nowrap flex items-center gap-1">
+                  <span>{subtitle}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {overflowCount > 0 && (
+        <div
+          className={`flex h-5 w-5 items-center justify-center rounded-full text-[8.5px] font-bold ring-2 ${t(
+            "ring-neutral-900 bg-neutral-500 text-white",
+            "ring-white bg-neutral-500 text-white",
+          )}`}
+          title={`${overflowCount} more collaborator${overflowCount > 1 ? "s" : ""}`}
+        >
+          +{overflowCount}
         </div>
       )}
     </div>
@@ -499,15 +767,17 @@ const InternetIndicator = ({ t }: { t: (dark: string, light: string) => string }
 
 const ShareInfoSection = ({
   pageId,
+  isLoggedIn = true,
   t,
 }: {
   pageId?: string;
+  isLoggedIn?: boolean;
   t: (dark: string, light: string) => string;
 }) => {
   const [copied, setCopied] = useState(false);
   const [shortCopied, setShortCopied] = useState(false);
 
-  const { data: share } = usePageShare(pageId ?? "");
+  const { data: share } = usePageShare(pageId ?? "", { enabled: isLoggedIn });
 
   const origin = typeof window === "undefined" ? "" : window.location.origin;
   const publicUrl = share?.shareToken ? `${origin}/share/${share.shareToken}` : "";
@@ -622,6 +892,7 @@ const PageDetailsPanel = ({
   wordCount,
   characterCount,
   readingTime,
+  isLoggedIn = true,
   t,
   onClose,
   isOpen,
@@ -634,6 +905,7 @@ const PageDetailsPanel = ({
   wordCount: number;
   characterCount: number;
   readingTime: number;
+  isLoggedIn?: boolean;
   t: (dark: string, light: string) => string;
   onClose: () => void;
   isOpen: boolean;
@@ -758,9 +1030,12 @@ const PageDetailsPanel = ({
             )}
           </div>
 
-          <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
-
-          <ShareInfoSection pageId={pageId} t={t} />
+          {isLoggedIn && (
+            <>
+              <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
+              <ShareInfoSection pageId={pageId} isLoggedIn={isLoggedIn} t={t} />
+            </>
+          )}
 
           <hr className={`border-t ${t("border-neutral-800/60", "border-neutral-200/60")}`} />
 
@@ -950,6 +1225,8 @@ export const PageEditor = ({
   createdAt,
   updatedAt,
   textContent,
+  isStandaloneShare,
+  shareToken,
   onDeleteStart,
 }: PageEditorProps) => {
   const { isDarkMode } = useTheme();
@@ -963,13 +1240,176 @@ export const PageEditor = ({
   const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
   const [headings, setHeadings] = useState<BlogHeading[]>(() => extractEditorHeadings(content));
 
-  const { data: creator } = useUserById(creatorId ?? "");
+  const { data: currentUser } = useAuth();
+  const isLoggedIn = !!currentUser;
+
+  const { data: creator } = useUserById(creatorId ?? "", { enabled: isLoggedIn });
   const { handleTitleBlur, handleTitleChange, localTitle, saveTitle, setLocalTitle, titleRef } =
-    usePageTitle(title, pageId);
+    usePageTitle(title, pageId, { enabled: editable });
+
+  const collabUrl = useCollaborationUrl();
+  const { data: collabData } = useCollabToken({ enabled: isLoggedIn });
+  const [collabStatus, setCollabStatus] = useState<CollaborationStatus>("disconnected");
+
+  const providersRef = useRef<{
+    remote: WebsocketProvider;
+  } | null>(null);
+
+  const [providerReady, setProviderReady] = useState(false);
+
+  const guestPokemon = useMemo(() => getGuestPokemon(), []);
+
+  const collabUser = useMemo(() => {
+    if (currentUser && isLoggedIn) {
+      const name = currentUser.name || currentUser.username || currentUser.email || "Member";
+      return {
+        avatar_url: currentUser.avatar_url || null,
+        color: getRandomColor(name),
+        id: currentUser.id,
+        isGuest: false,
+        isOwner: creatorId === currentUser.id,
+        name,
+      };
+    }
+    return {
+      avatar_url: guestPokemon.avatar,
+      color: guestPokemon.color,
+      id: `guest-${guestPokemon.name.toLowerCase()}`,
+      isGuest: true,
+      isOwner: false,
+      name: `${guestPokemon.name} (Guest)`,
+    };
+  }, [creatorId, currentUser, isLoggedIn, guestPokemon]);
+
+  useEffect(() => {
+    if (!pageId) {
+      return;
+    }
+
+    if (providersRef.current) {
+      setProviderReady(true);
+    } else {
+      const documentName = `page.${pageId}`;
+      const remote = createCollaborationProvider(collabUrl, documentName, collabData?.token);
+
+      remote.on("status", ({ status }: { status: CollaborationStatus }) => {
+        setCollabStatus(status);
+      });
+
+      providersRef.current = { remote };
+      setProviderReady(true);
+    }
+
+    return () => {
+      providersRef.current?.remote.destroy();
+      providersRef.current = null;
+      setProviderReady(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageId, collabUrl]);
+
+  const [activeCollaborators, setActiveCollaborators] = useState<ActiveCollaborator[]>([]);
+
+  useEffect(() => {
+    const provider = providersRef.current?.remote;
+    if (!provider || !providerReady || !collabUser) {
+      return;
+    }
+
+    const { awareness } = provider;
+    if (!awareness) {
+      return;
+    }
+
+    awareness.setLocalStateField("user", {
+      avatar_url: collabUser.avatar_url,
+      color: collabUser.color || getRandomColor(collabUser.name || collabUser.id),
+      id: collabUser.id,
+      isGuest: collabUser.isGuest,
+      isOwner: collabUser.isOwner,
+      name: collabUser.name,
+    });
+
+    const updateCollaborators = () => {
+      const states = awareness.getStates();
+      const list: ActiveCollaborator[] = [];
+      for (const [clientId, state] of states.entries()) {
+        const u = state.user as CollaboratorAwarenessUser | undefined;
+        if (u?.name && clientId !== awareness.clientID) {
+          list.push({
+            avatar_url: u.avatar_url,
+            clientId,
+            color: u.color || "#3b82f6",
+            id: u.id,
+            isGuest: u.isGuest ?? u.id?.startsWith("guest-") ?? u.name?.includes("(Guest)"),
+            name: u.name,
+          });
+        }
+      }
+      setActiveCollaborators(list);
+    };
+
+    updateCollaborators();
+
+    awareness.on("change", updateCollaborators);
+    awareness.on("update", updateCollaborators);
+
+    provider.on("status", updateCollaborators);
+
+    return () => {
+      awareness.off("change", updateCollaborators);
+      awareness.off("update", updateCollaborators);
+      provider.off("status", updateCollaborators);
+    };
+  }, [creatorId, providerReady, collabUser]);
+
+  const { collaborators: restCollaborators } = usePresenceApi(pageId, collabUser, {
+    enabled: true,
+    shareToken,
+  });
+
+  const mergedCollaborators = useMemo(() => {
+    const map = new Map<string, ActiveCollaborator>();
+
+    for (const c of activeCollaborators) {
+      const key = String(c.id || c.name);
+      map.set(key, c);
+    }
+
+    for (const c of restCollaborators) {
+      const key = String(c.id || c.name);
+      const existing = map.get(key);
+      if (existing) {
+        map.set(key, {
+          ...existing,
+          avatar_url: existing.avatar_url || c.avatar_url,
+          color: existing.color || c.color,
+          isGuest: existing.isGuest ?? c.isGuest,
+        });
+      } else {
+        map.set(key, c);
+      }
+    }
+
+    return [...map.values()];
+  }, [activeCollaborators, restCollaborators]);
+
+  useEffect(() => {
+    if (providersRef.current && collabData?.token) {
+      providersRef.current.remote.params.token = collabData.token;
+    }
+  }, [collabData?.token]);
 
   const markDirtyRef = useRef<(() => void) | null>(null);
 
-  const editor = usePageEditorInstance(content, editable && !isLocked, setHeadings, markDirtyRef);
+  const editor = usePageEditorInstance(
+    content,
+    editable && !isLocked,
+    setHeadings,
+    markDirtyRef,
+    providerReady ? providersRef.current?.remote : null,
+    collabUser,
+  );
 
   const updatePage = useUpdatePage();
   const handleToggleEditMode = useCallback(
@@ -987,6 +1427,44 @@ export const PageEditor = ({
       editor.setEditable(editable && !isLocked);
     }
   }, [editor, editable, isLocked]);
+
+  const lastUserStateRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!editor || editor.isDestroyed || !collabUser) {
+      return;
+    }
+    const userState = {
+      avatar_url: collabUser.avatar_url,
+      color: collabUser.color || getRandomColor(collabUser.name || collabUser.id),
+      id: collabUser.id,
+      isGuest: collabUser.isGuest,
+      isOwner: collabUser.isOwner,
+      name: collabUser.name,
+    };
+
+    const currentStateStr = JSON.stringify(userState);
+    if (lastUserStateRef.current !== currentStateStr) {
+      lastUserStateRef.current = currentStateStr;
+
+      const caretExt = editor.extensionManager.extensions.find(
+        (ext) => ext.name === "collaborationCaret" || ext.name === "collaborationCursor",
+      );
+      if (caretExt) {
+        caretExt.options.user = userState;
+      }
+
+      const editorCommands = editor.commands as unknown as Record<
+        string,
+        (attrs: unknown) => boolean
+      >;
+      if (typeof editorCommands.updateUser === "function") {
+        editorCommands.updateUser(userState);
+      } else if (providersRef.current?.remote) {
+        providersRef.current.remote.awareness.setLocalStateField("user", userState);
+      }
+    }
+  }, [editor, collabUser, providerReady]);
 
   if (editor && !editor.isDestroyed) {
     const storage = editor.storage as unknown as Record<string, Record<string, string | undefined>>;
@@ -1012,6 +1490,7 @@ export const PageEditor = ({
   const { dirty, cleanup, isSaving, lastSaved, markDirty, resetDirty } = useEditorContent(
     editor,
     pageId,
+    { enabled: isLoggedIn },
   );
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -1021,10 +1500,10 @@ export const PageEditor = ({
     handleTitleKeyPress(e, titleRef, localTitle, setLocalTitle, saveTitle, editor);
   };
 
-  const { data: favData } = useIsPageFavorited(pageId);
+  const { data: favData } = useIsPageFavorited(pageId, { enabled: isLoggedIn });
   const toggleFav = useTogglePageFavorite();
   const isFaved = favData?.favorited ?? false;
-  const { data: watchData } = useIsPageWatching(pageId);
+  const { data: watchData } = useIsPageWatching(pageId, { enabled: isLoggedIn });
   const watchPage = useWatchPage();
   const isWatching = watchData?.watching ?? false;
 
@@ -1053,7 +1532,7 @@ export const PageEditor = ({
 
   markDirtyRef.current = markDirty;
 
-  useSyncEditorContent(editor, content, contentJson, dirty);
+  useSyncEditorContent(editor, content, contentJson, dirty, providerReady);
 
   useEffect(() => {
     setHeadings(extractEditorHeadings(content));
@@ -1187,17 +1666,20 @@ export const PageEditor = ({
               </button>
             </div>
           )}
-          <InternetIndicator t={t} />
-          {editable && <SharePopover pageId={pageId} />}
-          <button
-            aria-label={isFaved ? "Unfavorite page" : "Favorite page"}
-            aria-pressed={isFaved}
-            className={`p-0.5 transition-colors ${isFaved ? "text-yellow-400" : t("text-text-dark/40 hover:text-text-dark", "text-text-light/40 hover:text-text-light")}`}
-            onClick={() => toggleFav.mutate(pageId)}
-            type="button"
-          >
-            <BookmarkSimpleIcon size={14} weight={isFaved ? "fill" : "regular"} />
-          </button>
+          <MergedConnectionStatus collabStatus={collabStatus} t={t} />
+          <ActiveCollaboratorsStack collaborators={mergedCollaborators} t={t} />
+          {editable && isLoggedIn && <SharePopover pageId={pageId} />}
+          {isLoggedIn && (
+            <button
+              aria-label={isFaved ? "Unfavorite page" : "Favorite page"}
+              aria-pressed={isFaved}
+              className={`p-0.5 transition-colors ${isFaved ? "text-yellow-400" : t("text-text-dark/40 hover:text-text-dark", "text-text-light/40 hover:text-text-light")}`}
+              onClick={() => toggleFav.mutate(pageId)}
+              type="button"
+            >
+              <BookmarkSimpleIcon size={14} weight={isFaved ? "fill" : "regular"} />
+            </button>
+          )}
           <button
             aria-label="Open table of contents"
             className={`p-0.5 transition-colors ${tocOpen ? t("text-text-dark", "text-text-light") : t("text-text-dark/40 hover:text-text-dark", "text-text-light/40 hover:text-text-light")}`}
@@ -1214,37 +1696,39 @@ export const PageEditor = ({
           >
             <InfoIcon size={14} />
           </button>
-          <EditorMoreMenu
-            pageId={pageId}
-            title={localTitle}
-            spaceName={spaceName}
-            spaceSlug={spaceSlug}
-            creatorId={creatorId}
-            createdAt={createdAt}
-            updatedAt={updatedAt}
-            textContent={textContent}
-            editor={editor}
-            isFaved={isFaved}
-            onToggleFav={() => toggleFav.mutate(pageId)}
-            favPending={toggleFav.isPending}
-            fullWidth={fullWidth}
-            onDeleteStart={() => {
-              setIsDeleting(true);
-              onDeleteStart?.();
-            }}
-            onDeleteSettled={() => setIsDeleting(false)}
-            onToggleFullWidth={toggleFullWidth}
-            isWatching={isWatching}
-            onToggleWatch={() =>
-              watchPage.mutate(pageId, {
-                onSuccess: (data) => {
-                  setFlashToast(data.watching ? "watching page" : "stopped watching");
-                },
-              })
-            }
-            watchPending={watchPage.isPending}
-            onOpenHistory={() => setHistoryOpen(true)}
-          />
+          {!isStandaloneShare && (
+            <EditorMoreMenu
+              pageId={pageId}
+              title={localTitle}
+              spaceName={spaceName}
+              spaceSlug={spaceSlug}
+              creatorId={creatorId}
+              createdAt={createdAt}
+              updatedAt={updatedAt}
+              textContent={textContent}
+              editor={editor}
+              isFaved={isFaved}
+              onToggleFav={() => toggleFav.mutate(pageId)}
+              favPending={toggleFav.isPending}
+              fullWidth={fullWidth}
+              onDeleteStart={() => {
+                setIsDeleting(true);
+                onDeleteStart?.();
+              }}
+              onDeleteSettled={() => setIsDeleting(false)}
+              onToggleFullWidth={toggleFullWidth}
+              isWatching={isWatching}
+              onToggleWatch={() =>
+                watchPage.mutate(pageId, {
+                  onSuccess: (data) => {
+                    setFlashToast(data.watching ? "watching page" : "stopped watching");
+                  },
+                })
+              }
+              watchPending={watchPage.isPending}
+              onOpenHistory={() => setHistoryOpen(true)}
+            />
+          )}
         </div>
       </div>
 
@@ -1299,17 +1783,20 @@ export const PageEditor = ({
         wordCount={derivedWordCount}
         characterCount={derivedCharCount}
         readingTime={derivedReadingTime}
+        isLoggedIn={isLoggedIn}
         t={t}
         onClose={() => setDetailsOpen(false)}
         isOpen={detailsOpen}
       />
 
-      <PageHistoryModal
-        isOpen={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        pageId={pageId}
-        onRestoreSuccess={resetDirty}
-      />
+      {isLoggedIn && (
+        <PageHistoryModal
+          isOpen={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          pageId={pageId}
+          onRestoreSuccess={resetDirty}
+        />
+      )}
 
       <TableOfContentsModal
         tocOpen={tocOpen}

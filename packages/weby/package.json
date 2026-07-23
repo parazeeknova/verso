@@ -1,6 +1,6 @@
 {
   "name": "@verso/weby",
-  "version": "0.4.26",
+  "version": "0.4.79",
   "private": true,
   "type": "module",
   "imports": {
@@ -42,6 +42,8 @@
     "@tanstack/router-plugin": "^1.167.27",
     "@tiptap/core": "^3.27.4",
     "@tiptap/extension-code-block-lowlight": "^3.27.4",
+    "@tiptap/extension-collaboration": "^3.28.0",
+    "@tiptap/extension-collaboration-caret": "^3.28.0",
     "@tiptap/extension-highlight": "^3.27.4",
     "@tiptap/extension-image": "^3.27.4",
     "@tiptap/extension-link": "^3.27.4",
@@ -74,6 +76,9 @@
     "react-tooltip": "^6.0.0",
     "tailwindcss": "^4.2.4",
     "theme-change": "^2.5.0",
+    "y-indexeddb": "^9.0.12",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.31",
     "zustand": "^5.0.13"
   },
   "devDependencies": {

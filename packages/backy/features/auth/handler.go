@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	mfafeat "verso/backy/features/mfa"
 	"verso/backy/shared/auth"
@@ -32,7 +33,48 @@ func (h *AuthHandlers) RegisterRoutes(rg *gin.RouterGroup) {
 		authGroup.POST("/refresh", h.Refresh)
 		authGroup.POST("/logout", h.Logout)
 		authGroup.GET("/me", h.Me)
+		authGroup.POST("/collab-token", h.CollabToken)
 	}
+}
+
+// CollabToken issues a short-lived JWT for WebSocket collaboration authentication.
+func (h *AuthHandlers) CollabToken(c *gin.Context) {
+	tokenString := extractAuthToken(c)
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, auth.ErrorResponse{Error: "not authenticated"})
+		return
+	}
+
+	accessClaims, err := auth.ValidateAccessToken(tokenString)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, auth.ErrorResponse{Error: "invalid or expired token"})
+		return
+	}
+
+	uid, err := uuid.Parse(accessClaims.UserID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, auth.ErrorResponse{Error: "invalid user ID"})
+		return
+	}
+
+	workspaceID, err := h.authService.GetUserPrimaryWorkspaceID(c.Request.Context(), accessClaims.UserID)
+	if err != nil || workspaceID == "" {
+		if errors.Is(err, ErrNoWorkspace) || workspaceID == "" {
+			c.JSON(http.StatusForbidden, auth.ErrorResponse{Error: "user does not belong to any workspace"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, auth.ErrorResponse{Error: "failed to retrieve workspace"})
+		return
+	}
+
+	collabToken, err := auth.GenerateCollabToken(uid, workspaceID)
+	if err != nil {
+		logger.Log.Error().Err(err).Msg("failed to generate collab token")
+		c.JSON(http.StatusInternalServerError, auth.ErrorResponse{Error: "failed to generate token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": collabToken})
 }
 
 // BootstrapState returns whether the system has been bootstrapped.

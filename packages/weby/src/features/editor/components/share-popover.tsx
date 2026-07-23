@@ -4,6 +4,9 @@ import {
   CopyIcon,
   CheckIcon,
   ArrowSquareOutIcon,
+  LockIcon,
+  PencilSimpleIcon,
+  UsersIcon,
 } from "@phosphor-icons/react";
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "#/shared/hooks/use-theme";
@@ -44,6 +47,77 @@ const SquareSwitch = ({ checked, disabled, onChange, isDarkMode }: SquareSwitchP
         }`}
       />
     </button>
+  );
+};
+
+interface AccessPermissionsProps {
+  currentAccessLevel: string;
+  disabled?: boolean;
+  isDarkMode: boolean;
+  onUpdateAccess: (level: string) => void;
+}
+
+const AccessPermissionsSection = ({
+  currentAccessLevel,
+  disabled,
+  isDarkMode,
+  onUpdateAccess,
+}: AccessPermissionsProps) => {
+  const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const options = [
+    {
+      desc: "readonly for anyone with link",
+      icon: LockIcon,
+      id: "read",
+      label: "read access",
+    },
+    {
+      desc: "logged-in members with link can edit",
+      icon: PencilSimpleIcon,
+      id: "edit",
+      label: "editor access",
+    },
+    {
+      desc: "anyone with link can edit (guests)",
+      icon: UsersIcon,
+      id: "public_edit",
+      label: "editor access for all",
+    },
+  ];
+
+  return (
+    <div className="flex flex-col gap-1.5 pt-1.5 border-t border-border-light dark:border-border-dark">
+      <div className="font-semibold lowercase text-text-light dark:text-text-dark text-[10px]">
+        access permissions
+      </div>
+      <div className="flex flex-col gap-1">
+        {options.map(({ desc, icon: Icon, id, label }) => {
+          const isSelected = currentAccessLevel === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onUpdateAccess(id)}
+              disabled={disabled}
+              className={`flex items-center justify-between px-2 py-1 border text-[10px] lowercase transition-all cursor-pointer ${
+                isSelected
+                  ? "border-accent bg-accent/10 text-accent font-medium"
+                  : t("border-border-dark hover:bg-white/5", "border-border-light hover:bg-black/5")
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                <Icon size={12} />
+                <div className="flex flex-col items-start leading-tight">
+                  <span>{label}</span>
+                  <span className="text-[8px] opacity-50">{desc}</span>
+                </div>
+              </div>
+              {isSelected && <CheckIcon size={12} />}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 };
 
@@ -119,11 +193,31 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
     });
   };
 
+  const handleUpdateAccess = (accessLevel: string) => {
+    if (!share) {
+      return;
+    }
+    updateShare.mutate(
+      {
+        accessLevel,
+        isEnabled: share.isEnabled,
+        pageId,
+        searchIndexing: share.searchIndexing,
+      },
+      {
+        onSuccess: () => {
+          setFlashToast(`access level set to ${accessLevel.replace("_", " ")}`);
+        },
+      },
+    );
+  };
+
   const origin = typeof window === "undefined" ? "" : window.location.origin;
   const publicUrl = share?.shareToken ? `${origin}/share/${share.shareToken}` : "";
   const shortUrl = share?.shortCode ? `${origin}/sh/${share.shortCode}` : "";
 
   const isSharedActive = share?.isEnabled;
+  const currentAccessLevel = share?.accessLevel || "read";
 
   return (
     <div className="relative inline-flex" ref={ref}>
@@ -145,7 +239,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
 
       {open && (
         <div
-          className={`absolute top-full right-0 mt-1 border text-[11px] p-2 w-64 flex flex-col gap-2 z-50 shadow-lg ${t(
+          className={`absolute top-full right-0 mt-1 border text-[11px] p-2.5 w-72 flex flex-col gap-2.5 z-50 shadow-lg ${t(
             "border-border-dark bg-bg-dark text-text-dark/70",
             "border-border-light bg-bg-light text-text-light/70",
           )}`}
@@ -174,6 +268,13 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
 
               {isSharedActive && (
                 <>
+                  <AccessPermissionsSection
+                    currentAccessLevel={currentAccessLevel}
+                    disabled={updateShare.isPending}
+                    isDarkMode={isDarkMode}
+                    onUpdateAccess={handleUpdateAccess}
+                  />
+
                   {/* Public link */}
                   <div className="flex flex-col gap-0.5">
                     <div className="text-[9px] font-medium lowercase opacity-45">public link</div>
@@ -265,7 +366,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                   </div>
 
                   {/* Search engine indexing */}
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-border-light dark:border-border-dark">
                     <div>
                       <div className="font-semibold lowercase text-text-light dark:text-text-dark text-[11px]">
                         search indexing

@@ -27,6 +27,7 @@ import { Superscript } from "@tiptap/extension-superscript";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { HeadingWithIds } from "#/features/blog/components/tiptap-heading-ids";
+import type { CollaboratorAwarenessUser } from "../lib/collaboration-presence";
 import GlobalDragHandle from "./drag-handle";
 import SlashCommand from "./slash-command";
 import { EmojiCommand } from "./emoji-command";
@@ -38,12 +39,16 @@ import { MathInline, MathBlock } from "./math";
 import { CustomAttachment } from "./attachment";
 import { CustomYoutube } from "./youtube";
 
+import { Collaboration } from "@tiptap/extension-collaboration";
+import { CollaborationCaret } from "@tiptap/extension-collaboration-caret";
+import type { WebsocketProvider } from "y-websocket";
+
 import plaintext from "highlight.js/lib/languages/plaintext";
 
 const lowlight = createLowlight(common);
 lowlight.register("mermaid", plaintext);
 
-export const getEditorExtensions = () => [
+export const getEditorExtensions = (options?: { isCollab?: boolean }) => [
   CustomImage,
   CustomVideo,
   CustomAudio,
@@ -60,6 +65,7 @@ export const getEditorExtensions = () => [
     },
     heading: false,
     link: false,
+    undoRedo: options?.isCollab ? false : undefined,
   }),
   HeadingWithIds.configure({
     levels: [1, 2, 3],
@@ -136,4 +142,74 @@ export const getEditorExtensions = () => [
   Status,
   Columns,
   Column,
+];
+
+const userColors = [
+  "#f783ac",
+  "#af52de",
+  "#7000ff",
+  "#4078f2",
+  "#0184bc",
+  "#50a14f",
+  "#a05a00",
+  "#c18401",
+  "#e45649",
+];
+
+export const getCompactCollaboratorName = (name?: string) => {
+  if (!name) {
+    return "Anonymous";
+  }
+  const withoutGuestSuffix = name.replace(/\s*\(guest\)$/i, "").trim();
+  const firstName = withoutGuestSuffix.split(/\s+/)[0] || withoutGuestSuffix;
+  return firstName.length > 14 ? `${firstName.slice(0, 13)}…` : firstName;
+};
+
+export const getRandomColor = (name?: string) => {
+  if (!name) {
+    return userColors[0];
+  }
+  let hash = 0;
+  for (let i = 0; i < name.length; i += 1) {
+    const code = name.codePointAt(i) || 0;
+    hash = (code + hash * 31) % userColors.length;
+  }
+  const index = Math.abs(hash) % userColors.length;
+  return userColors[index];
+};
+
+export const getCollabEditorExtensions = (
+  provider: WebsocketProvider,
+  user?: CollaboratorAwarenessUser,
+) => [
+  ...getEditorExtensions({ isCollab: true }),
+  Collaboration.configure({
+    document: provider.doc,
+  }),
+  CollaborationCaret.configure({
+    provider,
+    render: (presenceUser) => {
+      const cursor = document.createElement("span");
+      cursor.classList.add("collaboration-carets__caret");
+      const userColor = presenceUser?.color || "#3b82f6";
+      cursor.style.borderLeftColor = userColor;
+      cursor.style.borderColor = userColor;
+
+      const label = document.createElement("div");
+      label.classList.add("collaboration-carets__label");
+      label.style.backgroundColor = userColor;
+      label.textContent = getCompactCollaboratorName(presenceUser?.name);
+      cursor.append(label);
+
+      return cursor;
+    },
+    user: {
+      avatar_url: user?.avatar_url,
+      color: user?.color || getRandomColor(user?.name || user?.id),
+      id: user?.id,
+      isGuest: user?.isGuest,
+      isOwner: user?.isOwner,
+      name: user?.name || "Anonymous",
+    },
+  }),
 ];
