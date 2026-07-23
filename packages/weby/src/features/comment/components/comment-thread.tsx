@@ -91,7 +91,7 @@ export const CommentThread = ({
         <div className="ml-3 border p-1.5 mt-1 border-border-dark/60 bg-black/10">
           <textarea
             autoFocus
-            className={`w-full border p-1 text-xs outline-none focus:ring-1 focus:ring-blue-500/50 ${t("border-border-dark bg-bg-dark text-text-dark", "border-border-light bg-bg-light text-text-light")}`}
+            className={`w-full border p-1 text-[11px] placeholder:text-[10px] placeholder:opacity-50 outline-none focus:ring-1 focus:ring-purple-500/50 ${t("border-border-dark bg-bg-dark text-text-dark", "border-border-light bg-bg-light text-text-light")}`}
             onChange={(e) => setReplyText(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -112,7 +112,7 @@ export const CommentThread = ({
               cancel
             </button>
             <button
-              className="flex items-center gap-1 border border-blue-600 bg-blue-600/20 px-2 py-0.5 text-[10px] lowercase text-blue-400 hover:bg-blue-600/30 disabled:opacity-50"
+              className="flex items-center gap-1 border border-purple-600/60 bg-purple-600/20 px-2 py-0.5 text-[10px] lowercase text-purple-400 hover:bg-purple-600/30 dark:text-purple-300 disabled:opacity-50 transition-colors"
               disabled={isSubmitting || !replyText.trim()}
               onClick={() => void handleSendReply()}
               type="button"

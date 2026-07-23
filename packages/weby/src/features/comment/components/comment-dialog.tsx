@@ -71,7 +71,7 @@ export const CommentDialog = ({
 
       {selectedText && (
         <div
-          className={`mb-1.5 border-l-2 py-0.5 pl-1.5 font-mono text-[10px] italic border-blue-500/60 bg-blue-500/10 ${t("text-text-dark/80", "text-text-light/80")}`}
+          className={`mb-1.5 border-l-2 py-0.5 pl-1.5 font-mono text-[10px] italic border-purple-500/60 bg-purple-500/10 ${t("text-text-dark/80", "text-text-light/80")}`}
         >
           "{selectedText.slice(0, 100)}
           {selectedText.length > 100 ? "..." : ""}"
@@ -96,7 +96,7 @@ export const CommentDialog = ({
         <div className="flex-1">
           <textarea
             autoFocus
-            className={`w-full border p-1 text-xs outline-none focus:ring-1 focus:ring-blue-500/50 ${t("border-border-dark bg-bg-dark text-text-dark", "border-border-light bg-bg-light text-text-light")}`}
+            className={`w-full border p-1 text-[11px] placeholder:text-[10px] placeholder:opacity-50 outline-none focus:ring-1 focus:ring-purple-500/50 ${t("border-border-dark bg-bg-dark text-text-dark", "border-border-light bg-bg-light text-text-light")}`}
             onChange={(e) => setCommentText(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -118,7 +118,7 @@ export const CommentDialog = ({
               cancel
             </button>
             <button
-              className="flex items-center gap-1 border border-blue-600 bg-blue-600/20 px-2 py-0.5 text-[10px] lowercase text-blue-400 hover:bg-blue-600/30 disabled:opacity-50"
+              className="flex items-center gap-1 border border-purple-600/60 bg-purple-600/20 px-2 py-0.5 text-[10px] lowercase text-purple-400 hover:bg-purple-600/30 dark:text-purple-300 disabled:opacity-50 transition-colors"
               disabled={isSubmitting || !commentText.trim()}
               onClick={() => void handleSubmit()}
               type="button"

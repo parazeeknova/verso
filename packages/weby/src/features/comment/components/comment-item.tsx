@@ -229,9 +229,9 @@ export const CommentItem = ({
     const el = document.querySelector(`.comment-mark[data-comment-id="${comment.id}"]`);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
-      el.classList.add("ring-2", "ring-blue-500/50");
+      el.classList.add("ring-2", "ring-purple-500/50");
       setTimeout(() => {
-        el.classList.remove("ring-2", "ring-blue-500/50");
+        el.classList.remove("ring-2", "ring-purple-500/50");
       }, 2500);
     }
   };
@@ -265,7 +265,7 @@ export const CommentItem = ({
 
       {comment.selection && isRootComment && (
         <button
-          className={`my-1 block w-full border-l-2 py-0.5 pl-1.5 text-left text-[11px] font-mono italic cursor-pointer ${t("border-blue-500/60 bg-white/5 text-text-dark/70 hover:bg-white/10", "border-blue-500/60 bg-black/5 text-text-light/70 hover:bg-black/10")}`}
+          className={`my-1 block w-full border-l-2 py-0.5 pl-1.5 text-left text-[11px] font-mono italic cursor-pointer ${t("border-purple-500/60 bg-white/5 text-text-dark/70 hover:bg-white/10", "border-purple-500/60 bg-black/5 text-text-light/70 hover:bg-black/10")}`}
           onClick={handleTextClick}
           type="button"
         >
@@ -276,7 +276,7 @@ export const CommentItem = ({
       {isEditing ? (
         <div className="mt-1 space-y-1">
           <textarea
-            className={`w-full border p-1 text-[11px] outline-none focus:ring-1 focus:ring-blue-500/50 ${t("border-border-dark bg-bg-dark text-text-dark", "border-border-light bg-bg-light text-text-light")}`}
+            className={`w-full border p-1 text-[11px] placeholder:text-[10px] placeholder:opacity-50 outline-none focus:ring-1 focus:ring-purple-500/50 ${t("border-border-dark bg-bg-dark text-text-dark", "border-border-light bg-bg-light text-text-light")}`}
             onChange={(e) => setEditContent(e.target.value)}
             rows={2}
             value={editContent}
@@ -290,7 +290,7 @@ export const CommentItem = ({
               cancel
             </button>
             <button
-              className="border border-blue-600 bg-blue-600/20 px-2 py-0.5 text-[10px] lowercase text-blue-400 hover:bg-blue-600/30 disabled:opacity-50"
+              className="border border-purple-600/60 bg-purple-600/20 px-2 py-0.5 text-[10px] lowercase text-purple-400 hover:bg-purple-600/30 dark:text-purple-300 disabled:opacity-50 transition-colors"
               disabled={isSubmitting || !editContent.trim()}
               onClick={() => void handleSaveEdit()}
               type="button"

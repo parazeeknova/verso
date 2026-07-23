@@ -195,7 +195,7 @@ export const CommentSidebar = ({
           <button
             className={`flex h-full items-center gap-1.5 px-2.5 font-medium text-[11px] border-b-2 transition-colors ${
               tab === "open"
-                ? "border-blue-500 text-blue-500"
+                ? "border-purple-500 text-purple-500 dark:text-purple-400"
                 : "border-transparent opacity-50 hover:opacity-80"
             }`}
             onClick={() => setTab("open")}
@@ -253,7 +253,7 @@ export const CommentSidebar = ({
           )}
           <div className="min-w-0 flex-1">
             <textarea
-              className={`w-full border p-1 text-xs outline-none focus:ring-1 focus:ring-blue-500/50 ${t("border-border-dark bg-bg-dark text-text-dark", "border-border-light bg-bg-light text-text-light")}`}
+              className={`w-full border p-1 text-[11px] placeholder:text-[10px] placeholder:opacity-50 outline-none focus:ring-1 focus:ring-purple-500/50 ${t("border-border-dark bg-bg-dark text-text-dark", "border-border-light bg-bg-light text-text-light")}`}
               onChange={(e) => setNewCommentText(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -267,7 +267,7 @@ export const CommentSidebar = ({
             />
             <div className="mt-1 flex items-center justify-end">
               <button
-                className="flex items-center gap-1 border border-blue-600 bg-blue-600/20 px-2 py-0.5 text-[10px] lowercase text-blue-400 hover:bg-blue-600/30 disabled:opacity-50"
+                className="flex items-center gap-1 border border-purple-600/60 bg-purple-600/20 px-2 py-0.5 text-[10px] lowercase text-purple-400 hover:bg-purple-600/30 dark:text-purple-300 disabled:opacity-50 transition-colors"
                 disabled={isSubmitting || !newCommentText.trim()}
                 onClick={() => void handleCreatePageComment()}
                 type="button"
