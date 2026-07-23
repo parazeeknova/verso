@@ -81,6 +81,14 @@ func GetCurrentClaims(c *gin.Context) *auth.AccessTokenClaims {
 	return claims.(*auth.AccessTokenClaims)
 }
 
+func GetCurrentUserRole(c *gin.Context) string {
+	claims := GetCurrentClaims(c)
+	if claims == nil {
+		return ""
+	}
+	return claims.Role
+}
+
 func OwnerRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		claims := GetCurrentClaims(c)

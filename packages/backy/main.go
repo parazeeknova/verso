@@ -14,6 +14,7 @@ import (
 	"verso/backy/database"
 	authfeat "verso/backy/features/auth"
 	collabfeat "verso/backy/features/collab"
+	commentfeat "verso/backy/features/comment"
 	dfeat "verso/backy/features/debug"
 	gfeat "verso/backy/features/group"
 	mfafeat "verso/backy/features/mfa"
@@ -118,6 +119,9 @@ func main() {
 	var favRepo *repositories.SpaceFavoriteRepo
 	var pageFavRepo *repositories.PageFavoriteRepo
 	var collabService *collabfeat.CollabService
+	var notifHandlers *notifeat.NotificationHandlers
+	var pushHandlers *pushfeat.PushSubscriptionHandlers
+	var commentHandlers *commentfeat.CommentHandlers
 	if dbAvailable {
 		pool := database.GetPool()
 		pageRepo := repositories.NewPageRepo(pool)
@@ -155,6 +159,16 @@ func main() {
 			collabService.SetNotifier(notificationService)
 		}
 
+		// Comment Service & Handlers
+		commentRepo := repositories.NewCommentRepo()
+		commentHub := commentfeat.NewCommentHub()
+		var notifier notifeat.Notifier = notifeat.NoopNotifier()
+		if notificationService != nil {
+			notifier = notificationService
+		}
+		commentService := commentfeat.NewCommentService(commentRepo, pageRepo, spaceRepo, notifier, commentHub)
+		commentHandlers = commentfeat.NewCommentHandlers(commentService, commentHub)
+
 		h = handlers.NewWithDB(cfg, pageService, spaceService, workspaceService, groupService)
 		h.SetNotifier(notificationService)
 		h.SetPageFavoriteRepo(pageFavRepo)
@@ -183,8 +197,6 @@ func main() {
 		mfaHandlers.SetNotifier(notificationService)
 	}
 
-	var notifHandlers *notifeat.NotificationHandlers
-	var pushHandlers *pushfeat.PushSubscriptionHandlers
 	if notificationService != nil {
 		notifHandlers = notifeat.NewNotificationHandlers(notificationService, hub)
 		pushHandlers = pushfeat.NewPushSubscriptionHandlers(notificationService)
@@ -415,6 +427,11 @@ func main() {
 			// Push subscriptions
 			if pushHandlers != nil {
 				pushHandlers.RegisterRoutes(console)
+			}
+
+			// Comments
+			if commentHandlers != nil {
+				commentHandlers.RegisterRoutes(console)
 			}
 
 			// System settings (owner-only, requires DB)

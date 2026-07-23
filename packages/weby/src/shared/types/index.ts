@@ -295,3 +295,50 @@ export interface PushSubscriptionPayload {
   auth: string;
   userAgent?: string;
 }
+
+export interface CommentUserMeta {
+  id: string;
+  name: string;
+  avatarUrl: string;
+}
+
+export interface CommentItem {
+  id: string;
+  workspaceId: string;
+  spaceId: string;
+  pageId: string;
+  creatorId: string;
+  parentCommentId?: string | null;
+  content: string;
+  selection?: string | null;
+  type: string;
+  resolvedAt?: string | null;
+  resolvedById?: string | null;
+  editedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  creator: CommentUserMeta;
+  resolvedBy?: CommentUserMeta | null;
+}
+
+export interface CreateCommentInput {
+  content: string;
+  selection?: string;
+  type?: string;
+  parentCommentId?: string;
+}
+
+export interface UpdateCommentInput {
+  content: string;
+}
+
+export interface ResolveCommentInput {
+  resolved: boolean;
+}
+
+export interface CommentRealtimeEvent {
+  operation: "commentCreated" | "commentUpdated" | "commentDeleted" | "commentResolved";
+  pageId: string;
+  commentId?: string;
+  comment?: CommentItem;
+}

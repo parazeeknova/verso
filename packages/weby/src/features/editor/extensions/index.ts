@@ -38,6 +38,7 @@ import { CustomPdf } from "./pdf";
 import { MathInline, MathBlock } from "./math";
 import { CustomAttachment } from "./attachment";
 import { CustomYoutube } from "./youtube";
+import { CommentMark } from "./comment";
 
 import { Collaboration } from "@tiptap/extension-collaboration";
 import { CollaborationCaret } from "@tiptap/extension-collaboration-caret";
@@ -49,6 +50,7 @@ const lowlight = createLowlight(common);
 lowlight.register("mermaid", plaintext);
 
 export const getEditorExtensions = (options?: { isCollab?: boolean }) => [
+  CommentMark,
   CustomImage,
   CustomVideo,
   CustomAudio,

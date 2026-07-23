@@ -221,6 +221,15 @@ func (s *NotificationService) generateText(event NotificationEvent) (string, str
 		return "2FA enabled", "Two-factor authentication has been enabled on your account."
 	case EventProfileMFADisabled:
 		return "2FA disabled", "Two-factor authentication has been disabled on your account."
+	case EventCommentReply:
+		pageTitle := s.metadataStr(event.Metadata, "pageTitle", "a page")
+		return "New reply to comment", fmt.Sprintf("Someone replied to your comment on %q.", pageTitle)
+	case EventCommentMention:
+		pageTitle := s.metadataStr(event.Metadata, "pageTitle", "a page")
+		return "Mentioned in comment", fmt.Sprintf("You were mentioned in a comment on %q.", pageTitle)
+	case EventCommentResolved:
+		pageTitle := s.metadataStr(event.Metadata, "pageTitle", "a page")
+		return "Comment resolved", fmt.Sprintf("Your comment on %q was resolved.", pageTitle)
 	default:
 		return "Notification", "You have a new notification."
 	}

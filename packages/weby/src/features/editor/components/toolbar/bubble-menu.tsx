@@ -3,12 +3,17 @@ import {
   TextItalicIcon,
   LinkSimpleIcon,
   HighlighterIcon,
+  ChatCircleDotsIcon,
 } from "@phosphor-icons/react";
 import { BubbleMenu as TipTapBubbleMenu } from "@tiptap/react/menus";
 import type { ToolbarProps } from "#/features/editor/types/editor.types";
 import { useTheme } from "#/shared/hooks/use-theme";
 
-export const BubbleMenu = ({ editor }: ToolbarProps) => {
+interface BubbleMenuProps extends ToolbarProps {
+  onAddComment?: () => void;
+}
+
+export const BubbleMenu = ({ editor, onAddComment }: BubbleMenuProps) => {
   const { isDarkMode } = useTheme();
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
 
@@ -75,6 +80,17 @@ export const BubbleMenu = ({ editor }: ToolbarProps) => {
       >
         <HighlighterIcon size={13} weight={editor.isActive("highlight") ? "fill" : "regular"} />
       </button>
+
+      {onAddComment && (
+        <button
+          className={btn(editor.isActive("comment"))}
+          onClick={onAddComment}
+          title="Add comment"
+          type="button"
+        >
+          <ChatCircleDotsIcon size={13} weight={editor.isActive("comment") ? "fill" : "regular"} />
+        </button>
+      )}
     </TipTapBubbleMenu>
   );
 };

@@ -402,3 +402,36 @@ type PageShare struct {
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 }
+
+// CommentUserMeta represents minimal user metadata for a comment author or resolver.
+type CommentUserMeta struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	AvatarURL string `json:"avatarUrl"`
+}
+
+// Comment represents a document/page comment or inline discussion thread.
+type Comment struct {
+	ID              string     `json:"id"`
+	WorkspaceID     string     `json:"workspaceId"`
+	SpaceID         string     `json:"spaceId"`
+	PageID          string     `json:"pageId"`
+	CreatorID       string     `json:"creatorId"`
+	ParentCommentID *string    `json:"parentCommentId,omitempty"`
+	Content         string     `json:"content"`
+	Selection       *string    `json:"selection,omitempty"`
+	Type            string     `json:"type"`
+	ResolvedAt      *time.Time `json:"resolvedAt,omitempty"`
+	ResolvedByID    *string    `json:"resolvedById,omitempty"`
+	EditedAt        *time.Time `json:"editedAt,omitempty"`
+	CreatedAt       time.Time  `json:"createdAt"`
+	UpdatedAt       time.Time  `json:"updatedAt"`
+	DeletedAt       *time.Time `json:"deletedAt,omitempty"`
+}
+
+// CommentWithDetails represents a comment enriched with creator and resolvedBy metadata.
+type CommentWithDetails struct {
+	Comment
+	Creator    CommentUserMeta  `json:"creator"`
+	ResolvedBy *CommentUserMeta `json:"resolvedBy,omitempty"`
+}

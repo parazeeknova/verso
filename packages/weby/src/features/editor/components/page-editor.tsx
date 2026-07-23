@@ -15,7 +15,10 @@ import {
   WifiHighIcon,
   WifiSlashIcon,
   UsersIcon,
+  ChatCircleDotsIcon,
 } from "@phosphor-icons/react";
+import { CommentSidebar, CommentDialog } from "#/features/comment";
+import { BubbleMenu } from "./toolbar/bubble-menu";
 import { gsap } from "gsap";
 import { useTheme } from "#/shared/hooks/use-theme";
 import type { WebsocketProvider } from "y-websocket";
@@ -1508,6 +1511,10 @@ export const PageEditor = ({
   const isWatching = watchData?.watching ?? false;
 
   const [fullWidth, setFullWidth] = useState(getInitialFullWidth);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [inlineCommentState, setInlineCommentState] = useState<{ selectedText: string } | null>(
+    null,
+  );
 
   const toggleFullWidth = useCallback(() => {
     setFullWidth((prev) => {
@@ -1520,6 +1527,29 @@ export const PageEditor = ({
   const contentRef = useRef<HTMLDivElement>(null);
 
   const effectiveEditable = editable && !isLocked && !isDeleting;
+
+  const handleOpenInlineComment = useCallback(() => {
+    if (!editor || editor.isDestroyed) {
+      return;
+    }
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to);
+    setInlineCommentState({ selectedText });
+  }, [editor]);
+
+  useEffect(() => {
+    const handleCommentMarkClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement)?.closest(".comment-mark");
+      if (target) {
+        setCommentsOpen(true);
+      }
+    };
+    const container = contentRef.current;
+    container?.addEventListener("click", handleCommentMarkClick);
+    return () => {
+      container?.removeEventListener("click", handleCommentMarkClick);
+    };
+  }, []);
 
   const handleContentClick = useContentClickHandler(editor, effectiveEditable, contentRef);
 
@@ -1681,6 +1711,14 @@ export const PageEditor = ({
             </button>
           )}
           <button
+            aria-label="Comments"
+            className={`p-0.5 transition-colors ${commentsOpen ? t("text-text-dark", "text-text-light") : t("text-text-dark/40 hover:text-text-dark", "text-text-light/40 hover:text-text-light")}`}
+            onClick={() => setCommentsOpen((prev) => !prev)}
+            type="button"
+          >
+            <ChatCircleDotsIcon size={14} />
+          </button>
+          <button
             aria-label="Open table of contents"
             className={`p-0.5 transition-colors ${tocOpen ? t("text-text-dark", "text-text-light") : t("text-text-dark/40 hover:text-text-dark", "text-text-light/40 hover:text-text-light")}`}
             onClick={() => setTocOpen((prev) => !prev)}
@@ -1732,47 +1770,71 @@ export const PageEditor = ({
         </div>
       </div>
 
-      <div
-        ref={contentRef}
-        className={`w-full blog-reader-prose flex-1 min-h-0 overflow-y-auto pb-32 ${fullWidth ? "px-8 md:px-16 lg:px-24" : "px-4 mx-auto max-w-2xl"}`}
-        onClick={handleContentClick}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            handleContentClick(e);
-          }
-        }}
-        aria-label="page content"
-        aria-multiline="true"
-        role="textbox"
-        tabIndex={0}
-      >
-        <textarea
-          ref={titleRef}
-          rows={1}
-          className={`w-full resize-none overflow-hidden bg-transparent !text-5xl !font-black border-none outline-none focus:outline-none focus:border-none focus:ring-0 pt-8 pb-0 px-0 mb-0.5 font-sans tracking-tight leading-tight ${t("text-neutral-200 placeholder-neutral-700", "text-neutral-800 placeholder-neutral-300")}`}
-          placeholder="Untitled"
-          value={localTitle}
-          onChange={(e) => handleTitleChange(e.target.value)}
-          onBlur={handleTitleBlur}
-          onKeyDown={handleTitleKeyDown}
-          disabled={!effectiveEditable}
-        />
-        <CreatorByline creator={creator} t={t} />
-        <EditorContent editor={editor} />
-        {editor && effectiveEditable && (
-          <>
-            <TableMenu editor={editor} />
-            <ColumnsMenu editor={editor} />
-            <CalloutMenu editor={editor} />
-            <ImageMenu editor={editor} />
-            <VideoMenu editor={editor} />
-            <AudioMenu editor={editor} />
-            <PdfMenu editor={editor} />
-            <YoutubeMenu editor={editor} />
-            <TableHandlesLayer editor={editor} />
-          </>
+      <div className="flex flex-1 min-h-0 w-full overflow-hidden relative">
+        <div
+          ref={contentRef}
+          className={`w-full blog-reader-prose flex-1 min-h-0 overflow-y-auto pb-32 ${fullWidth ? "px-8 md:px-16 lg:px-24" : "px-4 mx-auto max-w-2xl"}`}
+          onClick={handleContentClick}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              handleContentClick(e);
+            }
+          }}
+          aria-label="page content"
+          aria-multiline="true"
+          role="textbox"
+          tabIndex={0}
+        >
+          <textarea
+            ref={titleRef}
+            rows={1}
+            className={`w-full resize-none overflow-hidden bg-transparent !text-5xl !font-black border-none outline-none focus:outline-none focus:border-none focus:ring-0 pt-8 pb-0 px-0 mb-0.5 font-sans tracking-tight leading-tight ${t("text-neutral-200 placeholder-neutral-700", "text-neutral-800 placeholder-neutral-300")}`}
+            placeholder="Untitled"
+            value={localTitle}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            onBlur={handleTitleBlur}
+            onKeyDown={handleTitleKeyDown}
+            disabled={!effectiveEditable}
+          />
+          <CreatorByline creator={creator} t={t} />
+          <EditorContent editor={editor} />
+          {editor && effectiveEditable && (
+            <>
+              <BubbleMenu editor={editor} onAddComment={handleOpenInlineComment} />
+              <TableMenu editor={editor} />
+              <ColumnsMenu editor={editor} />
+              <CalloutMenu editor={editor} />
+              <ImageMenu editor={editor} />
+              <VideoMenu editor={editor} />
+              <AudioMenu editor={editor} />
+              <PdfMenu editor={editor} />
+              <YoutubeMenu editor={editor} />
+              <TableHandlesLayer editor={editor} />
+            </>
+          )}
+        </div>
+
+        {commentsOpen && (
+          <CommentSidebar
+            isDarkMode={isDarkMode}
+            onClose={() => setCommentsOpen(false)}
+            pageId={pageId}
+          />
         )}
       </div>
+
+      {inlineCommentState && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <CommentDialog
+            editor={editor}
+            isDarkMode={isDarkMode}
+            onClose={() => setInlineCommentState(null)}
+            onSuccess={() => setCommentsOpen(true)}
+            pageId={pageId}
+            selectedText={inlineCommentState.selectedText}
+          />
+        </div>
+      )}
 
       <PageDetailsPanel
         pageId={pageId}
