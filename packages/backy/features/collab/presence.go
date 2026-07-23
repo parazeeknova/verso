@@ -307,10 +307,12 @@ func (cs *CollabService) canAccessPagePresence(c *gin.Context, pageID string) bo
 	}
 
 	if userID != "" {
+		space, spaceErr := cs.spaceRepo.GetByID(ctx, page.SpaceID)
+
 		// 1. Space level access
 		var userGroupIDs []string
-		if cs.groupRepo != nil {
-			userGroupIDs, _ = cs.groupRepo.ListUserGroupIDsInWorkspace(ctx, userID, page.SpaceID)
+		if spaceErr == nil && cs.groupRepo != nil {
+			userGroupIDs, _ = cs.groupRepo.ListUserGroupIDsInWorkspace(ctx, userID, space.WorkspaceID)
 		}
 		effectiveRole, err := cs.spaceRepo.GetEffectiveRole(ctx, page.SpaceID, userID, userGroupIDs)
 		if err == nil && effectiveRole != "" {
@@ -318,8 +320,7 @@ func (cs *CollabService) canAccessPagePresence(c *gin.Context, pageID string) bo
 		}
 
 		// 2. Space visibility
-		space, err := cs.spaceRepo.GetByID(ctx, page.SpaceID)
-		if err == nil {
+		if spaceErr == nil {
 			if space.Visibility == "public" {
 				return true
 			}
