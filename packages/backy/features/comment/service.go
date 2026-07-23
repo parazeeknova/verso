@@ -193,6 +193,13 @@ func (s *CommentService) UpdateComment(ctx context.Context, commentID string, us
 		return nil, ErrCommentResolved
 	}
 
+	if comment.ParentCommentID != nil && *comment.ParentCommentID != "" {
+		parent, err := s.commentRepo.GetByID(ctx, *comment.ParentCommentID)
+		if err == nil && parent != nil && parent.ResolvedAt != nil {
+			return nil, ErrCommentResolved
+		}
+	}
+
 	now := time.Now().UTC()
 	updated, err := s.commentRepo.Update(ctx, commentID, input.Content, now)
 	if err != nil {

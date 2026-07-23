@@ -259,7 +259,9 @@ const Home = function Home() {
   }
 
   const bgColor = isDarkMode ? "#111111" : "#eeeeee";
-  const headerGradient = `linear-gradient(to bottom, ${bgColor}00 0%, ${bgColor}00 15%, ${bgColor}33 30%, ${bgColor}88 50%, ${bgColor}cc 70%, ${bgColor} 85%, ${bgColor} 100%)`;
+  const headerGradient = isDarkMode
+    ? `linear-gradient(to bottom, ${bgColor}00 0%, ${bgColor}00 15%, ${bgColor}33 30%, ${bgColor}88 50%, ${bgColor}cc 70%, ${bgColor} 85%, ${bgColor} 100%)`
+    : `linear-gradient(to bottom, ${bgColor}00 0%, ${bgColor}00 60%, ${bgColor}66 75%, ${bgColor}cc 88%, ${bgColor} 100%)`;
 
   return (
     <div

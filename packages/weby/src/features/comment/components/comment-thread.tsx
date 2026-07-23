@@ -63,6 +63,7 @@ export const CommentThread = ({
         frameless
         isDarkMode={isDarkMode}
         isPageOwner={isPageOwner}
+        isThreadResolved={isResolved}
         onDelete={onDeleteComment}
         onReply={() => setIsReplying(true)}
         onResolve={onResolveComment}
@@ -79,6 +80,7 @@ export const CommentThread = ({
               comment={reply}
               frameless
               isDarkMode={isDarkMode}
+              isThreadResolved={isResolved}
               key={reply.id}
               onDelete={onDeleteComment}
               onUpdate={onUpdateComment}

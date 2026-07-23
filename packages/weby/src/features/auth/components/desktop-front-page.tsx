@@ -42,6 +42,14 @@ const GradientText = ({ as: Tag = "h1", children, className = "" }: GradientText
   );
 };
 
+const getHeaderGradient = (isDarkMode: boolean): string => {
+  const bg = isDarkMode ? "#111111" : "#eeeeee";
+  if (isDarkMode) {
+    return `linear-gradient(to bottom, ${bg}00 0%, ${bg}00 15%, ${bg}33 30%, ${bg}88 50%, ${bg}cc 70%, ${bg} 85%, ${bg} 100%)`;
+  }
+  return `linear-gradient(to bottom, ${bg}00 0%, ${bg}00 60%, ${bg}66 75%, ${bg}cc 88%, ${bg} 100%)`;
+};
+
 export const DesktopFrontPage = () => {
   const navigate = useNavigate();
   const { data: user, isLoading: isAuthLoading } = useAuth();
@@ -351,8 +359,7 @@ export const DesktopFrontPage = () => {
     return renderLoginForm();
   };
 
-  const bgColor = isDarkMode ? "#111111" : "#eeeeee";
-  const headerGradient = `linear-gradient(to bottom, ${bgColor}00 0%, ${bgColor}00 15%, ${bgColor}33 30%, ${bgColor}88 50%, ${bgColor}cc 70%, ${bgColor} 85%, ${bgColor} 100%)`;
+  const headerGradient = getHeaderGradient(isDarkMode);
 
   return (
     <div

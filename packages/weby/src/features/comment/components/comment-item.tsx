@@ -20,6 +20,7 @@ interface CommentItemProps {
   userRole?: string;
   frameless?: boolean;
   isPageOwner?: boolean;
+  isThreadResolved?: boolean;
 }
 
 const formatTimeAgo = (dateStr: string) => {
@@ -194,6 +195,7 @@ export const CommentItem = ({
   userRole,
   frameless = false,
   isPageOwner = false,
+  isThreadResolved = false,
 }: CommentItemProps) => {
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
   const { data: currentUser } = useAuth();
@@ -205,7 +207,8 @@ export const CommentItem = ({
 
   const isOwner = currentUser?.id === comment.creatorId;
   const canDelete = isOwner || userRole === "admin" || userRole === "owner";
-  const isResolved = comment.resolvedAt !== null && comment.resolvedAt !== undefined;
+  const isResolved =
+    (comment.resolvedAt !== null && comment.resolvedAt !== undefined) || isThreadResolved;
   const isRootComment =
     comment.parentCommentId === null ||
     comment.parentCommentId === undefined ||
