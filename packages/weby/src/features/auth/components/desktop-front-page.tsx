@@ -360,6 +360,7 @@ export const DesktopFrontPage = () => {
   };
 
   const headerGradient = getHeaderGradient(isDarkMode);
+  const headerVideo = isDarkMode ? "/stock/header.mp4" : "/stock/footer.mp4";
 
   return (
     <div
@@ -376,7 +377,7 @@ export const DesktopFrontPage = () => {
           muted
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
-          src="/stock/header.mp4"
+          src={headerVideo}
         />
         <div
           className="absolute inset-0 pointer-events-none"

@@ -262,6 +262,7 @@ const Home = function Home() {
   const headerGradient = isDarkMode
     ? `linear-gradient(to bottom, ${bgColor}00 0%, ${bgColor}00 15%, ${bgColor}33 30%, ${bgColor}88 50%, ${bgColor}cc 70%, ${bgColor} 85%, ${bgColor} 100%)`
     : `linear-gradient(to bottom, ${bgColor}00 0%, ${bgColor}00 60%, ${bgColor}66 75%, ${bgColor}cc 88%, ${bgColor} 100%)`;
+  const headerVideo = isDarkMode ? "/stock/header.mp4" : "/stock/footer.mp4";
 
   return (
     <div
@@ -278,7 +279,7 @@ const Home = function Home() {
           muted
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
-          src="/stock/header.mp4"
+          src={headerVideo}
         />
         <div
           className="absolute inset-0 pointer-events-none"

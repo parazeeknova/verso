@@ -1,5 +1,6 @@
 import {
   CheckIcon,
+  ArrowCounterClockwiseIcon,
   ArrowUUpLeftIcon,
   DotsThreeIcon,
   PencilIcon,
@@ -122,7 +123,11 @@ const CommentActions = ({
         title={isResolved ? "Re-open comment" : "Resolve comment"}
         type="button"
       >
-        <CheckIcon size={11} weight={isResolved ? "bold" : "regular"} />
+        {isResolved ? (
+          <ArrowCounterClockwiseIcon size={11} weight="bold" />
+        ) : (
+          <CheckIcon size={11} weight="regular" />
+        )}
       </button>
     )}
 
