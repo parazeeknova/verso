@@ -74,6 +74,22 @@
     z-index: 10;
   }
 
+  .ProseMirror-yjs-selection {
+    opacity: 0.4;
+    border-radius: 1px;
+    box-shadow: 0 0 0 1px currentColor;
+  }
+
+  .ProseMirror-yjs-cursor {
+    position: relative;
+    margin-left: -1px;
+    margin-right: -1px;
+    border-left: 2px solid;
+    border-right: none;
+    word-break: normal;
+    pointer-events: none;
+  }
+
   .theme-bg {
     background-color: var(--color-bg);
     transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);

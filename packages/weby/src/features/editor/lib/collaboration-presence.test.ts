@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isPageOwnerPresence } from "./collaboration-presence";
+import { getCompactCollaboratorName } from "../extensions";
 
 describe("isPageOwnerPresence", () => {
   it("matches the awareness owner flag", () => {
@@ -17,5 +18,21 @@ describe("isPageOwnerPresence", () => {
     expect(isPageOwnerPresence({ id: "guest-id" }, "")).toBe(false);
     expect(isPageOwnerPresence({ id: "guest-id" })).toBe(false);
     expect(isPageOwnerPresence({ id: "guest-id", isOwner: false }, "owner-id")).toBe(false);
+  });
+});
+
+describe("getCompactCollaboratorName", () => {
+  it("handles undefined or empty names safely", () => {
+    expect(getCompactCollaboratorName()).toBe("Anonymous");
+    expect(getCompactCollaboratorName("")).toBe("Anonymous");
+  });
+
+  it("strips guest suffix and returns first name", () => {
+    expect(getCompactCollaboratorName("Pikachu (Guest)")).toBe("Pikachu");
+    expect(getCompactCollaboratorName("John Doe (guest)")).toBe("John");
+  });
+
+  it("truncates very long first names", () => {
+    expect(getCompactCollaboratorName("Supercalifragilisticexpialidocious")).toBe("Supercalifrag…");
   });
 });

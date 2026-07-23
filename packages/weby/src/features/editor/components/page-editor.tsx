@@ -41,7 +41,6 @@ import { setFlashToast } from "#/features/console/components/flash-toast";
 import { useIsPageWatching, useWatchPage } from "#/features/console/hooks/use-page-watches";
 import { useUpdatePage, usePageShare } from "#/features/console/hooks/use-pages";
 import { getGuestPokemon, getPokemonDetails } from "#/features/editor/lib/pokemon-avatars";
-import { isPageOwnerPresence } from "#/features/editor/lib/collaboration-presence";
 import type { CollaboratorAwarenessUser } from "#/features/editor/lib/collaboration-presence";
 import { TableMenu } from "./table/table-menu";
 import { ColumnsMenu } from "./columns/columns-menu";
@@ -640,7 +639,7 @@ const CollaboratorAvatar = ({
         <img
           src={avatarUrl}
           alt={user.name}
-          className="h-3.5 w-3.5 object-contain grayscale opacity-80 transition-all duration-200 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110"
+          className="h-3.5 w-3.5 object-contain transition-all duration-200 group-hover:scale-110"
         />
       </div>
     );
@@ -657,7 +656,7 @@ const CollaboratorAvatar = ({
         <img
           src={user.avatar_url}
           alt={user.name}
-          className="h-full w-full object-contain grayscale opacity-90 dark:grayscale dark:brightness-90 transition-all duration-200 group-hover:grayscale-0 group-hover:opacity-100"
+          className="h-full w-full object-cover transition-all duration-200"
         />
       </div>
     );
@@ -1333,7 +1332,7 @@ export const PageEditor = ({
       const list: ActiveCollaborator[] = [];
       for (const [clientId, state] of states.entries()) {
         const u = state.user as CollaboratorAwarenessUser | undefined;
-        if (u?.name && clientId !== awareness.clientID && !isPageOwnerPresence(u, creatorId)) {
+        if (u?.name && clientId !== awareness.clientID) {
           list.push({
             avatar_url: u.avatar_url,
             clientId,
@@ -1421,7 +1420,13 @@ export const PageEditor = ({
         caretExt.options.user = userState;
       }
 
-      if (providersRef.current?.remote) {
+      const editorCommands = editor.commands as unknown as Record<
+        string,
+        (attrs: unknown) => boolean
+      >;
+      if (typeof editorCommands.updateUser === "function") {
+        editorCommands.updateUser(userState);
+      } else if (providersRef.current?.remote) {
         providersRef.current.remote.awareness.setLocalStateField("user", userState);
       }
     }

@@ -156,7 +156,10 @@ const userColors = [
   "#e45649",
 ];
 
-export const getCompactCollaboratorName = (name: string) => {
+export const getCompactCollaboratorName = (name?: string) => {
+  if (!name) {
+    return "Anonymous";
+  }
   const withoutGuestSuffix = name.replace(/\s*\(guest\)$/i, "").trim();
   const firstName = withoutGuestSuffix.split(/\s+/)[0] || withoutGuestSuffix;
   return firstName.length > 14 ? `${firstName.slice(0, 13)}…` : firstName;
@@ -188,14 +191,14 @@ export const getCollabEditorExtensions = (
     render: (presenceUser) => {
       const cursor = document.createElement("span");
       cursor.classList.add("collaboration-carets__caret");
-      const userColor = presenceUser.color || "#3b82f6";
+      const userColor = presenceUser?.color || "#3b82f6";
       cursor.style.borderLeftColor = userColor;
       cursor.style.borderColor = userColor;
 
       const label = document.createElement("div");
       label.classList.add("collaboration-carets__label");
       label.style.backgroundColor = userColor;
-      label.textContent = getCompactCollaboratorName(presenceUser.name);
+      label.textContent = getCompactCollaboratorName(presenceUser?.name);
       cursor.append(label);
 
       return cursor;
