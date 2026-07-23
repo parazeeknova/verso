@@ -16,14 +16,12 @@ require (
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/joho/godotenv v1.5.1
 	github.com/pquerna/otp v1.5.0
-	github.com/reearth/ygo v0.0.0-00010101000000-000000000000
+	github.com/reearth/ygo v1.36.0
 	github.com/rs/zerolog v1.35.1
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/crypto v0.50.0
 	golang.org/x/sync v0.20.0
 )
-
-replace github.com/reearth/ygo => ../../old/ygo
 
 require (
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.10 // indirect
