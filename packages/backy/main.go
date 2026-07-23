@@ -283,6 +283,14 @@ func main() {
 		api.GET("/shares/:token", h.GetPublicShare)
 		api.GET("/short/:shortCode", h.GetPublicShort)
 
+		if dbAvailable && collabService != nil {
+			api.POST("/shares/:token/presence", collabService.HandleShareHeartbeatPresence)
+			api.GET("/shares/:token/presence", collabService.HandleShareGetPresence)
+			api.POST("/pages/:id/presence", collabService.HandleHeartbeatPresence)
+			api.GET("/pages/:id/presence", collabService.HandleGetPresence)
+			api.POST("/pages/:id/presence/leave", collabService.HandleLeavePresence)
+		}
+
 		// Auth routes (public)
 		authHandlers.RegisterRoutes(api)
 		// Login is rate-limited separately
@@ -302,6 +310,11 @@ func main() {
 		console := api.Group("/console")
 		console.Use(middleware.AuthRequired(authService))
 		{
+			if dbAvailable && collabService != nil {
+				console.POST("/pages/:id/presence", collabService.HandleHeartbeatPresence)
+				console.GET("/pages/:id/presence", collabService.HandleGetPresence)
+				console.POST("/pages/:id/presence/leave", collabService.HandleLeavePresence)
+			}
 			// Collab token endpoint
 			console.POST("/auth/collab-token", authHandlers.CollabToken)
 

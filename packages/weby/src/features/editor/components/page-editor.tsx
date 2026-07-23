@@ -27,6 +27,7 @@ import {
 import { useCollabToken } from "#/features/auth/hooks/use-collab-token";
 import { useCollaborationUrl } from "#/features/editor/hooks/use-collaboration-url";
 import { useEditorContent } from "#/features/editor/hooks/use-editor-content";
+import { usePresenceApi } from "#/features/editor/hooks/use-presence-api";
 import { fetchProtected } from "#/features/auth/hooks/fetch-protected";
 import { useQueryClient } from "@tanstack/react-query";
 import { EditorMoreMenu } from "#/features/editor/components/editor-more-menu";
@@ -598,7 +599,7 @@ const MergedConnectionStatus = ({
 };
 
 interface ActiveCollaborator {
-  clientId: number;
+  clientId: number | string;
   id?: string;
   isGuest?: boolean;
   name: string;
@@ -1225,6 +1226,7 @@ export const PageEditor = ({
   updatedAt,
   textContent,
   isStandaloneShare,
+  shareToken,
   onDeleteStart,
 }: PageEditorProps) => {
   const { isDarkMode } = useTheme();
@@ -1359,6 +1361,37 @@ export const PageEditor = ({
       provider.off("status", updateCollaborators);
     };
   }, [creatorId, providerReady, collabUser]);
+
+  const { collaborators: restCollaborators } = usePresenceApi(pageId, collabUser, {
+    enabled: true,
+    shareToken,
+  });
+
+  const mergedCollaborators = useMemo(() => {
+    const map = new Map<string, ActiveCollaborator>();
+
+    for (const c of activeCollaborators) {
+      const key = String(c.id || c.name);
+      map.set(key, c);
+    }
+
+    for (const c of restCollaborators) {
+      const key = String(c.id || c.name);
+      const existing = map.get(key);
+      if (existing) {
+        map.set(key, {
+          ...existing,
+          avatar_url: existing.avatar_url || c.avatar_url,
+          color: existing.color || c.color,
+          isGuest: existing.isGuest ?? c.isGuest,
+        });
+      } else {
+        map.set(key, c);
+      }
+    }
+
+    return [...map.values()];
+  }, [activeCollaborators, restCollaborators]);
 
   useEffect(() => {
     if (providersRef.current && collabData?.token) {
@@ -1633,7 +1666,7 @@ export const PageEditor = ({
             </div>
           )}
           <MergedConnectionStatus collabStatus={collabStatus} t={t} />
-          <ActiveCollaboratorsStack collaborators={activeCollaborators} t={t} />
+          <ActiveCollaboratorsStack collaborators={mergedCollaborators} t={t} />
           {editable && isLoggedIn && <SharePopover pageId={pageId} />}
           {isLoggedIn && (
             <button

@@ -833,3 +833,32 @@ export const uploadBacky = (
     method: "POST",
   });
 };
+
+export const postPagePresence = (pageId: string, payload: unknown, cookieHeader?: string | null) =>
+  fetchBacky<{ success: boolean; collaborators: unknown[] }>(`console/pages/${pageId}/presence`, {
+    body: JSON.stringify(payload),
+    headers: {
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+
+export const getPagePresence = (pageId: string, cookieHeader?: string | null) =>
+  fetchBacky<{ collaborators: unknown[] }>(`console/pages/${pageId}/presence`, {
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+  });
+
+export const postPublicSharePresence = (token: string, payload: unknown) =>
+  fetchBacky<{ success: boolean; collaborators: unknown[] }>(`shares/${token}/presence`, {
+    body: JSON.stringify(payload),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+
+export const getPublicSharePresence = (token: string) =>
+  fetchBacky<{ collaborators: unknown[] }>(`shares/${token}/presence`, {
+    method: "GET",
+  });

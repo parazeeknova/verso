@@ -137,6 +137,7 @@ const SharedPageComponent = () => {
           creatorId={data.page.creatorId}
           updatedAt={data.page.updatedAt}
           isStandaloneShare={true}
+          shareToken={token}
         />
       </div>
 

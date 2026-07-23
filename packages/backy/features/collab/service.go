@@ -24,6 +24,7 @@ type CollabService struct {
 	spaceRepo     *repositories.SpaceRepo
 	pageShareRepo *repositories.PageShareRepo
 	notifier      *notifeat.NotificationService
+	presenceStore *PresenceStore
 }
 
 // NewCollabService creates and configures a new Yjs collaboration service.
@@ -44,6 +45,7 @@ func NewCollabService(
 		pageRepo:      pageRepo,
 		spaceRepo:     spaceRepo,
 		pageShareRepo: pageShareRepo,
+		presenceStore: NewPresenceStore(12 * time.Second),
 	}
 
 	// Attach custom Authorize hook
