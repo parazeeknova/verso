@@ -21,6 +21,7 @@ var (
 	ErrForbidden       = errors.New("forbidden")
 	ErrInvalidParent   = errors.New("parent comment not found or invalid")
 	ErrReplyToReply    = errors.New("you cannot reply to a reply")
+	ErrCommentResolved = errors.New("resolved comment cannot be edited")
 )
 
 type CreateCommentInput struct {
@@ -186,6 +187,10 @@ func (s *CommentService) UpdateComment(ctx context.Context, commentID string, us
 
 	if comment.CreatorID != userID {
 		return nil, ErrForbidden
+	}
+
+	if comment.ResolvedAt != nil {
+		return nil, ErrCommentResolved
 	}
 
 	now := time.Now().UTC()

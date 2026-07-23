@@ -351,6 +351,9 @@ export const DesktopFrontPage = () => {
     return renderLoginForm();
   };
 
+  const bgColor = isDarkMode ? "#111111" : "#eeeeee";
+  const headerGradient = `linear-gradient(to bottom, ${bgColor}00 0%, ${bgColor}00 15%, ${bgColor}33 30%, ${bgColor}88 50%, ${bgColor}cc 70%, ${bgColor} 85%, ${bgColor} 100%)`;
+
   return (
     <div
       data-theme={isDarkMode ? "dark" : "light"}
@@ -358,6 +361,22 @@ export const DesktopFrontPage = () => {
         isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
       }`}
     >
+      {/* Header Video */}
+      <div className="relative mx-auto w-full max-w-xl h-48 sm:h-64 lg:h-80 overflow-hidden">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          src="/stock/header.mp4"
+        />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: headerGradient }}
+        />
+      </div>
+
       {/* Top navbar with unboxed theme toggle with icons */}
       <header className="p-4 sm:p-6 flex items-center justify-end w-full">
         <button

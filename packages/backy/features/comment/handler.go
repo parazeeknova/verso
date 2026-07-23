@@ -15,12 +15,14 @@ import (
 type CommentHandlers struct {
 	commentService *CommentService
 	hub            *CommentHub
+	rateLimiter    *GuestCommentRateLimiter
 }
 
 func NewCommentHandlers(commentService *CommentService, hub *CommentHub) *CommentHandlers {
 	return &CommentHandlers{
 		commentService: commentService,
 		hub:            hub,
+		rateLimiter:    NewGuestCommentRateLimiter(),
 	}
 }
 
@@ -59,13 +61,27 @@ func (h *CommentHandlers) CreateComment(c *gin.Context) {
 		userID = "guest"
 	}
 
+	if userID == "guest" && h.rateLimiter != nil {
+		clientIP := c.ClientIP()
+		if allowed, msg := h.rateLimiter.Allow(clientIP); !allowed {
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": msg})
+			return
+		}
+	}
+
 	var input CreateCommentInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
-	if input.Content == "" {
+	trimmedContent := input.Content
+	if len(trimmedContent) > 2000 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "comment content cannot exceed 2000 characters"})
+		return
+	}
+
+	if trimmedContent == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "content is required"})
 		return
 	}
@@ -146,6 +162,10 @@ func (h *CommentHandlers) UpdateComment(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, ErrCommentNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "comment not found"})
+			return
+		}
+		if errors.Is(err, ErrCommentResolved) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "resolved comments cannot be edited"})
 			return
 		}
 		if errors.Is(err, ErrForbidden) {

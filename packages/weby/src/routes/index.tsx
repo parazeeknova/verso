@@ -258,14 +258,33 @@ const Home = function Home() {
     );
   }
 
+  const bgColor = isDarkMode ? "#111111" : "#eeeeee";
+  const headerGradient = `linear-gradient(to bottom, ${bgColor}00 0%, ${bgColor}00 15%, ${bgColor}33 30%, ${bgColor}88 50%, ${bgColor}cc 70%, ${bgColor} 85%, ${bgColor} 100%)`;
+
   return (
     <div
       data-theme={isDarkMode ? "dark" : "light"}
-      className={`min-h-screen w-full select-none overflow-y-auto p-4 sm:p-6 lg:p-8 ${
+      className={`min-h-screen w-full select-none overflow-y-auto ${
         isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
       }`}
     >
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 sm:gap-8">
+      {/* Header Video */}
+      <div className="relative mx-auto w-full max-w-3xl h-48 sm:h-64 overflow-hidden">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          src="/stock/header.mp4"
+        />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: headerGradient }}
+        />
+      </div>
+
+      <div className="mx-auto flex max-w-3xl flex-col gap-6 sm:gap-8 p-4 sm:p-6 lg:p-8">
         <div className="flex items-center justify-end gap-3 w-full">
           <button
             className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${

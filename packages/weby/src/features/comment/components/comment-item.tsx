@@ -150,7 +150,7 @@ const CommentActions = ({
           <div
             className={`absolute right-0 top-full z-30 mt-1 min-w-24 border p-0.5 shadow-lg lowercase ${t("border-border-dark bg-bg-dark", "border-border-light bg-bg-light")}`}
           >
-            {isOwner && (
+            {isOwner && !isResolved && (
               <button
                 className={`flex w-full items-center gap-1.5 px-2 py-1 text-[11px] text-left hover:bg-black/5 ${t("text-text-dark/80 hover:bg-white/5", "text-text-light/80")}`}
                 onClick={() => {
