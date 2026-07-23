@@ -387,13 +387,6 @@ func main() {
 			console.PUT("/pages/:id/share", h.UpdateConsolePageShare)
 			console.POST("/pages/:id/share/shorten", h.ShortenConsolePageShare)
 
-			// Page Presence
-			if collabService != nil {
-				console.POST("/pages/:id/presence", collabService.HandleHeartbeatPresence)
-				console.GET("/pages/:id/presence", collabService.HandleGetPresence)
-				console.POST("/pages/:id/presence/leave", collabService.HandleLeavePresence)
-			}
-
 			// Page Tree
 			console.GET("/pages/tree", h.GetConsolePageTree)
 			console.GET("/pages/:id/children", h.GetConsolePageChildren)
