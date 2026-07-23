@@ -42,27 +42,40 @@ export const usePresenceApi = (
     return newId;
   }, []);
 
+  // Store volatile parameters in refs so interval does not reset on re-renders
+  const paramsRef = useRef({ enabled, pageId, shareToken, user });
+  useEffect(() => {
+    paramsRef.current = { enabled, pageId, shareToken, user };
+  }, [enabled, pageId, shareToken, user]);
+
   const sendHeartbeat = useRef<(() => Promise<void>) | null>(null);
 
   sendHeartbeat.current = async () => {
-    if (!enabled || (!pageId && !shareToken) || !user) {
+    const {
+      enabled: isEnabled,
+      pageId: pid,
+      shareToken: stoken,
+      user: currentUser,
+    } = paramsRef.current;
+
+    if (!isEnabled || (!pid && !stoken) || !currentUser) {
       return;
     }
 
     const payload = {
-      avatar_url: user.avatar_url,
+      avatar_url: currentUser.avatar_url,
       clientId,
-      color: user.color || "#3b82f6",
-      id: user.id || clientId,
-      isGuest: user.isGuest ?? false,
-      isOwner: user.isOwner ?? false,
-      name: user.name || "Anonymous",
+      color: currentUser.color || "#3b82f6",
+      id: currentUser.id || clientId,
+      isGuest: currentUser.isGuest ?? false,
+      isOwner: currentUser.isOwner ?? false,
+      name: currentUser.name || "Anonymous",
     };
 
     try {
-      let endpoint = `/api/console/pages/${pageId}/presence`;
-      if (shareToken) {
-        endpoint = `/api/shares/${shareToken}/presence`;
+      let endpoint = `/api/console/pages/${pid}/presence`;
+      if (stoken) {
+        endpoint = `/api/shares/${stoken}/presence`;
       }
 
       const res = await fetchProtected<{ collaborators: ActiveCollaborator[] }>(endpoint, {
@@ -74,7 +87,7 @@ export const usePresenceApi = (
       if (res && Array.isArray(res.collaborators)) {
         // Filter out self by clientId or user id
         const remoteList = res.collaborators.filter(
-          (c) => String(c.clientId) !== String(clientId) && String(c.id) !== String(user.id),
+          (c) => String(c.clientId) !== String(clientId) && String(c.id) !== String(currentUser.id),
         );
         setRestCollaborators(remoteList);
       }
@@ -91,14 +104,15 @@ export const usePresenceApi = (
     // Initial heartbeat
     void sendHeartbeat.current?.();
 
-    // Heartbeat every 3.5 seconds
+    // Heartbeat every 10 seconds
     const interval = setInterval(() => {
       void sendHeartbeat.current?.();
-    }, 3500);
+    }, 10_000);
 
     const handleBeforeUnload = () => {
-      if (pageId && clientId) {
-        const leaveUrl = `/api/pages/${pageId}/presence/leave?clientId=${clientId}`;
+      const { pageId: pid } = paramsRef.current;
+      if (pid && clientId) {
+        const leaveUrl = `/api/pages/${pid}/presence/leave?clientId=${clientId}`;
         if (typeof navigator !== "undefined" && navigator.sendBeacon) {
           navigator.sendBeacon(leaveUrl);
         }
@@ -112,7 +126,7 @@ export const usePresenceApi = (
       window.removeEventListener("beforeunload", handleBeforeUnload);
       handleBeforeUnload();
     };
-  }, [pageId, shareToken, enabled, user, clientId]);
+  }, [pageId, shareToken, enabled, clientId]);
 
   return { collaborators: restCollaborators };
 };

@@ -15,26 +15,39 @@ export const useEditorContent = (
   const [dirty, setDirty] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
+  // Keep latest refs to prevent callback recreate loops
+  const stateRef = useRef({ editor, options, pageId, updatePage });
+  useEffect(() => {
+    stateRef.current = { editor, options, pageId, updatePage };
+  }, [editor, pageId, options, updatePage]);
+
   const flush = useCallback(() => {
-    if (!editor || !dirtyRef.current || options?.enabled === false) {
+    const {
+      editor: currentEditor,
+      pageId: currentId,
+      options: currentOpts,
+      updatePage: currentUpdate,
+    } = stateRef.current;
+
+    if (!currentEditor || !dirtyRef.current || currentOpts?.enabled === false) {
       return;
     }
-    const json = editor.getJSON();
+    const json = currentEditor.getJSON();
     const jsonStr = JSON.stringify(json);
     if (lastSavedJsonRef.current === jsonStr) {
       dirtyRef.current = false;
       setDirty(false);
       return;
     }
-    if (updatePage.isPending) {
+    if (currentUpdate.isPending) {
       pendingFlushRef.current = true;
       return;
     }
     pendingFlushRef.current = false;
-    const text = editor.getText();
-    updatePage.mutate(
+    const text = currentEditor.getText();
+    currentUpdate.mutate(
       {
-        id: pageId,
+        id: currentId,
         input: {
           contentJson: jsonStr,
           textContent: text,
@@ -49,19 +62,14 @@ export const useEditorContent = (
         },
       },
     );
-  }, [editor, pageId, updatePage, options?.enabled]);
+  }, []);
 
+  const { isPending } = updatePage;
   useEffect(() => {
-    if (!updatePage.isPending && pendingFlushRef.current) {
+    if (!isPending && pendingFlushRef.current) {
       flush();
     }
-  }, [updatePage.isPending, flush]);
-
-  useEffect(() => {
-    if (options?.enabled !== false && dirtyRef.current) {
-      flush();
-    }
-  }, [options?.enabled, flush]);
+  }, [isPending, flush]);
 
   const markDirty = useCallback(() => {
     dirtyRef.current = true;
