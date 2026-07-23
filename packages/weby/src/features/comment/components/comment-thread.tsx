@@ -47,7 +47,7 @@ export const CommentThread = ({
     }
   };
 
-  const isResolved = rootComment.resolvedAt !== null;
+  const isResolved = rootComment.resolvedAt !== null && rootComment.resolvedAt !== undefined;
 
   return (
     <div
