@@ -170,12 +170,22 @@ export const useUpdatePage = () => {
       const touchedKeys = Object.keys(input) as (keyof ConsolePageDetail)[];
       return { previousPages, touchedKeys };
     },
-    onSuccess: (_data, _variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: (data, variables) => {
+      const queries = queryClient.getQueriesData<ConsolePageDetail>({
+        exact: false,
         queryKey: ["consolePage"],
       });
-      queryClient.invalidateQueries({ queryKey: ["consolePages"] });
-      queryClient.invalidateQueries({ queryKey: ["pageTree"] });
+      for (const [queryKey, pageData] of queries) {
+        if (pageData && pageData.id === data.id) {
+          queryClient.setQueryData<ConsolePageDetail>(queryKey, data);
+        }
+      }
+
+      const { input } = variables;
+      if (input.title !== undefined || input.icon !== undefined || input.isLocked !== undefined) {
+        queryClient.invalidateQueries({ queryKey: ["pageTree"] });
+        queryClient.invalidateQueries({ queryKey: ["consolePages"] });
+      }
     },
   });
 };
