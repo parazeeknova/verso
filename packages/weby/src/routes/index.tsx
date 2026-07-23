@@ -207,12 +207,9 @@ const Home = function Home() {
 
     crossfadeVideo(fromRef, toRef, nextSrc, () => {
       videoActiveNext.current = !videoActiveNext.current;
-      const newTheme = nextDark ? "dark" : "light";
-      setIsDarkMode(nextDark);
-      localStorage.setItem("theme", newTheme);
-      document.documentElement.dataset.theme = newTheme;
+      toggleTheme();
     });
-  }, [isDarkMode]);
+  }, [isDarkMode, toggleTheme]);
 
   const handleProjectDetail = useCallback(
     (project: { productUrl?: string; readmeUrl?: string; repoUrl?: string; title: string }) => {

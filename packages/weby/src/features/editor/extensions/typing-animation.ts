@@ -32,6 +32,10 @@ export const TypingAnimation = Extension.create({
       return;
     }
 
+    if (transaction.getMeta("addToHistory") === false) {
+      return;
+    }
+
     const { view } = this.editor;
     const { duration } = this.options;
 

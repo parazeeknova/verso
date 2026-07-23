@@ -44,17 +44,33 @@ const cursorNodeOffset = (node: Text, root: HTMLElement): number => {
   return 0;
 };
 
-export const typingCharPlugin = (duration = 280) =>
-  new Plugin({
+export const typingCharPlugin = (duration = 280) => {
+  let capturedView: EditorView | null = null;
+  let pendingRaf = 0;
+
+  return new Plugin({
     appendTransaction: (transactions, oldState, newState) => {
       if (!transactions.some((t) => t.docChanged)) {
         return null;
       }
 
-      requestAnimationFrame(() => {
-        const pluginState = typingCharKey.get(newState) as unknown as { view?: EditorView };
-        const view = pluginState?.view;
-        if (!view || !view.hasFocus()) {
+      if (transactions.some((t) => t.getMeta("addToHistory") === false)) {
+        return null;
+      }
+
+      if (pendingRaf) {
+        cancelAnimationFrame(pendingRaf);
+      }
+
+      pendingRaf = requestAnimationFrame(() => {
+        pendingRaf = 0;
+
+        if (typeof document === "undefined") {
+          return;
+        }
+
+        const view = capturedView;
+        if (!view || !view.hasFocus() || !view.dom.isConnected) {
           return;
         }
 
@@ -138,4 +154,17 @@ export const typingCharPlugin = (duration = 280) =>
       return null;
     },
     key: typingCharKey,
+    view: (view) => {
+      capturedView = view;
+      return {
+        destroy: () => {
+          capturedView = null;
+          if (pendingRaf) {
+            cancelAnimationFrame(pendingRaf);
+            pendingRaf = 0;
+          }
+        },
+      };
+    },
   });
+};

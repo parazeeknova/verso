@@ -223,6 +223,13 @@ func (s *SpaceService) DeleteSpace(ctx context.Context, id, userID string) error
 		return fmt.Errorf("listing pages in space: %w", err)
 	}
 
+	pool := database.GetPool()
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("beginning transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
 	if len(pageIDs) > 0 {
 		if err := s.pageRepo.SoftDeleteAllInSpace(ctx, id, userID); err != nil {
 			return fmt.Errorf("deleting pages from database: %w", err)
@@ -235,10 +242,13 @@ func (s *SpaceService) DeleteSpace(ctx context.Context, id, userID string) error
 		}
 	}
 
-	pool := database.GetPool()
-	_, _ = pool.Exec(ctx, `UPDATE notifications SET deleted_at = now() WHERE (entity_id = $1 OR metadata->>'spaceId' = $1) AND deleted_at IS NULL`, id)
-	for _, pageID := range pageIDs {
-		_, _ = pool.Exec(ctx, `UPDATE notifications SET deleted_at = now() WHERE (entity_id = $1 OR metadata->>'pageId' = $1) AND deleted_at IS NULL`, pageID)
+	if _, err := tx.Exec(ctx, `UPDATE notifications SET deleted_at = now() WHERE (entity_id = $1 OR metadata->>'spaceId' = $1) AND deleted_at IS NULL`, id); err != nil {
+		return fmt.Errorf("soft-deleting space notifications: %w", err)
+	}
+	if len(pageIDs) > 0 {
+		if _, err := tx.Exec(ctx, `UPDATE notifications SET deleted_at = now() WHERE metadata->>'pageId' = ANY($1) AND deleted_at IS NULL`, pageIDs); err != nil {
+			return fmt.Errorf("soft-deleting page notifications: %w", err)
+		}
 	}
 
 	if err := s.spaceRepo.SoftDelete(ctx, id); err != nil {
@@ -246,6 +256,10 @@ func (s *SpaceService) DeleteSpace(ctx context.Context, id, userID string) error
 			return ErrSpaceNotFound
 		}
 		return fmt.Errorf("deleting space: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("committing transaction: %w", err)
 	}
 
 	// Trigger asynchronous cleanup after successful database commit

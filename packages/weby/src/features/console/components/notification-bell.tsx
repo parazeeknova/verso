@@ -27,6 +27,29 @@ const formatTime = (dateStr: string) => {
 
 const MAX_VISIBLE = 4;
 
+const parseNotificationMetadata = (raw: string | null): Record<string, string> => {
+  if (!raw) {
+    return {};
+  }
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      const obj = parsed as Record<string, unknown>;
+      const result: Record<string, string> = {};
+      if (typeof obj.pageId === "string") {
+        result.pageId = obj.pageId;
+      }
+      if (typeof obj.commentId === "string") {
+        result.commentId = obj.commentId;
+      }
+      return result;
+    }
+  } catch {
+    // ignore
+  }
+  return {};
+};
+
 interface NotificationBellProps {
   isDarkMode: boolean;
 }
@@ -92,14 +115,7 @@ export const NotificationBell = ({ isDarkMode }: NotificationBellProps) => {
     }
     setNotiOpen(false);
 
-    let meta: Record<string, string> = {};
-    try {
-      if (n.metadata) {
-        meta = JSON.parse(n.metadata) as Record<string, string>;
-      }
-    } catch {
-      // ignore
-    }
+    const meta = parseNotificationMetadata(n.metadata);
 
     const pageId = meta.pageId || (n.entityType === "page" ? n.entityId : undefined);
     const commentId = meta.commentId || (n.entityType === "comment" ? n.entityId : undefined);

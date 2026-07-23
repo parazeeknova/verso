@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/google/uuid"
@@ -456,27 +455,14 @@ func (s *CommentService) notifyCommentAction(ctx context.Context, page models.Pa
 	}
 }
 
-var uuidRegex = regexp.MustCompile(`[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}`)
-
 // extractMentionIDs parses content for mentioned user UUIDs
 func extractMentionIDs(content string) []string {
 	var ids []string
 	seen := make(map[string]bool)
 
-	// Try JSON parsing
 	var jsonMap map[string]any
 	if err := json.Unmarshal([]byte(content), &jsonMap); err == nil {
 		findMentionsInMap(jsonMap, seen, &ids)
-		return ids
-	}
-
-	// Fallback to regex pattern matching for UUIDs
-	matches := uuidRegex.FindAllString(content, -1)
-	for _, match := range matches {
-		if !seen[match] {
-			seen[match] = true
-			ids = append(ids, match)
-		}
 	}
 
 	return ids

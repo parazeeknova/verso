@@ -15,6 +15,9 @@ export const crossfadeVideo = (
   nextSrc: string,
   onComplete: () => void,
 ) => {
+  gsap.killTweensOf(fromRef.current);
+  gsap.killTweensOf(toRef.current);
+
   const tl = gsap.timeline();
   tl.set(toRef.current, { opacity: 0, src: nextSrc });
   tl.call(() => {

@@ -2,7 +2,7 @@ import { ReactRenderer } from "@tiptap/react";
 import type { SuggestionProps } from "@tiptap/suggestion";
 import type { SlashMenuItemType } from "./types";
 import { autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom";
-import { gsap } from "gsap";
+import { animateIn, animateOut } from "#/shared/lib/animate-popup";
 import { CommandList } from "./command-list";
 import type { CommandListRef } from "./command-list";
 
@@ -36,21 +36,6 @@ const renderItems = () => {
     /* eslint-enable promise/prefer-await-to-then */
   };
 
-  const animateOut = (onComplete: () => void) => {
-    if (popup) {
-      gsap.to(popup, {
-        duration: 0.12,
-        ease: "power2.in",
-        onComplete,
-        opacity: 0,
-        scale: 0.95,
-        y: -4,
-      });
-    } else {
-      onComplete();
-    }
-  };
-
   return {
     onExit: () => {
       if (cleanup) {
@@ -58,7 +43,7 @@ const renderItems = () => {
         cleanup = null;
       }
 
-      animateOut(() => {
+      animateOut(popup, () => {
         if (popup) {
           popup.remove();
           popup = null;
@@ -73,7 +58,7 @@ const renderItems = () => {
     onKeyDown: (props: { event: KeyboardEvent }) => {
       if (props.event.key === "Escape") {
         if (popup) {
-          animateOut(() => {
+          animateOut(popup, () => {
             if (popup) {
               popup.style.display = "none";
             }
@@ -107,11 +92,7 @@ const renderItems = () => {
         popup.append(component.element);
       }
 
-      gsap.fromTo(
-        popup,
-        { opacity: 0, scale: 0.95, y: -4 },
-        { duration: 0.15, ease: "power2.out", opacity: 1, scale: 1, y: 0 },
-      );
+      animateIn(popup);
 
       cleanup = autoUpdate(
         {
@@ -126,7 +107,11 @@ const renderItems = () => {
       component?.updateProps(props);
 
       if (popup) {
+        const wasHidden = popup.style.display === "none";
         popup.style.display = "";
+        if (wasHidden) {
+          animateIn(popup);
+        }
       }
 
       if (!props.clientRect) {
