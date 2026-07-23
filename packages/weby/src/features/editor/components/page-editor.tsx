@@ -17,7 +17,7 @@ import {
   UsersIcon,
   ChatCircleDotsIcon,
 } from "@phosphor-icons/react";
-import { CommentSidebar, CommentDialog } from "#/features/comment";
+import { CommentSidebar, CommentDialog, useComments, useCommentStream } from "#/features/comment";
 import { BubbleMenu } from "./toolbar/bubble-menu";
 import { gsap } from "gsap";
 import { useTheme } from "#/shared/hooks/use-theme";
@@ -1516,6 +1516,14 @@ export const PageEditor = ({
     null,
   );
 
+  const { data: pageComments = [] } = useComments(pageId);
+  useCommentStream(pageId);
+
+  const unresolvedCommentCount = useMemo(
+    () => pageComments.filter((c) => !c.parentCommentId && !c.resolvedAt).length,
+    [pageComments],
+  );
+
   const toggleFullWidth = useCallback(() => {
     setFullWidth((prev) => {
       const next = !prev;
@@ -1712,11 +1720,16 @@ export const PageEditor = ({
           )}
           <button
             aria-label="Comments"
-            className={`p-0.5 transition-colors ${commentsOpen ? t("text-text-dark", "text-text-light") : t("text-text-dark/40 hover:text-text-dark", "text-text-light/40 hover:text-text-light")}`}
+            className={`relative p-0.5 transition-colors ${commentsOpen ? t("text-text-dark", "text-text-light") : t("text-text-dark/40 hover:text-text-dark", "text-text-light/40 hover:text-text-light")}`}
             onClick={() => setCommentsOpen((prev) => !prev)}
             type="button"
           >
             <ChatCircleDotsIcon size={14} />
+            {unresolvedCommentCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-purple-600 px-1 text-[8px] font-bold text-white shadow-xs">
+                {unresolvedCommentCount > 99 ? "99+" : unresolvedCommentCount}
+              </span>
+            )}
           </button>
           <button
             aria-label="Open table of contents"
