@@ -36,13 +36,13 @@ const SquareSwitch = ({ checked, disabled, onChange, isDarkMode }: SquareSwitchP
       type="button"
       onClick={onChange}
       disabled={disabled}
-      className={`relative inline-flex h-3.5 w-6 shrink-0 cursor-pointer items-center transition-colors duration-150 focus:outline-none ${
+      className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer items-center transition-colors duration-150 focus:outline-none ${
         checked ? "bg-purple-600 dark:bg-purple-500" : inactiveBg
       }`}
     >
       <span
-        className={`pointer-events-none inline-block h-2.5 w-2.5 transform shadow-sm transition duration-150 ${thumbBg} ${
-          checked ? "translate-x-3" : "translate-x-0.5"
+        className={`pointer-events-none inline-block h-3 w-3 transform shadow-sm transition duration-150 ${thumbBg} ${
+          checked ? "translate-x-3.5" : "translate-x-0.5"
         }`}
       />
     </button>
@@ -86,14 +86,14 @@ const AccessPermissionsSection = ({
 
   return (
     <div
-      className={`flex flex-col gap-1.5 pt-1.5 border-t ${t("border-neutral-800", "border-neutral-200")}`}
+      className={`flex flex-col gap-2 pt-2 border-t ${t("border-neutral-800", "border-neutral-200")}`}
     >
       <div
-        className={`font-semibold lowercase text-[10px] ${t("text-neutral-300", "text-neutral-700")}`}
+        className={`font-semibold lowercase text-xs ${t("text-neutral-300", "text-neutral-700")}`}
       >
         access permissions
       </div>
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1.5">
         {options.map(({ desc, icon: Icon, id, label }) => {
           const isSelected = currentAccessLevel === id;
           return (
@@ -102,7 +102,7 @@ const AccessPermissionsSection = ({
               type="button"
               onClick={() => onUpdateAccess(id)}
               disabled={disabled}
-              className={`flex items-center justify-between px-2 py-1 border text-[10px] lowercase transition-all cursor-pointer ${
+              className={`flex items-center justify-between px-2.5 py-1.5 border text-xs lowercase transition-all cursor-pointer ${
                 isSelected
                   ? t(
                       "border-purple-500/50 bg-purple-500/10 text-purple-300 font-medium",
@@ -114,17 +114,17 @@ const AccessPermissionsSection = ({
                     )
               }`}
             >
-              <div className="flex items-center gap-1.5">
-                <Icon size={12} />
+              <div className="flex items-center gap-2">
+                <Icon size={13} />
                 <div className="flex flex-col items-start leading-tight">
-                  <span>{label}</span>
-                  <span className={`text-[8px] ${t("text-neutral-400", "text-neutral-500")}`}>
+                  <span className="text-[11px] font-medium">{label}</span>
+                  <span className={`text-[9.5px] ${t("text-neutral-400", "text-neutral-500")}`}>
                     {desc}
                   </span>
                 </div>
               </div>
               {isSelected && (
-                <CheckIcon size={12} className="text-purple-600 dark:text-purple-400" />
+                <CheckIcon size={13} className="text-purple-600 dark:text-purple-400" />
               )}
             </button>
           );
@@ -252,25 +252,25 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
 
       {open && (
         <div
-          className={`absolute top-full right-0 mt-1 border text-[11px] p-2.5 w-72 flex flex-col gap-2.5 z-50 shadow-xl ${t(
+          className={`absolute top-full right-0 mt-1.5 border text-xs p-3 w-80 flex flex-col gap-3 z-50 shadow-xl ${t(
             "border-neutral-800 bg-neutral-900 text-neutral-200",
             "border-neutral-200 bg-white text-neutral-800",
           )}`}
         >
           {isPending ? (
-            <div className="text-[10px] lowercase opacity-40">loading...</div>
+            <div className="text-xs lowercase opacity-40">loading...</div>
           ) : (
             <>
               {/* Share to web toggle */}
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <div
-                    className={`font-semibold lowercase text-[11px] ${t("text-neutral-200", "text-neutral-800")}`}
+                    className={`font-semibold lowercase text-xs ${t("text-neutral-200", "text-neutral-800")}`}
                   >
                     share to web
                   </div>
                   <div
-                    className={`text-[9px] lowercase ${t("text-neutral-400", "text-neutral-500")}`}
+                    className={`text-[10px] lowercase ${t("text-neutral-400", "text-neutral-500")}`}
                   >
                     make page publicly accessible
                   </div>
@@ -293,20 +293,20 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                   />
 
                   {/* Public link */}
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-col gap-1">
                     <div
-                      className={`text-[9px] font-medium lowercase ${t("text-neutral-400", "text-neutral-500")}`}
+                      className={`text-[10px] font-medium lowercase ${t("text-neutral-400", "text-neutral-500")}`}
                     >
                       public link
                     </div>
                     <div
-                      className={`flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
+                      className={`flex items-center gap-1.5 border px-2 py-1 text-[10px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
                         "border-neutral-800 bg-neutral-950 text-neutral-300",
                         "border-neutral-200 bg-neutral-100 text-neutral-800",
                       )}`}
                     >
                       <span className="flex-1 overflow-hidden text-ellipsis">{publicUrl}</span>
-                      <div className="flex items-center gap-1 shrink-0 pl-1">
+                      <div className="flex items-center gap-1.5 shrink-0 pl-1">
                         <button
                           type="button"
                           onClick={() => handleCopy(publicUrl, setCopied)}
@@ -314,9 +314,9 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                           title="copy link"
                         >
                           {copied ? (
-                            <CheckIcon className="size-2.5 text-purple-600 dark:text-purple-400" />
+                            <CheckIcon className="size-3 text-purple-600 dark:text-purple-400" />
                           ) : (
-                            <CopyIcon className="size-2.5" />
+                            <CopyIcon className="size-3" />
                           )}
                         </button>
                         <a
@@ -326,29 +326,29 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                           className="hover:opacity-100 opacity-60 transition-opacity"
                           title="open in new tab"
                         >
-                          <ArrowSquareOutIcon className="size-2.5" />
+                          <ArrowSquareOutIcon className="size-3" />
                         </a>
                       </div>
                     </div>
                   </div>
 
                   {/* Short link */}
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-col gap-1">
                     {share?.shortCode ? (
                       <>
                         <div
-                          className={`text-[9px] font-medium lowercase ${t("text-neutral-400", "text-neutral-500")}`}
+                          className={`text-[10px] font-medium lowercase ${t("text-neutral-400", "text-neutral-500")}`}
                         >
                           short link
                         </div>
                         <div
-                          className={`flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
+                          className={`flex items-center gap-1.5 border px-2 py-1 text-[10px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
                             "border-neutral-800 bg-neutral-950 text-neutral-300",
                             "border-neutral-200 bg-neutral-100 text-neutral-800",
                           )}`}
                         >
                           <span className="flex-1 overflow-hidden text-ellipsis">{shortUrl}</span>
-                          <div className="flex items-center gap-1 shrink-0 pl-1">
+                          <div className="flex items-center gap-1.5 shrink-0 pl-1">
                             <button
                               type="button"
                               onClick={() => handleCopy(shortUrl, setShortCopied)}
@@ -356,9 +356,9 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                               title="copy link"
                             >
                               {shortCopied ? (
-                                <CheckIcon className="size-2.5 text-purple-600 dark:text-purple-400" />
+                                <CheckIcon className="size-3 text-purple-600 dark:text-purple-400" />
                               ) : (
-                                <CopyIcon className="size-2.5" />
+                                <CopyIcon className="size-3" />
                               )}
                             </button>
                             <a
@@ -368,7 +368,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                               className="hover:opacity-100 opacity-60 transition-opacity"
                               title="open in new tab"
                             >
-                              <ArrowSquareOutIcon className="size-2.5" />
+                              <ArrowSquareOutIcon className="size-3" />
                             </a>
                           </div>
                         </div>
@@ -378,7 +378,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                         type="button"
                         onClick={handleShorten}
                         disabled={shortenShare.isPending}
-                        className={`w-full py-0.5 text-center text-[10px] border lowercase font-medium cursor-pointer transition-colors ${t(
+                        className={`w-full py-1 text-center text-xs border lowercase font-medium cursor-pointer transition-colors ${t(
                           "border-neutral-800 hover:bg-neutral-800/50 text-neutral-300",
                           "border-neutral-200 hover:bg-neutral-100 text-neutral-700",
                         )}`}
@@ -390,16 +390,16 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
 
                   {/* Search engine indexing */}
                   <div
-                    className={`flex items-center justify-between gap-2 pt-1 border-t ${t("border-neutral-800", "border-neutral-200")}`}
+                    className={`flex items-center justify-between gap-2 pt-1.5 border-t ${t("border-neutral-800", "border-neutral-200")}`}
                   >
                     <div>
                       <div
-                        className={`font-semibold lowercase text-[11px] ${t("text-neutral-200", "text-neutral-800")}`}
+                        className={`font-semibold lowercase text-xs ${t("text-neutral-200", "text-neutral-800")}`}
                       >
                         search indexing
                       </div>
                       <div
-                        className={`text-[9px] lowercase ${t("text-neutral-400", "text-neutral-500")}`}
+                        className={`text-[10px] lowercase ${t("text-neutral-400", "text-neutral-500")}`}
                       >
                         allow engines to index page
                       </div>
