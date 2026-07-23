@@ -6,6 +6,9 @@ import {
   LockIcon,
   PencilSimpleIcon,
   UsersIcon,
+  ChatTeardropTextIcon,
+  UserCheckIcon,
+  ProhibitIcon,
 } from "@phosphor-icons/react";
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "#/shared/hooks/use-theme";
@@ -134,6 +137,213 @@ const AccessPermissionsSection = ({
   );
 };
 
+interface CommentPermissionsProps {
+  currentCommentAccess: string;
+  disabled?: boolean;
+  isDarkMode: boolean;
+  onUpdateCommentAccess: (level: string) => void;
+}
+
+const CommentPermissionsSection = ({
+  currentCommentAccess,
+  disabled,
+  isDarkMode,
+  onUpdateCommentAccess,
+}: CommentPermissionsProps) => {
+  const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const options = [
+    {
+      desc: "anyone viewing page can post comments",
+      icon: ChatTeardropTextIcon,
+      id: "all",
+      label: "everyone (guests & members)",
+    },
+    {
+      desc: "only logged-in members can comment",
+      icon: UserCheckIcon,
+      id: "members",
+      label: "members only",
+    },
+    {
+      desc: "disable comments for everyone on this page",
+      icon: ProhibitIcon,
+      id: "disabled",
+      label: "disabled",
+    },
+  ];
+
+  return (
+    <div
+      className={`flex flex-col gap-2 pt-2 border-t ${t("border-neutral-800", "border-neutral-200")}`}
+    >
+      <div
+        className={`font-semibold lowercase text-xs ${t("text-neutral-300", "text-neutral-700")}`}
+      >
+        comment permissions
+      </div>
+      <div className="flex flex-col gap-1.5">
+        {options.map(({ desc, icon: Icon, id, label }) => {
+          const isSelected = currentCommentAccess === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onUpdateCommentAccess(id)}
+              disabled={disabled}
+              className={`flex items-center justify-between px-2.5 py-1.5 border text-xs lowercase transition-all cursor-pointer ${
+                isSelected
+                  ? t(
+                      "border-purple-500/50 bg-purple-500/10 text-purple-300 font-medium",
+                      "border-purple-600/50 bg-purple-50 text-purple-700 font-medium",
+                    )
+                  : t(
+                      "border-neutral-800 hover:bg-neutral-800/50 text-neutral-400 hover:text-neutral-200",
+                      "border-neutral-200 hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900",
+                    )
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Icon size={13} />
+                <div className="flex flex-col items-start leading-tight">
+                  <span className="text-[11px] font-medium">{label}</span>
+                  <span className={`text-[9.5px] ${t("text-neutral-400", "text-neutral-500")}`}>
+                    {desc}
+                  </span>
+                </div>
+              </div>
+              {isSelected && (
+                <CheckIcon size={13} className="text-purple-600 dark:text-purple-400" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+interface PublicAndShortLinksProps {
+  isDarkMode: boolean;
+  publicUrl: string;
+  shortUrl: string;
+  hasShortCode: boolean;
+  isShortening: boolean;
+  onShorten: () => void;
+}
+
+const PublicAndShortLinksSection = ({
+  isDarkMode,
+  publicUrl,
+  shortUrl,
+  hasShortCode,
+  isShortening,
+  onShorten,
+}: PublicAndShortLinksProps) => {
+  const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const [copied, setCopied] = useState(false);
+  const [shortCopied, setShortCopied] = useState(false);
+
+  return (
+    <>
+      {/* Public link */}
+      <div className="flex flex-col gap-1">
+        <div
+          className={`text-[10px] font-medium lowercase ${t("text-neutral-400", "text-neutral-500")}`}
+        >
+          public link
+        </div>
+        <div
+          className={`flex items-center gap-1.5 border px-2 py-1 text-[10px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
+            "border-neutral-800 bg-neutral-950 text-neutral-300",
+            "border-neutral-200 bg-neutral-100 text-neutral-800",
+          )}`}
+        >
+          <span className="flex-1 overflow-hidden text-ellipsis">{publicUrl}</span>
+          <div className="flex items-center gap-1.5 shrink-0 pl-1">
+            <button
+              type="button"
+              onClick={() => handleCopy(publicUrl, setCopied)}
+              className="hover:opacity-100 opacity-60 cursor-pointer transition-opacity"
+              title="copy link"
+            >
+              {copied ? (
+                <CheckIcon className="size-3 text-purple-600 dark:text-purple-400" />
+              ) : (
+                <CopyIcon className="size-3" />
+              )}
+            </button>
+            <a
+              href={publicUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-100 opacity-60 transition-opacity"
+              title="open in new tab"
+            >
+              <ArrowSquareOutIcon className="size-3" />
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Short link */}
+      <div className="flex flex-col gap-1">
+        {hasShortCode ? (
+          <>
+            <div
+              className={`text-[10px] font-medium lowercase ${t("text-neutral-400", "text-neutral-500")}`}
+            >
+              short link
+            </div>
+            <div
+              className={`flex items-center gap-1.5 border px-2 py-1 text-[10px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
+                "border-neutral-800 bg-neutral-950 text-neutral-300",
+                "border-neutral-200 bg-neutral-100 text-neutral-800",
+              )}`}
+            >
+              <span className="flex-1 overflow-hidden text-ellipsis">{shortUrl}</span>
+              <div className="flex items-center gap-1.5 shrink-0 pl-1">
+                <button
+                  type="button"
+                  onClick={() => handleCopy(shortUrl, setShortCopied)}
+                  className="hover:opacity-100 opacity-60 cursor-pointer transition-opacity"
+                  title="copy link"
+                >
+                  {shortCopied ? (
+                    <CheckIcon className="size-3 text-purple-600 dark:text-purple-400" />
+                  ) : (
+                    <CopyIcon className="size-3" />
+                  )}
+                </button>
+                <a
+                  href={shortUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:opacity-100 opacity-60 transition-opacity"
+                  title="open in new tab"
+                >
+                  <ArrowSquareOutIcon className="size-3" />
+                </a>
+              </div>
+            </div>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={onShorten}
+            disabled={isShortening}
+            className={`w-full py-1 text-center text-xs border lowercase font-medium cursor-pointer transition-colors ${t(
+              "border-neutral-800 hover:bg-neutral-800/50 text-neutral-300",
+              "border-neutral-200 hover:bg-neutral-100 text-neutral-700",
+            )}`}
+          >
+            {isShortening ? "shortening..." : "shorten link"}
+          </button>
+        )}
+      </div>
+    </>
+  );
+};
+
 export const SharePopover = ({ pageId }: SharePopoverProps) => {
   const { isDarkMode } = useTheme();
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
@@ -144,9 +354,6 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
   const { data: share, isPending } = usePageShare(pageId);
   const updateShare = useUpdatePageShare();
   const shortenShare = useShortenPageShare();
-
-  const [copied, setCopied] = useState(false);
-  const [shortCopied, setShortCopied] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -175,6 +382,8 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
     }
     updateShare.mutate(
       {
+        accessLevel: share.accessLevel,
+        commentAccess: share.commentAccess,
         isEnabled: !share.isEnabled,
         pageId,
         searchIndexing: share.searchIndexing,
@@ -192,6 +401,8 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
       return;
     }
     updateShare.mutate({
+      accessLevel: share.accessLevel,
+      commentAccess: share.commentAccess,
       isEnabled: share.isEnabled,
       pageId,
       searchIndexing: !share.searchIndexing,
@@ -213,6 +424,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
     updateShare.mutate(
       {
         accessLevel,
+        commentAccess: share.commentAccess,
         isEnabled: share.isEnabled,
         pageId,
         searchIndexing: share.searchIndexing,
@@ -225,12 +437,33 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
     );
   };
 
+  const handleUpdateCommentAccess = (commentAccess: string) => {
+    if (!share) {
+      return;
+    }
+    updateShare.mutate(
+      {
+        accessLevel: share.accessLevel,
+        commentAccess,
+        isEnabled: share.isEnabled,
+        pageId,
+        searchIndexing: share.searchIndexing,
+      },
+      {
+        onSuccess: () => {
+          setFlashToast(`comment permissions set to ${commentAccess}`);
+        },
+      },
+    );
+  };
+
   const origin = typeof window === "undefined" ? "" : window.location.origin;
   const publicUrl = share?.shareToken ? `${origin}/share/${share.shareToken}` : "";
   const shortUrl = share?.shortCode ? `${origin}/sh/${share.shortCode}` : "";
 
   const isSharedActive = Boolean(share?.isEnabled);
   const currentAccessLevel = share?.accessLevel || "read";
+  const currentCommentAccess = share?.commentAccess || "all";
 
   return (
     <div className="relative inline-flex" ref={ref}>
@@ -292,101 +525,21 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
                     onUpdateAccess={handleUpdateAccess}
                   />
 
-                  {/* Public link */}
-                  <div className="flex flex-col gap-1">
-                    <div
-                      className={`text-[10px] font-medium lowercase ${t("text-neutral-400", "text-neutral-500")}`}
-                    >
-                      public link
-                    </div>
-                    <div
-                      className={`flex items-center gap-1.5 border px-2 py-1 text-[10px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
-                        "border-neutral-800 bg-neutral-950 text-neutral-300",
-                        "border-neutral-200 bg-neutral-100 text-neutral-800",
-                      )}`}
-                    >
-                      <span className="flex-1 overflow-hidden text-ellipsis">{publicUrl}</span>
-                      <div className="flex items-center gap-1.5 shrink-0 pl-1">
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(publicUrl, setCopied)}
-                          className="hover:opacity-100 opacity-60 cursor-pointer transition-opacity"
-                          title="copy link"
-                        >
-                          {copied ? (
-                            <CheckIcon className="size-3 text-purple-600 dark:text-purple-400" />
-                          ) : (
-                            <CopyIcon className="size-3" />
-                          )}
-                        </button>
-                        <a
-                          href={publicUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:opacity-100 opacity-60 transition-opacity"
-                          title="open in new tab"
-                        >
-                          <ArrowSquareOutIcon className="size-3" />
-                        </a>
-                      </div>
-                    </div>
-                  </div>
+                  <CommentPermissionsSection
+                    currentCommentAccess={currentCommentAccess}
+                    disabled={updateShare.isPending}
+                    isDarkMode={isDarkMode}
+                    onUpdateCommentAccess={handleUpdateCommentAccess}
+                  />
 
-                  {/* Short link */}
-                  <div className="flex flex-col gap-1">
-                    {share?.shortCode ? (
-                      <>
-                        <div
-                          className={`text-[10px] font-medium lowercase ${t("text-neutral-400", "text-neutral-500")}`}
-                        >
-                          short link
-                        </div>
-                        <div
-                          className={`flex items-center gap-1.5 border px-2 py-1 text-[10px] font-mono select-all overflow-hidden whitespace-nowrap text-ellipsis ${t(
-                            "border-neutral-800 bg-neutral-950 text-neutral-300",
-                            "border-neutral-200 bg-neutral-100 text-neutral-800",
-                          )}`}
-                        >
-                          <span className="flex-1 overflow-hidden text-ellipsis">{shortUrl}</span>
-                          <div className="flex items-center gap-1.5 shrink-0 pl-1">
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(shortUrl, setShortCopied)}
-                              className="hover:opacity-100 opacity-60 cursor-pointer transition-opacity"
-                              title="copy link"
-                            >
-                              {shortCopied ? (
-                                <CheckIcon className="size-3 text-purple-600 dark:text-purple-400" />
-                              ) : (
-                                <CopyIcon className="size-3" />
-                              )}
-                            </button>
-                            <a
-                              href={shortUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:opacity-100 opacity-60 transition-opacity"
-                              title="open in new tab"
-                            >
-                              <ArrowSquareOutIcon className="size-3" />
-                            </a>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleShorten}
-                        disabled={shortenShare.isPending}
-                        className={`w-full py-1 text-center text-xs border lowercase font-medium cursor-pointer transition-colors ${t(
-                          "border-neutral-800 hover:bg-neutral-800/50 text-neutral-300",
-                          "border-neutral-200 hover:bg-neutral-100 text-neutral-700",
-                        )}`}
-                      >
-                        {shortenShare.isPending ? "shortening..." : "shorten link"}
-                      </button>
-                    )}
-                  </div>
+                  <PublicAndShortLinksSection
+                    hasShortCode={Boolean(share?.shortCode)}
+                    isDarkMode={isDarkMode}
+                    isShortening={shortenShare.isPending}
+                    onShorten={handleShorten}
+                    publicUrl={publicUrl}
+                    shortUrl={shortUrl}
+                  />
 
                   {/* Search engine indexing */}
                   <div

@@ -399,6 +399,7 @@ type PageShare struct {
 	SearchIndexing bool      `json:"searchIndexing"`
 	IsEnabled      bool      `json:"isEnabled"`
 	AccessLevel    string    `json:"accessLevel"`
+	CommentAccess  string    `json:"commentAccess"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 }

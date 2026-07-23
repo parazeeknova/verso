@@ -1,0 +1,1 @@
+ALTER TABLE page_shares ADD COLUMN IF NOT EXISTS comment_access TEXT NOT NULL DEFAULT 'all';

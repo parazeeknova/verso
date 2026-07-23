@@ -366,7 +366,10 @@ const Home = function Home() {
 
         <div className="shrink-0 space-y-2">
           <h3 className="font-medium text-base">voo look what i made</h3>
-          <ProjectList onDetail={handleProjectDetail} />
+          <ProjectList
+            imageOverrides={{ doty: "/stock/doty.png" }}
+            onDetail={handleProjectDetail}
+          />
         </div>
 
         <GitHubActivity isDarkMode={isDarkMode} username={githubUsername}>

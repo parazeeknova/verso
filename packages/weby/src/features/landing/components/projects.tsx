@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useProjects } from "../hooks/use-data";
 import { gsap } from "gsap";
+import { ArrowUpRightIcon } from "@phosphor-icons/react";
 import type { Project } from "#/shared/types";
 import { LoadingDots } from "#/shared/components/loading";
 
@@ -12,89 +13,117 @@ interface ProjectCardProps {
 const ProjectCard = ({ onDetail, project }: ProjectCardProps) => {
   const [stackOpen, setStackOpen] = useState(false);
 
+  const linkUrl = project.productUrl || project.repoUrl;
+
   return (
-    <div>
-      <h3 className="font-medium text-xs sm:text-sm">{project.title}</h3>
-      <p className="mt-1 text-gray-500 text-xs sm:text-sm">{project.desc}</p>
-      <p className="mt-1 flex items-center gap-2 text-gray-400 text-xs">
-        {stackOpen ? (
-          <>
-            {project.stack}{" "}
-            <button
-              className="text-gray-500 text-[11px] lowercase hover:text-gray-300 focus:outline-none"
-              onClick={(e) => {
-                e.stopPropagation();
-                setStackOpen(false);
-              }}
-              type="button"
-            >
-              collapse
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              className="text-gray-500 text-[11px] lowercase hover:text-gray-300 focus:outline-none"
-              onClick={(e) => {
-                e.stopPropagation();
-                setStackOpen(true);
-              }}
-              type="button"
-            >
-              stack
-            </button>
-            {project.readmeUrl && onDetail ? (
+    <div className="flex items-start gap-4">
+      {project.image ? (
+        <a
+          className="group relative shrink-0 block w-16 h-16 sm:w-20 sm:h-20 overflow-hidden"
+          href={linkUrl}
+          rel="noopener noreferrer"
+          style={{ transform: "rotate(-3deg)" }}
+          target="_blank"
+        >
+          <img
+            alt={project.title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            src={project.image}
+          />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-300 group-hover:bg-black/50 group-hover:opacity-100">
+            <ArrowUpRightIcon className="text-white" size={20} />
+          </div>
+        </a>
+      ) : null}
+      <div>
+        <h3 className="font-medium text-xs sm:text-sm">{project.title}</h3>
+        <p className="mt-1 text-gray-500 text-xs sm:text-sm">{project.desc}</p>
+        <p className="mt-1 flex items-center gap-2 text-gray-400 text-xs">
+          {stackOpen ? (
+            <>
+              {project.stack}{" "}
               <button
-                className="text-[#b58cff] text-[11px] lowercase hover:opacity-70 focus:outline-none"
+                className="text-gray-500 text-[11px] lowercase hover:text-gray-300 focus:outline-none"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDetail(project);
+                  setStackOpen(false);
                 }}
                 type="button"
               >
-                detail
+                collapse
               </button>
-            ) : null}
-            {project.repoUrl && (
-              <a
-                className="text-[#b58cff] text-[11px] lowercase hover:opacity-70"
-                href={project.repoUrl}
-                rel="noopener noreferrer"
-                target="_blank"
+            </>
+          ) : (
+            <>
+              <button
+                className="text-gray-500 text-[11px] lowercase hover:text-gray-300 focus:outline-none"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setStackOpen(true);
+                }}
+                type="button"
               >
-                repo
-              </a>
-            )}
-            {project.productUrl && (
-              <a
-                className="text-[#b58cff] text-[11px] lowercase hover:opacity-70"
-                href={project.productUrl}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                product
-              </a>
-            )}
-          </>
-        )}
-      </p>
+                stack
+              </button>
+              {project.readmeUrl && onDetail ? (
+                <button
+                  className="text-[#b58cff] text-[11px] lowercase hover:opacity-70 focus:outline-none"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDetail(project);
+                  }}
+                  type="button"
+                >
+                  detail
+                </button>
+              ) : null}
+              {project.repoUrl && (
+                <a
+                  className="text-[#b58cff] text-[11px] lowercase hover:opacity-70"
+                  href={project.repoUrl}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  repo
+                </a>
+              )}
+              {project.productUrl && (
+                <a
+                  className="text-[#b58cff] text-[11px] lowercase hover:opacity-70"
+                  href={project.productUrl}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  product
+                </a>
+              )}
+            </>
+          )}
+        </p>
+      </div>
     </div>
   );
 };
 
 interface ProjectListProps {
+  imageOverrides?: Record<string, string>;
   onDetail?: (project: Project) => void;
 }
 
-export const ProjectList = ({ onDetail }: ProjectListProps) => {
+export const ProjectList = ({ imageOverrides, onDetail }: ProjectListProps) => {
   const { data: projectData, isPending } = useProjects();
+
+  const enrichedProjects = projectData?.map((p) => ({
+    ...p,
+    image: imageOverrides?.[p.title] ?? p.image,
+  }));
 
   return (
     <div className="space-y-3 sm:space-y-4">
       {isPending ? (
         <LoadingDots />
       ) : (
-        projectData?.map((project) => (
+        enrichedProjects?.map((project) => (
           <ProjectCard key={project.title} onDetail={onDetail} project={project} />
         ))
       )}

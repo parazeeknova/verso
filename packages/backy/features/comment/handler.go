@@ -92,6 +92,10 @@ func (h *CommentHandlers) CreateComment(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		if errors.Is(err, ErrCommentsDisabled) || errors.Is(err, ErrMembersOnlyComments) {
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			return
+		}
 		logger.Log.Error().Err(err).Str("page_id", pageID).Str("user_id", userID).Msg("create comment error")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create comment"})
 		return

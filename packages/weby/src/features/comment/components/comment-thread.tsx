@@ -14,6 +14,7 @@ interface CommentThreadProps {
   onResolveComment: (commentId: string, resolved: boolean) => Promise<void>;
   userRole?: string;
   isPageOwner?: boolean;
+  canComment?: boolean;
 }
 
 export const CommentThread = ({
@@ -27,6 +28,7 @@ export const CommentThread = ({
   onResolveComment,
   userRole,
   isPageOwner,
+  canComment = true,
 }: CommentThreadProps) => {
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
   const [isReplying, setIsReplying] = useState(false);
@@ -65,7 +67,7 @@ export const CommentThread = ({
         isPageOwner={isPageOwner}
         isThreadResolved={isResolved}
         onDelete={onDeleteComment}
-        onReply={() => setIsReplying(true)}
+        onReply={canComment ? () => setIsReplying(true) : undefined}
         onResolve={onResolveComment}
         onUpdate={onUpdateComment}
         pageId={pageId}

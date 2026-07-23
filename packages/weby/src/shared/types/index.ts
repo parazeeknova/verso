@@ -20,6 +20,7 @@ export interface ExperienceItem {
 
 export interface Project {
   desc: string;
+  image?: string;
   productUrl?: string;
   readmeUrl?: string;
   repoUrl?: string;
@@ -151,6 +152,7 @@ export interface PageShare {
   searchIndexing: boolean;
   isEnabled: boolean;
   accessLevel?: string;
+  commentAccess?: string;
   createdAt?: string;
   updatedAt?: string;
 }

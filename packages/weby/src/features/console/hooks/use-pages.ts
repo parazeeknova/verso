@@ -334,11 +334,17 @@ export const useUpdatePageShare = () => {
   return useMutation<
     PageShare,
     Error,
-    { pageId: string; isEnabled: boolean; searchIndexing: boolean; accessLevel?: string }
+    {
+      pageId: string;
+      isEnabled: boolean;
+      searchIndexing: boolean;
+      accessLevel?: string;
+      commentAccess?: string;
+    }
   >({
-    mutationFn: ({ pageId, isEnabled, searchIndexing, accessLevel }) =>
+    mutationFn: ({ pageId, isEnabled, searchIndexing, accessLevel, commentAccess }) =>
       fetchProtected<PageShare>(`/api/console/pages/${pageId}/share`, {
-        body: JSON.stringify({ accessLevel, isEnabled, searchIndexing }),
+        body: JSON.stringify({ accessLevel, commentAccess, isEnabled, searchIndexing }),
         headers: { "Content-Type": "application/json" },
         method: "PUT",
       }),

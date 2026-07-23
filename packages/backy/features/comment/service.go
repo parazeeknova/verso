@@ -17,11 +17,13 @@ import (
 )
 
 var (
-	ErrCommentNotFound = errors.New("comment not found")
-	ErrForbidden       = errors.New("forbidden")
-	ErrInvalidParent   = errors.New("parent comment not found or invalid")
-	ErrReplyToReply    = errors.New("you cannot reply to a reply")
-	ErrCommentResolved = errors.New("resolved comment cannot be edited")
+	ErrCommentNotFound     = errors.New("comment not found")
+	ErrForbidden           = errors.New("forbidden")
+	ErrInvalidParent       = errors.New("parent comment not found or invalid")
+	ErrReplyToReply        = errors.New("you cannot reply to a reply")
+	ErrCommentResolved     = errors.New("resolved comment cannot be edited")
+	ErrCommentsDisabled    = errors.New("comments are disabled for this page")
+	ErrMembersOnlyComments = errors.New("only members can comment on this page")
 )
 
 type CreateCommentInput struct {
@@ -83,6 +85,18 @@ func (s *CommentService) IsPageShared(ctx context.Context, pageID string) bool {
 
 // CreateComment creates a top-level comment or a thread reply.
 func (s *CommentService) CreateComment(ctx context.Context, pageID string, creatorID string, input CreateCommentInput) (*models.CommentWithDetails, error) {
+	if s.pageShareRepo != nil {
+		share, err := s.pageShareRepo.GetByPageID(ctx, pageID)
+		if err == nil {
+			if share.CommentAccess == "disabled" {
+				return nil, ErrCommentsDisabled
+			}
+			if share.CommentAccess == "members" && (creatorID == "" || creatorID == "guest") {
+				return nil, ErrMembersOnlyComments
+			}
+		}
+	}
+
 	page, err := s.pageRepo.GetByID(ctx, pageID)
 	if err != nil {
 		return nil, fmt.Errorf("fetching page: %w", err)

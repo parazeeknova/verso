@@ -17,6 +17,7 @@ import {
   useResolveComment,
   useUpdateComment,
 } from "../hooks/use-comments";
+import { usePageShare } from "#/features/console/hooks/use-pages";
 import { CommentThread } from "./comment-thread";
 
 interface CommentSidebarProps {
@@ -28,6 +29,101 @@ interface CommentSidebarProps {
   isPageOwner?: boolean;
 }
 
+interface CommentFooterInputProps {
+  canComment: boolean;
+  isCommentsDisabled: boolean;
+  isDarkMode: boolean;
+  user: unknown;
+  newCommentText: string;
+  isSubmitting: boolean;
+  setNewCommentText: (val: string) => void;
+  onSubmit: () => void;
+}
+
+const CommentFooterInput = ({
+  canComment,
+  isCommentsDisabled,
+  isDarkMode,
+  user,
+  newCommentText,
+  isSubmitting,
+  setNewCommentText,
+  onSubmit,
+}: CommentFooterInputProps) => {
+  const t = (dark: string, light: string) => (isDarkMode ? dark : light);
+  const guest = user ? null : getGuestPokemon();
+  const avatarUrl = (user as { avatar_url?: string } | null)?.avatar_url || guest?.avatar;
+  const displayName =
+    (user as { name?: string } | null)?.name || (guest ? `${guest.name} (Guest)` : "?");
+
+  if (!canComment) {
+    if (isCommentsDisabled) {
+      return (
+        <div
+          className={`p-2 text-center text-[10px] font-medium lowercase border ${t("border-red-900/40 bg-red-950/20 text-red-400", "border-red-200 bg-red-50 text-red-600")}`}
+        >
+          comments are disabled for this page
+        </div>
+      );
+    }
+    return (
+      <div
+        className={`p-2 text-center text-[10px] font-medium lowercase border ${t("border-amber-900/40 bg-amber-950/20 text-amber-400", "border-amber-200 bg-amber-50 text-amber-700")}`}
+      >
+        only logged-in members can comment on this page
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-start gap-1.5">
+      {avatarUrl ? (
+        <img
+          alt={displayName}
+          className="mt-0.5 h-4 w-4 shrink-0 rounded-none object-cover border border-border-dark/40"
+          src={avatarUrl}
+        />
+      ) : (
+        <span
+          className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center border text-[9px] font-semibold uppercase ${t("border-border-dark bg-white/10 text-text-dark", "border-border-light bg-black/5 text-text-light")}`}
+        >
+          {displayName.slice(0, 2)}
+        </span>
+      )}
+      <div className="min-w-0 flex-1">
+        <textarea
+          className={`w-full border p-1 text-[11px] placeholder:text-[10px] placeholder:opacity-50 outline-none focus:ring-1 focus:ring-purple-500/50 ${t("border-border-dark bg-bg-dark text-text-dark", "border-border-light bg-bg-light text-text-light")}`}
+          onChange={(e) => setNewCommentText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              onSubmit();
+            }
+          }}
+          placeholder={
+            guest
+              ? `add a comment as ${guest.name.toLowerCase()} (Ctrl+Enter)...`
+              : "add a comment (Ctrl+Enter to send)..."
+          }
+          rows={2}
+          value={newCommentText}
+        />
+        <div className="mt-1 flex items-center justify-end">
+          <button
+            className="flex items-center gap-1 border border-purple-600/60 bg-purple-600/20 px-2 py-0.5 text-[10px] lowercase text-purple-400 hover:bg-purple-600/30 dark:text-purple-300 disabled:opacity-50 transition-colors"
+            disabled={isSubmitting || !newCommentText.trim()}
+            onClick={onSubmit}
+            type="button"
+          >
+            <PaperPlaneRightIcon size={11} />
+            comment
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const CommentSidebar = ({
   pageId,
   isDarkMode,
@@ -38,6 +134,12 @@ export const CommentSidebar = ({
 }: CommentSidebarProps) => {
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
   const { data: user } = useAuth();
+  const { data: pageShare } = usePageShare(pageId);
+  const commentAccess = pageShare?.commentAccess || "all";
+  const isCommentsDisabled = commentAccess === "disabled";
+  const isMembersOnly = commentAccess === "members" && !user;
+  const canComment = !isCommentsDisabled && !isMembersOnly;
+
   const panelRef = useRef<HTMLDivElement>(null);
   const [shouldRender, setShouldRender] = useState(isOpen);
 
@@ -176,6 +278,7 @@ export const CommentSidebar = ({
     }
     return activeThreads.map((thread) => (
       <CommentThread
+        canComment={canComment}
         isDarkMode={isDarkMode}
         isPageOwner={isPageOwner}
         key={thread.id}
@@ -190,10 +293,6 @@ export const CommentSidebar = ({
       />
     ));
   };
-
-  const guest = user ? null : getGuestPokemon();
-  const avatarUrl = user?.avatar_url || guest?.avatar;
-  const displayName = user?.name || (guest ? `${guest.name} (Guest)` : "?");
 
   return (
     <div
@@ -218,6 +317,7 @@ export const CommentSidebar = ({
             <ChatCircleDotsIcon size={13} />
             <span>open ({openThreads.length})</span>
           </button>
+
           <button
             className={`flex h-full items-center gap-1.5 px-2.5 font-medium text-[11px] border-b-2 transition-colors ${
               tab === "resolved"
@@ -251,51 +351,16 @@ export const CommentSidebar = ({
       <div
         className={`border-t p-2 ${t("border-border-dark bg-black/10", "border-border-light bg-black/5")}`}
       >
-        <div className="flex items-start gap-1.5">
-          {avatarUrl ? (
-            <img
-              alt={displayName}
-              className="mt-0.5 h-4 w-4 shrink-0 rounded-none object-cover border border-border-dark/40"
-              src={avatarUrl}
-            />
-          ) : (
-            <span
-              className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center border text-[9px] font-semibold uppercase ${t("border-border-dark bg-white/10 text-text-dark", "border-border-light bg-black/5 text-text-light")}`}
-            >
-              {displayName.slice(0, 2)}
-            </span>
-          )}
-          <div className="min-w-0 flex-1">
-            <textarea
-              className={`w-full border p-1 text-[11px] placeholder:text-[10px] placeholder:opacity-50 outline-none focus:ring-1 focus:ring-purple-500/50 ${t("border-border-dark bg-bg-dark text-text-dark", "border-border-light bg-bg-light text-text-light")}`}
-              onChange={(e) => setNewCommentText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                  e.preventDefault();
-                  void handleCreatePageComment();
-                }
-              }}
-              placeholder={
-                guest
-                  ? `add a comment as ${guest.name.toLowerCase()} (Ctrl+Enter)...`
-                  : "add a comment (Ctrl+Enter to send)..."
-              }
-              rows={2}
-              value={newCommentText}
-            />
-            <div className="mt-1 flex items-center justify-end">
-              <button
-                className="flex items-center gap-1 border border-purple-600/60 bg-purple-600/20 px-2 py-0.5 text-[10px] lowercase text-purple-400 hover:bg-purple-600/30 dark:text-purple-300 disabled:opacity-50 transition-colors"
-                disabled={isSubmitting || !newCommentText.trim()}
-                onClick={() => void handleCreatePageComment()}
-                type="button"
-              >
-                <PaperPlaneRightIcon size={11} />
-                comment
-              </button>
-            </div>
-          </div>
-        </div>
+        <CommentFooterInput
+          canComment={canComment}
+          isCommentsDisabled={isCommentsDisabled}
+          isDarkMode={isDarkMode}
+          isSubmitting={isSubmitting}
+          newCommentText={newCommentText}
+          onSubmit={() => void handleCreatePageComment()}
+          setNewCommentText={setNewCommentText}
+          user={user}
+        />
       </div>
     </div>
   );

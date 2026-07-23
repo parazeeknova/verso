@@ -1582,7 +1582,7 @@ func TestPageService_PageSharing(t *testing.T) {
 	}
 
 	// Update share settings to enable sharing
-	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, true, true, "read")
+	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, true, true, "read", "all")
 	if err != nil {
 		t.Fatalf("enabling page share: %v", err)
 	}
@@ -1615,7 +1615,7 @@ func TestPageService_PageSharing(t *testing.T) {
 	}
 
 	// Update to non-default access level and verify persistence
-	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, true, true, "public_edit")
+	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, true, true, "public_edit", "all")
 	if err != nil {
 		t.Fatalf("updating page share to public_edit: %v", err)
 	}
@@ -1653,7 +1653,7 @@ func TestPageService_PageSharing(t *testing.T) {
 	}
 
 	// Disable page sharing
-	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, false, false, "read")
+	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, false, false, "read", "all")
 	if err != nil {
 		t.Fatalf("disabling page share: %v", err)
 	}
