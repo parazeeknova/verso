@@ -53,10 +53,15 @@ func (s *NotificationService) Notify(ctx context.Context, event NotificationEven
 			}
 		}
 
+		var actorUserID *string
+		if event.ActorID != "" && event.ActorID != "guest" {
+			actorUserID = &event.ActorID
+		}
+
 		n := models.Notification{
 			ID:              uuid.New().String(),
 			RecipientUserID: recipientID,
-			ActorUserID:     &event.ActorID,
+			ActorUserID:     actorUserID,
 			Type:            string(event.Type),
 			Title:           title,
 			Body:            body,
