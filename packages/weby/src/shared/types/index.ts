@@ -312,6 +312,8 @@ export interface CommentItem {
   content: string;
   selection?: string | null;
   type: string;
+  guestName?: string | null;
+  guestAvatar?: string | null;
   resolvedAt?: string | null;
   resolvedById?: string | null;
   editedAt?: string | null;
@@ -326,6 +328,8 @@ export interface CreateCommentInput {
   selection?: string;
   type?: string;
   parentCommentId?: string;
+  guestName?: string;
+  guestAvatar?: string;
 }
 
 export interface UpdateCommentInput {

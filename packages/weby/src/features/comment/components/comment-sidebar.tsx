@@ -7,6 +7,7 @@ import {
 import { gsap } from "gsap";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "#/features/auth/hooks/use-auth";
+import { getGuestPokemon } from "#/features/editor/lib/pokemon-avatars";
 import type { CommentItem } from "#/shared/types";
 import { useCommentStream } from "../hooks/use-comment-stream";
 import {
@@ -109,8 +110,11 @@ export const CommentSidebar = ({
     }
     try {
       setIsSubmitting(true);
+      const guest = user ? null : getGuestPokemon();
       await createMutation.mutateAsync({
         content: newCommentText,
+        guestAvatar: guest?.avatar,
+        guestName: guest ? `${guest.name} (Guest)` : undefined,
         type: "page",
       });
       setNewCommentText("");
@@ -122,8 +126,11 @@ export const CommentSidebar = ({
   };
 
   const handleAddReply = async (parentCommentId: string, content: string) => {
+    const guest = user ? null : getGuestPokemon();
     await createMutation.mutateAsync({
       content,
+      guestAvatar: guest?.avatar,
+      guestName: guest ? `${guest.name} (Guest)` : undefined,
       parentCommentId,
       type: "page",
     });
@@ -180,6 +187,10 @@ export const CommentSidebar = ({
       />
     ));
   };
+
+  const guest = user ? null : getGuestPokemon();
+  const avatarUrl = user?.avatar_url || guest?.avatar;
+  const displayName = user?.name || (guest ? `${guest.name} (Guest)` : "?");
 
   return (
     <div
@@ -238,17 +249,17 @@ export const CommentSidebar = ({
         className={`border-t p-2 ${t("border-border-dark bg-black/10", "border-border-light bg-black/5")}`}
       >
         <div className="flex items-start gap-1.5">
-          {user?.avatar_url ? (
+          {avatarUrl ? (
             <img
-              alt={user.name}
+              alt={displayName}
               className="mt-0.5 h-4 w-4 shrink-0 rounded-none object-cover border border-border-dark/40"
-              src={user.avatar_url}
+              src={avatarUrl}
             />
           ) : (
             <span
               className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center border text-[9px] font-semibold uppercase ${t("border-border-dark bg-white/10 text-text-dark", "border-border-light bg-black/5 text-text-light")}`}
             >
-              {(user?.name || "?").slice(0, 2)}
+              {displayName.slice(0, 2)}
             </span>
           )}
           <div className="min-w-0 flex-1">
@@ -261,7 +272,11 @@ export const CommentSidebar = ({
                   void handleCreatePageComment();
                 }
               }}
-              placeholder="add a comment (Ctrl+Enter to send)..."
+              placeholder={
+                guest
+                  ? `add a comment as ${guest.name.toLowerCase()} (Ctrl+Enter)...`
+                  : "add a comment (Ctrl+Enter to send)..."
+              }
               rows={2}
               value={newCommentText}
             />

@@ -2,6 +2,7 @@ import { PaperPlaneRightIcon, XIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import type { Editor } from "@tiptap/react";
 import { useAuth } from "#/features/auth/hooks/use-auth";
+import { getGuestPokemon } from "#/features/editor/lib/pokemon-avatars";
 import { useCreateComment } from "../hooks/use-comments";
 
 interface CommentDialogProps {
@@ -34,8 +35,11 @@ export const CommentDialog = ({
     }
     try {
       setIsSubmitting(true);
+      const guest = user ? null : getGuestPokemon();
       const created = await createMutation.mutateAsync({
         content: commentText,
+        guestAvatar: guest?.avatar,
+        guestName: guest ? `${guest.name} (Guest)` : undefined,
         selection: selectedText,
         type: "inline",
       });
@@ -53,6 +57,10 @@ export const CommentDialog = ({
       setIsSubmitting(false);
     }
   };
+
+  const guest = user ? null : getGuestPokemon();
+  const avatarUrl = user?.avatar_url || guest?.avatar;
+  const displayName = user?.name || (guest ? `${guest.name} (Guest)` : "?");
 
   return (
     <div
@@ -79,17 +87,17 @@ export const CommentDialog = ({
       )}
 
       <div className="flex items-start gap-1.5">
-        {user?.avatar_url ? (
+        {avatarUrl ? (
           <img
-            alt={user.name}
+            alt={displayName}
             className="mt-0.5 h-4 w-4 shrink-0 rounded-none object-cover border border-border-dark/40"
-            src={user.avatar_url}
+            src={avatarUrl}
           />
         ) : (
           <span
             className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center border text-[8px] font-semibold uppercase ${t("border-border-dark bg-white/10 text-text-dark", "border-border-light bg-black/5 text-text-light")}`}
           >
-            {(user?.name || "?").slice(0, 2)}
+            {displayName.slice(0, 2)}
           </span>
         )}
 
@@ -104,7 +112,11 @@ export const CommentDialog = ({
                 void handleSubmit();
               }
             }}
-            placeholder="write comment (Ctrl+Enter to send)..."
+            placeholder={
+              guest
+                ? `write comment as ${guest.name.toLowerCase()}...`
+                : "write comment (Ctrl+Enter to send)..."
+            }
             rows={2}
             value={commentText}
           />

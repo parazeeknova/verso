@@ -28,6 +28,8 @@ type CreateCommentInput struct {
 	Selection       *string `json:"selection,omitempty"`
 	Type            string  `json:"type,omitempty"`
 	ParentCommentID *string `json:"parentCommentId,omitempty"`
+	GuestName       *string `json:"guestName,omitempty"`
+	GuestAvatar     *string `json:"guestAvatar,omitempty"`
 }
 
 type UpdateCommentInput struct {
@@ -128,6 +130,8 @@ func (s *CommentService) CreateComment(ctx context.Context, pageID string, creat
 		Content:         input.Content,
 		Selection:       selection,
 		Type:            commentType,
+		GuestName:       input.GuestName,
+		GuestAvatar:     input.GuestAvatar,
 		CreatedAt:       now,
 		UpdatedAt:       now,
 	}

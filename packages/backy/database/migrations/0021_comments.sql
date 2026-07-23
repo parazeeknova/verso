@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS comments (
     content TEXT NOT NULL,
     selection TEXT,
     type TEXT NOT NULL DEFAULT 'page',
+    guest_name TEXT,
+    guest_avatar TEXT,
     resolved_at TIMESTAMPTZ,
     resolved_by_id UUID REFERENCES users(id) ON DELETE SET NULL,
     edited_at TIMESTAMPTZ,

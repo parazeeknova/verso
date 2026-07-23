@@ -30,12 +30,12 @@ func (r *CommentRepo) Insert(ctx context.Context, c models.Comment) (*models.Com
 	}
 
 	query := `
-		INSERT INTO comments (id, workspace_id, space_id, page_id, creator_id, parent_comment_id, content, selection, type, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
+		INSERT INTO comments (id, workspace_id, space_id, page_id, creator_id, parent_comment_id, content, selection, type, guest_name, guest_avatar, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
 	_, err := r.pool.Exec(
 		ctx, query,
 		c.ID, c.WorkspaceID, c.SpaceID, c.PageID, creatorIDVal, c.ParentCommentID,
-		c.Content, c.Selection, c.Type, c.CreatedAt, c.UpdatedAt,
+		c.Content, c.Selection, c.Type, c.GuestName, c.GuestAvatar, c.CreatedAt, c.UpdatedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("inserting comment: %w", err)

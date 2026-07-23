@@ -421,6 +421,8 @@ type Comment struct {
 	Content         string     `json:"content"`
 	Selection       *string    `json:"selection,omitempty"`
 	Type            string     `json:"type"`
+	GuestName       *string    `json:"guestName,omitempty"`
+	GuestAvatar     *string    `json:"guestAvatar,omitempty"`
 	ResolvedAt      *time.Time `json:"resolvedAt,omitempty"`
 	ResolvedByID    *string    `json:"resolvedById,omitempty"`
 	EditedAt        *time.Time `json:"editedAt,omitempty"`
