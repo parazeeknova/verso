@@ -1581,7 +1581,7 @@ export const PageEditor = ({
     return () => {
       container?.removeEventListener("click", handleCommentMarkClick);
     };
-  }, []);
+  }, [editor]);
 
   const handleContentClick = useContentClickHandler(editor, effectiveEditable, contentRef);
 

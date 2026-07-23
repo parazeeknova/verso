@@ -144,6 +144,8 @@ export interface PageTreeItem {
   updatedAt: string;
 }
 
+export type CommentAccess = "disabled" | "members" | "all";
+
 export interface PageShare {
   id?: string;
   pageId: string;
@@ -152,7 +154,7 @@ export interface PageShare {
   searchIndexing: boolean;
   isEnabled: boolean;
   accessLevel?: string;
-  commentAccess?: string;
+  commentAccess?: CommentAccess;
   createdAt?: string;
   updatedAt?: string;
 }

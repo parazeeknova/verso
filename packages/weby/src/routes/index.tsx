@@ -21,6 +21,7 @@ import {
   useProfile,
   useProjects,
 } from "#/features/landing/hooks/use-data";
+import { crossfadeVideo, getHeaderGradient } from "#/shared/lib/video-helpers";
 
 const useIsMobile = (): boolean => {
   const getSnapshot = useCallback(() => {
@@ -161,17 +162,40 @@ const Home = function Home() {
     }
   }, []);
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const nextVideoRef = useRef<HTMLVideoElement>(null);
+  const gradientRef = useRef<HTMLDivElement>(null);
+  const videoActiveNext = useRef(false);
+
+  useEffect(() => {
+    const src = isDarkMode
+      ? "https://img.przknv.cc/t/header.mp4"
+      : "https://img.przknv.cc/t/footer.mp4";
+    if (videoActiveNext.current) {
+      if (nextVideoRef.current) {
+        nextVideoRef.current.src = src;
+        nextVideoRef.current.style.opacity = "1";
+      }
+      if (videoRef.current) {
+        videoRef.current.style.opacity = "0";
+      }
+    } else {
+      if (videoRef.current) {
+        videoRef.current.src = src;
+        videoRef.current.style.opacity = "1";
+      }
+      if (nextVideoRef.current) {
+        nextVideoRef.current.style.opacity = "0";
+      }
+    }
+  }, [isDarkMode]);
+
   const toggleTheme = useCallback(() => {
     const newTheme = isDarkMode ? "light" : "dark";
     setIsDarkMode(!isDarkMode);
     localStorage.setItem("theme", newTheme);
     document.documentElement.dataset.theme = newTheme;
   }, [isDarkMode]);
-
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const nextVideoRef = useRef<HTMLVideoElement>(null);
-  const gradientRef = useRef<HTMLDivElement>(null);
-  const videoActiveNext = useRef(false);
 
   const animatedToggleTheme = useCallback(() => {
     const nextDark = !isDarkMode;
@@ -181,24 +205,12 @@ const Home = function Home() {
     const fromRef = videoActiveNext.current ? nextVideoRef : videoRef;
     const toRef = videoActiveNext.current ? videoRef : nextVideoRef;
 
-    const tl = gsap.timeline();
-    tl.set(toRef.current, { opacity: 0, src: nextSrc });
-    tl.call(() => {
-      if (toRef.current) {
-        void toRef.current.play();
-      }
-    });
-    tl.to(toRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 1 });
-    tl.to(fromRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 0 }, "<");
-    tl.call(() => {
+    crossfadeVideo(fromRef, toRef, nextSrc, () => {
       videoActiveNext.current = !videoActiveNext.current;
       const newTheme = nextDark ? "dark" : "light";
       setIsDarkMode(nextDark);
       localStorage.setItem("theme", newTheme);
       document.documentElement.dataset.theme = newTheme;
-      if (fromRef.current) {
-        fromRef.current.pause();
-      }
     });
   }, [isDarkMode]);
 
@@ -292,10 +304,7 @@ const Home = function Home() {
     );
   }
 
-  const bgColor = isDarkMode ? "#111111" : "#eeeeee";
-  const headerGradient = isDarkMode
-    ? `linear-gradient(to bottom, ${bgColor}00 0%, ${bgColor}00 15%, ${bgColor}33 30%, ${bgColor}88 50%, ${bgColor}cc 70%, ${bgColor} 85%, ${bgColor} 100%)`
-    : `linear-gradient(to bottom, ${bgColor}00 0%, ${bgColor}00 60%, ${bgColor}66 75%, ${bgColor}cc 88%, ${bgColor} 100%)`;
+  const headerGradient = getHeaderGradient(isDarkMode);
 
   return (
     <div

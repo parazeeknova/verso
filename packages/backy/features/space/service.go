@@ -326,14 +326,17 @@ func (s *SpaceService) ListReadableFavoritedSpaces(ctx context.Context, ids []st
 	return readable, nil
 }
 
-// GetSpaceByID returns a space by ID.
-func (s *SpaceService) GetSpaceByID(ctx context.Context, id string) (models.Space, error) {
+// GetSpaceByID returns a space by ID with read permission check.
+func (s *SpaceService) GetSpaceByID(ctx context.Context, id, userID string) (models.Space, error) {
 	space, err := s.spaceRepo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, ErrSpaceNotFound) {
 			return models.Space{}, ErrSpaceNotFound
 		}
 		return models.Space{}, fmt.Errorf("getting space: %w", err)
+	}
+	if err := s.RequireRead(ctx, space.ID, userID); err != nil {
+		return models.Space{}, err
 	}
 	return space, nil
 }

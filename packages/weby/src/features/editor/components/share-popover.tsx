@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "#/shared/hooks/use-theme";
+import type { CommentAccess } from "#/shared/types";
 import {
   usePageShare,
   useUpdatePageShare,
@@ -138,10 +139,10 @@ const AccessPermissionsSection = ({
 };
 
 interface CommentPermissionsProps {
-  currentCommentAccess: string;
+  currentCommentAccess: CommentAccess;
   disabled?: boolean;
   isDarkMode: boolean;
-  onUpdateCommentAccess: (level: string) => void;
+  onUpdateCommentAccess: (level: CommentAccess) => void;
 }
 
 const CommentPermissionsSection = ({
@@ -151,7 +152,12 @@ const CommentPermissionsSection = ({
   onUpdateCommentAccess,
 }: CommentPermissionsProps) => {
   const t = (dark: string, light: string) => (isDarkMode ? dark : light);
-  const options = [
+  const options: {
+    desc: string;
+    icon: typeof ChatTeardropTextIcon;
+    id: CommentAccess;
+    label: string;
+  }[] = [
     {
       desc: "anyone viewing page can post comments",
       icon: ChatTeardropTextIcon,
@@ -437,7 +443,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
     );
   };
 
-  const handleUpdateCommentAccess = (commentAccess: string) => {
+  const handleUpdateCommentAccess = (commentAccess: CommentAccess) => {
     if (!share) {
       return;
     }

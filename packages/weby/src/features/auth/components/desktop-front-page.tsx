@@ -9,12 +9,12 @@ import {
   SunIcon,
   XIcon,
 } from "@phosphor-icons/react";
-import { gsap } from "gsap";
 import { useAuth, useAuthActions } from "#/features/auth/hooks/use-auth";
 import { useMFAVerify } from "#/features/auth/hooks/use-mfa";
 import { useIsBootstrapped, useBootstrapState } from "#/features/auth/hooks/use-bootstrap-state";
 
 import { useTheme } from "#/shared/hooks/use-theme";
+import { crossfadeVideo, getHeaderGradient } from "#/shared/lib/video-helpers";
 
 interface GradientTextProps {
   as?: "h1" | "h2" | "h3" | "span";
@@ -41,37 +41,6 @@ const GradientText = ({ as: Tag = "h1", children, className = "" }: GradientText
       {children}
     </Tag>
   );
-};
-
-const getHeaderGradient = (isDarkMode: boolean): string => {
-  const bg = isDarkMode ? "#111111" : "#eeeeee";
-  if (isDarkMode) {
-    return `linear-gradient(to bottom, ${bg}00 0%, ${bg}00 15%, ${bg}33 30%, ${bg}88 50%, ${bg}cc 70%, ${bg} 85%, ${bg} 100%)`;
-  }
-  return `linear-gradient(to bottom, ${bg}00 0%, ${bg}00 60%, ${bg}66 75%, ${bg}cc 88%, ${bg} 100%)`;
-};
-
-const crossfadeVideo = (
-  fromRef: React.RefObject<HTMLVideoElement | null>,
-  toRef: React.RefObject<HTMLVideoElement | null>,
-  nextSrc: string,
-  onComplete: () => void,
-) => {
-  const tl = gsap.timeline();
-  tl.set(toRef.current, { opacity: 0, src: nextSrc });
-  tl.call(() => {
-    if (toRef.current) {
-      void toRef.current.play();
-    }
-  });
-  tl.to(toRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 1 });
-  tl.to(fromRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 0 }, "<");
-  tl.call(() => {
-    onComplete();
-    if (fromRef.current) {
-      fromRef.current.pause();
-    }
-  });
 };
 
 const themeClass = (isDarkMode: boolean) =>
@@ -132,6 +101,29 @@ export const DesktopFrontPage = () => {
       toggleTheme();
     });
   }, [isDarkMode, toggleTheme]);
+
+  useEffect(() => {
+    const src = isDarkMode
+      ? "https://img.przknv.cc/t/header.mp4"
+      : "https://img.przknv.cc/t/footer.mp4";
+    if (videoActiveNext.current) {
+      if (nextVideoRef.current) {
+        nextVideoRef.current.src = src;
+        nextVideoRef.current.style.opacity = "1";
+      }
+      if (videoRef.current) {
+        videoRef.current.style.opacity = "0";
+      }
+    } else {
+      if (videoRef.current) {
+        videoRef.current.src = src;
+        videoRef.current.style.opacity = "1";
+      }
+      if (nextVideoRef.current) {
+        nextVideoRef.current.style.opacity = "0";
+      }
+    }
+  }, [isDarkMode]);
 
   // If user is already logged in, automatically navigate to console
   useEffect(() => {

@@ -104,9 +104,12 @@ const ProjectCard = ({ index, onDetail, project }: ProjectCardProps) => {
     });
   };
 
-  return (
-    <div className={`flex items-start gap-4 ${isEven ? "" : "flex-row-reverse"}`}>
-      {project.image ? (
+  const renderThumbnail = () => {
+    if (!project.image) {
+      return null;
+    }
+    if (linkUrl) {
+      return (
         <>
           <a
             ref={thumbRef}
@@ -143,7 +146,21 @@ const ProjectCard = ({ index, onDetail, project }: ProjectCardProps) => {
             </div>
           </div>
         </>
-      ) : null}
+      );
+    }
+    return (
+      <div
+        className="relative shrink-0 block w-28 h-28 sm:w-36 sm:h-36 overflow-hidden"
+        style={{ transform: isEven ? "rotate(-3deg)" : "rotate(3deg)" }}
+      >
+        <img alt={project.title} className="w-full h-full object-cover" src={project.image} />
+      </div>
+    );
+  };
+
+  return (
+    <div className={`flex items-start gap-4 ${isEven ? "" : "flex-row-reverse"}`}>
+      {renderThumbnail()}
       <div>
         <h3 className="font-medium text-xs sm:text-sm">{project.title}</h3>
         <p className="mt-1 text-gray-500 text-xs sm:text-sm">{project.desc}</p>

@@ -95,19 +95,13 @@ export const NotificationBell = ({ isDarkMode }: NotificationBellProps) => {
     let meta: Record<string, string> = {};
     try {
       if (n.metadata) {
-        meta =
-          typeof n.metadata === "string"
-            ? (JSON.parse(n.metadata) as Record<string, string>)
-            : (n.metadata as unknown as Record<string, string>);
+        meta = JSON.parse(n.metadata) as Record<string, string>;
       }
     } catch {
       // ignore
     }
 
-    const pageId =
-      meta.pageId ||
-      (n.entityType === "page" ? n.entityId : undefined) ||
-      (n.entityType === "comment" ? n.entityId : undefined);
+    const pageId = meta.pageId || (n.entityType === "page" ? n.entityId : undefined);
     const commentId = meta.commentId || (n.entityType === "comment" ? n.entityId : undefined);
 
     if (pageId) {

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -75,7 +76,7 @@ func (h *CommentHandlers) CreateComment(c *gin.Context) {
 		return
 	}
 
-	trimmedContent := input.Content
+	trimmedContent := strings.TrimSpace(input.Content)
 	if len(trimmedContent) > 2000 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "comment content cannot exceed 2000 characters"})
 		return
@@ -86,6 +87,7 @@ func (h *CommentHandlers) CreateComment(c *gin.Context) {
 		return
 	}
 
+	input.Content = trimmedContent
 	created, err := h.commentService.CreateComment(c.Request.Context(), pageID, userID, input)
 	if err != nil {
 		if errors.Is(err, ErrInvalidParent) || errors.Is(err, ErrReplyToReply) {
@@ -142,11 +144,20 @@ func (h *CommentHandlers) GetComment(c *gin.Context) {
 			return
 		}
 		if errors.Is(err, ErrForbidden) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			if userID == "" {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
+			} else {
+				c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			}
 			return
 		}
 		logger.Log.Error().Err(err).Str("comment_id", commentID).Msg("get comment error")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get comment"})
+		return
+	}
+
+	if userID == "" && !h.commentService.IsPageShared(c.Request.Context(), comment.PageID) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
 		return
 	}
 

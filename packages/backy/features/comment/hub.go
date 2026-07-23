@@ -56,10 +56,14 @@ func (h *CommentHub) Publish(pageID string, event CommentEvent) {
 	msg := string(data)
 
 	h.mu.RLock()
-	channels := h.subs[pageID]
+	subsMap := h.subs[pageID]
+	targets := make([]chan string, 0, len(subsMap))
+	for ch := range subsMap {
+		targets = append(targets, ch)
+	}
 	h.mu.RUnlock()
 
-	for ch := range channels {
+	for _, ch := range targets {
 		select {
 		case ch <- msg:
 		default:

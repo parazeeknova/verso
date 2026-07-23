@@ -421,7 +421,7 @@ func (s *CommentService) notifyCommentAction(ctx context.Context, page models.Pa
 	for _, id := range mentionedIDs {
 		if id != comment.CreatorID {
 			if _, alreadyNotified := recipients[id]; !alreadyNotified {
-				if s.canUserAccessPage(ctx, page, id) {
+				if s.isUserMember(ctx, page.WorkspaceID, page.SpaceID, id) {
 					filteredMentions = append(filteredMentions, id)
 				}
 			}

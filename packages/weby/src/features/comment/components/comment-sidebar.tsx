@@ -9,7 +9,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "#/features/auth/hooks/use-auth";
 import { getGuestPokemon } from "#/features/editor/lib/pokemon-avatars";
 import type { CommentItem } from "#/shared/types";
-import { useCommentStream } from "../hooks/use-comment-stream";
 import {
   useComments,
   useCreateComment,
@@ -146,9 +145,6 @@ export const CommentSidebar = ({
   const [tab, setTab] = useState<"open" | "resolved">("open");
   const [newCommentText, setNewCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Enable real-time SSE updates for page comments
-  useCommentStream(pageId, isOpen);
 
   useEffect(() => {
     if (isOpen) {

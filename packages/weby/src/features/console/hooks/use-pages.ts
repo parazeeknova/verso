@@ -1,4 +1,5 @@
 import type {
+  CommentAccess,
   ConsolePage,
   ConsolePageDetail,
   CreatePageInput,
@@ -339,7 +340,7 @@ export const useUpdatePageShare = () => {
       isEnabled: boolean;
       searchIndexing: boolean;
       accessLevel?: string;
-      commentAccess?: string;
+      commentAccess?: CommentAccess;
     }
   >({
     mutationFn: ({ pageId, isEnabled, searchIndexing, accessLevel, commentAccess }) =>

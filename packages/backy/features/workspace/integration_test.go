@@ -1605,6 +1605,9 @@ func TestPageService_PageSharing(t *testing.T) {
 	if share.AccessLevel != "read" {
 		t.Fatalf("expected access level %q, got %q", "read", share.AccessLevel)
 	}
+	if share.CommentAccess != "all" {
+		t.Fatalf("expected comment access %q, got %q", "all", share.CommentAccess)
+	}
 
 	// Fetch page by share token
 	fetchedPage, fetchedShare, err := db.pageSvc.GetPageByShareToken(ctx, share.ShareToken)
@@ -1636,6 +1639,30 @@ func TestPageService_PageSharing(t *testing.T) {
 	}
 	if fetchedShare.AccessLevel != "public_edit" {
 		t.Fatalf("expected persisted access level %q, got %q", "public_edit", fetchedShare.AccessLevel)
+	}
+
+	// Update commentAccess to "members" and verify
+	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, true, true, "public_edit", "members")
+	if err != nil {
+		t.Fatalf("updating comment access to members: %v", err)
+	}
+	if share.CommentAccess != "members" {
+		t.Fatalf("expected comment access %q, got %q", "members", share.CommentAccess)
+	}
+
+	// Update commentAccess to "disabled" and verify
+	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, true, true, "public_edit", "disabled")
+	if err != nil {
+		t.Fatalf("updating comment access to disabled: %v", err)
+	}
+	if share.CommentAccess != "disabled" {
+		t.Fatalf("expected comment access %q, got %q", "disabled", share.CommentAccess)
+	}
+
+	// Restore back to "all" for remaining tests
+	share, err = db.pageSvc.UpdatePageShare(ctx, p.ID, ownerID, true, true, "public_edit", "all")
+	if err != nil {
+		t.Fatalf("restoring comment access to all: %v", err)
 	}
 
 	// Shorten link

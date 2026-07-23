@@ -134,10 +134,15 @@ func (h *SpaceHandlers) GetSpaceByID(c *gin.Context) {
 		return
 	}
 
-	space, err := h.spaceService.GetSpaceByID(c.Request.Context(), id)
+	userID := middleware.GetCurrentUserID(c)
+	space, err := h.spaceService.GetSpaceByID(c.Request.Context(), id, userID)
 	if err != nil {
 		if errors.Is(err, repositories.ErrSpaceNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "space not found"})
+			return
+		}
+		if errors.Is(err, ErrSpacePermissionDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "permission denied"})
 			return
 		}
 		logger.Log.Error().Err(err).Str("id", id).Msg("get space by id error")
