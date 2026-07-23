@@ -2,6 +2,7 @@ import { ReactRenderer } from "@tiptap/react";
 import type { SuggestionProps } from "@tiptap/suggestion";
 import type { SlashMenuItemType } from "./types";
 import { autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom";
+import { gsap } from "gsap";
 import { CommandList } from "./command-list";
 import type { CommandListRef } from "./command-list";
 
@@ -35,6 +36,21 @@ const renderItems = () => {
     /* eslint-enable promise/prefer-await-to-then */
   };
 
+  const animateOut = (onComplete: () => void) => {
+    if (popup) {
+      gsap.to(popup, {
+        duration: 0.12,
+        ease: "power2.in",
+        onComplete,
+        opacity: 0,
+        scale: 0.95,
+        y: -4,
+      });
+    } else {
+      onComplete();
+    }
+  };
+
   return {
     onExit: () => {
       if (cleanup) {
@@ -42,20 +58,26 @@ const renderItems = () => {
         cleanup = null;
       }
 
-      if (popup) {
-        popup.remove();
-        popup = null;
-      }
+      animateOut(() => {
+        if (popup) {
+          popup.remove();
+          popup = null;
+        }
 
-      if (component) {
-        component.destroy();
-        component = null;
-      }
+        if (component) {
+          component.destroy();
+          component = null;
+        }
+      });
     },
     onKeyDown: (props: { event: KeyboardEvent }) => {
       if (props.event.key === "Escape") {
         if (popup) {
-          popup.style.display = "none";
+          animateOut(() => {
+            if (popup) {
+              popup.style.display = "none";
+            }
+          });
         }
         return true;
       }
@@ -84,6 +106,12 @@ const renderItems = () => {
       if (component) {
         popup.append(component.element);
       }
+
+      gsap.fromTo(
+        popup,
+        { opacity: 0, scale: 0.95, y: -4 },
+        { duration: 0.15, ease: "power2.out", opacity: 1, scale: 1, y: 0 },
+      );
 
       cleanup = autoUpdate(
         {

@@ -60,6 +60,9 @@ func (h *CommentHandlers) CreateComment(c *gin.Context) {
 			return
 		}
 		userID = "guest"
+	} else if !h.commentService.CanUserAccessPage(c.Request.Context(), pageID, userID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
 	}
 
 	if userID == "guest" && h.rateLimiter != nil {
@@ -114,8 +117,12 @@ func (h *CommentHandlers) ListComments(c *gin.Context) {
 	}
 
 	userID := middleware.GetCurrentUserID(c)
-	if userID == "" && !h.commentService.IsPageShared(c.Request.Context(), pageID) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
+	if !h.commentService.CanUserAccessPage(c.Request.Context(), pageID, userID) {
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
+		} else {
+			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		}
 		return
 	}
 
@@ -153,11 +160,6 @@ func (h *CommentHandlers) GetComment(c *gin.Context) {
 		}
 		logger.Log.Error().Err(err).Str("comment_id", commentID).Msg("get comment error")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get comment"})
-		return
-	}
-
-	if userID == "" && !h.commentService.IsPageShared(c.Request.Context(), comment.PageID) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
 		return
 	}
 
@@ -269,8 +271,12 @@ func (h *CommentHandlers) StreamComments(c *gin.Context) {
 	}
 
 	userID := middleware.GetCurrentUserID(c)
-	if userID == "" && !h.commentService.IsPageShared(c.Request.Context(), pageID) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
+	if !h.commentService.CanUserAccessPage(c.Request.Context(), pageID, userID) {
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
+		} else {
+			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		}
 		return
 	}
 

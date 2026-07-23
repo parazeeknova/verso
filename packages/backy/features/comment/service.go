@@ -114,6 +114,14 @@ func (s *CommentService) canUserAccessPage(ctx context.Context, page models.Page
 	return s.isUserMember(ctx, page.WorkspaceID, page.SpaceID, userID)
 }
 
+func (s *CommentService) CanUserAccessPage(ctx context.Context, pageID, userID string) bool {
+	page, err := s.pageRepo.GetByID(ctx, pageID)
+	if err != nil {
+		return false
+	}
+	return s.canUserAccessPage(ctx, page, userID)
+}
+
 // CreateComment creates a top-level comment or a thread reply.
 func (s *CommentService) CreateComment(ctx context.Context, pageID string, creatorID string, input CreateCommentInput) (*models.CommentWithDetails, error) {
 	page, err := s.pageRepo.GetByID(ctx, pageID)
@@ -421,7 +429,7 @@ func (s *CommentService) notifyCommentAction(ctx context.Context, page models.Pa
 	for _, id := range mentionedIDs {
 		if id != comment.CreatorID {
 			if _, alreadyNotified := recipients[id]; !alreadyNotified {
-				if s.isUserMember(ctx, page.WorkspaceID, page.SpaceID, id) {
+				if s.canUserAccessPage(ctx, page, id) {
 					filteredMentions = append(filteredMentions, id)
 				}
 			}

@@ -490,6 +490,7 @@ const MergedConnectionStatus = ({
   );
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -504,10 +505,35 @@ const MergedConnectionStatus = ({
     };
   }, []);
 
+  const closeMenu = useCallback(() => {
+    if (panelRef.current) {
+      gsap.to(panelRef.current, {
+        duration: 0.12,
+        ease: "power2.in",
+        onComplete: () => setIsOpen(false),
+        opacity: 0,
+        scale: 0.95,
+        y: -4,
+      });
+    } else {
+      setIsOpen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && panelRef.current) {
+      gsap.fromTo(
+        panelRef.current,
+        { opacity: 0, scale: 0.95, y: -4 },
+        { duration: 0.15, ease: "power2.out", opacity: 1, scale: 1, y: 0 },
+      );
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
+        closeMenu();
       }
     };
     if (isOpen) {
@@ -516,7 +542,7 @@ const MergedConnectionStatus = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, closeMenu]);
 
   const isWsConnected = collabStatus === "connected";
   const isWsConnecting = collabStatus === "connecting";
@@ -560,7 +586,13 @@ const MergedConnectionStatus = ({
     <div ref={dropdownRef} className="relative flex items-center justify-center">
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+          if (isOpen) {
+            closeMenu();
+          } else {
+            setIsOpen(true);
+          }
+        }}
         className={`flex items-center gap-1.5 px-1.5 py-0.5 border transition-all cursor-pointer ${badgeStyle}`}
         aria-label="Connection Status"
       >
@@ -570,7 +602,8 @@ const MergedConnectionStatus = ({
 
       {isOpen && (
         <div
-          className={`absolute top-full right-0 mt-1 z-50 w-44 p-1.5 shadow-lg border text-[10px] font-mono lowercase space-y-1 transition-all ${t(
+          ref={panelRef}
+          className={`absolute top-full right-0 mt-1 z-50 w-44 p-1.5 shadow-lg border text-[10px] font-mono lowercase space-y-1 ${t(
             "bg-neutral-900 border-neutral-800 text-neutral-200",
             "bg-white border-neutral-200 text-neutral-800",
           )}`}
@@ -683,6 +716,90 @@ const CollaboratorAvatar = ({
   );
 };
 
+const CollaboratorTooltip = ({
+  initials,
+  t,
+  user,
+  pokemonInfo,
+  isGuest,
+  cleanName,
+  subtitle,
+}: {
+  initials: string;
+  t: (dark: string, light: string) => string;
+  user: ActiveCollaborator;
+  pokemonInfo: ReturnType<typeof getPokemonDetails>;
+  isGuest: boolean;
+  cleanName: string;
+  subtitle: string;
+}) => {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+
+  const showTooltip = useCallback(() => {
+    if (tooltipRef.current) {
+      gsap.set(tooltipRef.current, { display: "flex" });
+      gsap.fromTo(
+        tooltipRef.current,
+        { opacity: 0, scale: 0.95, y: -4 },
+        { duration: 0.15, ease: "power2.out", opacity: 1, scale: 1, y: 0 },
+      );
+    }
+  }, []);
+
+  const hideTooltip = useCallback(() => {
+    if (tooltipRef.current) {
+      gsap.to(tooltipRef.current, {
+        duration: 0.1,
+        ease: "power2.in",
+        onComplete: () => {
+          gsap.set(tooltipRef.current, { display: "none" });
+        },
+        opacity: 0,
+        scale: 0.95,
+        y: -4,
+      });
+    }
+  }, []);
+
+  return (
+    <div
+      className="relative flex items-center justify-center shrink-0"
+      onMouseEnter={showTooltip}
+      onMouseLeave={hideTooltip}
+    >
+      <CollaboratorAvatar initials={initials} t={t} user={user} />
+      <div
+        ref={tooltipRef}
+        className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 hidden flex-col items-center select-none"
+      >
+        <div className="w-2 h-2 -mb-1 rotate-45 bg-neutral-900/95 border-l border-t border-neutral-700/60" />
+        <div className="flex flex-col gap-1 rounded-none px-2.5 py-1.5 text-xs bg-neutral-900/95 text-white dark:bg-neutral-900/95 dark:text-white border border-neutral-700/60 shadow-xl backdrop-blur-md">
+          <div className="flex items-center gap-1.5 font-semibold text-[11px] leading-tight whitespace-nowrap">
+            {user.avatar_url || pokemonInfo?.avatar ? (
+              <img
+                src={user.avatar_url || pokemonInfo?.avatar}
+                alt=""
+                className="h-4 w-4 object-contain shrink-0 grayscale"
+              />
+            ) : (
+              <span className="h-2 w-2 bg-purple-400 shrink-0" />
+            )}
+            <span>{cleanName}</span>
+            {isGuest && (
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1 py-0.5 rounded-none bg-purple-500/20 text-purple-300 border border-purple-500/30 leading-none">
+                Guest
+              </span>
+            )}
+          </div>
+          <div className="text-[9.5px] text-neutral-400 font-normal leading-tight whitespace-nowrap flex items-center gap-1">
+            <span>{subtitle}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ActiveCollaboratorsStack = ({
   collaborators,
   t,
@@ -724,37 +841,16 @@ const ActiveCollaboratorsStack = ({
         }
 
         return (
-          <div
+          <CollaboratorTooltip
             key={`${user.clientId}-${idx}`}
-            className="group relative flex items-center justify-center shrink-0"
-          >
-            <CollaboratorAvatar initials={initials} t={t} user={user} />
-            <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 hidden group-hover:flex flex-col items-center select-none animate-in fade-in zoom-in-95 duration-150">
-              <div className="w-2 h-2 -mb-1 rotate-45 bg-neutral-900/95 border-l border-t border-neutral-700/60" />
-              <div className="flex flex-col gap-1 rounded-none px-2.5 py-1.5 text-xs bg-neutral-900/95 text-white dark:bg-neutral-900/95 dark:text-white border border-neutral-700/60 shadow-xl backdrop-blur-md">
-                <div className="flex items-center gap-1.5 font-semibold text-[11px] leading-tight whitespace-nowrap">
-                  {user.avatar_url || pokemonInfo?.avatar ? (
-                    <img
-                      src={user.avatar_url || pokemonInfo?.avatar}
-                      alt=""
-                      className="h-4 w-4 object-contain shrink-0 grayscale"
-                    />
-                  ) : (
-                    <span className="h-2 w-2 bg-purple-400 shrink-0" />
-                  )}
-                  <span>{cleanName}</span>
-                  {isGuest && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider px-1 py-0.5 rounded-none bg-purple-500/20 text-purple-300 border border-purple-500/30 leading-none">
-                      Guest
-                    </span>
-                  )}
-                </div>
-                <div className="text-[9.5px] text-neutral-400 font-normal leading-tight whitespace-nowrap flex items-center gap-1">
-                  <span>{subtitle}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+            initials={initials}
+            t={t}
+            user={user}
+            pokemonInfo={pokemonInfo}
+            isGuest={isGuest}
+            cleanName={cleanName}
+            subtitle={subtitle}
+          />
         );
       })}
 

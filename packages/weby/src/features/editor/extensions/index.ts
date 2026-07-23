@@ -39,6 +39,7 @@ import { MathInline, MathBlock } from "./math";
 import { CustomAttachment } from "./attachment";
 import { CustomYoutube } from "./youtube";
 import { CommentMark } from "./comment";
+import { TypingAnimation } from "./typing-animation";
 
 import { Collaboration } from "@tiptap/extension-collaboration";
 import { CollaborationCaret } from "@tiptap/extension-collaboration-caret";
@@ -144,6 +145,7 @@ export const getEditorExtensions = (options?: { isCollab?: boolean }) => [
   Status,
   Columns,
   Column,
+  TypingAnimation,
 ];
 
 const userColors = [

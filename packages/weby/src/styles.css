@@ -1269,3 +1269,37 @@ div[data-type="columns"][data-layout="three_with_sidebars"] > div[data-type="col
   background: rgba(220, 40, 40, 0.08);
   color: rgba(200, 50, 50, 0.6);
 }
+
+@keyframes typing-phase-in {
+  0% {
+    opacity: 0.4;
+    color: var(--color-accent);
+    text-shadow: 0 0 8px var(--color-accent);
+    transform: translateY(1px);
+  }
+  60% {
+    opacity: 0.9;
+    text-shadow: 0 0 2px var(--color-accent);
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 1;
+    color: inherit;
+    text-shadow: none;
+    transform: translateY(0);
+  }
+}
+
+.ProseMirror .typing-char-animate {
+  display: inline;
+  animation: typing-phase-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.ProseMirror.is-typing {
+  caret-color: var(--color-accent);
+  transition: caret-color 0.15s ease;
+}
+
+.ProseMirror:not(.is-typing) {
+  transition: caret-color 0.4s ease;
+}

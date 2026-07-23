@@ -2,6 +2,7 @@ import { ReactRenderer } from "@tiptap/react";
 import type { SuggestionProps } from "@tiptap/suggestion";
 import { EmojiList } from "./emoji-list";
 import { autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom";
+import { gsap } from "gsap";
 
 export const renderEmojiItems = () => {
   let component: ReactRenderer | null = null;
@@ -9,21 +10,38 @@ export const renderEmojiItems = () => {
   let cleanup: (() => void) | null = null;
   let getReferenceClientRect: (() => DOMRect) | null = null;
 
+  const animateOut = (onComplete: () => void) => {
+    if (popup) {
+      gsap.to(popup, {
+        duration: 0.12,
+        ease: "power2.in",
+        onComplete,
+        opacity: 0,
+        scale: 0.95,
+        y: -4,
+      });
+    } else {
+      onComplete();
+    }
+  };
+
   const destroy = () => {
     if (cleanup) {
       cleanup();
       cleanup = null;
     }
 
-    if (popup) {
-      popup.remove();
-      popup = null;
-    }
+    animateOut(() => {
+      if (popup) {
+        popup.remove();
+        popup = null;
+      }
 
-    if (component) {
-      component.destroy();
-      component = null;
-    }
+      if (component) {
+        component.destroy();
+        component = null;
+      }
+    });
   };
 
   return {
@@ -45,6 +63,12 @@ export const renderEmojiItems = () => {
       popup.style.left = "0";
       popup.append(component.element);
       document.body.append(popup);
+
+      gsap.fromTo(
+        popup,
+        { opacity: 0, scale: 0.95, y: -4 },
+        { duration: 0.15, ease: "power2.out", opacity: 1, scale: 1, y: 0 },
+      );
 
       const virtualElement = {
         getBoundingClientRect: () =>

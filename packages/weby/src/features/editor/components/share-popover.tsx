@@ -10,7 +10,8 @@ import {
   UserCheckIcon,
   ProhibitIcon,
 } from "@phosphor-icons/react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { gsap } from "gsap";
 import { useTheme } from "#/shared/hooks/use-theme";
 import type { CommentAccess } from "#/shared/types";
 import {
@@ -356,20 +357,46 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
 
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const { data: share, isPending } = usePageShare(pageId);
   const updateShare = useUpdatePageShare();
   const shortenShare = useShortenPageShare();
 
+  const closeMenu = useCallback(() => {
+    if (panelRef.current) {
+      gsap.to(panelRef.current, {
+        duration: 0.12,
+        ease: "power2.in",
+        onComplete: () => setOpen(false),
+        opacity: 0,
+        scale: 0.95,
+        y: -4,
+      });
+    } else {
+      setOpen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (open && panelRef.current) {
+      gsap.fromTo(
+        panelRef.current,
+        { opacity: 0, scale: 0.95, y: -4 },
+        { duration: 0.15, ease: "power2.out", opacity: 1, scale: 1, y: 0 },
+      );
+    }
+  }, [open]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setOpen(false);
+        closeMenu();
       }
     };
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
+        closeMenu();
       }
     };
     if (open) {
@@ -380,7 +407,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("mousedown", handler);
     };
-  }, [open]);
+  }, [open, closeMenu]);
 
   const handleToggleShare = () => {
     if (!share) {
@@ -491,6 +518,7 @@ export const SharePopover = ({ pageId }: SharePopoverProps) => {
 
       {open && (
         <div
+          ref={panelRef}
           className={`absolute top-full right-0 mt-1.5 border text-xs p-3 w-80 flex flex-col gap-3 z-50 shadow-xl ${t(
             "border-neutral-800 bg-neutral-900 text-neutral-200",
             "border-neutral-200 bg-white text-neutral-800",
