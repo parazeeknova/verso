@@ -29,6 +29,7 @@ type PageService struct {
 	spaceRepo       *repositories.SpaceRepo
 	groupRepo       *repositories.GroupRepo
 	pageShareRepo   *repositories.PageShareRepo
+	workspaceRepo   *repositories.WorkspaceRepo
 	notifier        notifeat.Notifier
 }
 
@@ -41,6 +42,7 @@ func NewPageService(pageRepo *repositories.PageRepo, pageWatcherRepo *repositori
 		spaceRepo:       spaceRepo,
 		groupRepo:       groupRepo,
 		pageShareRepo:   repositories.NewPageShareRepo(),
+		workspaceRepo:   repositories.NewWorkspaceRepo(),
 		notifier:        notifeat.NoopNotifier(),
 	}
 }
@@ -661,6 +663,20 @@ func (s *PageService) requireWrite(ctx context.Context, spaceID, userID string) 
 	if role == models.SpaceRoleAdmin || role == models.SpaceRoleWriter {
 		return nil
 	}
+
+	if role == "" {
+		isWorkspaceMember := false
+		if s.workspaceRepo != nil {
+			isWorkspaceMember, _ = s.workspaceRepo.IsMember(ctx, space.WorkspaceID, userID)
+		}
+		if space.Visibility == "public" || (space.Visibility == "workspace" && isWorkspaceMember) {
+			defRole := space.DefaultRole
+			if defRole == "" || defRole == models.SpaceRoleAdmin || defRole == models.SpaceRoleWriter {
+				return nil
+			}
+		}
+	}
+
 	return ErrPagePermissionDenied
 }
 
@@ -686,6 +702,17 @@ func (s *PageService) RequireRead(ctx context.Context, spaceID, userID string) e
 	if role == models.SpaceRoleAdmin || role == models.SpaceRoleWriter || role == models.SpaceRoleReader {
 		return nil
 	}
+
+	if role == "" {
+		isWorkspaceMember := false
+		if s.workspaceRepo != nil {
+			isWorkspaceMember, _ = s.workspaceRepo.IsMember(ctx, space.WorkspaceID, userID)
+		}
+		if space.Visibility == "public" || (space.Visibility == "workspace" && isWorkspaceMember) {
+			return nil
+		}
+	}
+
 	return ErrPagePermissionDenied
 }
 
