@@ -121,6 +121,33 @@ func (h *SpaceHandlers) GetSpaceBySlug(c *gin.Context) {
 	c.JSON(http.StatusOK, space)
 }
 
+// GetSpaceByID handles GET /api/console/spaces/:id.
+func (h *SpaceHandlers) GetSpaceByID(c *gin.Context) {
+	if h.spaceService == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "space service unavailable"})
+		return
+	}
+
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	space, err := h.spaceService.GetSpaceByID(c.Request.Context(), id)
+	if err != nil {
+		if errors.Is(err, repositories.ErrSpaceNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "space not found"})
+			return
+		}
+		logger.Log.Error().Err(err).Str("id", id).Msg("get space by id error")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get space"})
+		return
+	}
+
+	c.JSON(http.StatusOK, space)
+}
+
 // CreateSpaceRequest is the request body for creating a space.
 type CreateSpaceRequest struct {
 	Name        string `json:"name" binding:"required"`

@@ -355,6 +355,7 @@ func main() {
 			console.GET("/spaces", spaceHandlers.GetSpaces)
 			console.POST("/spaces", spaceHandlers.CreateSpace)
 			console.GET("/spaces/by-slug/:slug", spaceHandlers.GetSpaceBySlug)
+			console.GET("/spaces/:id", spaceHandlers.GetSpaceByID)
 			console.PUT("/spaces/:id", spaceHandlers.UpdateSpace)
 			console.DELETE("/spaces/:id", spaceHandlers.DeleteSpace)
 			console.GET("/spaces/:id/members", spaceHandlers.GetSpaceMembers)
