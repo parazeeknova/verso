@@ -22,37 +22,59 @@ vi.mock("gsap", () => {
   return {
     gsap: {
       fromTo: (
-        el: HTMLElement | null,
+        target: HTMLElement | HTMLElement[] | Element[] | null,
         _from: Record<string, unknown>,
         to: Record<string, unknown>,
       ) => {
-        if (el) {
-          if (typeof to.onStart === "function") {
-            to.onStart();
-          }
-          const { duration: _d, ease: _e, onComplete, onStart: _s, ...styles } = to;
-          applyStyles(el, styles);
-          if (typeof onComplete === "function") {
-            onComplete();
+        let elements: (HTMLElement | Element)[] = [];
+        if (Array.isArray(target)) {
+          elements = target;
+        } else if (target) {
+          elements = [target];
+        }
+
+        for (const el of elements) {
+          if (el && "style" in el) {
+            if (typeof to.onStart === "function") {
+              to.onStart();
+            }
+            const { duration: _d, ease: _e, onComplete, onStart: _s, ...styles } = to;
+            applyStyles(el as HTMLElement, styles);
+            if (typeof onComplete === "function") {
+              onComplete();
+            }
           }
         }
         return mockTimeline;
       },
+      killTweensOf: () => {},
       set: (el: HTMLElement | null, props: Record<string, unknown>) => {
         if (el) {
           applyStyles(el, props);
         }
       },
       timeline: () => mockTimeline,
-      to: (el: HTMLElement | null, props: Record<string, unknown>) => {
-        if (el) {
-          if (typeof props.onStart === "function") {
-            props.onStart();
-          }
-          const { duration: _d, ease: _e, onComplete, onStart: _s, ...styles } = props;
-          applyStyles(el, styles);
-          if (typeof onComplete === "function") {
-            onComplete();
+      to: (
+        target: HTMLElement | HTMLElement[] | Element[] | null,
+        props: Record<string, unknown>,
+      ) => {
+        let elements: (HTMLElement | Element)[] = [];
+        if (Array.isArray(target)) {
+          elements = target;
+        } else if (target) {
+          elements = [target];
+        }
+
+        for (const el of elements) {
+          if (el && "style" in el) {
+            if (typeof props.onStart === "function") {
+              props.onStart();
+            }
+            const { duration: _d, ease: _e, onComplete, onStart: _s, ...styles } = props;
+            applyStyles(el as HTMLElement, styles);
+            if (typeof onComplete === "function") {
+              onComplete();
+            }
           }
         }
         return mockTimeline;

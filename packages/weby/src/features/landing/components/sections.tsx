@@ -24,8 +24,43 @@ export const ProfileSection = ({ profile, isPending, isMobile }: ProfileSectionP
   const [isExpanded, setIsExpanded] = useState(false);
   const profileDescRef = useRef<HTMLDivElement>(null);
   const profileFadeRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
   const portfolio = getLink(profile?.links, "portfolio");
+
+  useEffect(() => {
+    if (isPending || !profile) {
+      return;
+    }
+    const el = sectionRef.current;
+    if (!el) {
+      return;
+    }
+
+    const children = [...el.children];
+    if (children.length === 0) {
+      return;
+    }
+
+    gsap.killTweensOf(children);
+    gsap.fromTo(
+      children,
+      {
+        opacity: 0,
+        rotateX: -6,
+        transformOrigin: "top center",
+        y: 24,
+      },
+      {
+        duration: 0.85,
+        ease: "power3.out",
+        opacity: 1,
+        rotateX: 0,
+        stagger: 0.1,
+        y: 0,
+      },
+    );
+  }, [isPending, profile]);
 
   useEffect(() => {
     const desc = profileDescRef.current;
@@ -96,7 +131,7 @@ export const ProfileSection = ({ profile, isPending, isMobile }: ProfileSectionP
   }
 
   return (
-    <div className="shrink-0">
+    <div className="shrink-0" ref={sectionRef} style={{ perspective: 1000 }}>
       {profile?.name && (
         <h1
           className="font-normal text-5xl sm:text-7xl pl-2"
@@ -169,9 +204,44 @@ interface ExperienceSectionProps {
 
 export const ExperienceSection = ({ experience, isPending }: ExperienceSectionProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
   const extraRef = useRef<HTMLDivElement>(null);
   const fadeRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isPending || !experience || experience.length === 0) {
+      return;
+    }
+    const el = listRef.current;
+    if (!el) {
+      return;
+    }
+
+    const items = [...el.querySelectorAll(".experience-item")];
+    if (items.length === 0) {
+      return;
+    }
+
+    gsap.killTweensOf(items);
+    gsap.fromTo(
+      items,
+      {
+        opacity: 0,
+        rotateX: -6,
+        transformOrigin: "top center",
+        y: 20,
+      },
+      {
+        duration: 0.8,
+        ease: "power3.out",
+        opacity: 1,
+        rotateX: 0,
+        stagger: 0.08,
+        y: 0,
+      },
+    );
+  }, [isPending, experience]);
 
   useEffect(() => {
     const extra = extraRef.current;
@@ -245,9 +315,9 @@ export const ExperienceSection = ({ experience, isPending }: ExperienceSectionPr
 
   return (
     <div className="shrink-0 space-y-3 sm:space-y-4">
-      <div className="relative space-y-3 sm:space-y-4">
+      <div className="relative space-y-3 sm:space-y-4" ref={listRef} style={{ perspective: 1000 }}>
         {experience.slice(0, 3).map((item) => (
-          <div key={item.title}>
+          <div key={item.title} className="experience-item">
             <h3 className="font-medium text-xs sm:text-sm">{item.title}</h3>
             <p className="text-gray-500 text-xs sm:text-sm">
               {item.location} | {item.period}

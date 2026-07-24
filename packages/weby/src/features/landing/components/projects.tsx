@@ -237,9 +237,44 @@ interface ProjectListProps {
 
 export const ProjectList = ({ onDetail }: ProjectListProps) => {
   const { data: projectData, isPending } = useProjects();
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isPending || !projectData || projectData.length === 0) {
+      return;
+    }
+    const el = listRef.current;
+    if (!el) {
+      return;
+    }
+
+    const items = [...el.children];
+    if (items.length === 0) {
+      return;
+    }
+
+    gsap.killTweensOf(items);
+    gsap.fromTo(
+      items,
+      {
+        opacity: 0,
+        rotateX: -8,
+        transformOrigin: "top center",
+        y: 24,
+      },
+      {
+        duration: 0.85,
+        ease: "power3.out",
+        opacity: 1,
+        rotateX: 0,
+        stagger: 0.12,
+        y: 0,
+      },
+    );
+  }, [isPending, projectData]);
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="space-y-3 sm:space-y-4" ref={listRef} style={{ perspective: 1000 }}>
       {isPending ? (
         <LoadingDots />
       ) : (
@@ -258,9 +293,44 @@ interface MobileProjectListProps {
 export const MobileProjectList = ({ onDetail }: MobileProjectListProps) => {
   const { data: projectData, isPending } = useProjects();
   const [isExpanded, setIsExpanded] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
   const extraRef = useRef<HTMLDivElement>(null);
   const fadeRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isPending || !projectData || projectData.length === 0) {
+      return;
+    }
+    const el = listRef.current;
+    if (!el) {
+      return;
+    }
+
+    const items = [...el.querySelectorAll(".project-card-visible")];
+    if (items.length === 0) {
+      return;
+    }
+
+    gsap.killTweensOf(items);
+    gsap.fromTo(
+      items,
+      {
+        opacity: 0,
+        rotateX: -8,
+        transformOrigin: "top center",
+        y: 24,
+      },
+      {
+        duration: 0.85,
+        ease: "power3.out",
+        opacity: 1,
+        rotateX: 0,
+        stagger: 0.12,
+        y: 0,
+      },
+    );
+  }, [isPending, projectData]);
 
   useEffect(() => {
     const extra = extraRef.current;
@@ -330,9 +400,11 @@ export const MobileProjectList = ({ onDetail }: MobileProjectListProps) => {
 
   return (
     <div>
-      <div className="relative space-y-3 sm:space-y-4">
+      <div className="relative space-y-3 sm:space-y-4" ref={listRef} style={{ perspective: 1000 }}>
         {projectData.slice(0, 3).map((project, index) => (
-          <ProjectCard key={project.title} index={index} onDetail={onDetail} project={project} />
+          <div key={project.title} className="project-card-visible">
+            <ProjectCard index={index} onDetail={onDetail} project={project} />
+          </div>
         ))}
 
         {hasMore && (

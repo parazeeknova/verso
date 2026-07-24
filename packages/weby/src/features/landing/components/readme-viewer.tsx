@@ -97,6 +97,36 @@ export const ReadmeViewer = ({
     return { headings: extracted, html: div.innerHTML };
   }, [markdown]);
 
+  useEffect(() => {
+    if (isPending || !html || !contentRef.current) {
+      return;
+    }
+    const el = contentRef.current;
+    const blocks = [...el.children];
+    if (blocks.length === 0) {
+      return;
+    }
+
+    gsap.killTweensOf(blocks);
+    gsap.fromTo(
+      blocks,
+      {
+        opacity: 0,
+        rotateX: -5,
+        transformOrigin: "top center",
+        y: 20,
+      },
+      {
+        duration: 0.75,
+        ease: "power3.out",
+        opacity: 1,
+        rotateX: 0,
+        stagger: 0.04,
+        y: 0,
+      },
+    );
+  }, [isPending, html]);
+
   const handleSelectHeading = useCallback((id: string) => {
     const el = contentRef.current?.querySelector(`#${id}`);
     if (el) {
