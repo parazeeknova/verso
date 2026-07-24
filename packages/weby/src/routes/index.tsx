@@ -108,27 +108,31 @@ const Home = function Home() {
     title: string;
   } | null>(null);
   const [isAtBottom, setIsAtBottom] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    const target = bottomRef.current;
-    if (!target) {
-      return;
-    }
+    const handleScroll = () => {
+      const { body } = document;
+      const doc = document.documentElement;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        const isScrollable = document.documentElement.scrollHeight > window.innerHeight + 50;
-        setIsAtBottom(isScrollable && entry.isIntersecting);
-      },
-      {
-        threshold: 0.1,
-      },
-    );
+      const scrollTop = Math.max(window.scrollY, body.scrollTop, doc.scrollTop);
+      const clientHeight = window.innerHeight || doc.clientHeight || body.clientHeight;
+      const scrollHeight = Math.max(body.scrollHeight, doc.scrollHeight);
 
-    observer.observe(target);
-    return () => observer.disconnect();
+      const isScrollable = scrollHeight > clientHeight + 50;
+      const atBottom = isScrollable && scrollTop + clientHeight >= scrollHeight - 40;
+
+      setIsAtBottom(atBottom);
+    };
+
+    document.addEventListener("scroll", handleScroll, { capture: true, passive: true });
+    window.addEventListener("resize", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      document.removeEventListener("scroll", handleScroll, { capture: true });
+      window.removeEventListener("resize", handleScroll);
+    };
   }, []);
 
   const themeRefs = useThemeButtonHover();
@@ -410,7 +414,7 @@ const Home = function Home() {
           <LoginPopup isAtBottom={isAtBottom} isDarkMode={isDarkMode} />
         </div>
 
-        <div className="flex justify-end pt-4 pb-2" ref={bottomRef}>
+        <div className="flex justify-end pt-4 pb-2">
           <span
             className="text-4xl sm:text-5xl opacity-40"
             style={{ fontFamily: '"Louison Adriana", cursive' }}
