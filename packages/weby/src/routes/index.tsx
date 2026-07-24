@@ -332,7 +332,7 @@ const Home = function Home() {
   return (
     <div
       data-theme={isDarkMode ? "dark" : "light"}
-      className={`min-h-screen w-full select-none overflow-y-auto ${
+      className={`min-h-screen w-full select-none overflow-y-auto transition-colors duration-500 ${
         isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
       }`}
     >

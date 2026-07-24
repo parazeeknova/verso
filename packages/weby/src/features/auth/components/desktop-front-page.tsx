@@ -367,7 +367,7 @@ export const DesktopFrontPage = () => {
   return (
     <div
       data-theme={isDarkMode ? "dark" : "light"}
-      className={`relative min-h-screen w-full flex flex-col items-center justify-center select-none overflow-hidden transition-colors duration-300 ${themeClass(isDarkMode)}`}
+      className={`relative min-h-screen w-full flex flex-col items-center justify-center select-none overflow-hidden transition-colors duration-500 ${themeClass(isDarkMode)}`}
     >
       {/* Top navbar with unboxed theme toggle with icons */}
       <header className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 flex items-center">
