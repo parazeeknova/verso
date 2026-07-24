@@ -43,15 +43,14 @@ describe("useProfile", () => {
       wrapper: createWrapper(),
     });
 
-    // Initially loading
-    expect(result.current.isPending).toBe(true);
+    // With placeholderData, initially not pending
+    expect(result.current.data).toBeDefined();
 
-    // Wait for data
+    // Wait for fetched data
     await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.data).toEqual(mockProfile);
     });
 
-    expect(result.current.data).toEqual(mockProfile);
     expect(mockFetch).toHaveBeenCalledWith("/api/profile", expect.any(Object));
   });
 
@@ -112,10 +111,8 @@ describe("useExperience", () => {
     });
 
     await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.data).toEqual(mockExperience);
     });
-
-    expect(result.current.data).toEqual(mockExperience);
   });
 });
 
@@ -141,10 +138,8 @@ describe("useProjects", () => {
     });
 
     await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.data).toEqual(mockProjects);
     });
-
-    expect(result.current.data).toEqual(mockProjects);
   });
 });
 
@@ -153,7 +148,7 @@ describe("useIsFetchingData", () => {
     vi.resetAllMocks();
   });
 
-  it("returns true when any query is pending", () => {
+  it("returns false when placeholderData is active", () => {
     // Create a deferred promise that never resolves
     let resolvePromise: ((value: unknown) => void) | undefined;
     // eslint-disable-next-line promise/avoid-new
@@ -168,8 +163,8 @@ describe("useIsFetchingData", () => {
       wrapper: createWrapper(),
     });
 
-    // Should be true while loading
-    expect(result.current).toBe(true);
+    // Should be false with placeholderData
+    expect(result.current).toBe(false);
 
     // Clean up by resolving (avoid unhandled promise)
     if (resolvePromise) {
