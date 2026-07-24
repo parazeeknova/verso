@@ -58,17 +58,16 @@ export const BlogReader = ({
     gsap.fromTo(
       children,
       {
+        filter: "blur(10px)",
         opacity: 0,
-        rotateX: -6,
-        transformOrigin: "top center",
-        y: 20,
+        y: 14,
       },
       {
-        duration: 0.8,
-        ease: "power3.out",
+        duration: 0.55,
+        ease: "power2.out",
+        filter: "blur(0px)",
         opacity: 1,
-        rotateX: 0,
-        stagger: 0.08,
+        stagger: 0.05,
         y: 0,
       },
     );

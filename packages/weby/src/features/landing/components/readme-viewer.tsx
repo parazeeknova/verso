@@ -111,17 +111,16 @@ export const ReadmeViewer = ({
     gsap.fromTo(
       blocks,
       {
+        filter: "blur(10px)",
         opacity: 0,
-        rotateX: -5,
-        transformOrigin: "top center",
-        y: 20,
+        y: 14,
       },
       {
-        duration: 0.75,
-        ease: "power3.out",
+        duration: 0.55,
+        ease: "power2.out",
+        filter: "blur(0px)",
         opacity: 1,
-        rotateX: 0,
-        stagger: 0.04,
+        stagger: 0.035,
         y: 0,
       },
     );

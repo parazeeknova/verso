@@ -46,17 +46,18 @@ export const ProfileSection = ({ profile, isPending, isMobile }: ProfileSectionP
     gsap.fromTo(
       children,
       {
+        filter: "blur(12px)",
         opacity: 0,
-        rotateX: -6,
-        transformOrigin: "top center",
-        y: 24,
+        scale: 0.98,
+        y: 16,
       },
       {
-        duration: 0.85,
-        ease: "power3.out",
+        duration: 0.65,
+        ease: "power2.out",
+        filter: "blur(0px)",
         opacity: 1,
-        rotateX: 0,
-        stagger: 0.1,
+        scale: 1,
+        stagger: 0.08,
         y: 0,
       },
     );
@@ -227,17 +228,18 @@ export const ExperienceSection = ({ experience, isPending }: ExperienceSectionPr
     gsap.fromTo(
       items,
       {
+        filter: "blur(12px)",
         opacity: 0,
-        rotateX: -6,
-        transformOrigin: "top center",
-        y: 20,
+        scale: 0.98,
+        y: 16,
       },
       {
-        duration: 0.8,
-        ease: "power3.out",
+        duration: 0.65,
+        ease: "power2.out",
+        filter: "blur(0px)",
         opacity: 1,
-        rotateX: 0,
-        stagger: 0.08,
+        scale: 1,
+        stagger: 0.07,
         y: 0,
       },
     );

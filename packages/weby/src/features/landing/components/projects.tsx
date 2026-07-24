@@ -257,17 +257,18 @@ export const ProjectList = ({ onDetail }: ProjectListProps) => {
     gsap.fromTo(
       items,
       {
+        filter: "blur(12px)",
         opacity: 0,
-        rotateX: -8,
-        transformOrigin: "top center",
-        y: 24,
+        scale: 0.98,
+        y: 18,
       },
       {
-        duration: 0.85,
-        ease: "power3.out",
+        duration: 0.65,
+        ease: "power2.out",
+        filter: "blur(0px)",
         opacity: 1,
-        rotateX: 0,
-        stagger: 0.12,
+        scale: 1,
+        stagger: 0.09,
         y: 0,
       },
     );
@@ -316,17 +317,18 @@ export const MobileProjectList = ({ onDetail }: MobileProjectListProps) => {
     gsap.fromTo(
       items,
       {
+        filter: "blur(12px)",
         opacity: 0,
-        rotateX: -8,
-        transformOrigin: "top center",
-        y: 24,
+        scale: 0.98,
+        y: 18,
       },
       {
-        duration: 0.85,
-        ease: "power3.out",
+        duration: 0.65,
+        ease: "power2.out",
+        filter: "blur(0px)",
         opacity: 1,
-        rotateX: 0,
-        stagger: 0.12,
+        scale: 1,
+        stagger: 0.09,
         y: 0,
       },
     );
