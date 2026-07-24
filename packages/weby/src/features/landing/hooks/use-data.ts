@@ -12,10 +12,10 @@ const fetchJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
 export const DEFAULT_PROFILE: Profile = {
   description:
     "verso is a self-hosted personal knowledge base, blog, and portfolio built as one app with two access tiers. Publicly, it shows a portfolio and blog anyone can browse. Behind authentication, it's a full markdown editor and workspace — notes, documents, and long-term memory entries — with docmost-style editing and workspace management. The whole knowledge base is retrieval-augmented: markdown content is chunked, embedded, and stored in a vector index so it can be searched semantically and asked questions about directly, with recency-aware ranking so recent memory entries surface above older ones when relevant.",
-  email: "harsh@itssingularity.com",
+  email: "hello@verso.app",
   links: {
     github: { label: "GitHub", url: "https://github.com/parazeeknova/verso" },
-    portfolio: { label: "portfolio", url: "https://amemorymachine.cc" },
+    portfolio: { label: "portfolio", url: "https://verso.app" },
   },
   name: "verso",
   tagline: "personal knowledge base & folio",
@@ -60,21 +60,18 @@ export const DEFAULT_PROJECTS: Project[] = [
 
 export const useProfile = () =>
   useQuery<Profile>({
-    placeholderData: DEFAULT_PROFILE,
     queryFn: ({ signal }) => fetchJson<Profile>("/api/profile", { signal }),
     queryKey: ["profile"],
   });
 
 export const useExperience = () =>
   useQuery<ExperienceItem[]>({
-    placeholderData: DEFAULT_EXPERIENCES,
     queryFn: ({ signal }) => fetchJson<ExperienceItem[]>("/api/experience", { signal }),
     queryKey: ["experience"],
   });
 
 export const useProjects = () =>
   useQuery<Project[]>({
-    placeholderData: DEFAULT_PROJECTS,
     queryFn: ({ signal }) => fetchJson<Project[]>("/api/projects", { signal }),
     queryKey: ["projects"],
   });

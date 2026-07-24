@@ -43,8 +43,8 @@ describe("useProfile", () => {
       wrapper: createWrapper(),
     });
 
-    // With placeholderData, initially not pending
-    expect(result.current.data).toBeDefined();
+    // Initially pending
+    expect(result.current.isPending).toBe(true);
 
     // Wait for fetched data
     await waitFor(() => {
@@ -148,7 +148,7 @@ describe("useIsFetchingData", () => {
     vi.resetAllMocks();
   });
 
-  it("returns false when placeholderData is active", () => {
+  it("returns true when any query is pending", () => {
     // Create a deferred promise that never resolves
     let resolvePromise: ((value: unknown) => void) | undefined;
     // eslint-disable-next-line promise/avoid-new
@@ -163,8 +163,8 @@ describe("useIsFetchingData", () => {
       wrapper: createWrapper(),
     });
 
-    // Should be false with placeholderData
-    expect(result.current).toBe(false);
+    // Should be true while loading
+    expect(result.current).toBe(true);
 
     // Clean up by resolving (avoid unhandled promise)
     if (resolvePromise) {
