@@ -20,13 +20,14 @@ const createMockResponse = (data: unknown, ok = true, status = 200): Response =>
 describe("useProfile", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    localStorage.clear();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("fetches profile data successfully", async () => {
+  it("fetches profile data successfully and caches in localStorage", async () => {
     const mockProfile = {
       description: "test description",
       links: {
@@ -43,8 +44,8 @@ describe("useProfile", () => {
       wrapper: createWrapper(),
     });
 
-    // With placeholderData, initially not pending
-    expect(result.current.data).toBeDefined();
+    // Cold start is pending
+    expect(result.current.isPending).toBe(true);
 
     // Wait for fetched data
     await waitFor(() => {
@@ -52,6 +53,27 @@ describe("useProfile", () => {
     });
 
     expect(mockFetch).toHaveBeenCalledWith("/api/profile", expect.any(Object));
+    expect(localStorage.getItem("verso_cache_profile")).toContain("Test User");
+  });
+
+  it("restores cached profile data from localStorage instantly on warm start", () => {
+    const cachedProfile = {
+      description: "cached description",
+      links: {},
+      name: "Cached User",
+      tagline: "cached tagline",
+    };
+    localStorage.setItem("verso_cache_profile", JSON.stringify(cachedProfile));
+
+    const mockFetch = vi.fn().mockResolvedValueOnce(createMockResponse(cachedProfile));
+    vi.stubGlobal("fetch", mockFetch);
+
+    const { result } = renderHook(() => useProfile(), {
+      wrapper: createWrapper(),
+    });
+
+    // Warm start has data instantly from placeholderData
+    expect(result.current.data).toEqual(cachedProfile);
   });
 
   it("handles fetch error", async () => {
@@ -92,9 +114,10 @@ describe("useProfile", () => {
 describe("useExperience", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    localStorage.clear();
   });
 
-  it("fetches experience data successfully", async () => {
+  it("fetches experience data successfully and saves to localStorage", async () => {
     const mockExperience = [
       {
         location: "Remote",
@@ -113,15 +136,18 @@ describe("useExperience", () => {
     await waitFor(() => {
       expect(result.current.data).toEqual(mockExperience);
     });
+
+    expect(localStorage.getItem("verso_cache_experience")).toContain("Test Job");
   });
 });
 
 describe("useProjects", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    localStorage.clear();
   });
 
-  it("fetches projects data successfully", async () => {
+  it("fetches projects data successfully and saves to localStorage", async () => {
     const mockProjects = [
       {
         desc: "Test description",
@@ -140,15 +166,18 @@ describe("useProjects", () => {
     await waitFor(() => {
       expect(result.current.data).toEqual(mockProjects);
     });
+
+    expect(localStorage.getItem("verso_cache_projects")).toContain("Test Project");
   });
 });
 
 describe("useIsFetchingData", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    localStorage.clear();
   });
 
-  it("returns false when placeholderData is active", () => {
+  it("returns true when cold starting without cache", () => {
     // Create a deferred promise that never resolves
     let resolvePromise: ((value: unknown) => void) | undefined;
     // eslint-disable-next-line promise/avoid-new
@@ -163,8 +192,8 @@ describe("useIsFetchingData", () => {
       wrapper: createWrapper(),
     });
 
-    // Should be false with placeholderData
-    expect(result.current).toBe(false);
+    // Should be true while loading cold
+    expect(result.current).toBe(true);
 
     // Clean up by resolving (avoid unhandled promise)
     if (resolvePromise) {

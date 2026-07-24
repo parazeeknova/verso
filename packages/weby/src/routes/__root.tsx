@@ -1,4 +1,6 @@
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { useState } from "react";
 import { createTheme, MantineProvider } from "@mantine/core";
@@ -30,14 +32,34 @@ const theme = createTheme({
 
 const RootComponent = () => {
   const [queryClient] = useState(createQueryClient);
+  const [persister] = useState(() =>
+    typeof window === "undefined"
+      ? undefined
+      : createSyncStoragePersister({
+          storage: window.localStorage,
+        }),
+  );
   const { isDarkMode } = useTheme();
 
+  if (!persister) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <MantineProvider theme={theme} forceColorScheme={isDarkMode ? "dark" : "light"}>
+          <Outlet />
+        </MantineProvider>
+      </QueryClientProvider>
+    );
+  }
+
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ maxAge: 1000 * 60 * 60 * 24 * 7, persister }}
+    >
       <MantineProvider theme={theme} forceColorScheme={isDarkMode ? "dark" : "light"}>
         <Outlet />
       </MantineProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 };
 
