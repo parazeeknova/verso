@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { gsap } from "gsap";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { GitHubActivity } from "#/features/github/components/calendar";
@@ -107,7 +107,33 @@ const Home = function Home() {
     repoUrl?: string;
     title: string;
   } | null>(null);
+  const [isAtBottom, setIsAtBottom] = useState(false);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const { body } = document;
+      const doc = document.documentElement;
+
+      const scrollTop = Math.max(window.scrollY, body.scrollTop, doc.scrollTop);
+      const clientHeight = window.innerHeight || doc.clientHeight || body.clientHeight;
+      const scrollHeight = Math.max(body.scrollHeight, doc.scrollHeight);
+
+      const isScrollable = scrollHeight > clientHeight + 50;
+      const atBottom = isScrollable && scrollTop + clientHeight >= scrollHeight - 40;
+
+      setIsAtBottom(atBottom);
+    };
+
+    document.addEventListener("scroll", handleScroll, { capture: true, passive: true });
+    window.addEventListener("resize", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      document.removeEventListener("scroll", handleScroll, { capture: true });
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, []);
 
   const themeRefs = useThemeButtonHover();
   const themeRefsRight = useThemeButtonHover();
@@ -306,7 +332,7 @@ const Home = function Home() {
   return (
     <div
       data-theme={isDarkMode ? "dark" : "light"}
-      className={`min-h-screen w-full select-none overflow-y-auto ${
+      className={`min-h-screen w-full select-none overflow-y-auto transition-colors duration-500 ${
         isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
       }`}
     >
@@ -333,12 +359,12 @@ const Home = function Home() {
         />
         <div
           ref={gradientRef}
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 -bottom-1 pointer-events-none"
           style={{ background: headerGradient }}
         />
       </div>
 
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 sm:gap-8 p-4 sm:p-6 lg:p-8">
+      <div className="-mt-1 mx-auto flex max-w-3xl flex-col gap-6 sm:gap-8 p-4 sm:p-6 lg:p-8">
         <div className="flex items-center justify-end gap-3 w-full">
           <button
             className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${
@@ -379,13 +405,15 @@ const Home = function Home() {
           <ProjectList onDetail={handleProjectDetail} />
         </div>
 
-        <GitHubActivity isDarkMode={isDarkMode} username={githubUsername}>
-          <GitHubStats />
-        </GitHubActivity>
+        <ClientOnly>
+          <GitHubActivity isDarkMode={isDarkMode} username={githubUsername}>
+            <GitHubStats />
+          </GitHubActivity>
+        </ClientOnly>
 
         <div className="shrink-0 flex items-center justify-between pt-2">
           <SocialLinks profile={profile} />
-          <LoginPopup isDarkMode={isDarkMode} />
+          <LoginPopup isAtBottom={isAtBottom} isDarkMode={isDarkMode} />
         </div>
 
         <div className="flex justify-end pt-4 pb-2">

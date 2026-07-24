@@ -13,7 +13,8 @@ export const crossfadeVideo = (
   fromRef: RefObject<HTMLVideoElement | null>,
   toRef: RefObject<HTMLVideoElement | null>,
   nextSrc: string,
-  onComplete: () => void,
+  onStart: () => void,
+  onComplete?: () => void,
 ) => {
   gsap.killTweensOf(fromRef.current);
   gsap.killTweensOf(toRef.current);
@@ -21,6 +22,7 @@ export const crossfadeVideo = (
   const tl = gsap.timeline();
   tl.set(toRef.current, { opacity: 0, src: nextSrc });
   tl.call(() => {
+    onStart();
     if (toRef.current) {
       void toRef.current.play();
     }
@@ -28,7 +30,9 @@ export const crossfadeVideo = (
   tl.to(toRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 1 });
   tl.to(fromRef.current, { duration: 0.5, ease: "power2.inOut", opacity: 0 }, "<");
   tl.call(() => {
-    onComplete();
+    if (onComplete) {
+      onComplete();
+    }
     if (fromRef.current) {
       fromRef.current.pause();
     }

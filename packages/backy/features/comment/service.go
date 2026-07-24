@@ -342,7 +342,7 @@ func (s *CommentService) ToggleResolve(ctx context.Context, commentID string, us
 		return nil, fmt.Errorf("fetching page for resolve check: %w", err)
 	}
 
-	if userID == "" || userID != page.CreatorID {
+	if userID == "" || userID != page.CreatorID || !s.canUserAccessPage(ctx, page, userID) {
 		return nil, ErrForbidden
 	}
 

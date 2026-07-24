@@ -40,8 +40,38 @@ export const BlogReader = ({
   const [asideMounted, setAsideMounted] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const asideRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const headingsRef = useRef<TiptapHeading[]>([]);
+
+  useEffect(() => {
+    if (!post || !headerRef.current) {
+      return;
+    }
+    const el = headerRef.current;
+    const children = [...el.children];
+    if (children.length === 0) {
+      return;
+    }
+
+    gsap.killTweensOf(children);
+    gsap.fromTo(
+      children,
+      {
+        filter: "blur(10px)",
+        opacity: 0,
+        y: 14,
+      },
+      {
+        duration: 0.55,
+        ease: "power2.out",
+        filter: "blur(0px)",
+        opacity: 1,
+        stagger: 0.05,
+        y: 0,
+      },
+    );
+  }, [post]);
 
   const handleHeadingsExtracted = useCallback((headings: TiptapHeading[]) => {
     // Only update if headings actually changed to avoid infinite loops
@@ -213,7 +243,7 @@ export const BlogReader = ({
       >
         <div className="min-h-0 overflow-y-auto pr-2" ref={scrollContainerRef}>
           <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6 lg:space-y-8">
-            <header className="space-y-4">
+            <header className="space-y-4" ref={headerRef} style={{ perspective: 1000 }}>
               <h2 className="text-4xl">{post.title}</h2>
               <p className={`text-sm ${isDarkMode ? "text-text-dark/55" : "text-text-light/55"}`}>
                 {post.publishedAt ?? ""}{" "}

@@ -22,37 +22,59 @@ vi.mock("gsap", () => {
   return {
     gsap: {
       fromTo: (
-        el: HTMLElement | null,
+        target: HTMLElement | HTMLElement[] | Element[] | null,
         _from: Record<string, unknown>,
         to: Record<string, unknown>,
       ) => {
-        if (el) {
-          if (typeof to.onStart === "function") {
-            to.onStart();
-          }
-          const { duration: _d, ease: _e, onComplete, onStart: _s, ...styles } = to;
-          applyStyles(el, styles);
-          if (typeof onComplete === "function") {
-            onComplete();
+        let elements: (HTMLElement | Element)[] = [];
+        if (Array.isArray(target)) {
+          elements = target;
+        } else if (target) {
+          elements = [target];
+        }
+
+        for (const el of elements) {
+          if (el && "style" in el) {
+            if (typeof to.onStart === "function") {
+              to.onStart();
+            }
+            const { duration: _d, ease: _e, onComplete, onStart: _s, ...styles } = to;
+            applyStyles(el as HTMLElement, styles);
+            if (typeof onComplete === "function") {
+              onComplete();
+            }
           }
         }
         return mockTimeline;
       },
+      killTweensOf: () => {},
       set: (el: HTMLElement | null, props: Record<string, unknown>) => {
         if (el) {
           applyStyles(el, props);
         }
       },
       timeline: () => mockTimeline,
-      to: (el: HTMLElement | null, props: Record<string, unknown>) => {
-        if (el) {
-          if (typeof props.onStart === "function") {
-            props.onStart();
-          }
-          const { duration: _d, ease: _e, onComplete, onStart: _s, ...styles } = props;
-          applyStyles(el, styles);
-          if (typeof onComplete === "function") {
-            onComplete();
+      to: (
+        target: HTMLElement | HTMLElement[] | Element[] | null,
+        props: Record<string, unknown>,
+      ) => {
+        let elements: (HTMLElement | Element)[] = [];
+        if (Array.isArray(target)) {
+          elements = target;
+        } else if (target) {
+          elements = [target];
+        }
+
+        for (const el of elements) {
+          if (el && "style" in el) {
+            if (typeof props.onStart === "function") {
+              props.onStart();
+            }
+            const { duration: _d, ease: _e, onComplete, onStart: _s, ...styles } = props;
+            applyStyles(el as HTMLElement, styles);
+            if (typeof onComplete === "function") {
+              onComplete();
+            }
           }
         }
         return mockTimeline;
@@ -95,32 +117,14 @@ describe("ProfileSection", () => {
     expect(link.closest("a")?.getAttribute("href")).toBe("https://example.com");
   });
 
-  it("can expand and collapse description smoothly on mobile", () => {
-    const { container } = render(
-      <ProfileSection profile={mockProfile} isMobile={true} isPending={false} />,
-    );
+  it("renders full description on mobile without show more button", () => {
+    render(<ProfileSection profile={mockProfile} isMobile={true} isPending={false} />);
 
-    // Find the more button
-    const toggleButton = screen.getByRole("button", { name: /more/i });
-    expect(toggleButton).toBeDefined();
+    // Description is visible
+    expect(screen.getByText(/Test description/i)).toBeDefined();
 
-    // The description wrapper should be collapsed initially (height: 96px)
-    const descContainer = container.querySelector(".overflow-hidden") as HTMLDivElement;
-    expect(descContainer?.style.height).toBe("96px");
-
-    // Click to expand
-    fireEvent.click(toggleButton);
-
-    // Style checks for expanded state
-    expect(screen.getByRole("button", { name: /view less/i })).toBeDefined();
-    expect(descContainer?.style.height).toBe("auto");
-
-    // Click to collapse
-    const collapseButton = screen.getByRole("button", { name: /view less/i });
-    fireEvent.click(collapseButton);
-
-    // Style checks for collapsed state again
-    expect(descContainer?.style.height).toBe("96px");
+    // No toggle button present
+    expect(screen.queryByRole("button", { name: /more/i })).toBeNull();
   });
 });
 

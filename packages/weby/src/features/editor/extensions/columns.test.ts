@@ -1,10 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { Editor } from "@tiptap/core";
 import { getEditorExtensions } from "./index";
 
 describe("columns extension", () => {
+  let editor: Editor | undefined;
+
+  afterEach(() => {
+    editor?.destroy();
+    editor = undefined;
+  });
+
   it("allows nesting other blocks inside a column node", () => {
-    const editor = new Editor({
+    editor = new Editor({
       extensions: getEditorExtensions(),
     });
 
@@ -24,7 +31,7 @@ describe("columns extension", () => {
   });
 
   it("allows columns to be nested inside details and callout nodes", () => {
-    const editor = new Editor({
+    editor = new Editor({
       extensions: getEditorExtensions(),
     });
 
@@ -37,7 +44,7 @@ describe("columns extension", () => {
   });
 
   it("allows table to be nested inside a column node", () => {
-    const editor = new Editor({
+    editor = new Editor({
       extensions: getEditorExtensions(),
     });
 
@@ -48,7 +55,7 @@ describe("columns extension", () => {
   });
 
   it("allows columns to be nested inside another column", () => {
-    const editor = new Editor({
+    editor = new Editor({
       extensions: getEditorExtensions(),
     });
 

@@ -9,6 +9,11 @@ on:
       - main
       - dev
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_WEB: verso-web
+  IMAGE_NAME_API: verso-serve
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -57,9 +62,9 @@ jobs:
       - name: Install Go tools
         run: |
           # Pinned versions for reproducible CI
-          [ -f $(go env GOPATH)/bin/gofumpt ] || go install mvdan.cc/gofumpt@v0.7.0
-          [ -f $(go env GOPATH)/bin/goimports ] || go install golang.org/x/tools/cmd/goimports@v0.31.0
-          [ -f $(go env GOPATH)/bin/golangci-lint ] || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.11.4
+          [ -f "$(go env GOPATH)/bin/gofumpt" ] || go install mvdan.cc/gofumpt@v0.7.0
+          [ -f "$(go env GOPATH)/bin/goimports" ] || go install golang.org/x/tools/cmd/goimports@v0.31.0
+          [ -f "$(go env GOPATH)/bin/golangci-lint" ] || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$(go env GOPATH)/bin" v2.11.4
 
       - name: Install dependencies
         run: bun install
@@ -72,3 +77,331 @@ jobs:
 
       - name: Run tests
         run: bun run test
+
+  check-release-tag:
+    name: Check if release tag exists
+    runs-on: ubuntu-latest
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    outputs:
+      exists: ${{ steps.check_tag.outputs.exists }}
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Get version from package.json
+        id: version
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          if git rev-parse "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag ${{ steps.version.outputs.tag }} already exists. Skipping release steps."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Tag ${{ steps.version.outputs.tag }} does not exist. Proceeding with release."
+          fi
+
+  build-and-push:
+    name: Build and push images
+    runs-on: ubuntu-latest
+    needs: [check, check-release-tag]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.check-release-tag.outputs.exists == 'false'
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    strategy:
+      matrix:
+        include:
+          - package: weby
+            image-name: verso-web
+            dockerfile: ./packages/weby/Dockerfile
+            context: .
+          - package: backy
+            image-name: verso-serve
+            dockerfile: ./packages/backy/Dockerfile
+            context: ./packages/backy
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image-name }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=sha-,format=short
+            type=raw,value=${{ github.ref_name }}
+            type=raw,value=${{ needs.check-release-tag.outputs.tag }}
+
+      - name: Build and push
+        id: push
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate attestation
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image-name }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  build-desktop:
+    name: Build Desktop app (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    needs: [check, check-release-tag]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.check-release-tag.outputs.exists == 'false'
+    env:
+      MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            platform: macos
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: win
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "25"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Apple Certificates
+        if: matrix.platform == 'macos' && env.MACOS_CERTIFICATE != ''
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ env.MACOS_CERTIFICATE }}
+          P12_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build monorepo packages (weby)
+        run: bun --cwd packages/weby run build
+
+      - name: Build Electrobun App
+        env:
+          ELECTROBUN_DEVELOPER_ID: ${{ secrets.ELECTROBUN_DEVELOPER_ID }}
+          ELECTROBUN_TEAMID: ${{ secrets.ELECTROBUN_TEAMID }}
+          ELECTROBUN_APPLEID: ${{ secrets.ELECTROBUN_APPLEID }}
+          ELECTROBUN_APPLEIDPASS: ${{ secrets.ELECTROBUN_APPLEIDPASS }}
+          ELECTROBUN_MAC_CODESIGN: ${{ secrets.MACOS_CERTIFICATE != '' && 'true' || 'false' }}
+        run: cd packages/native && bun run build:stable
+
+      - name: Install fpm (Deb/RPM packaging tool)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby ruby-dev rubygems build-essential rpm
+          sudo gem install --no-document fpm
+
+      - name: Build Debian, RPM, and AppImage packages
+        if: matrix.platform == 'linux'
+        run: ./packages/native/scripts/build-linux-packages.sh
+
+      - name: Upload desktop artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-artifacts-${{ matrix.platform }}
+          path: packages/native/artifacts/*
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [check, check-release-tag, build-and-push, build-desktop]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.check-release-tag.outputs.exists == 'false'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          if [ -z "$PREV_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            COMMITS=$(git log "${PREV_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          {
+            echo "changes<<CHANGES_EOF"
+            echo "<p align=\"center\">"
+            echo "  <img src=\"https://github.com/parazeeknova/verso/blob/main/packages/weby/public/verso.png?raw=true\" alt=\"Verso Logo\" width=\"128\" height=\"128\" />"
+            echo "</p>"
+            echo ""
+            echo "## Changes"
+            echo ""
+            if [ -z "$COMMITS" ]; then
+              echo "No new commits since last release."
+            else
+              echo "$COMMITS"
+            fi
+            echo ""
+            echo "## Container Images"
+            echo ""
+            echo "- \"${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME_WEB }}:${{ needs.check-release-tag.outputs.tag }}\""
+            echo "- \"${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME_API }}:${{ needs.check-release-tag.outputs.tag }}\""
+            echo ""
+            echo "- \"${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME_WEB }}:latest\""
+            echo "- \"${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME_API }}:latest\""
+            echo "CHANGES_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Download desktop artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: desktop-artifacts
+          pattern: desktop-artifacts-*
+          merge-multiple: true
+
+      - name: Update SHA256 hashes in flake.nix and PKGBUILD
+        run: |
+          TAR_FILE="desktop-artifacts/stable-linux-x64-Verso-Setup.tar.gz"
+          if [ -f "$TAR_FILE" ]; then
+            # Calculate hex hash
+            HEX_HASH=$(sha256sum "$TAR_FILE" | cut -d' ' -f1)
+            # Calculate SRI hash
+            SRI_HASH="sha256-$(openssl dgst -sha256 -binary "$TAR_FILE" | openssl base64)"
+            
+            echo "Updating PKGBUILD with SHA256: $HEX_HASH"
+            sed -i "s/sha256sums=.*/sha256sums=('$HEX_HASH')/" packaging/arch/PKGBUILD
+            
+            echo "Updating flake.nix with SRI hash: $SRI_HASH"
+            sed -i "s|sha256 = \".*\";|sha256 = \"$SRI_HASH\";|" flake.nix
+            
+            # Commit and push updates back to branch
+            git config --local user.name "github-actions[bot]"
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git add packaging/arch/PKGBUILD flake.nix
+            git commit -m "chore(release): Update SHA256 hashes for v${{ needs.check-release-tag.outputs.version }} [skip ci]" || echo "No changes to commit"
+            git push origin HEAD:${{ github.ref_name }}
+          else
+            echo "Warning: stable-linux-x64-Verso-Setup.tar.gz not found, skipping hash updates."
+          fi
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26"
+
+      - name: Sync and verify version across all files
+        run: |
+          go run scripts/autobump.go sync
+          go run scripts/autobump.go check
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore(release): Sync versions for v${{ needs.check-release-tag.outputs.version }} [skip ci]" || echo "Versions already in sync"
+          git push origin HEAD:${{ github.ref_name }} || true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ needs.check-release-tag.outputs.tag }}
+          name: Release ${{ needs.check-release-tag.outputs.tag }}
+          body: ${{ steps.changelog.outputs.changes }}
+          files: |
+            desktop-artifacts/*
+          make_latest: true
+          generate_release_notes: false
+
+  deploy:
+    name: Deploy to Dokploy
+    runs-on: ubuntu-latest
+    needs: [check, check-release-tag, build-and-push]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.check-release-tag.outputs.exists == 'false'
+    steps:
+      - name: Trigger backy deploy (runs migrations on startup)
+        run: |
+          curl -X 'POST' \
+            '${{ secrets.DOKPLOY_API_URL }}/api/application.deploy' \
+            -H 'accept: application/json' \
+            -H 'Content-Type: application/json' \
+            -H 'x-api-key: ${{ secrets.DOKPLOY_API_TOKEN }}' \
+            -d '{ "applicationId": "${{ secrets.DOKPLOY_APP_ID }}" }' \
+            --fail --silent --show-error
+
+      - name: Wait for deploy to complete (migrations run on startup)
+        run: |
+          API_URL="${{ secrets.DOKPLOY_API_URL }}"
+          TOKEN="${{ secrets.DOKPLOY_API_TOKEN }}"
+          APP_ID="${{ secrets.DOKPLOY_APP_ID }}"
+          echo "Polling Dokploy deployment status..."
+          for i in $(seq 1 24); do
+            RESPONSE=$(curl -s "$API_URL/api/deployment.all?applicationId=$APP_ID" -H "x-api-key: $TOKEN")
+            STATUS=$(echo "$RESPONSE" | jq -r 'if type == "array" then .[0].status // .[0].applicationStatus // "polling" else .status // .applicationStatus // "polling" end')
+            echo "attempt $i/24: status=$STATUS"
+            if [ "$STATUS" = "done" ] || [ "$STATUS" = "running" ]; then
+              echo "Deployment complete (migrations applied)"
+              exit 0
+            fi
+            if [ "$STATUS" = "error" ] || [ "$STATUS" = "failed" ]; then
+              echo "Deployment failed"
+              exit 1
+            fi
+            sleep 5
+          done
+          echo "Timed out waiting for deployment"
+          exit 1

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useProjects } from "../hooks/use-data";
 import { gsap } from "gsap";
 import { ArrowUpRightIcon } from "@phosphor-icons/react";
@@ -11,6 +12,13 @@ interface ProjectCardProps {
   project: Project;
 }
 
+const isDesktopHoverAvailable = (): boolean => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  return window.innerWidth >= 768 && window.matchMedia("(hover: hover)").matches;
+};
+
 const ProjectCard = ({ index, onDetail, project }: ProjectCardProps) => {
   const [stackOpen, setStackOpen] = useState(false);
   const thumbRef = useRef<HTMLAnchorElement>(null);
@@ -21,6 +29,9 @@ const ProjectCard = ({ index, onDetail, project }: ProjectCardProps) => {
   const linkUrl = project.productUrl || project.repoUrl;
 
   const handlePreviewEnter = () => {
+    if (!isDesktopHoverAvailable()) {
+      return;
+    }
     if (!thumbRef.current || !previewRef.current || !previewImgRef.current) {
       return;
     }
@@ -60,6 +71,9 @@ const ProjectCard = ({ index, onDetail, project }: ProjectCardProps) => {
   };
 
   const handlePreviewMove = (e: React.MouseEvent) => {
+    if (!isDesktopHoverAvailable()) {
+      return;
+    }
     if (!previewRef.current || !thumbRef.current) {
       return;
     }
@@ -131,20 +145,25 @@ const ProjectCard = ({ index, onDetail, project }: ProjectCardProps) => {
               <ArrowUpRightIcon className="text-white" size={24} />
             </div>
           </a>
-          <div
-            ref={previewRef}
-            className="pointer-events-none fixed left-0 top-0 z-50 hidden origin-left"
-            style={{ perspective: 800 }}
-          >
-            <div className="overflow-hidden shadow-2xl border border-white/10 bg-black/80 backdrop-blur-sm">
-              <img
-                ref={previewImgRef}
-                alt={project.title}
-                className="block w-72 max-h-96 object-contain"
-                src={project.image}
-              />
-            </div>
-          </div>
+          {typeof window === "undefined"
+            ? null
+            : createPortal(
+                <div
+                  ref={previewRef}
+                  className="pointer-events-none fixed left-0 top-0 z-50 hidden origin-left"
+                  style={{ perspective: 800 }}
+                >
+                  <div className="overflow-hidden shadow-2xl border border-white/10 bg-black/80 backdrop-blur-sm">
+                    <img
+                      ref={previewImgRef}
+                      alt={project.title}
+                      className="block w-72 max-h-96 object-contain"
+                      src={project.image}
+                    />
+                  </div>
+                </div>,
+                document.body,
+              )}
         </>
       );
     }
@@ -159,9 +178,9 @@ const ProjectCard = ({ index, onDetail, project }: ProjectCardProps) => {
   };
 
   return (
-    <div className={`flex items-start gap-4 ${isEven ? "" : "flex-row-reverse"}`}>
+    <div className={`flex items-center gap-3 sm:gap-4 ${isEven ? "" : "flex-row-reverse"}`}>
       {renderThumbnail()}
-      <div>
+      <div className="flex-1 min-w-0">
         <h3 className="font-medium text-xs sm:text-sm">{project.title}</h3>
         <p className="mt-1 text-gray-500 text-xs sm:text-sm">{project.desc}</p>
         <p className="mt-1 flex items-center gap-2 text-gray-400 text-xs">
@@ -237,9 +256,45 @@ interface ProjectListProps {
 
 export const ProjectList = ({ onDetail }: ProjectListProps) => {
   const { data: projectData, isPending } = useProjects();
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isPending || !projectData || projectData.length === 0) {
+      return;
+    }
+    const el = listRef.current;
+    if (!el) {
+      return;
+    }
+
+    const items = [...el.children];
+    if (items.length === 0) {
+      return;
+    }
+
+    gsap.killTweensOf(items);
+    gsap.fromTo(
+      items,
+      {
+        filter: "blur(12px)",
+        opacity: 0,
+        scale: 0.98,
+        y: 18,
+      },
+      {
+        duration: 0.65,
+        ease: "power2.out",
+        filter: "blur(0px)",
+        opacity: 1,
+        scale: 1,
+        stagger: 0.09,
+        y: 0,
+      },
+    );
+  }, [isPending, projectData]);
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="space-y-3 sm:space-y-4" ref={listRef} style={{ perspective: 1000 }}>
       {isPending ? (
         <LoadingDots />
       ) : (
@@ -258,21 +313,59 @@ interface MobileProjectListProps {
 export const MobileProjectList = ({ onDetail }: MobileProjectListProps) => {
   const { data: projectData, isPending } = useProjects();
   const [isExpanded, setIsExpanded] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
   const extraRef = useRef<HTMLDivElement>(null);
   const fadeRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
 
   useEffect(() => {
-    const extra = extraRef.current;
-    const fade = fadeRef.current;
-    if (!extra) {
+    if (isPending || !projectData || projectData.length === 0) {
+      return;
+    }
+    const el = listRef.current;
+    if (!el) {
       return;
     }
 
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
+    const items = [...el.querySelectorAll(".project-card-visible")];
+    if (items.length === 0) {
       return;
     }
+
+    gsap.killTweensOf(items);
+    gsap.fromTo(
+      items,
+      {
+        filter: "blur(12px)",
+        opacity: 0,
+        scale: 0.98,
+        y: 18,
+      },
+      {
+        duration: 0.65,
+        ease: "power2.out",
+        filter: "blur(0px)",
+        opacity: 1,
+        scale: 1,
+        stagger: 0.09,
+        y: 0,
+      },
+    );
+  }, [isPending, projectData]);
+
+  useEffect(() => {
+    isFirstRender.current = false;
+  }, []);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      return;
+    }
+    const extra = extraRef.current;
+    if (!extra) {
+      return;
+    }
+    const fade = fadeRef.current;
 
     if (isExpanded) {
       gsap.fromTo(
@@ -330,9 +423,11 @@ export const MobileProjectList = ({ onDetail }: MobileProjectListProps) => {
 
   return (
     <div>
-      <div className="relative space-y-3 sm:space-y-4">
+      <div className="relative space-y-3 sm:space-y-4" ref={listRef} style={{ perspective: 1000 }}>
         {projectData.slice(0, 3).map((project, index) => (
-          <ProjectCard key={project.title} index={index} onDetail={onDetail} project={project} />
+          <div key={project.title} className="project-card-visible">
+            <ProjectCard index={index} onDetail={onDetail} project={project} />
+          </div>
         ))}
 
         {hasMore && (
