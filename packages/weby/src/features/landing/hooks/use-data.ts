@@ -60,18 +60,21 @@ export const DEFAULT_PROJECTS: Project[] = [
 
 export const useProfile = () =>
   useQuery<Profile>({
+    placeholderData: DEFAULT_PROFILE,
     queryFn: ({ signal }) => fetchJson<Profile>("/api/profile", { signal }),
     queryKey: ["profile"],
   });
 
 export const useExperience = () =>
   useQuery<ExperienceItem[]>({
+    placeholderData: DEFAULT_EXPERIENCES,
     queryFn: ({ signal }) => fetchJson<ExperienceItem[]>("/api/experience", { signal }),
     queryKey: ["experience"],
   });
 
 export const useProjects = () =>
   useQuery<Project[]>({
+    placeholderData: DEFAULT_PROJECTS,
     queryFn: ({ signal }) => fetchJson<Project[]>("/api/projects", { signal }),
     queryKey: ["projects"],
   });
