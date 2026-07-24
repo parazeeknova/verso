@@ -107,7 +107,33 @@ const Home = function Home() {
     repoUrl?: string;
     title: string;
   } | null>(null);
+  const [isAtBottom, setIsAtBottom] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const el = containerRef.current;
+      const windowAtBottom =
+        Math.ceil(window.innerHeight + window.scrollY) >=
+        document.documentElement.scrollHeight - 10;
+      const containerAtBottom = el
+        ? Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight - 10
+        : false;
+
+      setIsAtBottom(windowAtBottom || containerAtBottom);
+    };
+
+    const el = containerRef.current;
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    el?.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      el?.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   const themeRefs = useThemeButtonHover();
   const themeRefsRight = useThemeButtonHover();
@@ -305,6 +331,7 @@ const Home = function Home() {
 
   return (
     <div
+      ref={containerRef}
       data-theme={isDarkMode ? "dark" : "light"}
       className={`min-h-screen w-full select-none overflow-y-auto ${
         isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
@@ -385,7 +412,7 @@ const Home = function Home() {
 
         <div className="shrink-0 flex items-center justify-between pt-2">
           <SocialLinks profile={profile} />
-          <LoginPopup isDarkMode={isDarkMode} />
+          <LoginPopup isAtBottom={isAtBottom} isDarkMode={isDarkMode} />
         </div>
 
         <div className="flex justify-end pt-4 pb-2">

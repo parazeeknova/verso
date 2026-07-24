@@ -11,6 +11,7 @@ import { useBootstrapState } from "../hooks/use-bootstrap-state";
 
 interface LoginPopupProps {
   isDarkMode: boolean;
+  isAtBottom?: boolean;
 }
 
 type PopupMode = "loading" | "login" | "bootstrap" | "account";
@@ -407,7 +408,7 @@ const AccountPanel = ({
   </div>
 );
 
-export const LoginPopup = ({ isDarkMode }: LoginPopupProps) => {
+export const LoginPopup = ({ isDarkMode, isAtBottom = false }: LoginPopupProps) => {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<PopupMode>("loading");
   const [serverError, setServerError] = useState<string | null>(null);
@@ -499,7 +500,9 @@ export const LoginPopup = ({ isDarkMode }: LoginPopupProps) => {
   return (
     <>
       <button
-        className="fixed bottom-4 right-4 z-40 sm:bottom-6 sm:right-6 flex items-center gap-1.5 text-[10px] lowercase select-none border px-2.5 py-1 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-neutral-800/10 dark:border-neutral-100/10 text-neutral-800/50 dark:text-neutral-100/50 hover:border-neutral-800/20 dark:hover:border-neutral-100/20 cursor-pointer shadow-sm"
+        className={`fixed bottom-4 right-4 z-40 sm:bottom-6 sm:right-6 flex items-center gap-1.5 text-[10px] lowercase select-none border px-2.5 py-1 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-neutral-800/10 dark:border-neutral-100/10 text-neutral-800/50 dark:text-neutral-100/50 hover:border-neutral-800/20 dark:hover:border-neutral-100/20 cursor-pointer shadow-sm transition-opacity duration-200 ${
+          isAtBottom ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
         onClick={() => {
           if (isAuthenticated) {
             handleOpenPopup();
