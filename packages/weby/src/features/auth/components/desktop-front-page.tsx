@@ -367,10 +367,25 @@ export const DesktopFrontPage = () => {
   return (
     <div
       data-theme={isDarkMode ? "dark" : "light"}
-      className={`min-h-screen w-full flex flex-col justify-between select-none transition-colors duration-300 ${themeClass(isDarkMode)}`}
+      className={`relative min-h-screen w-full flex flex-col items-center justify-center select-none overflow-hidden transition-colors duration-300 ${themeClass(isDarkMode)}`}
     >
+      {/* Top navbar with unboxed theme toggle with icons */}
+      <header className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 flex items-center">
+        <button
+          aria-label="Toggle theme"
+          className={`flex items-center gap-1.5 text-xs lowercase transition-opacity opacity-50 hover:opacity-100 focus:outline-none ${
+            isDarkMode ? "text-text-dark" : "text-text-light"
+          }`}
+          onClick={animatedToggleTheme}
+          type="button"
+        >
+          {isDarkMode ? <SunIcon size={14} /> : <MoonIcon size={14} />}
+          <span>{isDarkMode ? "light" : "dark"}</span>
+        </button>
+      </header>
+
       {/* Header Video */}
-      <div className="relative w-full h-48 sm:h-64 lg:h-80 overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-48 sm:h-64 lg:h-80 overflow-hidden pointer-events-none">
         <video
           ref={nextVideoRef}
           autoPlay
@@ -397,23 +412,8 @@ export const DesktopFrontPage = () => {
         />
       </div>
 
-      {/* Top navbar with unboxed theme toggle with icons */}
-      <header className="p-4 sm:p-6 flex items-center justify-end w-full">
-        <button
-          aria-label="Toggle theme"
-          className={`flex items-center gap-1.5 text-xs lowercase transition-opacity opacity-50 hover:opacity-100 focus:outline-none ${
-            isDarkMode ? "text-text-dark" : "text-text-light"
-          }`}
-          onClick={animatedToggleTheme}
-          type="button"
-        >
-          {isDarkMode ? <SunIcon size={14} /> : <MoonIcon size={14} />}
-          <span>{isDarkMode ? "light" : "dark"}</span>
-        </button>
-      </header>
-
       {/* Main middle section with Footer-style About Logo & Text */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 text-center max-w-xl mx-auto w-full">
+      <main className="relative z-10 my-auto flex flex-col items-center justify-center px-4 py-8 text-center max-w-xl w-full">
         <div className="flex flex-col items-center">
           <div className="flex items-end gap-3 sm:gap-5 justify-center">
             <img
@@ -509,7 +509,7 @@ export const DesktopFrontPage = () => {
       </main>
 
       {/* Footer */}
-      <footer className="p-4 text-center text-[10px] lowercase opacity-40">
+      <footer className="absolute bottom-4 left-0 right-0 z-20 text-center text-[10px] lowercase opacity-40 pointer-events-none">
         &copy; {new Date().getFullYear()} verso. open source &middot; MIT &middot; yours.
       </footer>
     </div>
