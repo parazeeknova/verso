@@ -18,7 +18,7 @@
 
           src = pkgs.fetchurl {
             url = "https://github.com/parazeeknova/verso/releases/download/v${version}/stable-linux-x64-Verso-Setup.tar.gz";
-            sha256 = "sha256-lw3/ywTKSiaUgIdzZvIMDBvKRK7d3omHbB5P0xlE77M="; # Updated with each release hash
+            sha256 = "sha256-1k5GeZUWOcTR5NsSKsu6FeY+JJhm/7rKeGTqv6REZDI="; # Updated with each release hash
           };
 
           nativeBuildInputs = [ pkgs.makeWrapper pkgs.autoPatchelfHook ];
