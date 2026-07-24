@@ -370,7 +370,7 @@ export const DesktopFrontPage = () => {
       className={`min-h-screen w-full flex flex-col justify-between select-none transition-colors duration-300 ${themeClass(isDarkMode)}`}
     >
       {/* Header Video */}
-      <div className="relative mx-auto w-full max-w-xl h-48 sm:h-64 lg:h-80 overflow-hidden">
+      <div className="relative w-full h-48 sm:h-64 lg:h-80 overflow-hidden">
         <video
           ref={nextVideoRef}
           autoPlay
@@ -392,7 +392,7 @@ export const DesktopFrontPage = () => {
         />
         <div
           ref={gradientRef}
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 -bottom-1 pointer-events-none"
           style={{ background: headerGradient }}
         />
       </div>

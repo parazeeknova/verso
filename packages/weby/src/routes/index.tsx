@@ -337,7 +337,7 @@ const Home = function Home() {
       }`}
     >
       {/* Header Video */}
-      <div className="relative mx-auto w-full max-w-3xl h-48 sm:h-64 overflow-hidden">
+      <div className="relative w-full h-48 sm:h-64 lg:h-72 overflow-hidden">
         <video
           ref={nextVideoRef}
           autoPlay
