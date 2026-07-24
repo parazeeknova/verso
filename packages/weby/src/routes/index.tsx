@@ -108,39 +108,27 @@ const Home = function Home() {
     title: string;
   } | null>(null);
   const [isAtBottom, setIsAtBottom] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    const handleScroll = () => {
-      const el = containerRef.current;
-      const docEl = document.documentElement;
+    const target = bottomRef.current;
+    if (!target) {
+      return;
+    }
 
-      const hasWindowScroll = docEl.scrollHeight > window.innerHeight + 50;
-      const windowAtBottom =
-        hasWindowScroll &&
-        window.scrollY > 50 &&
-        Math.ceil(window.innerHeight + window.scrollY) >= docEl.scrollHeight - 25;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const isScrollable = document.documentElement.scrollHeight > window.innerHeight + 50;
+        setIsAtBottom(isScrollable && entry.isIntersecting);
+      },
+      {
+        threshold: 0.1,
+      },
+    );
 
-      const hasContainerScroll = el ? el.scrollHeight > el.clientHeight + 50 : false;
-      const containerAtBottom = el
-        ? hasContainerScroll &&
-          el.scrollTop > 50 &&
-          Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight - 25
-        : false;
-
-      setIsAtBottom(windowAtBottom || containerAtBottom);
-    };
-
-    const el = containerRef.current;
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    el?.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      el?.removeEventListener("scroll", handleScroll);
-    };
+    observer.observe(target);
+    return () => observer.disconnect();
   }, []);
 
   const themeRefs = useThemeButtonHover();
@@ -339,7 +327,6 @@ const Home = function Home() {
 
   return (
     <div
-      ref={containerRef}
       data-theme={isDarkMode ? "dark" : "light"}
       className={`min-h-screen w-full select-none overflow-y-auto ${
         isDarkMode ? "bg-bg-dark text-text-dark" : "bg-bg-light text-text-light"
@@ -423,7 +410,7 @@ const Home = function Home() {
           <LoginPopup isAtBottom={isAtBottom} isDarkMode={isDarkMode} />
         </div>
 
-        <div className="flex justify-end pt-4 pb-2">
+        <div className="flex justify-end pt-4 pb-2" ref={bottomRef}>
           <span
             className="text-4xl sm:text-5xl opacity-40"
             style={{ fontFamily: '"Louison Adriana", cursive' }}
