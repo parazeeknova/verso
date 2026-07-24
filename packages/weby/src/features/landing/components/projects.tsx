@@ -53,24 +53,8 @@ const ProjectCard = ({ index, onDetail, project }: ProjectCardProps) => {
     gsap.set(imgEl, { scale: 1 });
 
     const previewWidth = 288;
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-
-    let previewLeft = isEven ? rect.right + 16 : rect.left - previewWidth - 16;
-    if (previewLeft + previewWidth > screenWidth - 16) {
-      previewLeft = rect.left - previewWidth - 16;
-    }
-    if (previewLeft < 16) {
-      previewLeft = rect.right + 16;
-    }
-    previewLeft = Math.max(16, Math.min(previewLeft, screenWidth - previewWidth - 16));
-
-    let previewTop = rect.top + rect.height / 2;
-    const previewHeight = 240;
-    previewTop = Math.max(
-      previewHeight / 2 + 16,
-      Math.min(previewTop, screenHeight - previewHeight / 2 - 16),
-    );
+    const previewLeft = isEven ? rect.right + 16 : rect.left - previewWidth - 16;
+    const previewTop = rect.top + rect.height / 2;
 
     gsap.to(previewEl, {
       duration: 0.45,
@@ -94,25 +78,8 @@ const ProjectCard = ({ index, onDetail, project }: ProjectCardProps) => {
     }
     const thumbRect = thumbRef.current.getBoundingClientRect();
     const previewWidth = 288;
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-
-    let baseLeft = isEven ? thumbRect.right + 16 : thumbRect.left - previewWidth - 16;
-    if (baseLeft + previewWidth > screenWidth - 16) {
-      baseLeft = thumbRect.left - previewWidth - 16;
-    }
-    if (baseLeft < 16) {
-      baseLeft = thumbRect.right + 16;
-    }
-    baseLeft = Math.max(16, Math.min(baseLeft, screenWidth - previewWidth - 16));
-
-    let baseTop = thumbRect.top + thumbRect.height / 2;
-    const previewHeight = 240;
-    baseTop = Math.max(
-      previewHeight / 2 + 16,
-      Math.min(baseTop, screenHeight - previewHeight / 2 - 16),
-    );
-
+    const baseLeft = isEven ? thumbRect.right + 16 : thumbRect.left - previewWidth - 16;
+    const baseTop = thumbRect.top + thumbRect.height / 2;
     const dx = e.clientX - thumbRect.left - thumbRect.width / 2;
     const dy = e.clientY - thumbRect.top - thumbRect.height / 2;
     gsap.to(previewRef.current, {
