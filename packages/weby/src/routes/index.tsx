@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { gsap } from "gsap";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { GitHubActivity } from "#/features/github/components/calendar";
@@ -405,9 +405,11 @@ const Home = function Home() {
           <ProjectList onDetail={handleProjectDetail} />
         </div>
 
-        <GitHubActivity isDarkMode={isDarkMode} username={githubUsername}>
-          <GitHubStats />
-        </GitHubActivity>
+        <ClientOnly>
+          <GitHubActivity isDarkMode={isDarkMode} username={githubUsername}>
+            <GitHubStats />
+          </GitHubActivity>
+        </ClientOnly>
 
         <div className="shrink-0 flex items-center justify-between pt-2">
           <SocialLinks profile={profile} />
