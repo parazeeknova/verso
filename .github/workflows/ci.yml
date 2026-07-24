@@ -62,9 +62,9 @@ jobs:
       - name: Install Go tools
         run: |
           # Pinned versions for reproducible CI
-          [ -f $(go env GOPATH)/bin/gofumpt ] || go install mvdan.cc/gofumpt@v0.7.0
-          [ -f $(go env GOPATH)/bin/goimports ] || go install golang.org/x/tools/cmd/goimports@v0.31.0
-          [ -f $(go env GOPATH)/bin/golangci-lint ] || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.11.4
+          [ -f "$(go env GOPATH)/bin/gofumpt" ] || go install mvdan.cc/gofumpt@v0.7.0
+          [ -f "$(go env GOPATH)/bin/goimports" ] || go install golang.org/x/tools/cmd/goimports@v0.31.0
+          [ -f "$(go env GOPATH)/bin/golangci-lint" ] || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$(go env GOPATH)/bin" v2.11.4
 
       - name: Install dependencies
         run: bun install
@@ -223,12 +223,12 @@ jobs:
         run: |
           CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
-          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-          security list-keychain -d user -s $KEYCHAIN_PATH
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
 
       - name: Install dependencies
         run: bun install
