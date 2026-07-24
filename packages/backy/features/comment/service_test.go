@@ -1,7 +1,10 @@
 package comment
 
 import (
+	"context"
 	"testing"
+
+	"verso/backy/database/models"
 )
 
 func TestExtractMentionIDs(t *testing.T) {
@@ -70,6 +73,22 @@ func TestExtractMentionIDs(t *testing.T) {
 		ids := extractMentionIDs("just some text with a uuid 550e8400-e29b-41d4-a716-446655440000")
 		if len(ids) != 0 {
 			t.Fatalf("expected 0 mention IDs from non-JSON, got %d", len(ids))
+		}
+	})
+}
+
+func TestCanUserAccessPage(t *testing.T) {
+	s := &CommentService{}
+	page := models.Page{
+		ID:          "p1",
+		WorkspaceID: "w1",
+		SpaceID:     "s1",
+		CreatorID:   "user1",
+	}
+
+	t.Run("returns false when user is not member and page not shared", func(t *testing.T) {
+		if s.canUserAccessPage(context.Background(), page, "user1") {
+			t.Errorf("expected canUserAccessPage to return false when user is not member of workspace or space")
 		}
 	})
 }
