@@ -114,11 +114,19 @@ const Home = function Home() {
   useEffect(() => {
     const handleScroll = () => {
       const el = containerRef.current;
+      const docEl = document.documentElement;
+
+      const hasWindowScroll = docEl.scrollHeight > window.innerHeight + 50;
       const windowAtBottom =
-        Math.ceil(window.innerHeight + window.scrollY) >=
-        document.documentElement.scrollHeight - 10;
+        hasWindowScroll &&
+        window.scrollY > 50 &&
+        Math.ceil(window.innerHeight + window.scrollY) >= docEl.scrollHeight - 25;
+
+      const hasContainerScroll = el ? el.scrollHeight > el.clientHeight + 50 : false;
       const containerAtBottom = el
-        ? Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight - 10
+        ? hasContainerScroll &&
+          el.scrollTop > 50 &&
+          Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight - 25
         : false;
 
       setIsAtBottom(windowAtBottom || containerAtBottom);
