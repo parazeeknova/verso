@@ -163,16 +163,18 @@ export const ExperienceSection = ({ experience, isPending }: ExperienceSectionPr
   }, [isPending, experience]);
 
   useEffect(() => {
+    isFirstRender.current = false;
+  }, []);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      return;
+    }
     const extra = extraRef.current;
-    const fade = fadeRef.current;
     if (!extra) {
       return;
     }
-
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+    const fade = fadeRef.current;
 
     if (isExpanded) {
       gsap.fromTo(

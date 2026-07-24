@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useProjects } from "../hooks/use-data";
 import { gsap } from "gsap";
 import { ArrowUpRightIcon } from "@phosphor-icons/react";
@@ -144,20 +145,25 @@ const ProjectCard = ({ index, onDetail, project }: ProjectCardProps) => {
               <ArrowUpRightIcon className="text-white" size={24} />
             </div>
           </a>
-          <div
-            ref={previewRef}
-            className="pointer-events-none fixed left-0 top-0 z-50 hidden origin-left"
-            style={{ perspective: 800 }}
-          >
-            <div className="overflow-hidden shadow-2xl border border-white/10 bg-black/80 backdrop-blur-sm">
-              <img
-                ref={previewImgRef}
-                alt={project.title}
-                className="block w-72 max-h-96 object-contain"
-                src={project.image}
-              />
-            </div>
-          </div>
+          {typeof window === "undefined"
+            ? null
+            : createPortal(
+                <div
+                  ref={previewRef}
+                  className="pointer-events-none fixed left-0 top-0 z-50 hidden origin-left"
+                  style={{ perspective: 800 }}
+                >
+                  <div className="overflow-hidden shadow-2xl border border-white/10 bg-black/80 backdrop-blur-sm">
+                    <img
+                      ref={previewImgRef}
+                      alt={project.title}
+                      className="block w-72 max-h-96 object-contain"
+                      src={project.image}
+                    />
+                  </div>
+                </div>,
+                document.body,
+              )}
         </>
       );
     }
@@ -172,9 +178,9 @@ const ProjectCard = ({ index, onDetail, project }: ProjectCardProps) => {
   };
 
   return (
-    <div className={`flex items-start gap-4 ${isEven ? "" : "flex-row-reverse"}`}>
+    <div className={`flex items-center gap-3 sm:gap-4 ${isEven ? "" : "flex-row-reverse"}`}>
       {renderThumbnail()}
-      <div>
+      <div className="flex-1 min-w-0">
         <h3 className="font-medium text-xs sm:text-sm">{project.title}</h3>
         <p className="mt-1 text-gray-500 text-xs sm:text-sm">{project.desc}</p>
         <p className="mt-1 flex items-center gap-2 text-gray-400 text-xs">
@@ -348,16 +354,18 @@ export const MobileProjectList = ({ onDetail }: MobileProjectListProps) => {
   }, [isPending, projectData]);
 
   useEffect(() => {
+    isFirstRender.current = false;
+  }, []);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      return;
+    }
     const extra = extraRef.current;
-    const fade = fadeRef.current;
     if (!extra) {
       return;
     }
-
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+    const fade = fadeRef.current;
 
     if (isExpanded) {
       gsap.fromTo(

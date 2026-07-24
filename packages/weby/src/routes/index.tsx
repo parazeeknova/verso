@@ -359,12 +359,12 @@ const Home = function Home() {
         />
         <div
           ref={gradientRef}
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 -bottom-1 pointer-events-none"
           style={{ background: headerGradient }}
         />
       </div>
 
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 sm:gap-8 p-4 sm:p-6 lg:p-8">
+      <div className="-mt-1 mx-auto flex max-w-3xl flex-col gap-6 sm:gap-8 p-4 sm:p-6 lg:p-8">
         <div className="flex items-center justify-end gap-3 w-full">
           <button
             className={`text-[13px] lowercase focus:outline-none hover:opacity-70 ${
